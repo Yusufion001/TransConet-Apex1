@@ -1,0 +1,15 @@
+{
+  "name": "transconet-apex1",
+  "private": true,
+  "version": "1.0.0",
+  "description": "TransConet-Apex1 transportation platform",
+  "scripts": {
+    "mobile": "npm --prefix mobile-app start",
+    "backend": "npm --prefix backend run dev",
+    "typecheck:mobile": "npm --prefix mobile-app exec tsc -- --noEmit",
+    "typecheck:backend": "npm --prefix backend exec tsc -- --noEmit",
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit"
+  }
+}
