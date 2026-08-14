@@ -1,6 +1,11 @@
 import { Router } from "express";
 import { z } from "zod";
-import { loginUser, registerUser } from "../services/auth.service.js";
+import {
+  forgotPassword,
+  loginUser,
+  registerUser,
+  resetPassword,
+} from "../services/auth.service.js";
 
 const router = Router();
 
@@ -16,6 +21,15 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   identifier: z.string().min(1),
   password: z.string().min(1),
+});
+
+const forgotPasswordSchema = z.object({
+  identifier: z.string().min(1),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(8),
 });
 
 router.post("/register", async (req, res) => {
@@ -81,4 +95,52 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const input = forgotPasswordSchema.parse(req.body);
+
+    const result = await forgotPassword(input.identifier);
+
+    return res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Password reset request failed";
+
+    return res.status(400).json({
+      success: false,
+      error: message,
+    });
+  }
+});
+
+router.post("/reset-password", async (req, res) => {
+  try {
+    const input = resetPasswordSchema.parse(req.body);
+
+    const result = await resetPassword(
+      input.token,
+      input.password,
+    );
+
+    return res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Password reset failed";
+
+    return res.status(400).json({
+      success: false,
+      error: message,
+    });
+  }
+});
 export default router;

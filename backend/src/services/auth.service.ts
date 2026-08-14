@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env.js";
 import { prisma } from "../config/prisma.js";
+import crypto from "crypto";
 
 type UserRole = "CUSTOMER" | "TRANSPORTER" | "ADMIN";
 
@@ -109,5 +110,90 @@ export async function loginUser(identifier: string, password: string) {
     user,
     accessToken: createAccessToken(user.id, user.role),
     refreshToken: createRefreshToken(user.id),
+  };
+}
+export async function forgotPassword(
+  identifier: string,
+) {
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: identifier },
+        { phone: identifier },
+      ],
+    },
+  });
+
+  if (!user) {
+    return {
+      message:
+        "If an account exists, a reset token has been generated.",
+    };
+  }
+
+  const resetToken = crypto.randomBytes(32).toString(
+    "hex",
+  );
+
+  const expiresAt = new Date(
+    Date.now() + 1000 * 60 * 30,
+  );
+
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      resetPasswordToken: resetToken,
+      resetPasswordExpiresAt: expiresAt,
+    },
+  });
+
+  return {
+    resetToken,
+    expiresAt,
+  };
+}
+
+export async function resetPassword(
+  token: string,
+  password: string,
+) {
+  const user = await prisma.user.findFirst({
+    where: {
+      resetPasswordToken: token,
+    },
+  });
+
+  if (!user) {
+    throw new Error("Invalid reset token");
+  }
+
+  if (
+    !user.resetPasswordExpiresAt ||
+    user.resetPasswordExpiresAt <
+      new Date()
+  ) {
+    throw new Error("Reset token expired");
+  }
+
+  const passwordHash = await bcrypt.hash(
+    password,
+    12,
+  );
+
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      passwordHash,
+      resetPasswordToken: null,
+      resetPasswordExpiresAt: null,
+    },
+  });
+
+  return {
+    message: "Password updated successfully",
   };
 }
