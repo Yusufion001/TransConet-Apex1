@@ -5,12 +5,18 @@ import {
   updateVehicle,
   updateVehicleLocation,
 } from "./vehicle.service.js";
-import { authenticate } from "../middleware/auth.middleware.js";
+import {
+  authenticate,
+  authorize,
+} from "../middleware/auth.middleware.js";
 
 const router = Router();
 router.use(authenticate);
 
-router.post("/", async (req, res) => {
+router.post(
+  "/",
+  authorize("TRANSPORTER"),
+  async (req, res) => {
   try {
     const vehicle = await createVehicle(req.body);
 

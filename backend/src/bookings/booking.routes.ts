@@ -9,12 +9,18 @@ import {
   updateBookingStatus,
   uploadProofOfDelivery,
 } from "./booking.service.js";
-import { authenticate } from "../middleware/auth.middleware.js";
+import {
+  authenticate,
+  authorize,
+} from "../middleware/auth.middleware.js";
 
 const router = Router();
 router.use(authenticate);
 
-router.post("/", async (req, res) => {
+router.post(
+  "/",
+  authorize("CUSTOMER"),
+  async (req, res) => {
   try {
     const booking = await createBooking(req.body);
 
