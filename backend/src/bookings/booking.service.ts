@@ -72,13 +72,35 @@ export async function updateBookingStatus(
     | "COMPLETED"
     | "CANCELLED",
 ) {
+  const timestampData: any = {
+    status,
+  };
+
+  switch (status) {
+    case "ACCEPTED":
+      timestampData.acceptedAt = new Date();
+      break;
+
+    case "ARRIVED":
+      timestampData.arrivedAt = new Date();
+      break;
+
+    case "IN_TRANSIT":
+      timestampData.inTransitAt = new Date();
+      timestampData.pickedUpAt = new Date();
+      break;
+
+    case "COMPLETED":
+      timestampData.deliveredAt = new Date();
+      timestampData.completedAt = new Date();
+      break;
+  }
+
   const booking = await prisma.booking.update({
     where: {
       id: bookingId,
     },
-    data: {
-      status,
-    },
+    data: timestampData,
   });
 
   const eventMap = {
@@ -99,9 +121,7 @@ export async function updateBookingStatus(
   };
 
   const event =
-    eventMap[
-      status as keyof typeof eventMap
-    ];
+    eventMap[status as keyof typeof eventMap];
 
   if (event) {
     await createShipmentEvent({
@@ -113,6 +133,7 @@ export async function updateBookingStatus(
 
   return booking;
 }
+ 
 
 export async function getCustomerBookings(
   customerId: string,
