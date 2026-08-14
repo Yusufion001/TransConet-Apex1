@@ -5,8 +5,10 @@ import {
   updateVehicle,
   updateVehicleLocation,
 } from "./vehicle.service.js";
+import { authenticate } from "../middleware/auth.middleware.js";
 
 const router = Router();
+router.use(authenticate);
 
 router.post("/", async (req, res) => {
   try {

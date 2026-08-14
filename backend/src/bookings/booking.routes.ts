@@ -9,8 +9,10 @@ import {
   updateBookingStatus,
   uploadProofOfDelivery,
 } from "./booking.service.js";
+import { authenticate } from "../middleware/auth.middleware.js";
 
 const router = Router();
+router.use(authenticate);
 
 router.post("/", async (req, res) => {
   try {
