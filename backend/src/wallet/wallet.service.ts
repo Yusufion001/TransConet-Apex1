@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { publishEvent } from "../realtime/event-bus.js";
 
 export async function getWallet(
   transporterId: string,
@@ -25,11 +26,22 @@ export async function getWallet(
 export async function createWallet(
   transporterId: string,
 ) {
-  return prisma.wallet.create({
+  const wallet = await prisma.wallet.create({
     data: {
       transporterId,
     },
   });
+
+  publishEvent("admin", {
+    eventType: "WALLET_CREATED",
+    module: "FINANCIAL_OPERATIONS",
+    entityType: "WALLET",
+    entityId: wallet.id,
+    actorId: transporterId,
+    data: wallet,
+  });
+
+  return wallet;
 }
 
 export async function createWithdrawal(data: {
@@ -39,7 +51,22 @@ export async function createWithdrawal(data: {
   accountNumber: string;
   accountName: string;
 }) {
-  return prisma.withdrawal.create({
+  const withdrawal = await prisma.withdrawal.create({
     data,
   });
+
+  publishEvent("admin", {
+    eventType: "WITHDRAWAL_CREATED",
+    module: "FINANCIAL_OPERATIONS",
+    entityType: "WITHDRAWAL",
+    entityId: withdrawal.id,
+    data: {
+      withdrawalId: withdrawal.id,
+      walletId: withdrawal.walletId,
+      amount: withdrawal.amount,
+      status: withdrawal.status,
+    },
+  });
+
+  return withdrawal;
 }

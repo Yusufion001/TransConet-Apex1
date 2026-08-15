@@ -16,6 +16,15 @@ import disputeRoutes from "./disputes/dispute.routes.js";
 import eventRoutes from "./events/event.routes.js";
 import verificationRoutes from "./verification/verification.routes.js";
 import paymentRoutes from "./payments/payment.routes.js";
+import adminRoutes from "./admin/admin.routes.js";
+import adminSupportRoutes from "./admin/support.routes.js";
+import adminNotificationRoutes from "./admin/notification.routes.js";
+import adminFinancialRoutes from "./admin/financial.routes.js";
+import adminVerificationRoutes from "./admin/verification.routes.js";
+import adminFleetRoutes from "./admin/fleet.routes.js";
+import contentRoutes from "./content/content.routes.js";
+import { initializeRealtime } from "./realtime/realtime.service.js";
+import { initializeSocketEvents } from "./realtime/socket-events.js";
 
 import { env } from "./config/env.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -29,6 +38,9 @@ const io = new Server(httpServer, {
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   },
 });
+
+initializeRealtime(io);
+initializeSocketEvents(io);
 
 app.use(helmet());
 app.use(cors());
@@ -57,6 +69,13 @@ app.use(
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/transporters", transporterRoutes);
 app.use("/api/wallet", walletRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/admin/support", adminSupportRoutes);
+app.use("/api/admin/notifications", adminNotificationRoutes);
+app.use("/api/admin/financial", adminFinancialRoutes);
+app.use("/api/admin/verification", adminVerificationRoutes);
+app.use("/api/admin/fleet", adminFleetRoutes);
+app.use("/api/admin/content", contentRoutes);
 app.use("/api/messages", messageRoutes);
 app.use(
   "/api/notifications",

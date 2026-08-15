@@ -13,6 +13,58 @@ enum UserRole {
   ADMIN
 }
 
+enum AdminType {
+  SUPER_ADMIN
+  VERIFICATION_ADMIN
+  SUPPORT_ADMIN
+  NOTIFICATION_ADMIN
+  FINANCIAL_ADMIN
+  FLEET_ADMIN
+  PARTNER_ADMIN
+  MARKETING_ADMIN
+  RISK_ADMIN
+  REPORTING_ADMIN
+  AI_ADMIN
+  FEATURE_ADMIN
+  DEVELOPER_ADMIN
+  BACKUP_ADMIN
+  API_ADMIN
+  SECURITY_ADMIN
+}
+
+enum AdminStatus {
+  ACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+enum AdminModule {
+  PLATFORM_OVERVIEW
+  VERIFICATION_CENTER
+  CONTENT_MANAGEMENT
+  SUPPORT_CARE
+  NOTIFICATION_CENTER
+  SUBSCRIPTION_BILLING
+  FLEET_MARKETPLACE
+  PARTNER_MANAGEMENT
+  MARKETING_CENTER
+  FINANCIAL_OPERATIONS
+  RISK_FRAUD
+  REPORTS_CENTER
+  AI_AUTOMATION
+  FEATURE_MANAGEMENT
+  DEVELOPER_CONSOLE
+  BACKUP_RECOVERY
+  ACTIVITY_TIMELINE
+  ROLE_PERMISSION
+  PLATFORM_CONFIG
+  LIVE_TRIPS
+  ERROR_CENTER
+  API_MANAGEMENT
+  SECURITY_CENTER
+  DATABASE_HEALTH
+}
+
 enum UserStatus {
   PENDING
   ACTIVE
@@ -59,6 +111,7 @@ enum PaymentStatus {
   FAILED
   REFUNDED
 }
+
 enum string {
   CREDIT
   DEBIT
@@ -70,6 +123,7 @@ enum WithdrawalStatus {
   COMPLETED
   FAILED
 }
+
 enum DocumentType {
   DRIVERS_LICENSE
   VEHICLE_REGISTRATION
@@ -111,6 +165,7 @@ enum DisputeStatus {
   RESOLVED
   REJECTED
 }
+
 enum ShipmentEventType {
   SHIPMENT_CREATED
   TRANSPORTER_ASSIGNED
@@ -126,6 +181,7 @@ enum ShipmentEventType {
   PAYMENT_COMPLETED
   DISPUTE_OPENED
 }
+
 enum CargoCategory {
   GENERAL
   FRAGILE
@@ -157,24 +213,25 @@ enum TransporterTier {
   TIER_1
   TIER_2
 }
+
 model User {
-  id           String     @id @default(uuid())
-  firstName    String
-  lastName     String
-  email        String?    @unique
-  phone        String?    @unique
-  passwordHash String
-  role         UserRole
-  status       UserStatus @default(PENDING)
-  transporterTier   TransporterTier?
-  profilePhoto String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  lastLoginAt  DateTime?
-  refreshTokenHash        String?
-  refreshTokenExpiresAt   DateTime?
-  resetPasswordToken      String?
-  resetPasswordExpiresAt  DateTime?
+  id                     String           @id @default(uuid())
+  firstName              String
+  lastName               String
+  email                  String?          @unique
+  phone                  String?          @unique
+  passwordHash           String
+  role                   UserRole
+  status                 UserStatus       @default(PENDING)
+  transporterTier        TransporterTier?
+  profilePhoto           String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  lastLoginAt            DateTime?
+  refreshTokenHash       String?
+  refreshTokenExpiresAt  DateTime?
+  resetPasswordToken     String?
+  resetPasswordExpiresAt DateTime?
 
   customerProfile    CustomerProfile?
   transporterProfile TransporterProfile?
@@ -197,12 +254,16 @@ model User {
   supportTickets  SupportTicket[] @relation("TicketRequester")
   assignedTickets SupportTicket[] @relation("TicketAssignee")
 
-  auditLogs         AuditLog[] @relation("AuditAdministrator")
-  affectedAuditLogs AuditLog[] @relation("AuditAffectedUser")
+  auditLogs         AuditLog[]      @relation("AuditAdministrator")
+  adminActivities   AdminActivity[]
+  affectedAuditLogs AuditLog[]      @relation("AuditAffectedUser")
 
   disputesAsCustomer    Dispute[] @relation("DisputeCustomer")
   disputesAsTransporter Dispute[] @relation("DisputeTransporter")
   assignedDisputes      Dispute[] @relation("DisputeAdministrator")
+
+  createdContent ContentItem[] @relation("ContentCreator")
+  updatedContent ContentItem[] @relation("ContentUpdater")
 }
 
 model CustomerProfile {
@@ -230,27 +291,51 @@ model TransporterProfile {
 
   tier2Approved Boolean @default(false)
 
-  rating                     Float              @default(0)
-  totalTrips                 Int                @default(0)
-  totalEarnings              Decimal            @default(0) @db.Decimal(14, 2)
+  rating        Float   @default(0)
+  totalTrips    Int     @default(0)
+  totalEarnings Decimal @default(0) @db.Decimal(14, 2)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model AdminProfile {
-  userId       String    @id
-  permissions  Json?
+  userId String @id
+
+  isSuperAdministrator Boolean @default(false)
+
+  administratorType AdminType @default(SUPPORT_ADMIN)
+
+  assignedModules AdminModule[]
+
+  permissions Json?
+
+  status AdminStatus @default(ACTIVE)
+
+  createdBy String?
+
+  failedLoginAttempts Int @default(0)
+
+  lockedUntil DateTime?
+
+  twoFactorEnabled Boolean @default(false)
+
+  lastLoginAt DateTime?
+
   lastActionAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Vehicle {
-  id                 String                    @id @default(uuid())
+  id                 String @id @default(uuid())
   transporterId      String
-  registrationNumber String                    @unique
+  registrationNumber String @unique
 
-  vehicleType        String
+  vehicleType  String
   vehicleClass VehicleClass
 
   make               String?
@@ -280,19 +365,19 @@ enum TruckCategory {
   TANKER
   SPECIALIZED
 }
+
 model Booking {
   id            String  @id @default(uuid())
   customerId    String
   transporterId String?
   vehicleId     String?
 
-cargoDescription String?
+  cargoDescription String?
 
+  truckCategory   TruckCategory?
+  transporterTier TransporterTier?
 
-truckCategory    TruckCategory?
-transporterTier  TransporterTier?
-
-estimatedFare    Decimal? @db.Decimal(14, 2)
+  estimatedFare Decimal? @db.Decimal(14, 2)
 
   pickupLocation       String
   destination          String
@@ -303,25 +388,25 @@ estimatedFare    Decimal? @db.Decimal(14, 2)
 
   scheduledDate DateTime?
 
-cargoCategory CargoCategory?
-cargoWeight   Decimal? @db.Decimal(14,2)
+  cargoCategory CargoCategory?
+  cargoWeight   Decimal?       @db.Decimal(14, 2)
 
-status        BookingStatus @default(REQUESTED)
-fare          Decimal       @db.Decimal(14, 2)
+  status BookingStatus @default(REQUESTED)
+  fare   Decimal       @db.Decimal(14, 2)
 
-paymentStatus PaymentStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
 
-acceptedAt     DateTime?
-arrivedAt      DateTime?
-pickedUpAt     DateTime?
-inTransitAt    DateTime?
-deliveredAt    DateTime?
-completedAt    DateTime?
+  acceptedAt  DateTime?
+  arrivedAt   DateTime?
+  pickedUpAt  DateTime?
+  inTransitAt DateTime?
+  deliveredAt DateTime?
+  completedAt DateTime?
 
-proofOfDelivery String?
-deliveryConfirmationCode String?
-createdAt DateTime @default(now())
-updatedAt DateTime @updatedAt
+  proofOfDelivery          String?
+  deliveryConfirmationCode String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   customer    User     @relation("CustomerBookings", fields: [customerId], references: [id])
   transporter User?    @relation("TransporterBookings", fields: [transporterId], references: [id])
@@ -332,7 +417,7 @@ updatedAt DateTime @updatedAt
   reviews        Review[]
   disputes       Dispute[]
   supportTickets SupportTicket[]
-  events ShipmentEvent[]
+  events         ShipmentEvent[]
 
   @@index([customerId])
   @@index([transporterId])
@@ -359,34 +444,35 @@ model Payment {
   @@index([bookingId])
   @@index([customerId])
 }
+
 model Wallet {
-  id               String   @id @default(uuid())
-  transporterId    String   @unique
+  id            String @id @default(uuid())
+  transporterId String @unique
 
-  availableBalance Decimal  @default(0) @db.Decimal(14, 2)
-  pendingBalance   Decimal  @default(0) @db.Decimal(14, 2)
+  availableBalance Decimal @default(0) @db.Decimal(14, 2)
+  pendingBalance   Decimal @default(0) @db.Decimal(14, 2)
 
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   transporter User @relation(fields: [transporterId], references: [id])
 
   transactions WalletTransaction[]
-  withdrawals Withdrawal[]
+  withdrawals  Withdrawal[]
 }
 
 model WalletTransaction {
-  id              String                @id @default(uuid())
-  walletId        String
-  bookingId       String?
+  id        String  @id @default(uuid())
+  walletId  String
+  bookingId String?
 
-  amount          Decimal               @db.Decimal(14, 2)
+  amount Decimal @db.Decimal(14, 2)
 
   transactionType String
 
-  description     String?
+  description String?
 
-  createdAt       DateTime              @default(now())
+  createdAt DateTime @default(now())
 
   wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
@@ -394,26 +480,27 @@ model WalletTransaction {
 }
 
 model Withdrawal {
-  id              String           @id @default(uuid())
+  id String @id @default(uuid())
 
-  walletId        String
+  walletId String
 
-  amount          Decimal          @db.Decimal(14, 2)
+  amount Decimal @db.Decimal(14, 2)
 
-  bankName        String
+  bankName String
 
-  accountNumber   String
+  accountNumber String
 
-  accountName     String
+  accountName String
 
   status String @default("PENDING")
 
-  createdAt       DateTime         @default(now())
+  createdAt DateTime @default(now())
 
   wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([walletId])
 }
+
 model Notification {
   id          String   @id @default(uuid())
   recipientId String
@@ -477,11 +564,11 @@ model Document {
   externalVerificationId String?
   providerResponse       Json?
   verifiedAt             DateTime?
-  adminApproved          Boolean        @default(false)
+  adminApproved          Boolean   @default(false)
   adminApprovedAt        DateTime?
 
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -525,6 +612,28 @@ model Dispute {
   administrator User?   @relation("DisputeAdministrator", fields: [administratorId], references: [id])
 }
 
+model AdminActivity {
+  id          String      @id @default(uuid())
+  eventType   String
+  module      AdminModule
+  actorId     String?
+  entityType  String?
+  entityId    String?
+  bookingId   String?
+  title       String
+  description String?
+  data        Json?
+  createdAt   DateTime    @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([module, createdAt])
+  @@index([eventType, createdAt])
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId])
+  @@index([bookingId])
+}
+
 model AuditLog {
   id                String   @id @default(uuid())
   administratorId   String
@@ -540,6 +649,7 @@ model AuditLog {
   administrator User  @relation("AuditAdministrator", fields: [administratorId], references: [id])
   affectedUser  User? @relation("AuditAffectedUser", fields: [affectedUserId], references: [id])
 }
+
 model ShipmentEvent {
   id          String            @id @default(uuid())
   bookingId   String
@@ -553,4 +663,44 @@ model ShipmentEvent {
 
   @@index([bookingId])
   @@index([eventType])
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ContentType {
+  ANNOUNCEMENT
+  BANNER
+  FAQ
+  ARTICLE
+  TERMS
+  POLICY
+  HELP
+}
+
+model ContentItem {
+  id          String        @id @default(uuid())
+  title       String
+  slug        String        @unique
+  type        ContentType
+  status      ContentStatus @default(DRAFT)
+  summary     String?
+  body        String
+  imageUrl    String?
+  metadata    Json?
+  publishedAt DateTime?
+  createdBy   String
+  updatedBy   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  creator User  @relation("ContentCreator", fields: [createdBy], references: [id])
+  updater User? @relation("ContentUpdater", fields: [updatedBy], references: [id])
+
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
 }

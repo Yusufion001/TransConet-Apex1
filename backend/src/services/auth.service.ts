@@ -14,12 +14,29 @@ function createAccessToken(userId: string, role: UserRole) {
   );
 }
 
+function hashToken(token: string) {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
 function createRefreshToken(userId: string) {
   return jwt.sign(
     { sub: userId, type: "refresh" },
     env.JWT_REFRESH_SECRET,
     { expiresIn: "30d" },
   );
+}
+
+async function issueTokens(userId: string, role: UserRole) {
+  const accessToken = createAccessToken(userId, role);
+  const refreshToken = createRefreshToken(userId);
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      refreshTokenHash: hashToken(refreshToken),
+      refreshTokenExpiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+    },
+  });
+  return { accessToken, refreshToken };
 }
 
 export async function registerUser(input: {
@@ -68,8 +85,7 @@ export async function registerUser(input: {
 
   return {
     user,
-    accessToken: createAccessToken(user.id, user.role),
-    refreshToken: createRefreshToken(user.id),
+    ...await issueTokens(user.id, user.role),
   };
 }
 
@@ -108,8 +124,7 @@ export async function loginUser(identifier: string, password: string) {
 
   return {
     user,
-    accessToken: createAccessToken(user.id, user.role),
-    refreshToken: createRefreshToken(user.id),
+    ...await issueTokens(user.id, user.role),
   };
 }
 export async function forgotPassword(
@@ -131,9 +146,8 @@ export async function forgotPassword(
     };
   }
 
-  const resetToken = crypto.randomBytes(32).toString(
-    "hex",
-  );
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  const resetTokenHash = crypto.createHash("sha256").update(resetToken).digest("hex");
 
   const expiresAt = new Date(
     Date.now() + 1000 * 60 * 30,
@@ -144,7 +158,7 @@ export async function forgotPassword(
       id: user.id,
     },
     data: {
-      resetPasswordToken: resetToken,
+      resetPasswordToken: resetTokenHash,
       resetPasswordExpiresAt: expiresAt,
     },
   });
@@ -161,7 +175,7 @@ export async function resetPassword(
 ) {
   const user = await prisma.user.findFirst({
     where: {
-      resetPasswordToken: token,
+      resetPasswordToken: crypto.createHash("sha256").update(token).digest("hex"),
     },
   });
 
@@ -196,4 +210,56 @@ export async function resetPassword(
   return {
     message: "Password updated successfully",
   };
+}
+
+
+export async function refreshAccessToken(refreshToken: string) {
+  let payload: { sub: string; type: string };
+
+  try {
+    payload = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as {
+      sub: string;
+      type: string;
+    };
+  } catch {
+    throw new Error("Invalid refresh token");
+  }
+
+  if (payload.type !== "refresh" || !payload.sub) {
+    throw new Error("Invalid refresh token");
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: payload.sub },
+  });
+
+  if (!user || !user.refreshTokenHash || !user.refreshTokenExpiresAt) {
+    throw new Error("Invalid refresh token");
+  }
+
+  if (user.refreshTokenExpiresAt <= new Date()) {
+    throw new Error("Refresh token expired");
+  }
+
+  if (hashToken(refreshToken) !== user.refreshTokenHash) {
+    throw new Error("Invalid refresh token");
+  }
+
+  if (user.status === "BLOCKED" || user.status === "SUSPENDED") {
+    throw new Error("This account is not active");
+  }
+
+  return issueTokens(user.id, user.role);
+}
+
+export async function logoutUser(userId: string) {
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      refreshTokenHash: null,
+      refreshTokenExpiresAt: null,
+    },
+  });
+
+  return { message: "Logged out successfully" };
 }

@@ -1,22 +1,23 @@
 import { prisma } from "../config/prisma.js";
+import { publishEvent } from "../realtime/event-bus.js";
 
 export async function startVerification(
   documentId: string,
 ) {
-  const document =
+  const existingDocument =
     await prisma.document.findUnique({
       where: {
         id: documentId,
       },
     });
 
-  if (!document) {
+  if (!existingDocument) {
     throw new Error(
       "Document not found",
     );
   }
 
-  return prisma.document.update({
+  const document = await prisma.document.update({
     where: {
       id: documentId,
     },
@@ -28,6 +29,16 @@ export async function startVerification(
       },
     },
   });
+
+  publishEvent("admin", {
+    eventType: "VERIFICATION_STARTED",
+    module: "VERIFICATION_CENTER",
+    entityType: "DOCUMENT",
+    entityId: document.id,
+    data: document,
+  });
+
+  return document;
 }
 export async function completeVerification(
   documentId: string,
@@ -35,7 +46,7 @@ export async function completeVerification(
   externalVerificationId: string,
   providerResponse: any,
 ) {
-  return prisma.document.update({
+  const document = await prisma.document.update({
     where: {
       id: documentId,
     },
@@ -46,4 +57,14 @@ export async function completeVerification(
       verifiedAt: new Date(),
     },
   });
+
+  publishEvent("admin", {
+    eventType: "VERIFICATION_COMPLETED",
+    module: "VERIFICATION_CENTER",
+    entityType: "DOCUMENT",
+    entityId: document.id,
+    data: document,
+  });
+
+  return document;
 }

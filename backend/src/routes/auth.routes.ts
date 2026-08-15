@@ -1,8 +1,11 @@
 import { Router } from "express";
+import { authenticate, AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { z } from "zod";
 import {
   forgotPassword,
   loginUser,
+  logoutUser,
+  refreshAccessToken,
   registerUser,
   resetPassword,
 } from "../services/auth.service.js";
@@ -30,6 +33,10 @@ const forgotPasswordSchema = z.object({
 const resetPasswordSchema = z.object({
   token: z.string().min(1),
   password: z.string().min(8),
+});
+
+const refreshSchema = z.object({
+  refreshToken: z.string().min(1),
 });
 
 router.post("/register", async (req, res) => {
@@ -92,6 +99,25 @@ router.post("/login", async (req, res) => {
       success: false,
       error: "Invalid credentials",
     });
+  }
+});
+
+router.post("/refresh", async (req, res) => {
+  try {
+    const input = refreshSchema.parse(req.body);
+    const result = await refreshAccessToken(input.refreshToken);
+    return res.json({ success: true, data: result });
+  } catch {
+    return res.status(401).json({ success: false, error: "Invalid refresh token" });
+  }
+});
+
+router.post("/logout", authenticate, async (req: AuthenticatedRequest, res) => {
+  try {
+    const result = await logoutUser(req.user!.id);
+    return res.json({ success: true, data: result });
+  } catch {
+    return res.status(500).json({ success: false, error: "Logout failed" });
   }
 });
 

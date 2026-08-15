@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { publishEvent } from "../realtime/event-bus.js";
 
 export async function createDocument(data: {
   userId: string;
@@ -11,7 +12,7 @@ export async function createDocument(data: {
     | "OTHER";
   fileUrl: string;
 }) {
-  return prisma.document.create({
+  const document = await prisma.document.create({
     data: {
       ...data,
       verificationProvider: null,
@@ -23,6 +24,17 @@ export async function createDocument(data: {
       status: "PENDING",
     },
   });
+
+  publishEvent("admin", {
+    eventType: "DOCUMENT_SUBMITTED",
+    module: "VERIFICATION_CENTER",
+    entityType: "DOCUMENT",
+    entityId: document.id,
+    actorId: data.userId,
+    data: document,
+  });
+
+  return document;
 }
 
 export async function getUserDocuments(
@@ -41,7 +53,7 @@ export async function approveDocument(
   documentId: string,
   reviewedBy: string,
 ) {
-  return prisma.document.update({
+  const document = await prisma.document.update({
     where: { id: documentId },
     data: {
       status: "APPROVED",
@@ -50,6 +62,17 @@ export async function approveDocument(
       reviewedBy,
     },
   });
+
+  publishEvent("admin", {
+    eventType: "DOCUMENT_APPROVED",
+    module: "VERIFICATION_CENTER",
+    entityType: "DOCUMENT",
+    entityId: document.id,
+    actorId: reviewedBy,
+    data: document,
+  });
+
+  return document;
 }
 
 export async function rejectDocument(
@@ -57,7 +80,7 @@ export async function rejectDocument(
   reviewedBy: string,
   rejectionReason: string,
 ) {
-  return prisma.document.update({
+  const document = await prisma.document.update({
     where: { id: documentId },
     data: {
       status: "REJECTED",
@@ -65,6 +88,17 @@ export async function rejectDocument(
       rejectionReason,
     },
   });
+
+  publishEvent("admin", {
+    eventType: "DOCUMENT_REJECTED",
+    module: "VERIFICATION_CENTER",
+    entityType: "DOCUMENT",
+    entityId: document.id,
+    actorId: reviewedBy,
+    data: document,
+  });
+
+  return document;
 }
 
 export async function getPendingDocuments() {

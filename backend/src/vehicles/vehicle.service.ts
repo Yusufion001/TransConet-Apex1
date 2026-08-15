@@ -1,5 +1,7 @@
 import { prisma } from "../config/prisma.js";
 import type { VehicleClass } from "../../generated/prisma/enums.js";
+import { publishEvent } from "../realtime/event-bus.js";
+import { publishAdminEvent } from "../realtime/realtime.service.js";
 
 export async function createVehicle(data: {
   transporterId: string;
@@ -7,9 +9,18 @@ export async function createVehicle(data: {
   vehicleType: string;
   vehicleClass: VehicleClass;
 }) {
-  return prisma.vehicle.create({
-    data,
+  const vehicle = await prisma.vehicle.create({ data });
+
+  publishAdminEvent({
+    eventType: "vehicle.created",
+    module: "FLEET_MARKETPLACE",
+    actorId: data.transporterId,
+    entityType: "VEHICLE",
+    entityId: vehicle.id,
+    data: vehicle,
   });
+
+  return vehicle;
 }
 
 export async function getVehicleById(id: string) {
@@ -30,12 +41,20 @@ export async function updateVehicle(
     capacity?: number;
   },
 ) {
-  return prisma.vehicle.update({
-    where: {
-      id,
-    },
+  const vehicle = await prisma.vehicle.update({
+    where: { id },
     data,
   });
+
+  publishAdminEvent({
+    eventType: "vehicle.updated",
+    module: "FLEET_MARKETPLACE",
+    entityType: "VEHICLE",
+    entityId: id,
+    data: vehicle,
+  });
+
+  return vehicle;
 }
 
 export async function updateVehicleLocation(
@@ -43,7 +62,7 @@ export async function updateVehicleLocation(
   latitude: number,
   longitude: number,
 ) {
-  return prisma.vehicle.update({
+  const vehicle = await prisma.vehicle.update({
     where: {
       id,
     },
@@ -53,4 +72,21 @@ export async function updateVehicleLocation(
       availabilityStatus: "AVAILABLE",
     },
   });
+
+  publishEvent("vehicle", {
+    eventType: "VEHICLE_LOCATION_UPDATED",
+    module: "FLEET_MARKETPLACE",
+    entityType: "VEHICLE",
+    entityId: vehicle.id,
+    actorId: vehicle.transporterId,
+    data: {
+      vehicleId: vehicle.id,
+      transporterId: vehicle.transporterId,
+      latitude,
+      longitude,
+      availabilityStatus: vehicle.availabilityStatus,
+    },
+  });
+
+  return vehicle;
 }

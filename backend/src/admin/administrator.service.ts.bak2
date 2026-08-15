@@ -1,0 +1,130 @@
+import { prisma } from "../config/prisma.js";
+import { AdminModule, AdminStatus, AdminType } from "../../generated/prisma/enums.js";
+
+
+type CreateAdministratorInput = {
+  creatorId: string;
+  userId: string;
+  administratorType: AdminType;
+  assignedModules: AdminModule[];
+};
+
+
+async function superAdministratorExists() {
+  const administrator =
+    await prisma.adminProfile.findFirst({
+      where: {
+        isSuperAdministrator: true,
+      },
+    });
+
+  return Boolean(administrator);
+}
+
+
+export async function createAdministrator(
+  input: CreateAdministratorInput,
+) {
+  if (!input.assignedModules.length) {
+    throw new Error(
+      "At least one administrator module is required",
+    );
+  }
+
+
+  const creator =
+    await prisma.adminProfile.findUnique({
+      where: {
+        userId: input.creatorId,
+      },
+    });
+
+
+  if (
+    !creator ||
+    !creator.isSuperAdministrator
+  ) {
+    throw new Error(
+      "Only a Super Administrator can create administrators",
+    );
+  }
+
+
+  const user =
+    await prisma.user.findUnique({
+      where: {
+        id: input.userId,
+      },
+    });
+
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user.role !== "ADMIN") {
+    throw new Error(
+      "The user role must be ADMIN",
+    );
+  }
+
+
+  const existingAdministrator =
+    await prisma.adminProfile.findUnique({
+      where: {
+        userId: input.userId,
+      },
+    });
+
+
+  if (existingAdministrator) {
+    throw new Error(
+      "Administrator profile already exists",
+    );
+  }
+
+
+  if (
+    input.administratorType ===
+      AdminType.SUPER_ADMIN &&
+    await superAdministratorExists()
+  ) {
+    throw new Error(
+      "A Super Administrator already exists",
+    );
+  }
+
+
+  const administrator =
+    await prisma.adminProfile.create({
+      data: {
+        userId: input.userId,
+        isSuperAdministrator:
+          input.administratorType ===
+          AdminType.SUPER_ADMIN,
+        administratorType:
+          input.administratorType,
+        assignedModules:
+          input.assignedModules,
+        status: AdminStatus.ACTIVE,
+        createdBy: input.creatorId,
+      },
+    });
+
+
+  await prisma.auditLog.create({
+    data: {
+      administratorId: input.creatorId,
+      action: "ADMINISTRATOR_CREATED",
+      affectedUserId: input.userId,
+      newValue: {
+        administratorType:
+          input.administratorType,
+        assignedModules:
+          input.assignedModules,
+      },
+    },
+  });
+
+  return administrator;
+}

@@ -1,6 +1,7 @@
 import { prisma } from "../config/prisma.js";
 import { createNotification } from "../notifications/notification.service.js";
 import { createShipmentEvent } from "../events/event.service.js";
+import { publishEvent } from "../realtime/event-bus.js";
 
 
 function createTransactionReference() {
@@ -12,7 +13,7 @@ export async function initializePayment(
   customerId: string,
   amount: number,
 ) {
-  return prisma.payment.create({
+  const payment = await prisma.payment.create({
     data: {
       bookingId,
       customerId,
@@ -23,6 +24,24 @@ export async function initializePayment(
       status: "PENDING",
     },
   });
+
+  publishEvent("admin", {
+    eventType: "PAYMENT_INITIALIZED",
+    module: "FINANCIAL_OPERATIONS",
+    entityType: "PAYMENT",
+    entityId: payment.id,
+    actorId: customerId,
+    data: {
+      paymentId: payment.id,
+      bookingId,
+      customerId,
+      amount: payment.amount,
+      currency: payment.currency,
+      status: payment.status,
+    },
+  });
+
+  return payment;
 }
 
 export async function getPaymentById(
@@ -98,6 +117,22 @@ export async function completePayment(
       relatedId: payment.id,
     });
   }
+
+  publishEvent("admin", {
+    eventType: "PAYMENT_COMPLETED",
+    module: "FINANCIAL_OPERATIONS",
+    entityType: "PAYMENT",
+    entityId: payment.id,
+    actorId: payment.customerId,
+    bookingId: payment.bookingId,
+    data: {
+      paymentId: payment.id,
+      amount: payment.amount,
+      currency: payment.currency,
+      status: payment.status,
+      transporterId: payment.booking.transporterId,
+    },
+  });
 
   await createShipmentEvent({
     bookingId: payment.bookingId,
