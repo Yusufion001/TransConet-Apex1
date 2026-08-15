@@ -114,6 +114,36 @@ io.on("connection", (socket) => {
     );
   });
 
+  socket.on("join-administration", () => {
+    socket.join("administration");
+
+    console.log(
+      `${socket.id} joined administration`,
+    );
+  });
+
+  socket.on(
+    "join-admin-module",
+    (module: string) => {
+      socket.join(`admin:${module}`);
+
+      console.log(
+        `${socket.id} joined admin module ${module}`,
+      );
+    },
+  );
+
+  socket.on(
+    "leave-admin-module",
+    (module: string) => {
+      socket.leave(`admin:${module}`);
+
+      console.log(
+        `${socket.id} left admin module ${module}`,
+      );
+    },
+  );
+
   socket.on("leave-booking", (bookingId: string) => {
     socket.leave(bookingId);
 
