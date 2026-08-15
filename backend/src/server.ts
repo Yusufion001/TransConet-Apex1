@@ -4,6 +4,9 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
+import jwt from "jsonwebtoken";
+import { prisma } from "./config/prisma.js";
+import { AdminModule } from "../generated/prisma/enums.js";
 import documentRoutes from "./documents/document.routes.js";
 import vehicleRoutes from "./vehicles/vehicle.routes.js";
 import transporterRoutes from "./transporters/transporter.routes.js";
@@ -49,6 +52,59 @@ const io = new Server(httpServer, {
     origin: env.CLIENT_URL || "*",
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   },
+});
+
+io.use(async (socket, next) => {
+  try {
+    const authToken = socket.handshake.auth?.token as string | undefined;
+    const header = socket.handshake.headers.authorization;
+    const token =
+      authToken ||
+      (typeof header === "string" && header.startsWith("Bearer ")
+        ? header.slice(7)
+        : undefined);
+
+    if (!token) {
+      return next(new Error("Authentication required"));
+    }
+
+    const payload = jwt.verify(token, env.JWT_ACCESS_SECRET) as {
+      sub: string;
+    };
+
+    const user = await prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: {
+        id: true,
+        role: true,
+        status: true,
+        adminProfile: {
+          select: {
+            status: true,
+            isSuperAdministrator: true,
+            administratorType: true,
+            assignedModules: true,
+          },
+        },
+      },
+    });
+
+    if (!user || user.status !== "ACTIVE") {
+      return next(new Error("Account is not active"));
+    }
+
+    socket.data.user = user;
+
+    if (user.role === "ADMIN") {
+      if (!user.adminProfile || user.adminProfile.status !== "ACTIVE") {
+        return next(new Error("Administrator account is not active"));
+      }
+    }
+
+    next();
+  } catch {
+    next(new Error("Invalid authentication"));
+  }
 });
 
 initializeRealtime(io);
@@ -137,6 +193,15 @@ io.on("connection", (socket) => {
   });
 
   socket.on("join-administration", () => {
+    const user = socket.data.user;
+
+    if (user?.role !== "ADMIN" || !user.adminProfile) {
+      socket.emit("admin:access-denied", {
+        error: "Administrator access required",
+      });
+      return;
+    }
+
     socket.join("administration");
 
     console.log(
@@ -147,6 +212,35 @@ io.on("connection", (socket) => {
   socket.on(
     "join-admin-module",
     (module: string) => {
+      const user = socket.data.user;
+      const admin = user?.adminProfile;
+
+      if (user?.role !== "ADMIN" || !admin || admin.status !== "ACTIVE") {
+        socket.emit("admin:access-denied", {
+          error: "Administrator access required",
+        });
+        return;
+      }
+
+      if (!Object.values(AdminModule).includes(module as AdminModule)) {
+        socket.emit("admin:access-denied", {
+          error: "Invalid administration module",
+        });
+        return;
+      }
+
+      const allowed =
+        admin.isSuperAdministrator ||
+        admin.administratorType === "SUPER_ADMIN" ||
+        admin.assignedModules.includes(module as AdminModule);
+
+      if (!allowed) {
+        socket.emit("admin:access-denied", {
+          error: `Access denied for ${module}`,
+        });
+        return;
+      }
+
       socket.join(`admin:${module}`);
 
       console.log(

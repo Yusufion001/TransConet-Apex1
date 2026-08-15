@@ -8,6 +8,7 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     role: string;
+    status: string;
   };
 }
 
@@ -55,9 +56,22 @@ export async function authenticate(
       });
     }
 
+    if (user.status !== "ACTIVE") {
+      return res.status(403).json({
+        success: false,
+        error:
+          user.status === "SUSPENDED"
+            ? "Account suspended"
+            : user.status === "BLOCKED"
+              ? "Account blocked"
+              : "Account is not active",
+      });
+    }
+
     req.user = {
       id: user.id,
       role: user.role,
+      status: user.status,
     };
 
     next();
