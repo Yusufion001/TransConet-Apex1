@@ -31,6 +31,7 @@ import adminErrorRoutes from "./admin/error.routes.js";
 import adminApiManagementRoutes from "./admin/api-management.routes.js";
 import adminDatabaseHealthRoutes from "./admin/database-health.routes.js";
 import adminBackupRecoveryRoutes from "./admin/backup-recovery.routes.js";
+import adminRiskFraudRoutes from "./admin/risk-fraud.routes.js";
 import contentRoutes from "./content/content.routes.js";
 import { initializeRealtime } from "./realtime/realtime.service.js";
 import { initializeSocketEvents } from "./realtime/socket-events.js";
@@ -93,6 +94,7 @@ app.use("/api/admin/errors", adminErrorRoutes);
 app.use("/api/admin/api-management", adminApiManagementRoutes);
 app.use("/api/admin/database-health", adminDatabaseHealthRoutes);
 app.use("/api/admin/backup-recovery", adminBackupRecoveryRoutes);
+app.use("/api/admin/risk-fraud", adminRiskFraudRoutes);
 app.use("/api/admin/content", contentRoutes);
 app.use("/api/messages", messageRoutes);
 app.use(
