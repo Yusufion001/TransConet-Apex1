@@ -1,53 +1,73 @@
 import { Router } from "express";
-
 import {
   createTicket,
   getUserTickets,
   updateTicketStatus,
 } from "./support.service.js";
+import {
+  authenticate,
+  type AuthenticatedRequest,
+} from "../middleware/auth.middleware.js";
+import { assertBookingAccess } from "../bookings/booking.service.js";
+import { requireAdmin } from "../middleware/admin.middleware.js";
 
 const router = Router();
 
-router.post("/", async (req, res) => {
-  try {
-    const ticket =
-      await createTicket(req.body);
+router.use(authenticate);
 
-    res.json({
-      success: true,
-      data: ticket,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Server error",
-    });
-  }
-});
+router.post(
+  "/",
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.body.bookingId) {
+        await assertBookingAccess(
+          String(req.body.bookingId),
+          req.user!.id,
+          req.user!.role,
+          "read",
+        );
+      }
+
+      const ticket = await createTicket({
+        ...req.body,
+        requesterId: req.user!.id,
+      });
+
+      res.json({ success: true, data: ticket });
+    } catch (error) {
+      const status =
+        error instanceof Error && error.message === "Access denied"
+          ? 403
+          : 500;
+
+      res.status(status).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Server error",
+      });
+    }
+  },
+);
 
 router.get(
   "/user/:userId",
-  async (req, res) => {
+  async (req: AuthenticatedRequest, res) => {
     try {
-      const tickets =
-        await getUserTickets(
-          req.params.userId,
-        );
+      const userId = String(req.params.userId);
 
-      res.json({
-        success: true,
-        data: tickets,
-      });
+      if (req.user!.role !== "ADMIN" && req.user!.id !== userId) {
+        return res.status(403).json({
+          success: false,
+          error: "Access denied",
+        });
+      }
+
+      const tickets = await getUserTickets(userId);
+
+      res.json({ success: true, data: tickets });
     } catch (error) {
       res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Server error",
+        error: error instanceof Error ? error.message : "Server error",
       });
     }
   },
@@ -55,25 +75,20 @@ router.get(
 
 router.patch(
   "/:id/status",
-  async (req, res) => {
+  requireAdmin,
+  async (req: AuthenticatedRequest, res) => {
     try {
-      const ticket =
-        await updateTicketStatus(
-          req.params.id,
-          req.body.status,
-        );
+      const ticket = await updateTicketStatus(
+        String(req.params.id),
+        req.body.status,
+        req.user!.id,
+      );
 
-      res.json({
-        success: true,
-        data: ticket,
-      });
+      res.json({ success: true, data: ticket });
     } catch (error) {
       res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Server error",
+        error: error instanceof Error ? error.message : "Server error",
       });
     }
   },

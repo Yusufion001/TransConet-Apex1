@@ -53,6 +53,33 @@ export async function createBooking(data: {
   return booking;
 }
 
+export async function assertBookingAccess(
+  bookingId: string,
+  userId: string,
+  role: string,
+  action: "read" | "assign" | "status" | "proof" | "confirm" = "read",
+) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { id: true, customerId: true, transporterId: true },
+  });
+
+  if (!booking) throw new Error("Booking not found");
+  if (role === "ADMIN") return booking;
+
+  if (action === "read" &&
+      ((role === "CUSTOMER" && booking.customerId === userId) ||
+       (role === "TRANSPORTER" && booking.transporterId === userId))) return booking;
+
+  if ((action === "status" || action === "proof") &&
+      role === "TRANSPORTER" && booking.transporterId === userId) return booking;
+
+  if (action === "confirm" &&
+      role === "CUSTOMER" && booking.customerId === userId) return booking;
+
+  throw new Error("Access denied");
+}
+
 export async function getBookingById(id: string) {
   return prisma.booking.findUnique({
     where: {
@@ -66,15 +93,79 @@ export async function assignBooking(
   transporterId: string,
   vehicleId: string,
 ) {
-  const booking = await prisma.booking.update({
-    where: {
-      id: bookingId,
-    },
-    data: {
-      transporterId,
-      vehicleId,
-      status: "ASSIGNED",
-    },
+  const result = await prisma.$transaction(async (tx) => {
+    const booking = await tx.booking.findUnique({
+      where: { id: bookingId },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    const transporter = await tx.user.findUnique({
+      where: { id: transporterId },
+      select: {
+        id: true,
+        role: true,
+        status: true,
+      },
+    });
+
+    if (!transporter || transporter.role !== "TRANSPORTER") {
+      throw new Error("Invalid transporter");
+    }
+
+    if (transporter.status !== "ACTIVE") {
+      throw new Error("Transporter account is not active");
+    }
+
+    const vehicle = await tx.vehicle.findUnique({
+      where: { id: vehicleId },
+      select: {
+        id: true,
+        transporterId: true,
+        availabilityStatus: true,
+        verificationStatus: true,
+      },
+    });
+
+    if (!vehicle) {
+      throw new Error("Vehicle not found");
+    }
+
+    if (vehicle.transporterId !== transporterId) {
+      throw new Error("Vehicle does not belong to transporter");
+    }
+
+    if (vehicle.verificationStatus !== "APPROVED") {
+      throw new Error("Vehicle is not approved");
+    }
+
+    if (vehicle.availabilityStatus !== "AVAILABLE") {
+      throw new Error("Vehicle is not available");
+    }
+
+    const updated = await tx.booking.update({
+      where: { id: bookingId },
+      data: {
+        transporterId,
+        vehicleId,
+        status: "ASSIGNED",
+      },
+    });
+
+    await tx.vehicle.update({
+      where: { id: vehicleId },
+      data: {
+        availabilityStatus: "ON_TRIP",
+      },
+    });
+
+    return updated;
   });
 
   publishBookingEvent(bookingId, {
@@ -83,7 +174,11 @@ export async function assignBooking(
     actorId: transporterId,
     entityType: "BOOKING",
     entityId: bookingId,
-    data: { transporterId, vehicleId, status: booking.status },
+    data: {
+      transporterId,
+      vehicleId,
+      status: result.status,
+    },
   });
 
   await createShipmentEvent({
@@ -98,17 +193,17 @@ export async function assignBooking(
     eventType: "TRANSPORTER_ASSIGNED",
     module: "LIVE_TRIPS",
     entityType: "BOOKING",
-    entityId: booking.id,
-    bookingId: booking.id,
+    entityId: result.id,
+    bookingId: result.id,
     actorId: transporterId,
     data: {
       transporterId,
       vehicleId,
-      status: booking.status,
+      status: result.status,
     },
   });
 
-  return booking;
+  return result;
 }
 
 export async function updateBookingStatus(
@@ -121,35 +216,95 @@ export async function updateBookingStatus(
     | "COMPLETED"
     | "CANCELLED",
 ) {
-  const timestampData: any = {
-    status,
-  };
+  const result = await prisma.$transaction(async (tx) => {
+    const booking = await tx.booking.findUnique({
+      where: { id: bookingId },
+      select: {
+        id: true,
+        status: true,
+        transporterId: true,
+        vehicleId: true,
+      },
+    });
 
-  switch (status) {
-    case "ACCEPTED":
-      timestampData.acceptedAt = new Date();
-      break;
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
 
-    case "ARRIVED":
-      timestampData.arrivedAt = new Date();
-      break;
+    const allowedTransitions: Record<string, string[]> = {
+      REQUESTED: ["CANCELLED"],
+      SEARCHING: ["CANCELLED"],
+      ASSIGNED: ["ACCEPTED", "CANCELLED"],
+      ACCEPTED: ["DRIVER_ARRIVING", "CANCELLED"],
+      DRIVER_ARRIVING: ["ARRIVED", "CANCELLED"],
+      ARRIVED: ["IN_TRANSIT", "CANCELLED"],
+      IN_TRANSIT: ["COMPLETED", "CANCELLED"],
+      DISPUTED: ["COMPLETED", "CANCELLED"],
+      COMPLETED: [],
+      CANCELLED: [],
+    };
 
-    case "IN_TRANSIT":
-      timestampData.inTransitAt = new Date();
-      timestampData.pickedUpAt = new Date();
-      break;
+    const allowed = allowedTransitions[booking.status] ?? [];
 
-    case "COMPLETED":
-      timestampData.deliveredAt = new Date();
-      timestampData.completedAt = new Date();
-      break;
-  }
+    if (!allowed.includes(status)) {
+      throw new Error(
+        `Invalid booking status transition: ${booking.status} -> ${status}`,
+      );
+    }
 
-  const booking = await prisma.booking.update({
-    where: {
-      id: bookingId,
-    },
-    data: timestampData,
+    const timestampData: {
+      status: typeof status;
+      acceptedAt?: Date;
+      arrivedAt?: Date;
+      pickedUpAt?: Date;
+      inTransitAt?: Date;
+      deliveredAt?: Date;
+      completedAt?: Date;
+    } = {
+      status,
+    };
+
+    switch (status) {
+      case "ACCEPTED":
+        timestampData.acceptedAt = new Date();
+        break;
+
+      case "ARRIVED":
+        timestampData.arrivedAt = new Date();
+        break;
+
+      case "IN_TRANSIT":
+        timestampData.inTransitAt = new Date();
+        timestampData.pickedUpAt = new Date();
+        break;
+
+      case "COMPLETED":
+        timestampData.deliveredAt = new Date();
+        timestampData.completedAt = new Date();
+        break;
+    }
+
+    const updatedBooking = await tx.booking.update({
+      where: { id: bookingId },
+      data: timestampData,
+    });
+
+    if (
+      (status === "COMPLETED" || status === "CANCELLED") &&
+      booking.vehicleId
+    ) {
+      await tx.vehicle.update({
+        where: { id: booking.vehicleId },
+        data: {
+          availabilityStatus: "AVAILABLE",
+        },
+      });
+    }
+
+    return {
+      booking: updatedBooking,
+      previousStatus: booking.status,
+    };
   });
 
   const eventMap: Partial<Record<
@@ -188,23 +343,44 @@ export async function updateBookingStatus(
 
   publishEvent("booking", {
     eventType: status,
-    module: status === "COMPLETED"
-      ? "FINANCIAL_OPERATIONS"
-      : "LIVE_TRIPS",
+    module:
+      status === "COMPLETED"
+        ? "FINANCIAL_OPERATIONS"
+        : "LIVE_TRIPS",
     entityType: "BOOKING",
-    entityId: booking.id,
-    bookingId: booking.id,
+    entityId: result.booking.id,
+    bookingId: result.booking.id,
     data: {
-      status: booking.status,
-      transporterId: booking.transporterId,
-      vehicleId: booking.vehicleId,
-      updatedAt: booking.updatedAt,
+      status: result.booking.status,
+      previousStatus: result.previousStatus,
+      transporterId: result.booking.transporterId,
+      vehicleId: result.booking.vehicleId,
+      updatedAt: result.booking.updatedAt,
     },
   });
 
-  return booking;
+  if (
+    (status === "COMPLETED" || status === "CANCELLED") &&
+    result.booking.vehicleId
+  ) {
+    publishEvent("vehicle", {
+      eventType: "VEHICLE_AVAILABILITY_UPDATED",
+      module: "FLEET_MARKETPLACE",
+      entityType: "VEHICLE",
+      entityId: result.booking.vehicleId,
+      actorId: result.booking.transporterId ?? undefined,
+      data: {
+        vehicleId: result.booking.vehicleId,
+        transporterId: result.booking.transporterId,
+        availabilityStatus: "AVAILABLE",
+        bookingId: result.booking.id,
+      },
+    });
+  }
+
+  return result.booking;
 }
- 
+
 
 export async function getCustomerBookings(
   customerId: string,
@@ -253,75 +429,145 @@ export async function confirmDelivery(
   bookingId: string,
   code: string,
 ) {
-  const booking =
-    await prisma.booking.findUnique({
+  const result = await prisma.$transaction(async (tx) => {
+    const booking = await tx.booking.findUnique({
       where: {
         id: bookingId,
       },
     });
 
-  if (!booking) {
-    throw new Error("Booking not found");
-  }
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
 
-  if (!booking.transporterId) {
-    throw new Error(
-      "No transporter assigned",
-    );
-  }
+    if (booking.status === "COMPLETED") {
+      throw new Error("Delivery already confirmed");
+    }
 
-  if (
-    booking.deliveryConfirmationCode !==
-    code
-  ) {
-    throw new Error(
-      "Invalid confirmation code",
-    );
-  }
+    if (!booking.transporterId) {
+      throw new Error("No transporter assigned");
+    }
 
-  const wallet =
-    await prisma.wallet.findUnique({
+    if (booking.status !== "ARRIVED") {
+      throw new Error("Shipment has not arrived");
+    }
+
+    if (booking.deliveryConfirmationCode !== code) {
+      throw new Error("Invalid confirmation code");
+    }
+
+    const claimed = await tx.booking.updateMany({
       where: {
-        transporterId:
-          booking.transporterId,
+        id: bookingId,
+        status: "ARRIVED",
+      },
+      data: {
+        status: "COMPLETED",
+        completedAt: new Date(),
       },
     });
 
-  if (!wallet) {
-    throw new Error(
-      "Transporter wallet not found",
-    );
-  }
+    if (claimed.count !== 1) {
+      throw new Error("Delivery already confirmed");
+    }
 
-  await prisma.wallet.update({
-    where: {
-      id: wallet.id,
-    },
-    data: {
-      pendingBalance: {
-        increment: booking.fare,
+    const payment = await tx.payment.findFirst({
+      where: {
+        bookingId: booking.id,
+        status: "SUCCESS",
       },
-    },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    if (!payment) {
+      throw new Error("Successful shipment payment not found");
+    }
+
+    const wallet = await tx.wallet.findUnique({
+      where: {
+        transporterId: booking.transporterId,
+      },
+    });
+
+    if (!wallet) {
+      throw new Error("Transporter wallet not found");
+    }
+
+    if (wallet.pendingBalance < payment.amount) {
+      throw new Error("Insufficient pending wallet balance");
+    }
+
+    await tx.wallet.update({
+      where: {
+        id: wallet.id,
+      },
+      data: {
+        pendingBalance: {
+          decrement: payment.amount,
+        },
+        availableBalance: {
+          increment: payment.amount,
+        },
+      },
+    });
+
+    await tx.walletTransaction.create({
+      data: {
+        walletId: wallet.id,
+        bookingId: booking.id,
+        amount: payment.amount,
+        transactionType: "PAYMENT_RELEASED",
+        description:
+          "Shipment payment released after delivery confirmation",
+      },
+    });
+
+    if (booking.vehicleId) {
+      await tx.vehicle.update({
+        where: {
+          id: booking.vehicleId,
+        },
+        data: {
+          availabilityStatus: "AVAILABLE",
+        },
+      });
+    }
+
+    const completedBooking = await tx.booking.update({
+      where: {
+        id: bookingId,
+      },
+      data: {
+        paymentStatus: "SUCCESS",
+      },
+    });
+
+    return {
+      booking: completedBooking,
+      transporterId: booking.transporterId,
+      vehicleId: booking.vehicleId,
+    };
   });
 
-  await prisma.walletTransaction.create({
-    data: {
-      walletId: wallet.id,
-      bookingId: booking.id,
-      amount: booking.fare,
-      transactionType: "CREDIT",
-      description:
-        "Shipment payment",
-    },
+  publishBookingEvent(bookingId, {
+    eventType: "booking.completed",
+    module: "LIVE_TRIPS",
+    entityType: "BOOKING",
+    entityId: bookingId,
+    data: result.booking,
   });
 
-  return prisma.booking.update({
-    where: {
-      id: bookingId,
-    },
-    data: {
-      status: "COMPLETED",
-      completedAt: new Date(),
-    },
+  await createShipmentEvent({
+    bookingId,
+    actorId: result.transporterId,
+    eventType: "DELIVERY_CONFIRMED",
+    title: "Delivery confirmed",
+    description:
+      "Delivery was confirmed and transporter payment was released.",
   });
+
+  return result.booking;
 }
+

@@ -23,6 +23,25 @@ export async function createVehicle(data: {
   return vehicle;
 }
 
+export async function assertVehicleAccess(
+  vehicleId: string,
+  userId: string,
+  role: string,
+) {
+  const vehicle = await prisma.vehicle.findUnique({
+    where: { id: vehicleId },
+    select: { id: true, transporterId: true },
+  });
+
+  if (!vehicle) throw new Error("Vehicle not found");
+
+  if (role === "ADMIN" || vehicle.transporterId === userId) {
+    return vehicle;
+  }
+
+  throw new Error("Access denied");
+}
+
 export async function getVehicleById(id: string) {
   return prisma.vehicle.findUnique({
     where: {
@@ -49,6 +68,7 @@ export async function updateVehicle(
   publishAdminEvent({
     eventType: "vehicle.updated",
     module: "FLEET_MARKETPLACE",
+    actorId: vehicle.transporterId,
     entityType: "VEHICLE",
     entityId: id,
     data: vehicle,

@@ -5,36 +5,42 @@ import {
   getTransporterVehicles,
   updateTransporterVerification,
 } from "./transporter.service.js";
+import {
+  authenticate,
+  authorize,
+  type AuthenticatedRequest,
+} from "../middleware/auth.middleware.js";
 
 const router = Router();
-router.post("/", async (req, res) => {
-  try {
-    const transporter =
-      await createTransporterProfile(
-        req.body,
-      );
+router.use(authenticate);
 
-    res.json({
-      success: true,
-      data: transporter,
+router.post("/", authorize("TRANSPORTER"), async (req: AuthenticatedRequest, res) => {
+  try {
+    const transporter = await createTransporterProfile({
+      ...req.body,
+      userId: req.user!.id,
     });
+
+    res.json({ success: true, data: transporter });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Server error",
+      error: error instanceof Error ? error.message : "Server error",
     });
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", async (req: AuthenticatedRequest, res) => {
   try {
-    const transporter =
-      await getTransporterProfile(
-        req.params.id,
-      );
+    if (
+      req.user!.role !== "ADMIN" &&
+      (req.user!.role !== "TRANSPORTER" ||
+        req.user!.id !== String(req.params.id))
+    ) {
+      return res.status(403).json({ success: false, error: "Access denied" });
+    }
+
+    const transporter = await getTransporterProfile(String(req.params.id));
 
     if (!transporter) {
       return res.status(404).json({
@@ -43,64 +49,51 @@ router.get("/:id", async (req, res) => {
       });
     }
 
-    res.json({
-      success: true,
-      data: transporter,
-    });
+    res.json({ success: true, data: transporter });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Server error",
+      error: error instanceof Error ? error.message : "Server error",
     });
   }
 });
 
-router.get("/:id/vehicles", async (req, res) => {
+router.get("/:id/vehicles", async (req: AuthenticatedRequest, res) => {
   try {
-    const vehicles =
-      await getTransporterVehicles(
-        req.params.id,
-      );
+    if (
+      req.user!.role !== "ADMIN" &&
+      (req.user!.role !== "TRANSPORTER" ||
+        req.user!.id !== String(req.params.id))
+    ) {
+      return res.status(403).json({ success: false, error: "Access denied" });
+    }
 
-    res.json({
-      success: true,
-      data: vehicles,
-    });
+    const vehicles = await getTransporterVehicles(String(req.params.id));
+
+    res.json({ success: true, data: vehicles });
   } catch (error) {
     res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Server error",
+      error: error instanceof Error ? error.message : "Server error",
     });
   }
 });
 
 router.patch(
   "/:id/verification",
-  async (req, res) => {
+  authorize("ADMIN"),
+  async (req: AuthenticatedRequest, res) => {
     try {
-      const transporter =
-        await updateTransporterVerification(
-          req.params.id,
-          req.body.status,
-        );
+      const transporter = await updateTransporterVerification(
+        String(req.params.id),
+        req.body.status,
+      );
 
-      res.json({
-        success: true,
-        data: transporter,
-      });
+      res.json({ success: true, data: transporter });
     } catch (error) {
       res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Server error",
+        error: error instanceof Error ? error.message : "Server error",
       });
     }
   },

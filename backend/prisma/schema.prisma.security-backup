@@ -1,0 +1,706 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  CUSTOMER
+  TRANSPORTER
+  ADMIN
+}
+
+enum AdminType {
+  SUPER_ADMIN
+  VERIFICATION_ADMIN
+  SUPPORT_ADMIN
+  NOTIFICATION_ADMIN
+  FINANCIAL_ADMIN
+  FLEET_ADMIN
+  PARTNER_ADMIN
+  MARKETING_ADMIN
+  RISK_ADMIN
+  REPORTING_ADMIN
+  AI_ADMIN
+  FEATURE_ADMIN
+  DEVELOPER_ADMIN
+  BACKUP_ADMIN
+  API_ADMIN
+  SECURITY_ADMIN
+}
+
+enum AdminStatus {
+  ACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+enum AdminModule {
+  PLATFORM_OVERVIEW
+  VERIFICATION_CENTER
+  CONTENT_MANAGEMENT
+  SUPPORT_CARE
+  NOTIFICATION_CENTER
+  SUBSCRIPTION_BILLING
+  FLEET_MARKETPLACE
+  PARTNER_MANAGEMENT
+  MARKETING_CENTER
+  FINANCIAL_OPERATIONS
+  RISK_FRAUD
+  REPORTS_CENTER
+  AI_AUTOMATION
+  FEATURE_MANAGEMENT
+  DEVELOPER_CONSOLE
+  BACKUP_RECOVERY
+  ACTIVITY_TIMELINE
+  ROLE_PERMISSION
+  PLATFORM_CONFIG
+  LIVE_TRIPS
+  ERROR_CENTER
+  API_MANAGEMENT
+  SECURITY_CENTER
+  DATABASE_HEALTH
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  BLOCKED
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum VehicleVerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum VehicleAvailabilityStatus {
+  AVAILABLE
+  UNAVAILABLE
+  ON_TRIP
+}
+
+enum BookingStatus {
+  REQUESTED
+  SEARCHING
+  ASSIGNED
+  ACCEPTED
+  DRIVER_ARRIVING
+  ARRIVED
+  IN_TRANSIT
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum string {
+  CREDIT
+  DEBIT
+}
+
+enum WithdrawalStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum DocumentType {
+  DRIVERS_LICENSE
+  VEHICLE_REGISTRATION
+  INSURANCE
+  BUSINESS_DOCUMENT
+  IDENTITY_DOCUMENT
+  OTHER
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum MessageType {
+  TEXT
+  SYSTEM
+  SUPPORT
+}
+
+enum SupportStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum DisputeStatus {
+  OPEN
+  INVESTIGATING
+  RESOLVED
+  REJECTED
+}
+
+enum ShipmentEventType {
+  SHIPMENT_CREATED
+  TRANSPORTER_ASSIGNED
+  VEHICLE_ASSIGNED
+  SHIPMENT_ACCEPTED
+  VEHICLE_ARRIVED
+  CARGO_LOADED
+  IN_TRANSIT
+  DOCUMENT_UPLOADED
+  PROOF_OF_DELIVERY
+  DELIVERY_CONFIRMED
+  SUPPORT_OPENED
+  PAYMENT_COMPLETED
+  DISPUTE_OPENED
+}
+
+enum CargoCategory {
+  GENERAL
+  FRAGILE
+  ELECTRONICS
+  FURNITURE
+  AGRICULTURAL
+  INDUSTRIAL
+  CONSTRUCTION
+  HAZARDOUS
+  REFRIGERATED
+}
+
+enum VehicleClass {
+  MOTORCYCLE
+  MINI_VAN
+  CARGO_VAN
+  PICKUP
+  LIGHT_TRUCK
+  MEDIUM_TRUCK
+  HEAVY_TRUCK
+  CONTAINER
+  FLATBED
+  REFRIGERATED_TRUCK
+  TANKER
+  LOWBED
+}
+
+enum TransporterTier {
+  TIER_1
+  TIER_2
+}
+
+model User {
+  id                     String           @id @default(uuid())
+  firstName              String
+  lastName               String
+  email                  String?          @unique
+  phone                  String?          @unique
+  passwordHash           String
+  role                   UserRole
+  status                 UserStatus       @default(PENDING)
+  transporterTier        TransporterTier?
+  profilePhoto           String?
+  createdAt              DateTime         @default(now())
+  updatedAt              DateTime         @updatedAt
+  lastLoginAt            DateTime?
+  refreshTokenHash       String?
+  refreshTokenExpiresAt  DateTime?
+  resetPasswordToken     String?
+  resetPasswordExpiresAt DateTime?
+
+  customerProfile    CustomerProfile?
+  transporterProfile TransporterProfile?
+  adminProfile       AdminProfile?
+
+  customerBookings    Booking[] @relation("CustomerBookings")
+  transporterBookings Booking[] @relation("TransporterBookings")
+  vehicles            Vehicle[] @relation("TransporterVehicles")
+  payments            Payment[] @relation("CustomerPayments")
+  wallet              Wallet?
+
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+
+  notifications   Notification[]
+  reviewsGiven    Review[]       @relation("ReviewsGiven")
+  reviewsReceived Review[]       @relation("ReviewsReceived")
+
+  documents       Document[]
+  supportTickets  SupportTicket[] @relation("TicketRequester")
+  assignedTickets SupportTicket[] @relation("TicketAssignee")
+
+  auditLogs         AuditLog[]      @relation("AuditAdministrator")
+  adminActivities   AdminActivity[]
+  affectedAuditLogs AuditLog[]      @relation("AuditAffectedUser")
+
+  disputesAsCustomer    Dispute[] @relation("DisputeCustomer")
+  disputesAsTransporter Dispute[] @relation("DisputeTransporter")
+  assignedDisputes      Dispute[] @relation("DisputeAdministrator")
+
+  createdContent ContentItem[] @relation("ContentCreator")
+  updatedContent ContentItem[] @relation("ContentUpdater")
+}
+
+model CustomerProfile {
+  userId             String             @id
+  address            String?
+  city               String?
+  state              String?
+  country            String?
+  verificationStatus VerificationStatus @default(PENDING)
+  rating             Float              @default(0)
+  totalBookings      Int                @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TransporterProfile {
+  userId                     String             @id
+  companyName                String?
+  businessRegistrationNumber String?
+  address                    String?
+  city                       String?
+  state                      String?
+  country                    String?
+  verificationStatus         VerificationStatus @default(PENDING)
+
+  tier2Approved Boolean @default(false)
+
+  rating        Float   @default(0)
+  totalTrips    Int     @default(0)
+  totalEarnings Decimal @default(0) @db.Decimal(14, 2)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AdminProfile {
+  userId String @id
+
+  isSuperAdministrator Boolean @default(false)
+
+  administratorType AdminType @default(SUPPORT_ADMIN)
+
+  assignedModules AdminModule[]
+
+  permissions Json?
+
+  status AdminStatus @default(ACTIVE)
+
+  createdBy String?
+
+  failedLoginAttempts Int @default(0)
+
+  lockedUntil DateTime?
+
+  twoFactorEnabled Boolean @default(false)
+
+  lastLoginAt DateTime?
+
+  lastActionAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Vehicle {
+  id                 String @id @default(uuid())
+  transporterId      String
+  registrationNumber String @unique
+
+  vehicleType  String
+  vehicleClass VehicleClass
+
+  make               String?
+  model              String?
+  year               Int?
+  color              String?
+  capacity           Int?
+  documents          Json?
+  verificationStatus VehicleVerificationStatus @default(PENDING)
+  availabilityStatus VehicleAvailabilityStatus @default(UNAVAILABLE)
+  currentLatitude    Decimal?                  @db.Decimal(10, 7)
+  currentLongitude   Decimal?                  @db.Decimal(10, 7)
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+
+  transporter User      @relation("TransporterVehicles", fields: [transporterId], references: [id], onDelete: Cascade)
+  bookings    Booking[]
+}
+
+enum TruckCategory {
+  MINI_TRUCK
+  LIGHT_TRUCK
+  MEDIUM_TRUCK
+  HEAVY_TRUCK
+  CONTAINER_TRUCK
+  REFRIGERATED_TRUCK
+  TANKER
+  SPECIALIZED
+}
+
+model Booking {
+  id            String  @id @default(uuid())
+  customerId    String
+  transporterId String?
+  vehicleId     String?
+
+  cargoDescription String?
+
+  truckCategory   TruckCategory?
+  transporterTier TransporterTier?
+
+  estimatedFare Decimal? @db.Decimal(14, 2)
+
+  pickupLocation       String
+  destination          String
+  pickupLatitude       Decimal @db.Decimal(10, 7)
+  pickupLongitude      Decimal @db.Decimal(10, 7)
+  destinationLatitude  Decimal @db.Decimal(10, 7)
+  destinationLongitude Decimal @db.Decimal(10, 7)
+
+  scheduledDate DateTime?
+
+  cargoCategory CargoCategory?
+  cargoWeight   Decimal?       @db.Decimal(14, 2)
+
+  status BookingStatus @default(REQUESTED)
+  fare   Decimal       @db.Decimal(14, 2)
+
+  paymentStatus PaymentStatus @default(PENDING)
+
+  acceptedAt  DateTime?
+  arrivedAt   DateTime?
+  pickedUpAt  DateTime?
+  inTransitAt DateTime?
+  deliveredAt DateTime?
+  completedAt DateTime?
+
+  proofOfDelivery          String?
+  deliveryConfirmationCode String?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  customer    User     @relation("CustomerBookings", fields: [customerId], references: [id])
+  transporter User?    @relation("TransporterBookings", fields: [transporterId], references: [id])
+  vehicle     Vehicle? @relation(fields: [vehicleId], references: [id])
+
+  payments       Payment[]
+  messages       Message[]
+  reviews        Review[]
+  disputes       Dispute[]
+  supportTickets SupportTicket[]
+  events         ShipmentEvent[]
+
+  @@index([customerId])
+  @@index([transporterId])
+  @@index([vehicleId])
+  @@index([status])
+  @@index([scheduledDate])
+}
+
+model Payment {
+  id                   String        @id @default(uuid())
+  bookingId            String
+  customerId           String
+  amount               Decimal       @db.Decimal(14, 2)
+  currency             String        @default("NGN")
+  provider             String
+  transactionReference String        @unique
+  status               PaymentStatus @default(PENDING)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  booking  Booking @relation(fields: [bookingId], references: [id])
+  customer User    @relation("CustomerPayments", fields: [customerId], references: [id])
+
+  @@index([bookingId])
+  @@index([customerId])
+}
+
+model Wallet {
+  id            String @id @default(uuid())
+  transporterId String @unique
+
+  availableBalance Decimal @default(0) @db.Decimal(14, 2)
+  pendingBalance   Decimal @default(0) @db.Decimal(14, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transporter User @relation(fields: [transporterId], references: [id])
+
+  transactions WalletTransaction[]
+  withdrawals  Withdrawal[]
+}
+
+model WalletTransaction {
+  id        String  @id @default(uuid())
+  walletId  String
+  bookingId String?
+
+  amount Decimal @db.Decimal(14, 2)
+
+  transactionType String
+
+  description String?
+
+  createdAt DateTime @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+}
+
+model Withdrawal {
+  id String @id @default(uuid())
+
+  walletId String
+
+  amount Decimal @db.Decimal(14, 2)
+
+  bankName String
+
+  accountNumber String
+
+  accountName String
+
+  status String @default("PENDING")
+
+  createdAt DateTime @default(now())
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  recipientId String
+  type        String
+  title       String
+  message     String
+  read        Boolean  @default(false)
+  relatedType String?
+  relatedId   String?
+  createdAt   DateTime @default(now())
+
+  recipient User @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId, read])
+}
+
+model Message {
+  id          String      @id @default(uuid())
+  senderId    String
+  recipientId String
+  bookingId   String?
+  type        MessageType @default(TEXT)
+  content     String
+  createdAt   DateTime    @default(now())
+  readAt      DateTime?
+
+  sender    User     @relation("SentMessages", fields: [senderId], references: [id])
+  recipient User     @relation("ReceivedMessages", fields: [recipientId], references: [id])
+  booking   Booking? @relation(fields: [bookingId], references: [id])
+
+  @@index([senderId, recipientId])
+  @@index([bookingId])
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  bookingId  String
+  reviewerId String
+  revieweeId String
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+
+  booking  Booking @relation(fields: [bookingId], references: [id])
+  reviewer User    @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  reviewee User    @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+
+  @@unique([bookingId, reviewerId])
+}
+
+model Document {
+  id              String         @id @default(uuid())
+  userId          String
+  type            DocumentType
+  fileUrl         String
+  status          DocumentStatus @default(PENDING)
+  rejectionReason String?
+  reviewedBy      String?
+
+  verificationProvider   String?
+  externalVerificationId String?
+  providerResponse       Json?
+  verifiedAt             DateTime?
+  adminApproved          Boolean   @default(false)
+  adminApprovedAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+}
+
+model SupportTicket {
+  id              String        @id @default(uuid())
+  requesterId     String
+  bookingId       String?
+  category        String
+  subject         String
+  description     String
+  priority        Priority      @default(MEDIUM)
+  status          SupportStatus @default(OPEN)
+  assignedAdminId String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  requester     User     @relation("TicketRequester", fields: [requesterId], references: [id])
+  assignedAdmin User?    @relation("TicketAssignee", fields: [assignedAdminId], references: [id])
+  booking       Booking? @relation(fields: [bookingId], references: [id])
+}
+
+model Dispute {
+  id              String        @id @default(uuid())
+  bookingId       String
+  customerId      String
+  transporterId   String?
+  reason          String
+  evidence        Json?
+  status          DisputeStatus @default(OPEN)
+  administratorId String?
+  resolution      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  booking       Booking @relation(fields: [bookingId], references: [id])
+  customer      User    @relation("DisputeCustomer", fields: [customerId], references: [id])
+  transporter   User?   @relation("DisputeTransporter", fields: [transporterId], references: [id])
+  administrator User?   @relation("DisputeAdministrator", fields: [administratorId], references: [id])
+}
+
+model AdminActivity {
+  id          String      @id @default(uuid())
+  eventType   String
+  module      AdminModule
+  actorId     String?
+  entityType  String?
+  entityId    String?
+  bookingId   String?
+  title       String
+  description String?
+  data        Json?
+  createdAt   DateTime    @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([module, createdAt])
+  @@index([eventType, createdAt])
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId])
+  @@index([bookingId])
+}
+
+model AuditLog {
+  id                String   @id @default(uuid())
+  administratorId   String
+  action            String
+  affectedUserId    String?
+  affectedBookingId String?
+  previousValue     Json?
+  newValue          Json?
+  ipAddress         String?
+  deviceMetadata    Json?
+  createdAt         DateTime @default(now())
+
+  administrator User  @relation("AuditAdministrator", fields: [administratorId], references: [id])
+  affectedUser  User? @relation("AuditAffectedUser", fields: [affectedUserId], references: [id])
+}
+
+model ShipmentEvent {
+  id          String            @id @default(uuid())
+  bookingId   String
+  actorId     String?
+  eventType   ShipmentEventType
+  title       String
+  description String?
+  createdAt   DateTime          @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@index([bookingId])
+  @@index([eventType])
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ContentType {
+  ANNOUNCEMENT
+  BANNER
+  FAQ
+  ARTICLE
+  TERMS
+  POLICY
+  HELP
+}
+
+model ContentItem {
+  id          String        @id @default(uuid())
+  title       String
+  slug        String        @unique
+  type        ContentType
+  status      ContentStatus @default(DRAFT)
+  summary     String?
+  body        String
+  imageUrl    String?
+  metadata    Json?
+  publishedAt DateTime?
+  createdBy   String
+  updatedBy   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  creator User  @relation("ContentCreator", fields: [createdBy], references: [id])
+  updater User? @relation("ContentUpdater", fields: [updatedBy], references: [id])
+
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}

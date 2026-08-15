@@ -71,8 +71,29 @@ export async function getBookingPayments(
 export async function completePayment(
   paymentId: string,
 ) {
-  const payment =
-    await prisma.payment.update({
+  const result = await prisma.$transaction(async (tx) => {
+    const payment = await tx.payment.findUnique({
+      where: {
+        id: paymentId,
+      },
+      include: {
+        booking: true,
+      },
+    });
+
+    if (!payment) {
+      throw new Error("Payment not found");
+    }
+
+    if (payment.status === "SUCCESS") {
+      throw new Error("Payment already completed");
+    }
+
+    if (payment.status === "REFUNDED") {
+      throw new Error("Payment has already been refunded");
+    }
+
+    const updatedPayment = await tx.payment.update({
       where: {
         id: paymentId,
       },
@@ -84,63 +105,83 @@ export async function completePayment(
       },
     });
 
-  if (payment.booking.transporterId) {
-    const wallet =
-      await prisma.wallet.findUnique({
+    await tx.booking.update({
+      where: {
+        id: updatedPayment.bookingId,
+      },
+      data: {
+        paymentStatus: "SUCCESS",
+      },
+    });
+
+    if (updatedPayment.booking.transporterId) {
+      const wallet = await tx.wallet.findUnique({
         where: {
-          transporterId:
-            payment.booking.transporterId,
+          transporterId: updatedPayment.booking.transporterId,
         },
       });
 
-    if (wallet) {
-      await prisma.wallet.update({
+      if (!wallet) {
+        throw new Error("Transporter wallet not found");
+      }
+
+      await tx.wallet.update({
         where: {
           id: wallet.id,
         },
         data: {
-          availableBalance: {
-            increment: payment.amount,
+          pendingBalance: {
+            increment: updatedPayment.amount,
           },
         },
       });
+
+      await tx.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          bookingId: updatedPayment.bookingId,
+          amount: updatedPayment.amount,
+          transactionType: "PAYMENT_PENDING",
+          description: "Shipment payment received and held pending delivery",
+        },
+      });
+
+      await createNotification({
+        recipientId: updatedPayment.booking.transporterId,
+        type: "PAYMENT",
+        title: "Payment received",
+        message: "A shipment payment has been received and is pending delivery confirmation.",
+        relatedType: "PAYMENT",
+        relatedId: updatedPayment.id,
+      });
     }
 
-    await createNotification({
-      recipientId:
-        payment.booking.transporterId,
-      type: "PAYMENT",
-      title: "Payment received",
-      message:
-        "A shipment payment has been completed.",
-      relatedType: "PAYMENT",
-      relatedId: payment.id,
-    });
-  }
+    return updatedPayment;
+  });
 
   publishEvent("admin", {
     eventType: "PAYMENT_COMPLETED",
     module: "FINANCIAL_OPERATIONS",
     entityType: "PAYMENT",
-    entityId: payment.id,
-    actorId: payment.customerId,
-    bookingId: payment.bookingId,
+    entityId: result.id,
+    actorId: result.customerId,
+    bookingId: result.bookingId,
     data: {
-      paymentId: payment.id,
-      amount: payment.amount,
-      currency: payment.currency,
-      status: payment.status,
-      transporterId: payment.booking.transporterId,
+      paymentId: result.id,
+      amount: result.amount,
+      currency: result.currency,
+      status: result.status,
+      transporterId: result.booking.transporterId,
     },
   });
 
   await createShipmentEvent({
-    bookingId: payment.bookingId,
+    bookingId: result.bookingId,
     eventType: "PAYMENT_COMPLETED",
     title: "Payment completed",
-    description:
-      "Shipment payment was completed successfully.",
+    description: "Shipment payment was completed successfully and is pending delivery confirmation.",
   });
 
-  return payment;
+  return result;
 }
+

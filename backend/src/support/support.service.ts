@@ -61,15 +61,23 @@ export async function updateTicketStatus(
     | "IN_PROGRESS"
     | "RESOLVED"
     | "CLOSED",
+  administratorId: string,
 ) {
-  return prisma.supportTicket.update({
-    where: {
-      id,
-    },
-    data: {
-      status,
-    },
+  const ticket = await prisma.supportTicket.update({
+    where: { id },
+    data: { status },
   });
+
+  publishEvent("admin", {
+    eventType: "SUPPORT_TICKET_STATUS_UPDATED",
+    module: "SUPPORT_CARE",
+    entityType: "SUPPORT_TICKET",
+    entityId: ticket.id,
+    actorId: administratorId,
+    data: ticket,
+  });
+
+  return ticket;
 }
 
 export async function getAdminTickets(filters?: {

@@ -136,24 +136,96 @@ export async function updateWithdrawalStatus(
   status: string,
   administratorId: string,
 ) {
-  const withdrawal =
-    await prisma.withdrawal.update({
+  const allowedStatuses = [
+    "PENDING",
+    "PROCESSING",
+    "COMPLETED",
+    "FAILED",
+  ];
+
+  if (!allowedStatuses.includes(status)) {
+    throw new Error("Invalid withdrawal status");
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const withdrawal = await tx.withdrawal.findUnique({
+      where: {
+        id: withdrawalId,
+      },
+      include: {
+        wallet: true,
+      },
+    });
+
+    if (!withdrawal) {
+      throw new Error("Withdrawal not found");
+    }
+
+    if (withdrawal.status === "COMPLETED") {
+      throw new Error("Withdrawal already completed");
+    }
+
+    if (withdrawal.status === "FAILED") {
+      throw new Error("Withdrawal already failed");
+    }
+
+    const updated = await tx.withdrawal.update({
       where: {
         id: withdrawalId,
       },
       data: {
         status,
       },
+      include: {
+        wallet: true,
+      },
     });
+
+    if (status === "FAILED") {
+      await tx.wallet.update({
+        where: {
+          id: withdrawal.walletId,
+        },
+        data: {
+          availableBalance: {
+            increment: withdrawal.amount,
+          },
+        },
+      });
+
+      await tx.walletTransaction.create({
+        data: {
+          walletId: withdrawal.walletId,
+          amount: withdrawal.amount,
+          transactionType: "WITHDRAWAL_REFUNDED",
+          description: `Failed withdrawal ${withdrawal.id} refunded`,
+        },
+      });
+    }
+
+    if (status === "COMPLETED") {
+      await tx.walletTransaction.create({
+        data: {
+          walletId: withdrawal.walletId,
+          amount: withdrawal.amount,
+          transactionType: "WITHDRAWAL_COMPLETED",
+          description: `Withdrawal ${withdrawal.id} completed`,
+        },
+      });
+    }
+
+    return updated;
+  });
 
   publishEvent("admin", {
     eventType: "WITHDRAWAL_STATUS_UPDATED",
     module: "FINANCIAL_OPERATIONS",
     entityType: "WITHDRAWAL",
-    entityId: withdrawal.id,
+    entityId: result.id,
     actorId: administratorId,
-    data: withdrawal,
+    data: result,
   });
 
-  return withdrawal;
+  return result;
 }
+

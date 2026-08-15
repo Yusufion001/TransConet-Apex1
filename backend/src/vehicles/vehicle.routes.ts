@@ -4,10 +4,12 @@ import {
   getVehicleById,
   updateVehicle,
   updateVehicleLocation,
+  assertVehicleAccess,
 } from "./vehicle.service.js";
 import {
   authenticate,
   authorize,
+  type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
 
 const router = Router();
@@ -32,9 +34,15 @@ router.post(
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", async (req: AuthenticatedRequest, res) => {
   try {
-    const vehicle = await getVehicleById(req.params.id);
+    await assertVehicleAccess(
+      String(req.params.id),
+      req.user!.id,
+      req.user!.role,
+    );
+
+    const vehicle = await getVehicleById(String(req.params.id));
 
     if (!vehicle) {
       return res.status(404).json({
@@ -55,10 +63,16 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", async (req: AuthenticatedRequest, res) => {
   try {
+    await assertVehicleAccess(
+      String(req.params.id),
+      req.user!.id,
+      req.user!.role,
+    );
+
     const vehicle = await updateVehicle(
-      req.params.id,
+      String(req.params.id),
       req.body,
     );
 
@@ -74,10 +88,16 @@ router.patch("/:id", async (req, res) => {
   }
 });
 
-router.patch("/:id/location", async (req, res) => {
+router.patch("/:id/location", async (req: AuthenticatedRequest, res) => {
   try {
+    await assertVehicleAccess(
+      String(req.params.id),
+      req.user!.id,
+      req.user!.role,
+    );
+
     const vehicle = await updateVehicleLocation(
-      req.params.id,
+      String(req.params.id),
       req.body.latitude,
       req.body.longitude,
     );

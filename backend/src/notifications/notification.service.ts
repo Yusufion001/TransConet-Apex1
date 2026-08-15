@@ -40,14 +40,28 @@ export async function getUserNotifications(
 
 export async function markNotificationAsRead(
   id: string,
+  userId: string,
+  role: string,
 ) {
+  const notification = await prisma.notification.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      recipientId: true,
+    },
+  });
+
+  if (!notification) {
+    throw new Error("Notification not found");
+  }
+
+  if (role !== "ADMIN" && notification.recipientId !== userId) {
+    throw new Error("Access denied");
+  }
+
   return prisma.notification.update({
-    where: {
-      id,
-    },
-    data: {
-      read: true,
-    },
+    where: { id },
+    data: { read: true },
   });
 }
 

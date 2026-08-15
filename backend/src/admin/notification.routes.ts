@@ -60,6 +60,8 @@ router.patch("/:id/read", async (req: AuthenticatedRequest, res) => {
   try {
     const notification = await markNotificationAsRead(
       String(req.params.id),
+      req.user!.id,
+      req.user!.role,
     );
 
     res.json({
