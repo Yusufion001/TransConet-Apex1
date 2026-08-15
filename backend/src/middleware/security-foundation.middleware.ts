@@ -228,11 +228,9 @@ export function applySecurityFoundation(app: Express) {
   app.use(requestIdMiddleware);
 
   /*
-   * Request size limits.
+   * Global JSON request-size protection.
    *
-   * JSON and URL encoded payloads are intentionally limited.
-   * File uploads should use dedicated multipart handling rather
-   * than bypassing this protection globally.
+   * File uploads must use dedicated multipart middleware.
    */
   app.use(
     express.json({
@@ -248,36 +246,6 @@ export function applySecurityFoundation(app: Express) {
     "/api",
     globalApiLimiter,
   );
-}
-
-/*
- * Express JSON parser with a deliberately small global limit.
- *
- * Large uploads must use dedicated upload middleware.
- */
-function expressJsonLimit(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  let size = 0;
-
-  const maxBytes = 1024 * 1024;
-
-  req.on("data", (chunk: Buffer) => {
-    size += chunk.length;
-
-    if (size > maxBytes) {
-      res.status(413).json({
-        success: false,
-        error: "Request body too large",
-      });
-
-      req.destroy();
-    }
-  });
-
-  next();
 }
 
 export function applySecurityErrorHandler(app: Express) {
