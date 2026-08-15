@@ -38,6 +38,11 @@ import contentRoutes from "./content/content.routes.js";
 import { initializeRealtime } from "./realtime/realtime.service.js";
 import { initializeSocketEvents } from "./realtime/socket-events.js";
 import {
+  canAccessBooking,
+  canUpdateVehicleLocation,
+  isValidCoordinates,
+} from "./realtime/socket-authorization.js";
+import {
   applySecurityFoundation,
   applySecurityErrorHandler,
 } from "./middleware/security-foundation.middleware.js";
@@ -175,8 +180,28 @@ app.get("/health", (_req, res) => {
 
 io.on("connection", (socket) => {
   console.log(`Realtime client connected: ${socket.id}`);
+  socket.on("join-booking", async (bookingId: string) => {
+    const user = socket.data.user;
 
-  socket.on("join-booking", (bookingId: string) => {
+    if (!user) {
+      socket.emit("booking:access-denied", {
+        error: "Authentication required",
+      });
+      return;
+    }
+
+    const allowed = await canAccessBooking(
+      user,
+      bookingId,
+    );
+
+    if (!allowed) {
+      socket.emit("booking:access-denied", {
+        error: "Access denied for this booking",
+      });
+      return;
+    }
+
     socket.join(bookingId);
 
     console.log(
@@ -259,26 +284,60 @@ io.on("connection", (socket) => {
       `${socket.id} left booking ${bookingId}`,
     );
   });
-
   socket.on(
     "vehicle-location-update",
-    (data: {
+    async (data: {
       bookingId: string;
       latitude: number;
       longitude: number;
     }) => {
+      const user = socket.data.user;
+
+      if (!user) {
+        socket.emit("vehicle:access-denied", {
+          error: "Authentication required",
+        });
+        return;
+      }
+
+      if (
+        !data ||
+        typeof data.bookingId !== "string" ||
+        !isValidCoordinates(
+          data.latitude,
+          data.longitude,
+        )
+      ) {
+        socket.emit("vehicle:update-rejected", {
+          error: "Invalid vehicle location",
+        });
+        return;
+      }
+
+      const allowed =
+        await canUpdateVehicleLocation(
+          user,
+          data.bookingId,
+        );
+
+      if (!allowed) {
+        socket.emit("vehicle:access-denied", {
+          error:
+            "Only the assigned transporter can update this vehicle location",
+        });
+        return;
+      }
+
       io.to(data.bookingId).emit(
         "vehicle-location",
-        data,
+        {
+          bookingId: data.bookingId,
+          latitude: data.latitude,
+          longitude: data.longitude,
+        },
       );
     },
   );
-
-  socket.on("disconnect", () => {
-    console.log(
-      `Realtime client disconnected: ${socket.id}`,
-    );
-  });
 });
 httpServer.listen(env.PORT, "0.0.0.0", () => {
   console.log(
