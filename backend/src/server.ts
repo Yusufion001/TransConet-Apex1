@@ -28,6 +28,7 @@ import adminVerificationRoutes from "./admin/verification.routes.js";
 import adminFleetRoutes from "./admin/fleet.routes.js";
 import adminPartnerRoutes from "./admin/partner.routes.js";
 import adminErrorRoutes from "./admin/error.routes.js";
+import adminApiManagementRoutes from "./admin/api-management.routes.js";
 import contentRoutes from "./content/content.routes.js";
 import { initializeRealtime } from "./realtime/realtime.service.js";
 import { initializeSocketEvents } from "./realtime/socket-events.js";
@@ -87,6 +88,7 @@ app.use("/api/admin/verification", adminVerificationRoutes);
 app.use("/api/admin/fleet", adminFleetRoutes);
 app.use("/api/admin/partners", adminPartnerRoutes);
 app.use("/api/admin/errors", adminErrorRoutes);
+app.use("/api/admin/api-management", adminApiManagementRoutes);
 app.use("/api/admin/content", contentRoutes);
 app.use("/api/messages", messageRoutes);
 app.use(
