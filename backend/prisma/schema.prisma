@@ -264,6 +264,7 @@ model User {
 
   createdContent ContentItem[] @relation("ContentCreator")
   updatedContent ContentItem[] @relation("ContentUpdater")
+  refreshSessions RefreshSession[]
 }
 
 model CustomerProfile {
@@ -703,4 +704,61 @@ model ContentItem {
   @@index([type])
   @@index([status])
   @@index([createdAt])
+}
+
+
+model RefreshSession {
+  id String @id @default(uuid())
+
+  userId String
+
+  /*
+   * A session owns one refresh-token family.
+   * Every rotation creates a new token in the same family.
+   */
+  familyId String
+
+  /*
+   * Unique identifier of the currently issued refresh token.
+   * The token itself is never stored.
+   */
+  tokenId String @unique
+
+  /*
+   * SHA-256 hash of the refresh token.
+   */
+  tokenHash String @unique
+
+  expiresAt DateTime
+
+  /*
+   * Set when this particular session is explicitly revoked.
+   */
+  revokedAt DateTime?
+
+  /*
+   * Set when a refresh token in this family is detected
+   * being reused after rotation.
+   */
+  reuseDetectedAt DateTime?
+
+  /*
+   * Previous token in this rotation chain.
+   */
+  replacedTokenId String?
+
+  /*
+   * Token created by rotating this token.
+   */
+  replacedByTokenId String?
+
+  createdAt DateTime @default(now())
+  lastUsedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
+  @@index([revokedAt])
 }
