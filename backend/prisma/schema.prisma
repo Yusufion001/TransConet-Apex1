@@ -262,8 +262,8 @@ model User {
   disputesAsTransporter Dispute[] @relation("DisputeTransporter")
   assignedDisputes      Dispute[] @relation("DisputeAdministrator")
 
-  createdContent ContentItem[] @relation("ContentCreator")
-  updatedContent ContentItem[] @relation("ContentUpdater")
+  createdContent  ContentItem[]    @relation("ContentCreator")
+  updatedContent  ContentItem[]    @relation("ContentUpdater")
   refreshSessions RefreshSession[]
 }
 
@@ -352,8 +352,9 @@ model Vehicle {
   createdAt          DateTime                  @default(now())
   updatedAt          DateTime                  @updatedAt
 
-  transporter User      @relation("TransporterVehicles", fields: [transporterId], references: [id], onDelete: Cascade)
-  bookings    Booking[]
+  transporter    User            @relation("TransporterVehicles", fields: [transporterId], references: [id], onDelete: Cascade)
+  bookings       Booking[]
+  trackingPoints TrackingPoint[]
 }
 
 enum TruckCategory {
@@ -419,12 +420,38 @@ model Booking {
   disputes       Dispute[]
   supportTickets SupportTicket[]
   events         ShipmentEvent[]
+  trackingPoints TrackingPoint[]
 
   @@index([customerId])
   @@index([transporterId])
   @@index([vehicleId])
   @@index([status])
   @@index([scheduledDate])
+}
+
+model TrackingPoint {
+  id        String @id @default(uuid())
+  bookingId String
+  vehicleId String
+
+  latitude  Decimal @db.Decimal(10, 7)
+  longitude Decimal @db.Decimal(10, 7)
+
+  speed    Decimal? @db.Decimal(8, 2)
+  heading  Decimal? @db.Decimal(8, 2)
+  accuracy Decimal? @db.Decimal(8, 2)
+
+  source String @default("ANDROID_GPS")
+
+  recordedAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, recordedAt])
+  @@index([vehicleId, recordedAt])
+  @@index([recordedAt])
 }
 
 model Payment {
@@ -440,25 +467,25 @@ model Payment {
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 
-  booking  Booking @relation(fields: [bookingId], references: [id])
-  customer User    @relation("CustomerPayments", fields: [customerId], references: [id])
+  booking       Booking               @relation(fields: [bookingId], references: [id])
+  customer      User                  @relation("CustomerPayments", fields: [customerId], references: [id])
   webhookEvents PaymentWebhookEvent[]
 
+  @@unique([customerId, idempotencyKey])
   @@index([bookingId])
   @@index([customerId])
-  @@unique([customerId, idempotencyKey])
 }
 
 model PaymentWebhookEvent {
-  id                String    @id @default(uuid())
-  provider          String
-  providerEventId   String
-  eventType         String
-  paymentId         String?
-  payload           Json
-  processed         Boolean   @default(false)
-  processedAt       DateTime?
-  createdAt         DateTime  @default(now())
+  id              String    @id @default(uuid())
+  provider        String
+  providerEventId String
+  eventType       String
+  paymentId       String?
+  payload         Json
+  processed       Boolean   @default(false)
+  processedAt     DateTime?
+  createdAt       DateTime  @default(now())
 
   payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
 
@@ -728,53 +755,52 @@ model ContentItem {
   @@index([createdAt])
 }
 
-
 model RefreshSession {
   id String @id @default(uuid())
 
   userId String
 
-  /*
+  /**
    * A session owns one refresh-token family.
    * Every rotation creates a new token in the same family.
    */
   familyId String
 
-  /*
+  /**
    * Unique identifier of the currently issued refresh token.
    * The token itself is never stored.
    */
   tokenId String @unique
 
-  /*
+  /**
    * SHA-256 hash of the refresh token.
    */
   tokenHash String @unique
 
   expiresAt DateTime
 
-  /*
+  /**
    * Set when this particular session is explicitly revoked.
    */
   revokedAt DateTime?
 
-  /*
+  /**
    * Set when a refresh token in this family is detected
    * being reused after rotation.
    */
   reuseDetectedAt DateTime?
 
-  /*
+  /**
    * Previous token in this rotation chain.
    */
   replacedTokenId String?
 
-  /*
+  /**
    * Token created by rotating this token.
    */
   replacedByTokenId String?
 
-  createdAt DateTime @default(now())
+  createdAt  DateTime  @default(now())
   lastUsedAt DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

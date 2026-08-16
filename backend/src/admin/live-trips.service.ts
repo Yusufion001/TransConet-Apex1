@@ -147,3 +147,73 @@ export async function getLiveTripSummary() {
     synchronizedAt: new Date(),
   };
 }
+
+export async function getLiveTripTracking(
+  bookingId: string,
+  options?: {
+    limit?: number;
+    before?: Date;
+  },
+) {
+  const limit = Math.min(
+    Math.max(options?.limit ?? 100, 1),
+    500,
+  );
+
+  const booking = await prisma.booking.findFirst({
+    where: {
+      id: bookingId,
+      status: {
+        in: [...LIVE_TRIP_STATUSES] as any,
+      },
+    },
+    select: {
+      id: true,
+      vehicleId: true,
+    },
+  });
+
+  if (!booking) {
+    return null;
+  }
+
+  const points = await prisma.trackingPoint.findMany({
+    where: {
+      bookingId,
+      ...(options?.before
+        ? {
+            recordedAt: {
+              lt: options.before,
+            },
+          }
+        : {}),
+    },
+    select: {
+      id: true,
+      bookingId: true,
+      vehicleId: true,
+      latitude: true,
+      longitude: true,
+      speed: true,
+      heading: true,
+      accuracy: true,
+      source: true,
+      recordedAt: true,
+    },
+    orderBy: {
+      recordedAt: "desc",
+    },
+    take: limit,
+  });
+
+  return {
+    bookingId: booking.id,
+    vehicleId: booking.vehicleId,
+    points,
+    count: points.length,
+    nextBefore:
+      points.length === limit
+        ? points[points.length - 1]?.recordedAt ?? null
+        : null,
+  };
+}

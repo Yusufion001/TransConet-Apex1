@@ -9,6 +9,7 @@ import {
   getLiveTrips,
   getLiveTripById,
   getLiveTripSummary,
+  getLiveTripTracking,
 } from "./live-trips.service.js";
 
 const router = Router();
@@ -64,6 +65,62 @@ router.get("/", async (req: AuthenticatedRequest, res) => {
         error instanceof Error
           ? error.message
           : "Failed to load live trips",
+    });
+  }
+});
+
+router.get("/:id/tracking", async (req, res) => {
+  try {
+    const limit =
+      typeof req.query.limit === "string"
+        ? Number(req.query.limit)
+        : undefined;
+
+    const before =
+      typeof req.query.before === "string"
+        ? new Date(req.query.before)
+        : undefined;
+
+    if (limit !== undefined && (!Number.isInteger(limit) || limit < 1)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid tracking limit",
+      });
+    }
+
+    if (before !== undefined && Number.isNaN(before.getTime())) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid tracking cursor",
+      });
+    }
+
+    const tracking = await getLiveTripTracking(
+      String(req.params.id),
+      {
+        limit,
+        before,
+      },
+    );
+
+    if (!tracking) {
+      return res.status(404).json({
+        success: false,
+        error: "Live trip not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: tracking,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to load live trip tracking",
     });
   }
 });

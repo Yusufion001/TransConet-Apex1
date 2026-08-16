@@ -3,7 +3,6 @@ import {
   createVehicle,
   getVehicleById,
   updateVehicle,
-  updateVehicleLocation,
   assertVehicleAccess,
 } from "./vehicle.service.js";
 import {
@@ -88,30 +87,5 @@ router.patch("/:id", async (req: AuthenticatedRequest, res) => {
   }
 });
 
-router.patch("/:id/location", async (req: AuthenticatedRequest, res) => {
-  try {
-    await assertVehicleAccess(
-      String(req.params.id),
-      req.user!.id,
-      req.user!.role,
-    );
-
-    const vehicle = await updateVehicleLocation(
-      String(req.params.id),
-      req.body.latitude,
-      req.body.longitude,
-    );
-
-    res.json({
-      success: true,
-      data: vehicle,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Server error",
-    });
-  }
-});
 
 export default router;

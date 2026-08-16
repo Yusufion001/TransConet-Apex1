@@ -39,6 +39,7 @@ import adminAIAutomationRoutes from "./admin/ai-automation.routes.js";
 import contentRoutes from "./content/content.routes.js";
 import { initializeRealtime } from "./realtime/realtime.service.js";
 import { initializeSocketEvents } from "./realtime/socket-events.js";
+import { recordVehicleLocation } from "./realtime/tracking.service.js";
 import {
   canAccessBooking,
   canUpdateVehicleLocation,
@@ -76,9 +77,19 @@ io.use(async (socket, next) => {
       return next(new Error("Authentication required"));
     }
 
-    const payload = jwt.verify(token, env.JWT_ACCESS_SECRET) as {
-      sub: string;
-    };
+    const payload = jwt.verify(token, env.JWT_ACCESS_SECRET);
+
+    if (
+      typeof payload !== "object" ||
+      payload === null ||
+      typeof payload.sub !== "string" ||
+      payload.sub.length === 0 ||
+      typeof payload.role !== "string" ||
+      payload.role.length === 0 ||
+      payload.type !== "access"
+    ) {
+      return next(new Error("Invalid access token"));
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: payload.sub },
@@ -294,52 +305,73 @@ io.on("connection", (socket) => {
       bookingId: string;
       latitude: number;
       longitude: number;
+      speed?: number;
+      heading?: number;
+      accuracy?: number;
     }) => {
-      const user = socket.data.user;
+      try {
+        const user = socket.data.user;
 
-      if (!user) {
-        socket.emit("vehicle:access-denied", {
-          error: "Authentication required",
-        });
-        return;
-      }
+        if (!user) {
+          socket.emit("vehicle:access-denied", {
+            error: "Authentication required",
+          });
+          return;
+        }
 
-      if (
-        !data ||
-        typeof data.bookingId !== "string" ||
-        !isValidCoordinates(
-          data.latitude,
-          data.longitude,
-        )
-      ) {
-        socket.emit("vehicle:update-rejected", {
-          error: "Invalid vehicle location",
-        });
-        return;
-      }
+        if (
+          !data ||
+          typeof data.bookingId !== "string" ||
+          !isValidCoordinates(
+            data.latitude,
+            data.longitude,
+          )
+        ) {
+          socket.emit("vehicle:update-rejected", {
+            error: "Invalid vehicle location",
+          });
+          return;
+        }
 
-      const allowed =
-        await canUpdateVehicleLocation(
-          user,
-          data.bookingId,
+        const allowed =
+          await canUpdateVehicleLocation(
+            user,
+            data.bookingId,
+          );
+
+        if (!allowed) {
+          socket.emit("vehicle:access-denied", {
+            error:
+              "Only the assigned transporter can update this vehicle location",
+          });
+          return;
+        }
+
+        const location =
+          await recordVehicleLocation({
+            transporterId: user.id,
+            bookingId: data.bookingId,
+            latitude: data.latitude,
+            longitude: data.longitude,
+            speed: data.speed,
+            heading: data.heading,
+            accuracy: data.accuracy,
+          });
+
+        io.to(data.bookingId).emit(
+          "vehicle-location",
+          location,
         );
 
-      if (!allowed) {
-        socket.emit("vehicle:access-denied", {
+        socket.emit("vehicle:location-updated", location);
+      } catch (error) {
+        socket.emit("vehicle:update-rejected", {
           error:
-            "Only the assigned transporter can update this vehicle location",
+            error instanceof Error
+              ? error.message
+              : "Failed to update vehicle location",
         });
-        return;
       }
-
-      io.to(data.bookingId).emit(
-        "vehicle-location",
-        {
-          bookingId: data.bookingId,
-          latitude: data.latitude,
-          longitude: data.longitude,
-        },
-      );
     },
   );
 });
