@@ -10,6 +10,12 @@ import {
 } from "../middleware/auth.middleware.js";
 import { assertBookingAccess } from "../bookings/booking.service.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
+import { validate } from "../middleware/validate.middleware.js";
+import {
+  createSupportTicketSchema,
+  supportTicketIdSchema,
+  supportTicketStatusSchema,
+} from "./support.validators.js";
 
 const router = Router();
 
@@ -17,11 +23,12 @@ router.use(authenticate);
 
 router.post(
   "/",
+  validate(createSupportTicketSchema),
   async (req: AuthenticatedRequest, res) => {
     try {
       if (req.body.bookingId) {
         await assertBookingAccess(
-          String(req.body.bookingId),
+          req.body.bookingId,
           req.user!.id,
           req.user!.role,
           "read",
@@ -33,16 +40,21 @@ router.post(
         requesterId: req.user!.id,
       });
 
-      res.json({ success: true, data: ticket });
+      res.status(201).json({ success: true, data: ticket });
     } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Server error";
+
       const status =
-        error instanceof Error && error.message === "Access denied"
+        message === "Access denied"
           ? 403
-          : 500;
+          : message === "Booking not found"
+            ? 404
+            : 500;
 
       res.status(status).json({
         success: false,
-        error: error instanceof Error ? error.message : "Server error",
+        error: message,
       });
     }
   },
@@ -67,7 +79,8 @@ router.get(
     } catch (error) {
       res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : "Server error",
+        error:
+          error instanceof Error ? error.message : "Server error",
       });
     }
   },
@@ -76,6 +89,8 @@ router.get(
 router.patch(
   "/:id/status",
   requireAdmin,
+  validate(supportTicketIdSchema, "params"),
+  validate(supportTicketStatusSchema),
   async (req: AuthenticatedRequest, res) => {
     try {
       const ticket = await updateTicketStatus(
@@ -86,9 +101,12 @@ router.patch(
 
       res.json({ success: true, data: ticket });
     } catch (error) {
-      res.status(500).json({
+      const message =
+        error instanceof Error ? error.message : "Server error";
+
+      res.status(message === "Support ticket not found" ? 404 : 500).json({
         success: false,
-        error: error instanceof Error ? error.message : "Server error",
+        error: message,
       });
     }
   },

@@ -8,6 +8,11 @@ import {
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
 import { assertBookingAccess } from "../bookings/booking.service.js";
+import { validate } from "../middleware/validate.middleware.js";
+import {
+  createMessageSchema,
+  bookingMessageParamsSchema,
+} from "./message.validators.js";
 
 const router = Router();
 
@@ -15,25 +20,22 @@ router.use(authenticate);
 
 router.post(
   "/",
+  validate(createMessageSchema),
   async (req: AuthenticatedRequest, res) => {
     try {
-      const bookingId = req.body.bookingId;
-
-      if (!bookingId) {
-        return res.status(400).json({
-          success: false,
-          error: "bookingId is required",
-        });
-      }
+      const {
+        bookingId,
+        recipientId,
+        type,
+        content,
+      } = req.body;
 
       const booking = await assertBookingAccess(
-        String(bookingId),
+        bookingId,
         req.user!.id,
         req.user!.role,
         "read",
       );
-
-      const recipientId = String(req.body.recipientId);
 
       if (
         req.user!.role !== "ADMIN" &&
@@ -46,23 +48,44 @@ router.post(
         });
       }
 
+      if (
+        req.user!.role !== "ADMIN" &&
+        recipientId === req.user!.id
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "Cannot send a message to yourself",
+        });
+      }
+
       const message = await createMessage({
-        ...req.body,
         senderId: req.user!.id,
         recipientId,
-        bookingId: String(bookingId),
+        bookingId,
+        type,
+        content,
       });
 
-      res.json({ success: true, data: message });
+      return res.json({
+        success: true,
+        data: message,
+      });
     } catch (error) {
       const status =
-        error instanceof Error && error.message === "Access denied"
+        error instanceof Error &&
+        error.message === "Access denied"
           ? 403
-          : 500;
+          : error instanceof Error &&
+              error.message === "Booking not found"
+            ? 404
+            : 500;
 
-      res.status(status).json({
+      return res.status(status).json({
         success: false,
-        error: error instanceof Error ? error.message : "Server error",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Server error",
       });
     }
   },
@@ -70,31 +93,42 @@ router.post(
 
 router.get(
   "/booking/:bookingId",
+  validate(bookingMessageParamsSchema, "params"),
   async (req: AuthenticatedRequest, res) => {
     try {
+      const bookingId = String(req.params.bookingId);
+
       await assertBookingAccess(
-        String(req.params.bookingId),
+        bookingId,
         req.user!.id,
         req.user!.role,
         "read",
       );
 
       const messages = await getBookingMessages(
-        String(req.params.bookingId),
+        bookingId,
       );
 
-      res.json({ success: true, data: messages });
+      return res.json({
+        success: true,
+        data: messages,
+      });
     } catch (error) {
       const status =
         error instanceof Error &&
-        (error.message === "Access denied" ||
-          error.message === "Booking not found")
+        error.message === "Access denied"
           ? 403
-          : 500;
+          : error instanceof Error &&
+              error.message === "Booking not found"
+            ? 404
+            : 500;
 
-      res.status(status).json({
+      return res.status(status).json({
         success: false,
-        error: error instanceof Error ? error.message : "Server error",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Server error",
       });
     }
   },

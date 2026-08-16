@@ -15,6 +15,7 @@ import supportRoutes from "./support/support.routes.js";
 import disputeRoutes from "./disputes/dispute.routes.js";
 import eventRoutes from "./events/event.routes.js";
 import verificationRoutes from "./verification/verification.routes.js";
+import youverifyWebhookRoutes from "./verification/youverify/youverify.webhook.routes.js";
 import paymentRoutes from "./payments/payment.routes.js";
 import adminRoutes from "./admin/admin.routes.js";
 import adminPlatformConfigRoutes from "./admin/platform-config.routes.js";
@@ -122,6 +123,7 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/documents", documentRoutes);
+app.use("/api/verification/youverify", youverifyWebhookRoutes);
 app.use(
   "/api/verification",
   verificationRoutes,

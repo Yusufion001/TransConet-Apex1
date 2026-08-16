@@ -2,17 +2,78 @@ import { prisma } from "../config/prisma.js";
 import { createShipmentEvent } from "../events/event.service.js";
 import { publishEvent } from "../realtime/event-bus.js";
 
+type SupportStatus =
+  | "OPEN"
+  | "IN_PROGRESS"
+  | "RESOLVED"
+  | "CLOSED";
+
+type SupportPriority =
+  | "LOW"
+  | "MEDIUM"
+  | "HIGH"
+  | "URGENT";
+
+async function requireSupportAdministrator(
+  administratorId: string,
+) {
+  const administrator =
+    await prisma.adminProfile.findUnique({
+      where: {
+        userId: administratorId,
+      },
+      select: {
+        userId: true,
+        status: true,
+        isSuperAdministrator: true,
+        administratorType: true,
+        assignedModules: true,
+      },
+    });
+
+  if (!administrator) {
+    throw new Error("Administrator profile not found");
+  }
+
+  if (administrator.status !== "ACTIVE") {
+    throw new Error(
+      "Administrator account is not active",
+    );
+  }
+
+  if (
+    !administrator.isSuperAdministrator &&
+    administrator.administratorType !== "SUPER_ADMIN" &&
+    !administrator.assignedModules.includes("SUPPORT_CARE")
+  ) {
+    throw new Error(
+      "Administrator is not authorized for SUPPORT_CARE",
+    );
+  }
+
+  return administrator;
+}
+
+async function requireTicket(id: string) {
+  const ticket =
+    await prisma.supportTicket.findUnique({
+      where: { id },
+    });
+
+  if (!ticket) {
+    throw new Error("Support ticket not found");
+  }
+
+  return ticket;
+}
+
 export async function createTicket(data: {
   requesterId: string;
   bookingId?: string;
   category: string;
   subject: string;
   description: string;
-  priority?:
-    | "LOW"
-    | "MEDIUM"
-    | "HIGH"
-    | "URGENT";
+  priority?: SupportPriority;
 }) {
   const ticket =
     await prisma.supportTicket.create({
@@ -56,17 +117,20 @@ export async function getUserTickets(
 
 export async function updateTicketStatus(
   id: string,
-  status:
-    | "OPEN"
-    | "IN_PROGRESS"
-    | "RESOLVED"
-    | "CLOSED",
+  status: SupportStatus,
   administratorId: string,
 ) {
-  const ticket = await prisma.supportTicket.update({
-    where: { id },
-    data: { status },
-  });
+  await requireSupportAdministrator(
+    administratorId,
+  );
+
+  await requireTicket(id);
+
+  const ticket =
+    await prisma.supportTicket.update({
+      where: { id },
+      data: { status },
+    });
 
   publishEvent("admin", {
     eventType: "SUPPORT_TICKET_STATUS_UPDATED",
@@ -81,13 +145,17 @@ export async function updateTicketStatus(
 }
 
 export async function getAdminTickets(filters?: {
-  status?: "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
-  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  status?: SupportStatus;
+  priority?: SupportPriority;
 }) {
   return prisma.supportTicket.findMany({
     where: {
-      ...(filters?.status ? { status: filters.status } : {}),
-      ...(filters?.priority ? { priority: filters.priority } : {}),
+      ...(filters?.status
+        ? { status: filters.status }
+        : {}),
+      ...(filters?.priority
+        ? { priority: filters.priority }
+        : {}),
     },
     include: {
       requester: {
@@ -119,12 +187,35 @@ export async function assignTicket(
   id: string,
   administratorId: string,
 ) {
-  const ticket = await prisma.supportTicket.update({
-    where: { id },
-    data: {
-      assignedAdminId: administratorId,
-    },
-  });
+  await requireSupportAdministrator(
+    administratorId,
+  );
+
+  await requireTicket(id);
+
+  const assignee =
+    await prisma.adminProfile.findUnique({
+      where: {
+        userId: administratorId,
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+  if (!assignee) {
+    throw new Error(
+      "Administrator profile not found",
+    );
+  }
+
+  const ticket =
+    await prisma.supportTicket.update({
+      where: { id },
+      data: {
+        assignedAdminId: administratorId,
+      },
+    });
 
   publishEvent("admin", {
     eventType: "SUPPORT_TICKET_ASSIGNED",
@@ -140,13 +231,20 @@ export async function assignTicket(
 
 export async function updateAdminTicketStatus(
   id: string,
-  status: "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED",
+  status: SupportStatus,
   administratorId: string,
 ) {
-  const ticket = await prisma.supportTicket.update({
-    where: { id },
-    data: { status },
-  });
+  await requireSupportAdministrator(
+    administratorId,
+  );
+
+  await requireTicket(id);
+
+  const ticket =
+    await prisma.supportTicket.update({
+      where: { id },
+      data: { status },
+    });
 
   publishEvent("admin", {
     eventType: "SUPPORT_TICKET_STATUS_UPDATED",

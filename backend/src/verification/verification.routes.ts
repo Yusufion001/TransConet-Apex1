@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { authenticate } from "../middleware/auth.middleware.js";
+import { authenticate, authorize, type AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
 
 import {
@@ -13,11 +13,20 @@ const router = Router();
 router.post(
   "/start",
   authenticate,
-  async (req, res) => {
+  authorize("CUSTOMER", "TRANSPORTER"),
+  async (req: AuthenticatedRequest, res) => {
     try {
       const document =
         await startVerification(
-          req.body.documentId,
+          String(req.body.documentId),
+          req.user!.id,
+          req.body.verificationType,
+          req.body.verificationId,
+          req.body.firstName,
+          req.body.lastName,
+          req.body.dateOfBirth,
+          req.body.subjectConsent === true,
+          req.body.selfieImage,
         );
 
       res.json({
