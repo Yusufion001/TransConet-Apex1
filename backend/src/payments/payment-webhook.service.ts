@@ -1,0 +1,138 @@
+import crypto from "node:crypto";
+import { env } from "../config/env.js";
+import { prisma } from "../config/prisma.js";
+import { completePayment } from "./payment.service.js";
+
+export type PaymentWebhookInput = {
+  provider: string;
+  providerEventId: string;
+  eventType: string;
+  paymentId?: string;
+  payload: unknown;
+  rawBody: Buffer;
+  signature: string;
+};
+
+function verifyWebhookSignature(
+  rawBody: Buffer,
+  signature: string,
+): boolean {
+  const expectedSignature = crypto
+    .createHmac("sha256", env.PAYMENT_WEBHOOK_SECRET)
+    .update(rawBody)
+    .digest("hex");
+
+  if (signature.length !== expectedSignature.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature),
+  );
+}
+
+export async function processPaymentWebhook(
+  input: PaymentWebhookInput,
+) {
+  const {
+    provider,
+    providerEventId,
+    eventType,
+    paymentId,
+    payload,
+  } = input;
+  if (!verifyWebhookSignature(input.rawBody, input.signature)) {
+    throw new Error("Invalid webhook signature");
+  }
+
+  /*
+   * Idempotency protection:
+   * the same provider event must never be processed twice.
+   */
+  const existing = await prisma.paymentWebhookEvent.findUnique({
+    where: {
+      provider_providerEventId: {
+        provider,
+        providerEventId,
+      },
+    },
+  });
+
+  if (existing) {
+    return {
+      duplicate: true,
+      processed: existing.processed,
+      webhookEventId: existing.id,
+    };
+  }
+
+  const webhookEvent = await prisma.paymentWebhookEvent.create({
+    data: {
+      id: crypto.randomUUID(),
+      provider,
+      providerEventId,
+      eventType,
+      paymentId,
+      payload: payload as object,
+    },
+  });
+
+  try {
+    /*
+     * Generic payment-event mapping.
+     *
+     * Provider-specific adapters should normalize their
+     * provider payload into this service's input format.
+     */
+    if (
+      paymentId &&
+      [
+        "payment.success",
+        "payment.completed",
+        "charge.success",
+        "SUCCESS",
+      ].includes(eventType)
+    ) {
+      try {
+        await completePayment(paymentId);
+      } catch (error) {
+        if (
+          !(error instanceof Error) ||
+          error.message !== "Payment already completed"
+        ) {
+          throw error;
+        }
+      }
+    }
+
+    const processedEvent =
+      await prisma.paymentWebhookEvent.update({
+        where: {
+          id: webhookEvent.id,
+        },
+        data: {
+          processed: true,
+          processedAt: new Date(),
+        },
+      });
+
+    return {
+      duplicate: false,
+      processed: processedEvent.processed,
+      webhookEventId: processedEvent.id,
+    };
+  } catch (error) {
+    /*
+     * Keep the webhook record when processing fails.
+     * This allows administrators/retry workers to inspect
+     * and retry the event later.
+     */
+    console.error(
+      `Payment webhook processing failed: ${provider}:${providerEventId}`,
+      error,
+    );
+
+    throw error;
+  }
+}

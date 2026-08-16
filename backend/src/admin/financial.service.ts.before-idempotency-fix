@@ -187,16 +187,7 @@ export async function retryPaymentWebhook(
     const { completePayment } =
       await import("../payments/payment.service.js");
 
-    try {
-      await completePayment(webhookEvent.paymentId);
-    } catch (error) {
-      if (
-        !(error instanceof Error) ||
-        error.message !== "Payment already completed"
-      ) {
-        throw error;
-      }
-    }
+    await completePayment(webhookEvent.paymentId);
   }
 
   const updated = await prisma.paymentWebhookEvent.update({

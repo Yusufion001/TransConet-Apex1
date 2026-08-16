@@ -1,7 +1,3 @@
-import type { Server } from "socket.io";
-
-let io: Server | null = null;
-
 export type AdminRealtimeModule =
   | "PLATFORM_OVERVIEW"
   | "VERIFICATION_CENTER"
@@ -40,64 +36,29 @@ export type AdminRealtimeEvent = {
   data?: unknown;
 };
 
-export function initializeRealtime(server: Server) {
-  io = server;
+export function initializeRealtime(_server?: unknown): void {
+  // Socket.IO delivery is initialized by socket-events.ts.
 }
 
-export function publishAdminEvent(
+export async function publishAdminEvent(
   event: Omit<AdminRealtimeEvent, "eventId" | "timestamp">,
 ) {
-  if (!io) {
-    return;
-  }
+  const { publishEvent } = await import("./event-bus.js");
 
-  const payload: AdminRealtimeEvent = {
-    eventId: crypto.randomUUID(),
-    timestamp: new Date().toISOString(),
-    ...event,
-  };
-
-  io.to("administration").emit(
-    "admin:activity",
-    payload,
-  );
-
-  io.to(`admin:${event.module}`).emit(
-    "admin:module-event",
-    payload,
-  );
+  publishEvent("admin", event);
 }
 
-export function publishBookingEvent(
+export async function publishBookingEvent(
   bookingId: string,
   event: Omit<
     AdminRealtimeEvent,
     "eventId" | "timestamp" | "bookingId"
   >,
 ) {
-  if (!io) {
-    return;
-  }
+  const { publishEvent } = await import("./event-bus.js");
 
-  const payload: AdminRealtimeEvent = {
-    eventId: crypto.randomUUID(),
-    timestamp: new Date().toISOString(),
-    bookingId,
+  publishEvent("booking", {
     ...event,
-  };
-
-  io.to(bookingId).emit(
-    "booking:activity",
-    payload,
-  );
-
-  io.to("administration").emit(
-    "admin:activity",
-    payload,
-  );
-
-  io.to(`admin:${event.module}`).emit(
-    "admin:module-event",
-    payload,
-  );
+    bookingId,
+  });
 }

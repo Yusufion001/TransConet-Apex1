@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { authenticate, type AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { z } from "zod";
 import { getUserById, updateUser } from "../users/user.service.js";
 import {
@@ -9,16 +8,9 @@ import {
 
 const router = Router();
 
-router.get("/:id", authenticate, async (req: AuthenticatedRequest, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const { id } = userIdSchema.parse(req.params);
-
-    if (req.user!.id !== id && req.user!.role !== "ADMIN") {
-      return res.status(403).json({
-        success: false,
-        error: "Access denied",
-      });
-    }
 
     const user = await getUserById(id);
 
@@ -48,16 +40,9 @@ router.get("/:id", authenticate, async (req: AuthenticatedRequest, res) => {
   }
 });
 
-router.patch("/:id", authenticate, async (req: AuthenticatedRequest, res) => {
+router.patch("/:id", async (req, res) => {
   try {
     const { id } = userIdSchema.parse(req.params);
-
-    if (req.user!.id !== id && req.user!.role !== "ADMIN") {
-      return res.status(403).json({
-        success: false,
-        error: "Access denied",
-      });
-    }
 
     const data = updateUserSchema.parse(req.body);
 

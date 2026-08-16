@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -117,7 +117,7 @@ const globalApiLimiter = rateLimit({
      * express-rate-limit already handles IPv6 normalization.
      * req.ip is also compatible with Express trust-proxy settings.
      */
-    return req.ip ?? "unknown";
+    return ipKeyGenerator(req.ip ?? "unknown");
   },
 });
 
@@ -220,7 +220,7 @@ export function applySecurityFoundation(app: Express) {
   /*
    * Browser preflight.
    */
-  app.options("*", cors(corsOptions));
+  app.options("/{*splat}", cors(corsOptions));
 
   /*
    * Request identification.
@@ -232,12 +232,18 @@ export function applySecurityFoundation(app: Express) {
    *
    * File uploads must use dedicated multipart middleware.
    */
+
   app.use(
-    express.json({
-      limit: "1mb",
-      strict: true,
-    }),
-  );
+  express.json({
+    limit: "1mb",
+    strict: true,
+    verify(req, _res, buf) {
+      if (req.url === "/api/payments/webhook") {
+        (req as typeof req & { rawBody?: Buffer }).rawBody = Buffer.from(buf);
+      }
+    },
+  }),
+);
 
   /*
    * Global API rate limiting.

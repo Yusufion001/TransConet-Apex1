@@ -15,7 +15,6 @@ export async function createShipmentEvent(data: {
     | "PROOF_OF_DELIVERY"
     | "DELIVERY_CONFIRMED"
     | "SUPPORT_OPENED"
-      | "PAYMENT_COMPLETED"
     | "DISPUTE_OPENED";
   title: string;
   description?: string;

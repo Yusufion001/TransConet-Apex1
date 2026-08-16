@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { processPaymentWebhook } from "./payment-webhook.service.js";
 
 import {
   authenticate,
@@ -17,11 +18,95 @@ import {
 const router = Router();
 
 router.post(
+  "/webhook",
+  async (req, res) => {
+      const rawBody =
+        (req as typeof req & { rawBody?: Buffer }).rawBody;
+
+     const signature = req.header("X-Webhook-Signature");
+      if (!rawBody || !signature) {
+        return res.status(401).json({ success: false, error: "Webhook signature verification required" });
+      }
+
+
+    try {
+      const provider =
+        req.header("X-Payment-Provider")?.trim() ||
+        req.body?.provider;
+
+      const providerEventId =
+        req.header("X-Provider-Event-Id")?.trim() ||
+        req.body?.providerEventId;
+
+      const eventType =
+        req.header("X-Event-Type")?.trim() ||
+        req.body?.eventType;
+
+      const paymentId =
+        req.body?.paymentId ||
+        req.header("X-Payment-Id")?.trim();
+
+      if (!provider || !providerEventId || !eventType) {
+        return res.status(400).json({
+          success: false,
+          error: "Missing required webhook event information",
+        });
+      }
+
+      const result = await processPaymentWebhook({
+  provider,
+  providerEventId,
+  eventType,
+  paymentId,
+  payload: req.body,
+  rawBody,
+  signature,
+});
+
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error("Payment webhook route error:", error);
+
+      if (
+        error instanceof Error &&
+        error.message === "Invalid webhook signature"
+      ) {
+        return res.status(401).json({
+          success: false,
+          error: "Invalid webhook signature",
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: "Webhook processing failed",
+      });
+    }
+  },
+);
+
+router.post(
   "/",
   authenticate,
   async (req: AuthenticatedRequest, res) => {
     try {
       const bookingId = String(req.body.bookingId);
+      const idempotencyKey = req.header("X-Idempotency-Key")?.trim();
+
+      if (
+        !idempotencyKey ||
+        idempotencyKey.length < 16 ||
+        idempotencyKey.length > 128 ||
+        !/^[A-Za-z0-9._:-]+$/.test(idempotencyKey)
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "A valid X-Idempotency-Key header is required",
+        });
+      }
 
       await assertBookingAccess(
         bookingId,
@@ -59,6 +144,7 @@ router.post(
         bookingId,
         customerId,
         req.body.amount,
+        idempotencyKey,
       );
 
       res.json({
@@ -78,6 +164,16 @@ router.post(
 
       if (message === "Access denied") {
         return res.status(403).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      if (
+        message ===
+        "Idempotency key has already been used with different payment parameters"
+      ) {
+        return res.status(409).json({
           success: false,
           error: message,
         });

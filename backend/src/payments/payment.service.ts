@@ -12,18 +12,80 @@ export async function initializePayment(
   bookingId: string,
   customerId: string,
   amount: number,
+  idempotencyKey: string,
 ) {
-  const payment = await prisma.payment.create({
-    data: {
-      bookingId,
+  const existingPayment = await prisma.payment.findFirst({
+    where: {
       customerId,
-      amount,
-      provider: "TEST_PROVIDER",
-      transactionReference:
-        createTransactionReference(),
-      status: "PENDING",
+      idempotencyKey,
     },
   });
+
+  if (existingPayment) {
+    if (
+      existingPayment.bookingId !== bookingId ||
+      Number(existingPayment.amount) !== Number(amount)
+    ) {
+      throw new Error(
+        "Idempotency key has already been used with different payment parameters",
+      );
+    }
+
+    return existingPayment;
+  }
+
+  let payment;
+
+  try {
+    payment = await prisma.payment.create({
+      data: {
+        bookingId,
+        customerId,
+        amount,
+        provider: "TEST_PROVIDER",
+        transactionReference:
+          createTransactionReference(),
+        idempotencyKey,
+        status: "PENDING",
+      },
+    });
+  } catch (error) {
+    /*
+     * A concurrent request can pass the lookup above before either
+     * request creates the payment. The database unique constraint
+     * is the final protection against duplicate payments.
+     */
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
+      const concurrentPayment = await prisma.payment.findFirst({
+        where: {
+          customerId,
+          idempotencyKey,
+        },
+      });
+
+      if (!concurrentPayment) {
+        throw error;
+      }
+
+      if (
+        concurrentPayment.bookingId !== bookingId ||
+        Number(concurrentPayment.amount) !== Number(amount)
+      ) {
+        throw new Error(
+          "Idempotency key has already been used with different payment parameters",
+        );
+      }
+
+      return concurrentPayment;
+    }
+
+    throw error;
+  }
 
   publishEvent("admin", {
     eventType: "PAYMENT_INITIALIZED",
@@ -173,13 +235,6 @@ export async function completePayment(
       status: result.status,
       transporterId: result.booking.transporterId,
     },
-  });
-
-  await createShipmentEvent({
-    bookingId: result.bookingId,
-    eventType: "PAYMENT_COMPLETED",
-    title: "Payment completed",
-    description: "Shipment payment was completed successfully and is pending delivery confirmation.",
   });
 
   return result;

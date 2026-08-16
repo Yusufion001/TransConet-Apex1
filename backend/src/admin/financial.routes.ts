@@ -9,6 +9,8 @@ import {
   getAdminPayments,
   getAdminWithdrawals,
   updateWithdrawalStatus,
+  getPaymentWebhookEvents,
+  retryPaymentWebhook,
 } from "./financial.service.js";
 
 const router = Router();
@@ -69,6 +71,40 @@ router.get("/payments", async (req, res) => {
   }
 });
 
+router.get("/webhooks", async (req, res) => {
+  try {
+    const processed =
+      typeof req.query.processed === "string"
+        ? req.query.processed === "true"
+          ? true
+          : req.query.processed === "false"
+            ? false
+            : undefined
+        : undefined;
+
+    const events = await getPaymentWebhookEvents({
+      processed,
+      provider:
+        typeof req.query.provider === "string"
+          ? req.query.provider
+          : undefined,
+    });
+
+    res.json({
+      success: true,
+      data: events,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Server error",
+    });
+  }
+});
+
 router.get("/withdrawals", async (req, res) => {
   try {
     const withdrawals =
@@ -93,6 +129,40 @@ router.get("/withdrawals", async (req, res) => {
     });
   }
 });
+
+router.post(
+  "/webhooks/:id/retry",
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const result = await retryPaymentWebhook(
+        String(req.params.id),
+        req.user!.id,
+      );
+
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Server error";
+
+      if (message === "Payment webhook event not found") {
+        return res.status(404).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
 
 router.patch(
   "/withdrawals/:id/status",

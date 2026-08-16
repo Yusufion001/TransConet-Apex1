@@ -264,7 +264,6 @@ model User {
 
   createdContent ContentItem[] @relation("ContentCreator")
   updatedContent ContentItem[] @relation("ContentUpdater")
-  refreshSessions RefreshSession[]
 }
 
 model CustomerProfile {
@@ -435,37 +434,15 @@ model Payment {
   currency             String        @default("NGN")
   provider             String
   transactionReference String        @unique
-  idempotencyKey       String?
   status               PaymentStatus @default(PENDING)
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 
   booking  Booking @relation(fields: [bookingId], references: [id])
   customer User    @relation("CustomerPayments", fields: [customerId], references: [id])
-  webhookEvents PaymentWebhookEvent[]
 
   @@index([bookingId])
   @@index([customerId])
-  @@unique([customerId, idempotencyKey])
-}
-
-model PaymentWebhookEvent {
-  id                String    @id @default(uuid())
-  provider          String
-  providerEventId   String
-  eventType         String
-  paymentId         String?
-  payload           Json
-  processed         Boolean   @default(false)
-  processedAt       DateTime?
-  createdAt         DateTime  @default(now())
-
-  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
-
-  @@unique([provider, providerEventId])
-  @@index([paymentId])
-  @@index([provider, eventType])
-  @@index([createdAt])
 }
 
 model Wallet {
@@ -726,61 +703,4 @@ model ContentItem {
   @@index([type])
   @@index([status])
   @@index([createdAt])
-}
-
-
-model RefreshSession {
-  id String @id @default(uuid())
-
-  userId String
-
-  /*
-   * A session owns one refresh-token family.
-   * Every rotation creates a new token in the same family.
-   */
-  familyId String
-
-  /*
-   * Unique identifier of the currently issued refresh token.
-   * The token itself is never stored.
-   */
-  tokenId String @unique
-
-  /*
-   * SHA-256 hash of the refresh token.
-   */
-  tokenHash String @unique
-
-  expiresAt DateTime
-
-  /*
-   * Set when this particular session is explicitly revoked.
-   */
-  revokedAt DateTime?
-
-  /*
-   * Set when a refresh token in this family is detected
-   * being reused after rotation.
-   */
-  reuseDetectedAt DateTime?
-
-  /*
-   * Previous token in this rotation chain.
-   */
-  replacedTokenId String?
-
-  /*
-   * Token created by rotating this token.
-   */
-  replacedByTokenId String?
-
-  createdAt DateTime @default(now())
-  lastUsedAt DateTime?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([familyId])
-  @@index([expiresAt])
-  @@index([revokedAt])
 }
