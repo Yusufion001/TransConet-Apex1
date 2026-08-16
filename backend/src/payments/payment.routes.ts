@@ -5,11 +5,9 @@ import {
   authenticate,
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
-import { requireAdmin } from "../middleware/admin.middleware.js";
 import { assertBookingAccess } from "../bookings/booking.service.js";
 
 import {
-  completePayment,
   getBookingPayments,
   getPaymentById,
   initializePayment,
@@ -46,6 +44,18 @@ router.post(
         req.body?.paymentId ||
         req.header("X-Payment-Id")?.trim();
 
+      const transactionReference =
+        req.body?.transactionReference ||
+        req.body?.transaction_reference ||
+        req.body?.reference ||
+        req.header("X-Transaction-Reference")?.trim();
+
+      const amount =
+        req.body?.amount;
+
+      const currency =
+        req.body?.currency;
+
       if (!provider || !providerEventId || !eventType) {
         return res.status(400).json({
           success: false,
@@ -58,6 +68,9 @@ router.post(
   providerEventId,
   eventType,
   paymentId,
+  transactionReference,
+  amount,
+  currency,
   payload: req.body,
   rawBody,
   signature,
@@ -143,7 +156,6 @@ router.post(
       const payment = await initializePayment(
         bookingId,
         customerId,
-        req.body.amount,
         idempotencyKey,
       );
 
@@ -276,30 +288,6 @@ router.get(
       res.status(500).json({
         success: false,
         error: message,
-      });
-    }
-  },
-);
-
-router.patch(
-  "/:id/complete",
-  authenticate,
-  requireAdmin,
-  async (req, res) => {
-    try {
-      const payment = await completePayment(
-        String(req.params.id),
-      );
-
-      res.json({
-        success: true,
-        data: payment,
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error:
-          error instanceof Error ? error.message : "Server error",
       });
     }
   },

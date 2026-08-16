@@ -4,6 +4,7 @@ import crypto from "crypto";
 
 import { env } from "../config/env.js";
 import { prisma } from "../config/prisma.js";
+import { sendPasswordResetEmail } from "./email.service.js";
 
 type UserRole = "CUSTOMER" | "TRANSPORTER" | "ADMIN";
 
@@ -205,31 +206,21 @@ export async function loginUser(
   identifier: string,
   password: string,
 ) {
-  const user =
-    await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: identifier },
-          { phone: identifier },
-        ],
-      },
-      include: {
-        customerProfile: true,
-        transporterProfile: true,
-      },
-    });
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: identifier },
+        { phone: identifier },
+      ],
+    },
+    include: {
+      customerProfile: true,
+      transporterProfile: true,
+      adminProfile: true,
+    },
+  });
 
   if (!user) {
-    throw new Error("Invalid credentials");
-  }
-
-  const validPassword =
-    await bcrypt.compare(
-      password,
-      user.passwordHash,
-    );
-
-  if (!validPassword) {
     throw new Error("Invalid credentials");
   }
 
@@ -237,9 +228,63 @@ export async function loginUser(
     user.status === "BLOCKED" ||
     user.status === "SUSPENDED"
   ) {
-    throw new Error(
-      "This account is not active",
-    );
+    throw new Error("This account is not active");
+  }
+
+  /*
+   * Administrator security is controlled by AdminProfile
+   * in addition to the normal User status.
+   */
+  if (user.role === "ADMIN") {
+    const administrator = user.adminProfile;
+
+    if (!administrator) {
+      throw new Error("Administrator profile not found");
+    }
+
+    if (administrator.status !== "ACTIVE") {
+      throw new Error("Administrator account is not active");
+    }
+
+    if (
+      administrator.lockedUntil &&
+      administrator.lockedUntil > new Date()
+    ) {
+      throw new Error("Administrator account is temporarily locked");
+    }
+  }
+
+  const validPassword = await bcrypt.compare(
+    password,
+    user.passwordHash,
+  );
+
+  if (!validPassword) {
+    /*
+     * Failed administrator authentication is tracked separately
+     * from normal customer/transporter authentication.
+     *
+     * Five consecutive failures produce a 15-minute lock.
+     */
+    if (user.role === "ADMIN" && user.adminProfile) {
+      const administrator = user.adminProfile;
+      const failedAttempts = administrator.failedLoginAttempts + 1;
+      const shouldLock = failedAttempts >= 5;
+
+      await prisma.adminProfile.update({
+        where: {
+          userId: user.id,
+        },
+        data: {
+          failedLoginAttempts: shouldLock ? 0 : failedAttempts,
+          lockedUntil: shouldLock
+            ? new Date(Date.now() + 15 * 60 * 1000)
+            : null,
+        },
+      });
+    }
+
+    throw new Error("Invalid credentials");
   }
 
   await prisma.user.update({
@@ -250,6 +295,20 @@ export async function loginUser(
       lastLoginAt: new Date(),
     },
   });
+
+  if (user.role === "ADMIN" && user.adminProfile) {
+    await prisma.adminProfile.update({
+      where: {
+        userId: user.id,
+      },
+      data: {
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        lastLoginAt: new Date(),
+        lastActionAt: new Date(),
+      },
+    });
+  }
 
   return {
     user,
@@ -304,9 +363,21 @@ export async function forgotPassword(
     },
   });
 
+  if (user.email) {
+    try {
+      await sendPasswordResetEmail(
+        user.email,
+        resetToken,
+      );
+    } catch {
+      // Do not expose email-delivery failures to the client.
+      // The reset token remains stored hashed in the database.
+    }
+  }
+
   return {
-    resetToken,
-    expiresAt,
+    message:
+      "If an account exists, a password reset email has been sent.",
   };
 }
 
@@ -499,6 +570,11 @@ export async function refreshAccessToken(
         id: true,
         role: true,
         status: true,
+        adminProfile: {
+          select: {
+            status: true,
+          },
+        },
       },
     });
 
@@ -522,6 +598,24 @@ export async function refreshAccessToken(
 
     throw new Error(
       "This account is not active",
+    );
+  }
+
+  /*
+   * Administrator status is authoritative in AdminProfile.
+   * A suspended or disabled administrator must not be able
+   * to obtain a new access token from an existing refresh token.
+   */
+  if (
+    user.role === "ADMIN" &&
+    (!user.adminProfile || user.adminProfile.status !== "ACTIVE")
+  ) {
+    await revokeRefreshFamily(
+      session.familyId,
+    );
+
+    throw new Error(
+      "Administrator account is not active",
     );
   }
 

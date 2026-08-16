@@ -1,5 +1,12 @@
 import { Router } from "express";
 import {
+  createBookingSchema,
+  assignBookingSchema,
+  updateBookingStatusSchema,
+  proofOfDeliverySchema,
+  confirmDeliverySchema,
+} from "./booking.validators.js";
+import {
   assignBooking,
   confirmDelivery,
   createBooking,
@@ -24,8 +31,10 @@ router.post(
   authorize("CUSTOMER"),
   async (req: AuthenticatedRequest, res) => {
   try {
+    const input = createBookingSchema.parse(req.body);
+
     const booking = await createBooking({
-      ...req.body,
+      ...input,
       customerId: req.user!.id,
     });
 
@@ -144,10 +153,12 @@ router.patch("/:id/assign", async (req: AuthenticatedRequest, res) => {
       "assign",
     );
 
+    const input = assignBookingSchema.parse(req.body);
+
     const booking = await assignBooking(
       String(req.params.id),
-      req.body.transporterId,
-      req.body.vehicleId,
+      input.transporterId,
+      input.vehicleId,
     );
 
     res.json({
@@ -201,9 +212,11 @@ router.patch("/:id/status", async (req: AuthenticatedRequest, res) => {
       "status",
     );
 
+    const input = updateBookingStatusSchema.parse(req.body);
+
     const booking = await updateBookingStatus(
       String(req.params.id),
-      req.body.status,
+      input.status,
     );
 
     res.json({
@@ -228,11 +241,13 @@ router.patch(
         "proof",
       );
 
+      const input = proofOfDeliverySchema.parse(req.body);
+
       const booking =
         await uploadProofOfDelivery(
           String(req.params.id),
-          req.body.proofOfDelivery,
-          req.body.deliveryConfirmationCode,
+          input.proofOfDelivery,
+          input.deliveryConfirmationCode,
         );
 
       res.json({
@@ -261,10 +276,12 @@ router.patch(
         "confirm",
       );
 
+      const input = confirmDeliverySchema.parse(req.body);
+
       const booking =
         await confirmDelivery(
           String(req.params.id),
-          req.body.code,
+          input.code,
         );
 
       res.json({

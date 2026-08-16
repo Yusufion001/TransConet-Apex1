@@ -60,6 +60,8 @@ export async function createWithdrawal(
     throw new Error("Withdrawal amount must be greater than zero");
   }
 
+  const amount = new Prisma.Decimal(data.amount);
+
   const result = await prisma.$transaction(async (tx) => {
     const wallet = await tx.wallet.findUnique({
       where: {
@@ -80,14 +82,34 @@ export async function createWithdrawal(
       throw new Error("Access denied");
     }
 
-    if (wallet.availableBalance.lessThan(new Prisma.Decimal(data.amount))) {
+    /*
+     * Atomically reserve the withdrawal amount.
+     *
+     * The balance condition is part of the UPDATE itself, preventing
+     * concurrent withdrawal requests from spending the same balance.
+     */
+    const reserved = await tx.wallet.updateMany({
+      where: {
+        id: wallet.id,
+        availableBalance: {
+          gte: amount,
+        },
+      },
+      data: {
+        availableBalance: {
+          decrement: amount,
+        },
+      },
+    });
+
+    if (reserved.count !== 1) {
       throw new Error("Insufficient available balance");
     }
 
     const withdrawal = await tx.withdrawal.create({
       data: {
         walletId: data.walletId,
-        amount: data.amount,
+        amount,
         bankName: data.bankName,
         accountNumber: data.accountNumber,
         accountName: data.accountName,
@@ -95,21 +117,10 @@ export async function createWithdrawal(
       },
     });
 
-    await tx.wallet.update({
-      where: {
-        id: wallet.id,
-      },
-      data: {
-        availableBalance: {
-          decrement: data.amount,
-        },
-      },
-    });
-
     await tx.walletTransaction.create({
       data: {
         walletId: wallet.id,
-        amount: data.amount,
+        amount,
         transactionType: "WITHDRAWAL_PENDING",
         description: `Withdrawal ${withdrawal.id} reserved`,
       },
@@ -134,4 +145,3 @@ export async function createWithdrawal(
 
   return result;
 }
-

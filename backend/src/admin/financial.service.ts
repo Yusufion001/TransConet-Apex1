@@ -175,6 +175,24 @@ export async function retryPaymentWebhook(
     };
   }
 
+  const webhookPayment = webhookEvent.paymentId
+    ? await prisma.payment.findUnique({
+        where: { id: webhookEvent.paymentId },
+        select: {
+          id: true,
+          customerId: true,
+          bookingId: true,
+          status: true,
+          amount: true,
+          currency: true,
+        },
+      })
+    : null;
+
+  if (webhookEvent.paymentId && !webhookPayment) {
+    throw new Error("Payment associated with webhook event not found");
+  }
+
   if (
     webhookEvent.paymentId &&
     [
@@ -206,6 +224,32 @@ export async function retryPaymentWebhook(
     data: {
       processed: true,
       processedAt: new Date(),
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      administratorId,
+      affectedUserId: webhookPayment?.customerId,
+      affectedBookingId: webhookPayment?.bookingId,
+      action: "PAYMENT_WEBHOOK_REPROCESSED",
+      previousValue: {
+        webhookEventId: webhookEvent.id,
+        processed: webhookEvent.processed,
+        paymentId: webhookEvent.paymentId,
+        paymentStatus: webhookPayment?.status,
+      },
+      newValue: {
+        webhookEventId: updated.id,
+        processed: updated.processed,
+        processedAt: updated.processedAt,
+        paymentId: updated.paymentId,
+        paymentStatus: webhookPayment?.status === "PENDING"
+          ? "SUCCESS"
+          : webhookPayment?.status,
+        amount: webhookPayment?.amount,
+        currency: webhookPayment?.currency,
+      },
     },
   });
 
@@ -254,7 +298,11 @@ export async function updateWithdrawalStatus(
         id: withdrawalId,
       },
       include: {
-        wallet: true,
+        wallet: {
+          select: {
+            transporterId: true,
+          },
+        },
       },
     });
 
@@ -262,25 +310,79 @@ export async function updateWithdrawalStatus(
       throw new Error("Withdrawal not found");
     }
 
-    if (withdrawal.status === "COMPLETED") {
-      throw new Error("Withdrawal already completed");
+    if (
+      withdrawal.status === "COMPLETED" ||
+      withdrawal.status === "FAILED"
+    ) {
+      throw new Error(
+        withdrawal.status === "COMPLETED"
+          ? "Withdrawal already completed"
+          : "Withdrawal already failed",
+      );
     }
 
-    if (withdrawal.status === "FAILED") {
-      throw new Error("Withdrawal already failed");
+    /*
+     * Enforce the withdrawal state machine:
+     *
+     * PENDING    -> PROCESSING
+     * PROCESSING -> COMPLETED
+     * PROCESSING -> FAILED
+     *
+     * Terminal states cannot be changed.
+     */
+    const validTransition =
+      (withdrawal.status === "PENDING" &&
+        status === "PROCESSING") ||
+      (withdrawal.status === "PROCESSING" &&
+        (status === "COMPLETED" || status === "FAILED"));
+
+    if (!validTransition) {
+      throw new Error(
+        `Invalid withdrawal transition: ${withdrawal.status} -> ${status}`,
+      );
     }
 
-    const updated = await tx.withdrawal.update({
+    /*
+     * Atomically claim the transition.
+     *
+     * The current status is part of the UPDATE condition, so concurrent
+     * administrator requests cannot both successfully transition the
+     * same withdrawal.
+     */
+    const updated = await tx.withdrawal.updateMany({
       where: {
         id: withdrawalId,
+        status: withdrawal.status,
       },
       data: {
         status,
       },
-      include: {
-        wallet: true,
-      },
     });
+
+    if (updated.count !== 1) {
+      const current = await tx.withdrawal.findUnique({
+        where: {
+          id: withdrawalId,
+        },
+        select: {
+          status: true,
+        },
+      });
+
+      if (!current) {
+        throw new Error("Withdrawal not found");
+      }
+
+      if (current.status === "COMPLETED") {
+        throw new Error("Withdrawal already completed");
+      }
+
+      if (current.status === "FAILED") {
+        throw new Error("Withdrawal already failed");
+      }
+
+      throw new Error("Withdrawal status could not be updated");
+    }
 
     if (status === "FAILED") {
       await tx.wallet.update({
@@ -315,8 +417,39 @@ export async function updateWithdrawalStatus(
       });
     }
 
-    return updated;
+    await tx.auditLog.create({
+      data: {
+        administratorId,
+        affectedUserId: withdrawal.wallet.transporterId,
+        action: "WITHDRAWAL_STATUS_UPDATED",
+        previousValue: {
+          withdrawalId: withdrawal.id,
+          status: withdrawal.status,
+          amount: withdrawal.amount,
+          walletId: withdrawal.walletId,
+        },
+        newValue: {
+          withdrawalId: withdrawal.id,
+          status,
+          amount: withdrawal.amount,
+          walletId: withdrawal.walletId,
+        },
+      },
+    });
+
+    return tx.withdrawal.findUnique({
+      where: {
+        id: withdrawalId,
+      },
+      include: {
+        wallet: true,
+      },
+    });
   });
+
+  if (!result) {
+    throw new Error("Withdrawal not found");
+  }
 
   publishEvent("admin", {
     eventType: "WITHDRAWAL_STATUS_UPDATED",
@@ -329,4 +462,3 @@ export async function updateWithdrawalStatus(
 
   return result;
 }
-

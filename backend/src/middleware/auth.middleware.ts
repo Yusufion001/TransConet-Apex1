@@ -106,6 +106,11 @@ export async function authenticate(
           id: true,
           role: true,
           status: true,
+          adminProfile: {
+            select: {
+              status: true,
+            },
+          },
         },
       });
 
@@ -125,6 +130,22 @@ export async function authenticate(
             : user.status === "BLOCKED"
               ? "Account blocked"
               : "Account is not active",
+      });
+    }
+
+    /*
+     * Administrator status is authoritative in AdminProfile.
+     * This prevents an already-issued access token from
+     * remaining usable after an administrator is suspended
+     * or disabled.
+     */
+    if (
+      user.role === "ADMIN" &&
+      (!user.adminProfile || user.adminProfile.status !== "ACTIVE")
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "Administrator account is not active",
       });
     }
 

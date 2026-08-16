@@ -3,7 +3,7 @@ import {
   authenticate,
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
-import { requireAdmin } from "../middleware/admin.middleware.js";
+import { createWalletSchema, withdrawalSchema } from "./wallet.validators.js";
 
 import {
   createWallet,
@@ -15,7 +15,8 @@ const router = Router();
 
 router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
   try {
-    const requestedTransporterId = String(req.body.transporterId);
+    const input = createWalletSchema.parse(req.body);
+    const requestedTransporterId = input.transporterId;
 
     if (
       req.user!.role !== "ADMIN" &&
@@ -86,8 +87,10 @@ router.post(
   authenticate,
   async (req: AuthenticatedRequest, res) => {
     try {
+      const input = withdrawalSchema.parse(req.body);
+
       const withdrawal = await createWithdrawal(
-        req.body,
+        input,
         req.user!.id,
         req.user!.role,
       );

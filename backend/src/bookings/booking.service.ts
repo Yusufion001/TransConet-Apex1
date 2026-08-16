@@ -213,7 +213,6 @@ export async function updateBookingStatus(
     | "DRIVER_ARRIVING"
     | "ARRIVED"
     | "IN_TRANSIT"
-    | "COMPLETED"
     | "CANCELLED",
 ) {
   const result = await prisma.$transaction(async (tx) => {
@@ -238,8 +237,8 @@ export async function updateBookingStatus(
       ACCEPTED: ["DRIVER_ARRIVING", "CANCELLED"],
       DRIVER_ARRIVING: ["ARRIVED", "CANCELLED"],
       ARRIVED: ["IN_TRANSIT", "CANCELLED"],
-      IN_TRANSIT: ["COMPLETED", "CANCELLED"],
-      DISPUTED: ["COMPLETED", "CANCELLED"],
+      IN_TRANSIT: ["CANCELLED"],
+      DISPUTED: ["CANCELLED"],
       COMPLETED: [],
       CANCELLED: [],
     };
@@ -278,10 +277,11 @@ export async function updateBookingStatus(
         timestampData.pickedUpAt = new Date();
         break;
 
-      case "COMPLETED":
-        timestampData.deliveredAt = new Date();
-        timestampData.completedAt = new Date();
-        break;
+      /*
+       * COMPLETED is intentionally excluded from this service.
+       * Delivery completion must go through confirmDelivery(), which
+       * atomically verifies payment and releases the transporter funds.
+       */
     }
 
     const updatedBooking = await tx.booking.update({
@@ -289,10 +289,7 @@ export async function updateBookingStatus(
       data: timestampData,
     });
 
-    if (
-      (status === "COMPLETED" || status === "CANCELLED") &&
-      booking.vehicleId
-    ) {
+    if (status === "CANCELLED" && booking.vehicleId) {
       await tx.vehicle.update({
         where: { id: booking.vehicleId },
         data: {
@@ -325,10 +322,6 @@ export async function updateBookingStatus(
       eventType: "IN_TRANSIT",
       title: "Shipment in transit",
     },
-    COMPLETED: {
-      eventType: "DELIVERY_CONFIRMED",
-      title: "Delivery completed",
-    },
   };
 
   const shipmentEvent = eventMap[status];
@@ -343,10 +336,7 @@ export async function updateBookingStatus(
 
   publishEvent("booking", {
     eventType: status,
-    module:
-      status === "COMPLETED"
-        ? "FINANCIAL_OPERATIONS"
-        : "LIVE_TRIPS",
+    module: "LIVE_TRIPS",
     entityType: "BOOKING",
     entityId: result.booking.id,
     bookingId: result.booking.id,
@@ -359,10 +349,7 @@ export async function updateBookingStatus(
     },
   });
 
-  if (
-    (status === "COMPLETED" || status === "CANCELLED") &&
-    result.booking.vehicleId
-  ) {
+  if (status === "CANCELLED" && result.booking.vehicleId) {
     publishEvent("vehicle", {
       eventType: "VEHICLE_AVAILABILITY_UPDATED",
       module: "FLEET_MARKETPLACE",
@@ -413,15 +400,29 @@ export async function uploadProofOfDelivery(
   proofOfDelivery: string,
   deliveryConfirmationCode: string,
 ) {
-  return prisma.booking.update({
-    where: {
-      id: bookingId,
-    },
-    data: {
-      proofOfDelivery,
-      deliveryConfirmationCode,
-      status: "ARRIVED",
-    },
+  return prisma.$transaction(async (tx) => {
+    const booking = await tx.booking.findUnique({
+      where: { id: bookingId },
+      select: { id: true, status: true },
+    });
+
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    if (booking.status !== "ARRIVED") {
+      throw new Error("Proof of delivery can only be submitted after arrival");
+    }
+
+    return tx.booking.update({
+      where: {
+        id: bookingId,
+      },
+      data: {
+        proofOfDelivery,
+        deliveryConfirmationCode,
+      },
+    });
   });
 }
 
@@ -495,13 +496,19 @@ export async function confirmDelivery(
       throw new Error("Transporter wallet not found");
     }
 
-    if (wallet.pendingBalance < payment.amount) {
-      throw new Error("Insufficient pending wallet balance");
-    }
-
-    await tx.wallet.update({
+    /*
+     * Atomically release the pending payment.
+     *
+     * The balance condition is part of the UPDATE itself so concurrent
+     * delivery/payment operations cannot release more than the wallet
+     * actually holds in pendingBalance.
+     */
+    const released = await tx.wallet.updateMany({
       where: {
         id: wallet.id,
+        pendingBalance: {
+          gte: payment.amount,
+        },
       },
       data: {
         pendingBalance: {
@@ -512,6 +519,10 @@ export async function confirmDelivery(
         },
       },
     });
+
+    if (released.count !== 1) {
+      throw new Error("Insufficient pending wallet balance");
+    }
 
     await tx.walletTransaction.create({
       data: {

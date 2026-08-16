@@ -7,3 +7,5 @@ node_modules
 # Backup files
 *.bak
 *.save
+
+.env.test

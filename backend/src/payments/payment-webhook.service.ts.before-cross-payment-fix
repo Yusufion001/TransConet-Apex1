@@ -8,9 +8,6 @@ export type PaymentWebhookInput = {
   providerEventId: string;
   eventType: string;
   paymentId?: string;
-  transactionReference?: string;
-  amount?: string | number;
-  currency?: string;
   payload: unknown;
   rawBody: Buffer;
   signature: string;
@@ -43,101 +40,10 @@ export async function processPaymentWebhook(
     providerEventId,
     eventType,
     paymentId,
-    transactionReference,
-    amount,
-    currency,
     payload,
   } = input;
-
   if (!verifyWebhookSignature(input.rawBody, input.signature)) {
     throw new Error("Invalid webhook signature");
-  }
-
-  /*
-   * Cross-payment protection:
-   *
-   * Never trust a webhook-supplied paymentId by itself.
-   * The provider transaction reference is the authoritative external
-   * payment identity and must resolve to the same database Payment.
-   */
-  let validatedPaymentId = paymentId;
-
-  if (paymentId) {
-    const payment = await prisma.payment.findUnique({
-      where: { id: paymentId },
-      select: {
-        id: true,
-        provider: true,
-        transactionReference: true,
-        amount: true,
-        currency: true,
-      },
-    });
-
-    if (!payment) {
-      throw new Error("Payment not found");
-    }
-
-    if (payment.provider !== provider) {
-      throw new Error("Webhook provider does not match payment");
-    }
-
-    if (
-      !transactionReference ||
-      transactionReference !== payment.transactionReference
-    ) {
-      throw new Error("Webhook transaction does not match payment");
-    }
-
-    if (
-      amount !== undefined &&
-      String(amount) !== String(payment.amount)
-    ) {
-      throw new Error("Webhook amount does not match payment");
-    }
-
-    if (
-      currency !== undefined &&
-      currency.toUpperCase() !== payment.currency.toUpperCase()
-    ) {
-      throw new Error("Webhook currency does not match payment");
-    }
-
-    validatedPaymentId = payment.id;
-  } else if (transactionReference) {
-    const payment = await prisma.payment.findUnique({
-      where: { transactionReference },
-      select: {
-        id: true,
-        provider: true,
-        amount: true,
-        currency: true,
-      },
-    });
-
-    if (!payment) {
-      throw new Error("Payment not found");
-    }
-
-    if (payment.provider !== provider) {
-      throw new Error("Webhook provider does not match payment");
-    }
-
-    if (
-      amount !== undefined &&
-      String(amount) !== String(payment.amount)
-    ) {
-      throw new Error("Webhook amount does not match payment");
-    }
-
-    if (
-      currency !== undefined &&
-      currency.toUpperCase() !== payment.currency.toUpperCase()
-    ) {
-      throw new Error("Webhook currency does not match payment");
-    }
-
-    validatedPaymentId = payment.id;
   }
 
   /*
@@ -170,7 +76,7 @@ export async function processPaymentWebhook(
         provider,
         providerEventId,
         eventType,
-        paymentId: validatedPaymentId,
+        paymentId,
         payload: payload as object,
       },
     });
@@ -218,7 +124,7 @@ export async function processPaymentWebhook(
      * provider payload into this service's input format.
      */
     if (
-      validatedPaymentId &&
+      paymentId &&
       [
         "payment.success",
         "payment.completed",
@@ -227,7 +133,7 @@ export async function processPaymentWebhook(
       ].includes(eventType)
     ) {
       try {
-        await completePayment(validatedPaymentId!);
+        await completePayment(paymentId);
       } catch (error) {
         if (
           !(error instanceof Error) ||

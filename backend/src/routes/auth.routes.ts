@@ -1,4 +1,5 @@
 import { Router } from "express";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { authenticate, AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { z } from "zod";
 import {
@@ -11,6 +12,22 @@ import {
 } from "../services/auth.service.js";
 
 const router = Router();
+
+const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator(req) {
+    return ipKeyGenerator(req.ip ?? "unknown");
+  },
+  handler(_req, res) {
+    return res.status(429).json({
+      success: false,
+      error: "Too many password reset requests. Please try again later.",
+    });
+  },
+});
 
 const registerSchema = z.object({
   firstName: z.string().min(2).max(50),
@@ -121,7 +138,7 @@ router.post("/logout", authenticate, async (req: AuthenticatedRequest, res) => {
   }
 });
 
-router.post("/forgot-password", async (req, res) => {
+router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
   try {
     const input = forgotPasswordSchema.parse(req.body);
 

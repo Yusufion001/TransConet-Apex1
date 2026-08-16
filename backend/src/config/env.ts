@@ -9,6 +9,9 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(32),
   CLIENT_URL: z.string().optional(),
   PAYMENT_WEBHOOK_SECRET: z.string().min(32),
+  RESEND_API_KEY: z.string().min(1),
+  EMAIL_FROM_ADDRESS: z.string().email(),
+  PASSWORD_RESET_URL: z.string().url(),
 });
 
 export const env = envSchema.parse(process.env);

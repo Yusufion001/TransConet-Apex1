@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { prisma } from "../config/prisma.js";
 import { createNotification } from "../notifications/notification.service.js";
 import { createShipmentEvent } from "../events/event.service.js";
@@ -5,15 +6,45 @@ import { publishEvent } from "../realtime/event-bus.js";
 
 
 function createTransactionReference() {
-  return `TXN-${Date.now()}`;
+  return `TXN-${Date.now()}-${crypto.randomUUID()}`;
 }
 
 export async function initializePayment(
   bookingId: string,
   customerId: string,
-  amount: number,
   idempotencyKey: string,
 ) {
+  /*
+   * The booking fare is the authoritative payment amount.
+   *
+   * Never trust an amount supplied by the mobile client because a client
+   * could otherwise attempt to initialize a payment below the real fare.
+   */
+  const booking = await prisma.booking.findUnique({
+    where: {
+      id: bookingId,
+    },
+    select: {
+      id: true,
+      customerId: true,
+      fare: true,
+    },
+  });
+
+  if (!booking) {
+    throw new Error("Booking not found");
+  }
+
+  if (booking.customerId !== customerId) {
+    throw new Error("Access denied");
+  }
+
+  if (booking.fare === null || booking.fare.lessThanOrEqualTo(0)) {
+    throw new Error("Booking has an invalid payment amount");
+  }
+
+  const amount = booking.fare;
+
   const existingPayment = await prisma.payment.findFirst({
     where: {
       customerId,
@@ -24,7 +55,7 @@ export async function initializePayment(
   if (existingPayment) {
     if (
       existingPayment.bookingId !== bookingId ||
-      Number(existingPayment.amount) !== Number(amount)
+      !existingPayment.amount.equals(amount)
     ) {
       throw new Error(
         "Idempotency key has already been used with different payment parameters",
@@ -155,17 +186,60 @@ export async function completePayment(
       throw new Error("Payment has already been refunded");
     }
 
-    const updatedPayment = await tx.payment.update({
+    /*
+     * Atomically claim the payment.
+     *
+     * Only a payment that is still PENDING can be changed to SUCCESS.
+     * This prevents concurrent webhook/admin requests from both
+     * crediting the transporter wallet.
+     */
+    const claimed = await tx.payment.updateMany({
       where: {
         id: paymentId,
+        status: "PENDING",
       },
       data: {
         status: "SUCCESS",
+      },
+    });
+
+    if (claimed.count !== 1) {
+      const currentPayment = await tx.payment.findUnique({
+        where: {
+          id: paymentId,
+        },
+        select: {
+          status: true,
+        },
+      });
+
+      if (!currentPayment) {
+        throw new Error("Payment not found");
+      }
+
+      if (currentPayment.status === "SUCCESS") {
+        throw new Error("Payment already completed");
+      }
+
+      if (currentPayment.status === "REFUNDED") {
+        throw new Error("Payment has already been refunded");
+      }
+
+      throw new Error("Payment could not be completed");
+    }
+
+    const updatedPayment = await tx.payment.findUnique({
+      where: {
+        id: paymentId,
       },
       include: {
         booking: true,
       },
     });
+
+    if (!updatedPayment) {
+      throw new Error("Payment not found");
+    }
 
     await tx.booking.update({
       where: {
@@ -204,7 +278,8 @@ export async function completePayment(
           bookingId: updatedPayment.bookingId,
           amount: updatedPayment.amount,
           transactionType: "PAYMENT_PENDING",
-          description: "Shipment payment received and held pending delivery",
+          description:
+            "Shipment payment received and held pending delivery",
         },
       });
 
@@ -212,7 +287,8 @@ export async function completePayment(
         recipientId: updatedPayment.booking.transporterId,
         type: "PAYMENT",
         title: "Payment received",
-        message: "A shipment payment has been received and is pending delivery confirmation.",
+        message:
+          "A shipment payment has been received and is pending delivery confirmation.",
         relatedType: "PAYMENT",
         relatedId: updatedPayment.id,
       });
