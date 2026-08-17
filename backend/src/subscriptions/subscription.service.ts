@@ -26,8 +26,8 @@ export async function getTransporterSubscription(
     where: {
       transporterId,
       status: {
-        in: ["ACTIVE", "PAST_DUE"],
-      },
+  in: ["PENDING", "ACTIVE", "PAST_DUE"],
+},
     },
     include: {
       plan: true,
@@ -162,7 +162,7 @@ export async function cancelSubscription(
     await prisma.transporterSubscription.findFirst({
       where: {
         transporterId,
-        status: "ACTIVE",
+        status:  "PENDING",
       },
     });
 
@@ -200,16 +200,11 @@ export async function cancelSubscription(
   return updated;
 }
 
-export async function markSubscriptionInvoicePaid(
-  invoiceId: string,
-) {
+export async function markSubscriptionInvoicePaid(invoiceId: string) {
   const result = await prisma.$transaction(async (tx) => {
-    const invoice =
-      await tx.subscriptionInvoice.findUnique({
-        where: {
-          id: invoiceId,
-        },
-      });
+    const invoice = await tx.subscriptionInvoice.findUnique({
+      where: { id: invoiceId },
+    });
 
     if (!invoice) {
       throw new Error("Subscription invoice not found");
@@ -223,7 +218,7 @@ export async function markSubscriptionInvoicePaid(
       throw new Error("Invoice has already been refunded");
     }
 
-    return tx.subscriptionInvoice.update({
+    const updatedInvoice = await tx.subscriptionInvoice.update({
       where: {
         id: invoiceId,
       },
@@ -232,6 +227,19 @@ export async function markSubscriptionInvoicePaid(
         paidAt: new Date(),
       },
     });
+
+    await tx.transporterSubscription.update({
+      where: {
+        id: invoice.subscriptionId,
+      },
+      data: {
+        status: "ACTIVE",
+        currentPeriodStart: invoice.periodStart,
+        currentPeriodEnd: invoice.periodEnd,
+      },
+    });
+
+    return updatedInvoice;
   });
 
   publishEvent("admin", {
@@ -250,6 +258,7 @@ export async function markSubscriptionInvoicePaid(
 
   return result;
 }
+
 
 export async function getTransporterInvoices(
   transporterId: string,

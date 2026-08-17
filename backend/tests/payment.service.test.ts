@@ -7,6 +7,16 @@ const prismaMock = {
     findUnique: mock.fn<(...args: any[]) => any>(),
     update: mock.fn<(...args: any[]) => any>(),
   },
+  user: {
+    findUnique: mock.fn<(...args: any[]) => any>(),
+  },
+  settlement: {
+    findUnique: mock.fn<(...args: any[]) => any>(),
+    create: mock.fn<(...args: any[]) => any>(),
+  },
+  commissionRule: {
+    findMany: mock.fn<(...args: any[]) => any>(),
+  },
   payment: {
     findFirst: mock.fn<(...args: any[]) => any>(),
     findUnique: mock.fn<(...args: any[]) => any>(),
@@ -26,6 +36,15 @@ const prismaMock = {
 
 const createNotificationMock = mock.fn<(...args: any[]) => any>();
 const publishEventMock = mock.fn<(...args: any[]) => any>();
+
+const createSettlementMock =
+  mock.fn<(...args: any[]) => any>();
+
+mock.module("../src/settlements/settlement.service.js", {
+  exports: {
+    createSettlement: createSettlementMock,
+  },
+});
 
 mock.module("../src/config/prisma.js", {
   exports: {
@@ -54,24 +73,28 @@ const {
 } = await import("../src/payments/payment.service.js");
 
 function resetMocks() {
-  prismaMock.booking.findUnique = mock.fn<(...args: any[]) => any>();
-  prismaMock.booking.update = mock.fn<(...args: any[]) => any>();
-
-  prismaMock.payment.findFirst = mock.fn<(...args: any[]) => any>();
-  prismaMock.payment.findUnique = mock.fn<(...args: any[]) => any>();
-  prismaMock.payment.create = mock.fn<(...args: any[]) => any>();
-  prismaMock.payment.updateMany = mock.fn<(...args: any[]) => any>();
-  prismaMock.payment.findMany = mock.fn<(...args: any[]) => any>();
-
-  prismaMock.wallet.findUnique = mock.fn<(...args: any[]) => any>();
-  prismaMock.wallet.update = mock.fn<(...args: any[]) => any>();
-
-  prismaMock.walletTransaction.create = mock.fn<(...args: any[]) => any>();
-
-  prismaMock.$transaction = mock.fn<(...args: any[]) => any>();
-
-  createNotificationMock.mock.resetCalls();
-  publishEventMock.mock.resetCalls();
+  for (const fn of [
+    prismaMock.booking.findUnique,
+    prismaMock.booking.update,
+    prismaMock.user.findUnique,
+    prismaMock.settlement.findUnique,
+    prismaMock.settlement.create,
+    prismaMock.commissionRule.findMany,
+    prismaMock.payment.findFirst,
+    prismaMock.payment.findUnique,
+    prismaMock.payment.create,
+    prismaMock.payment.updateMany,
+    prismaMock.payment.findMany,
+    prismaMock.wallet.findUnique,
+    prismaMock.wallet.update,
+    prismaMock.walletTransaction.create,
+    prismaMock.$transaction,
+    createNotificationMock,
+    publishEventMock,
+    createSettlementMock,
+  ]) {
+    fn.mock.resetCalls();
+  }
 
   prismaMock.$transaction.mock.mockImplementation(
     async (callback: any) => callback(prismaMock),
@@ -435,12 +458,13 @@ test("completePayment rejects a missing payment", async () => {
   assert.equal(prismaMock.wallet.update.mock.calls.length, 0);
 });
 
-test("completePayment rejects an already completed payment", async () => {
+test("completePayment returns an already completed payment without duplicating processing", async () => {
   prismaMock.payment.findUnique.mock.mockImplementation(async () => ({
     id: "payment-1",
     bookingId: "booking-1",
     customerId: "customer-1",
     amount: new Prisma.Decimal("150000.00"),
+    currency: "NGN",
     status: "SUCCESS",
     booking: {
       id: "booking-1",
@@ -448,12 +472,44 @@ test("completePayment rejects an already completed payment", async () => {
     },
   }));
 
-  await assert.rejects(
-    completePayment("payment-1"),
-    { message: "Payment already completed" },
+  prismaMock.settlement.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "settlement-1",
+      paymentId: "payment-1",
+      bookingId: "booking-1",
+      status: "PENDING",
+    }),
   );
 
-  assert.equal(prismaMock.payment.updateMany.mock.calls.length, 0);
+  const result = await completePayment("payment-1");
+
+  assert.equal(result.id, "payment-1");
+  assert.equal(result.status, "SUCCESS");
+
+  assert.equal(
+    prismaMock.payment.updateMany.mock.calls.length,
+    0,
+  );
+
+  assert.equal(
+    prismaMock.booking.update.mock.calls.length,
+    0,
+  );
+
+  assert.equal(
+    prismaMock.wallet.update.mock.calls.length,
+    0,
+  );
+
+  assert.equal(
+    prismaMock.walletTransaction.create.mock.calls.length,
+    0,
+  );
+
+  assert.equal(
+    createSettlementMock.mock.calls.length,
+    0,
+  );
 });
 
 test("completePayment rejects a refunded payment", async () => {

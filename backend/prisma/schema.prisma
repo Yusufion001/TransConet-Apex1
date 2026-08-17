@@ -113,6 +113,7 @@ enum PaymentStatus {
 }
 
 enum SubscriptionStatus {
+  PENDING
   ACTIVE
   PAST_DUE
   CANCELLED
@@ -526,20 +527,23 @@ model Payment {
 }
 
 model PaymentWebhookEvent {
-  id              String    @id @default(uuid())
-  provider        String
-  providerEventId String
-  eventType       String
-  paymentId       String?
-  payload         Json
-  processed       Boolean   @default(false)
-  processedAt     DateTime?
-  createdAt       DateTime  @default(now())
+  id                   String    @id @default(uuid())
+  provider             String
+  providerEventId      String
+  eventType            String
+  paymentId            String?
+  subscriptionInvoiceId String?
+  payload              Json
+  processed            Boolean   @default(false)
+  processedAt          DateTime?
+  createdAt            DateTime  @default(now())
 
-  payment Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  payment             Payment?             @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  subscriptionInvoice  SubscriptionInvoice? @relation(fields: [subscriptionInvoiceId], references: [id], onDelete: SetNull)
 
   @@unique([provider, providerEventId])
   @@index([paymentId])
+  @@index([subscriptionInvoiceId])
   @@index([provider, eventType])
   @@index([createdAt])
 }
@@ -904,7 +908,7 @@ model TransporterSubscription {
   id                 String             @id @default(uuid())
   transporterId      String
   planId             String
-  status             SubscriptionStatus @default(ACTIVE)
+  status             SubscriptionStatus @default(PENDING)
   startedAt          DateTime           @default(now())
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
@@ -929,6 +933,7 @@ model SubscriptionInvoice {
   transporterId        String
   amount               Decimal       @db.Decimal(14, 2)
   currency             String        @default("NGN")
+  provider String @default("TEST_PROVIDER")
   status               PaymentStatus @default(PENDING)
   transactionReference String?       @unique
   periodStart          DateTime
@@ -936,6 +941,8 @@ model SubscriptionInvoice {
   paidAt               DateTime?
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
+
+  webhookEvents PaymentWebhookEvent[]
 
   subscription TransporterSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
   plan         SubscriptionPlan        @relation(fields: [planId], references: [id])

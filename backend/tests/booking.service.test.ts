@@ -14,6 +14,15 @@ const prismaMock = {
     findUnique: mock.fn<(...args: any[]) => any>(),
   },
 
+  settlement: {
+    findUnique: mock.fn<(...args: any[]) => any>(),
+    create: mock.fn<(...args: any[]) => any>(),
+  },
+
+  commissionRule: {
+    findMany: mock.fn<(...args: any[]) => any>(),
+  },
+
   vehicle: {
     findUnique: mock.fn<(...args: any[]) => any>(),
     update: mock.fn<(...args: any[]) => any>(),
@@ -21,6 +30,7 @@ const prismaMock = {
 
   payment: {
     findFirst: mock.fn<(...args: any[]) => any>(),
+    findUnique: mock.fn<(...args: any[]) => any>(),
   },
 
   wallet: {
@@ -46,6 +56,15 @@ const publishAdminEventMock =
 
 const publishBookingEventMock =
   mock.fn<(...args: any[]) => any>();
+
+const createSettlementMock =
+  mock.fn<(...args: any[]) => any>();
+
+mock.module("../src/settlements/settlement.service.js", {
+  exports: {
+    createSettlement: createSettlementMock,
+  },
+});
 
 mock.module("../src/config/prisma.js", {
   exports: {
@@ -86,6 +105,7 @@ const {
 } = await import("../src/bookings/booking.service.js");
 
 function resetMocks() {
+  createSettlementMock.mock.resetCalls();
   for (const fn of [
     prismaMock.booking.create,
     prismaMock.booking.findUnique,
@@ -96,11 +116,16 @@ function resetMocks() {
     prismaMock.vehicle.findUnique,
     prismaMock.vehicle.update,
     prismaMock.payment.findFirst,
+    prismaMock.payment.findUnique,
+    prismaMock.settlement.findUnique,
+    prismaMock.settlement.create,
+    prismaMock.commissionRule.findMany,
     prismaMock.wallet.findUnique,
     prismaMock.wallet.updateMany,
     prismaMock.walletTransaction.create,
     prismaMock.$transaction,
     createShipmentEventMock,
+    createSettlementMock,
     publishEventMock,
     publishAdminEventMock,
     publishBookingEventMock,
@@ -543,7 +568,7 @@ test("uploadProofOfDelivery rejects proof before arrival", async () => {
   );
 });
 
-test("confirmDelivery releases successful payment into transporter wallet", async () => {
+test("confirmDelivery completes delivery and creates a settlement", async () => {
   prismaMock.booking.findUnique.mock.mockImplementation(
     async () => ({
       id: "booking-1",
@@ -567,29 +592,6 @@ test("confirmDelivery releases successful payment into transporter wallet", asyn
     }),
   );
 
-  prismaMock.wallet.findUnique.mock.mockImplementation(
-    async () => ({
-      id: "wallet-1",
-      transporterId: "transporter-1",
-      pendingBalance: 150000,
-      availableBalance: 0,
-    }),
-  );
-
-  prismaMock.wallet.updateMany.mock.mockImplementation(
-    async () => ({ count: 1 }),
-  );
-
-  prismaMock.walletTransaction.create.mock.mockImplementation(
-    async () => ({
-      id: "transaction-1",
-      walletId: "wallet-1",
-      bookingId: "booking-1",
-      amount: 150000,
-      transactionType: "PAYMENT_RELEASED",
-    }),
-  );
-
   prismaMock.vehicle.update.mock.mockImplementation(
     async () => ({
       id: "vehicle-1",
@@ -602,6 +604,16 @@ test("confirmDelivery releases successful payment into transporter wallet", asyn
       id: "booking-1",
       status: "COMPLETED",
       paymentStatus: "SUCCESS",
+    }),
+  );
+
+  createSettlementMock.mock.mockImplementation(
+    async () => ({
+      id: "settlement-1",
+      bookingId: "booking-1",
+      paymentId: "payment-1",
+      transporterId: "transporter-1",
+      status: "PENDING",
     }),
   );
 
@@ -624,59 +636,23 @@ test("confirmDelivery releases successful payment into transporter wallet", asyn
   );
 
   assert.equal(
-    prismaMock.wallet.findUnique.mock.calls.length,
-    1,
-  );
-
-  assert.equal(
-    prismaMock.wallet.updateMany.mock.calls.length,
-    1,
-  );
-
-  const walletUpdate =
-    prismaMock.wallet.updateMany.mock.calls[0]?.arguments[0];
-
-  assert.equal(
-    walletUpdate.where.id,
-    "wallet-1",
-  );
-
-  assert.equal(
-    walletUpdate.where.pendingBalance.gte,
-    150000,
-  );
-
-  assert.equal(
-    walletUpdate.data.pendingBalance.decrement,
-    150000,
-  );
-
-  assert.equal(
-    walletUpdate.data.availableBalance.increment,
-    150000,
-  );
-
-  assert.equal(
-    prismaMock.walletTransaction.create.mock.calls.length,
-    1,
-  );
-
-  const transactionCall =
-    prismaMock.walletTransaction.create.mock.calls[0]?.arguments[0];
-
-  assert.equal(
-    transactionCall.data.transactionType,
-    "PAYMENT_RELEASED",
-  );
-
-  assert.equal(
-    transactionCall.data.bookingId,
-    "booking-1",
-  );
-
-  assert.equal(
     prismaMock.vehicle.update.mock.calls.length,
     1,
+  );
+
+  assert.equal(
+    prismaMock.booking.update.mock.calls.length,
+    1,
+  );
+
+  assert.equal(
+    createSettlementMock.mock.calls.length,
+    1,
+  );
+
+  assert.deepEqual(
+    createSettlementMock.mock.calls[0]?.arguments,
+    ["booking-1", "payment-1"],
   );
 
   assert.equal(
@@ -764,65 +740,6 @@ test("confirmDelivery rejects delivery when successful payment is missing", asyn
 
   assert.equal(
     prismaMock.walletTransaction.create.mock.calls.length,
-    0,
-  );
-});
-
-test("confirmDelivery rejects release when pending wallet balance is insufficient", async () => {
-  prismaMock.booking.findUnique.mock.mockImplementation(
-    async () => ({
-      id: "booking-1",
-      status: "ARRIVED",
-      transporterId: "transporter-1",
-      vehicleId: "vehicle-1",
-      deliveryConfirmationCode: "123456",
-    }),
-  );
-
-  prismaMock.booking.updateMany.mock.mockImplementation(
-    async () => ({ count: 1 }),
-  );
-
-  prismaMock.payment.findFirst.mock.mockImplementation(
-    async () => ({
-      id: "payment-1",
-      bookingId: "booking-1",
-      amount: 150000,
-      status: "SUCCESS",
-    }),
-  );
-
-  prismaMock.wallet.findUnique.mock.mockImplementation(
-    async () => ({
-      id: "wallet-1",
-      transporterId: "transporter-1",
-      pendingBalance: 100000,
-      availableBalance: 0,
-    }),
-  );
-
-  prismaMock.wallet.updateMany.mock.mockImplementation(
-    async () => ({ count: 0 }),
-  );
-
-  await assert.rejects(
-    confirmDelivery(
-      "booking-1",
-      "123456",
-    ),
-    {
-      message:
-        "Insufficient pending wallet balance",
-    },
-  );
-
-  assert.equal(
-    prismaMock.walletTransaction.create.mock.calls.length,
-    0,
-  );
-
-  assert.equal(
-    prismaMock.vehicle.update.mock.calls.length,
     0,
   );
 });
