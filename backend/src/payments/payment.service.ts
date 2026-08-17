@@ -3,6 +3,7 @@ import { prisma } from "../config/prisma.js";
 import { createNotification } from "../notifications/notification.service.js";
 import { createShipmentEvent } from "../events/event.service.js";
 import { publishEvent } from "../realtime/event-bus.js";
+import { createSettlement } from "../settlements/settlement.service.js";
 
 
 function createTransactionReference() {
@@ -179,7 +180,17 @@ export async function completePayment(
     }
 
     if (payment.status === "SUCCESS") {
-      throw new Error("Payment already completed");
+      const existingSettlement = await tx.settlement.findUnique({
+        where: {
+          paymentId,
+        },
+      });
+
+      return {
+        alreadyCompleted: true,
+        payment,
+        settlementExists: Boolean(existingSettlement),
+      };
     }
 
     if (payment.status === "REFUNDED") {
@@ -294,25 +305,43 @@ export async function completePayment(
       });
     }
 
-    return updatedPayment;
+    return {
+      alreadyCompleted: false,
+      payment: updatedPayment,
+      settlementExists: false,
+    };
   });
+
+  /*
+   * A successful payment must always have a settlement record.
+   *
+   * This is intentionally idempotent: createSettlement() returns the
+   * existing settlement when a webhook is retried or an administrator
+   * reprocesses the payment.
+   */
+  if (!result.settlementExists) {
+    await createSettlement(
+      result.payment.bookingId,
+      result.payment.id,
+    );
+  }
 
   publishEvent("admin", {
     eventType: "PAYMENT_COMPLETED",
     module: "FINANCIAL_OPERATIONS",
     entityType: "PAYMENT",
-    entityId: result.id,
-    actorId: result.customerId,
-    bookingId: result.bookingId,
+    entityId: result.payment.id,
+    actorId: result.payment.customerId,
+    bookingId: result.payment.bookingId,
     data: {
-      paymentId: result.id,
-      amount: result.amount,
-      currency: result.currency,
-      status: result.status,
-      transporterId: result.booking.transporterId,
+      paymentId: result.payment.id,
+      amount: result.payment.amount,
+      currency: result.payment.currency,
+      status: result.payment.status,
+      transporterId: result.payment.booking.transporterId,
     },
   });
 
-  return result;
+  return result.payment;
 }
 

@@ -13,6 +13,16 @@ import {
   retryPaymentWebhook,
 } from "./financial.service.js";
 
+import {
+  getSettlementById,
+  listSettlements,
+  submitSettlementForApproval,
+  approveSettlement,
+  rejectSettlement,
+  resubmitSettlementForApproval,
+  releaseSettlement,
+} from "../settlements/settlement.service.js";
+
 const router = Router();
 
 router.use(authenticate);
@@ -104,6 +114,214 @@ router.get("/webhooks", async (req, res) => {
     });
   }
 });
+
+router.get("/settlements", async (req, res) => {
+  try {
+    const allowedStatuses = [
+      "PENDING",
+      "AWAITING_APPROVAL",
+      "APPROVED",
+      "REJECTED",
+      "RELEASED",
+      "FAILED",
+    ] as const;
+
+    const status =
+      typeof req.query.status === "string" &&
+      allowedStatuses.includes(
+        req.query.status as typeof allowedStatuses[number],
+      )
+        ? req.query.status as typeof allowedStatuses[number]
+        : undefined;
+
+    const settlements = await listSettlements({
+      status,
+      transporterId:
+        typeof req.query.transporterId === "string"
+          ? req.query.transporterId
+          : undefined,
+    });
+
+    res.json({
+      success: true,
+      data: settlements,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Server error",
+    });
+  }
+});
+
+router.get("/settlements/:id", async (req, res) => {
+  try {
+    const settlement = await getSettlementById(
+      String(req.params.id),
+    );
+
+    if (!settlement) {
+      return res.status(404).json({
+        success: false,
+        error: "Settlement not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: settlement,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Server error",
+    });
+  }
+});
+
+router.post(
+  "/settlements/:id/submit",
+  async (req, res) => {
+    try {
+      const settlement =
+        await submitSettlementForApproval(
+          String(req.params.id),
+        );
+
+      res.json({
+        success: true,
+        data: settlement,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Server error",
+      });
+    }
+  },
+);
+
+router.post(
+  "/settlements/:id/approve",
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const result = await approveSettlement(
+        String(req.params.id),
+        req.user!.id,
+        typeof req.body?.decisionNote === "string"
+          ? req.body.decisionNote
+          : undefined,
+      );
+
+      res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Server error",
+      });
+    }
+  },
+);
+
+router.post(
+  "/settlements/:id/reject",
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (
+        typeof req.body?.rejectionReason !== "string" ||
+        !req.body.rejectionReason.trim()
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "Rejection reason is required",
+        });
+      }
+
+      const result = await rejectSettlement(
+        String(req.params.id),
+        req.user!.id,
+        req.body.rejectionReason,
+      );
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Server error",
+      });
+    }
+  },
+);
+
+router.post(
+  "/settlements/:id/resubmit",
+  async (req, res) => {
+    try {
+      const settlement = await resubmitSettlementForApproval(
+        String(req.params.id),
+      );
+
+      return res.json({
+        success: true,
+        data: settlement,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Server error",
+      });
+    }
+  },
+);
+
+router.post(
+  "/settlements/:id/release",
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const settlement = await releaseSettlement(
+        String(req.params.id),
+        req.user!.id,
+      );
+
+      res.json({
+        success: true,
+        data: settlement,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Server error",
+      });
+    }
+  },
+);
 
 router.get("/withdrawals", async (req, res) => {
   try {

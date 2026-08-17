@@ -112,6 +112,43 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
+enum SubscriptionInterval {
+  MONTHLY
+  YEARLY
+}
+
+enum CommissionType {
+  PERCENTAGE
+  FIXED
+}
+
+enum CommissionStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum SettlementStatus {
+  PENDING
+  AWAITING_APPROVAL
+  APPROVED
+  REJECTED
+  RELEASED
+  FAILED
+}
+
+enum SettlementApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum string {
   CREDIT
   DEBIT
@@ -243,8 +280,16 @@ model User {
   payments            Payment[] @relation("CustomerPayments")
   wallet              Wallet?
 
-  sentMessages     Message[] @relation("SentMessages")
-  receivedMessages Message[] @relation("ReceivedMessages")
+  subscriptions        TransporterSubscription[]
+  subscriptionInvoices SubscriptionInvoice[]
+
+  commissionRulesCreated CommissionRule[] @relation("CommissionRuleCreator")
+  commissionRulesUpdated CommissionRule[] @relation("CommissionRuleUpdater")
+
+  transporterSettlements Settlement[]         @relation("TransporterSettlements")
+  settlementApprovals    SettlementApproval[] @relation("SettlementApprovals")
+  sentMessages           Message[]            @relation("SentMessages")
+  receivedMessages       Message[]            @relation("ReceivedMessages")
 
   notifications   Notification[]
   reviewsGiven    Review[]       @relation("ReviewsGiven")
@@ -379,6 +424,8 @@ model Booking {
   truckCategory   TruckCategory?
   transporterTier TransporterTier?
 
+  settlements Settlement[]
+
   estimatedFare Decimal? @db.Decimal(14, 2)
 
   pickupLocation       String
@@ -467,6 +514,8 @@ model Payment {
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 
+  settlement Settlement?
+
   booking       Booking               @relation(fields: [bookingId], references: [id])
   customer      User                  @relation("CustomerPayments", fields: [customerId], references: [id])
   webhookEvents PaymentWebhookEvent[]
@@ -491,6 +540,25 @@ model PaymentWebhookEvent {
 
   @@unique([provider, providerEventId])
   @@index([paymentId])
+  @@index([provider, eventType])
+  @@index([createdAt])
+}
+
+model YouverifyWebhookEvent {
+  id              String    @id @default(uuid())
+  provider        String
+  providerEventId String
+  eventType       String
+  documentId      String?
+  payload         Json
+  processed       Boolean   @default(false)
+  processedAt     DateTime?
+  createdAt       DateTime  @default(now())
+
+  document Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, providerEventId])
+  @@index([documentId])
   @@index([provider, eventType])
   @@index([createdAt])
 }
@@ -621,6 +689,8 @@ model Document {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  youverifyWebhookEvents YouverifyWebhookEvent[]
 
   @@index([userId, status])
 }
@@ -809,4 +879,147 @@ model RefreshSession {
   @@index([familyId])
   @@index([expiresAt])
   @@index([revokedAt])
+}
+
+model SubscriptionPlan {
+  id              String               @id @default(uuid())
+  name            String               @unique
+  description     String?
+  price           Decimal              @db.Decimal(14, 2)
+  currency        String               @default("NGN")
+  interval        SubscriptionInterval
+  transporterOnly Boolean              @default(true)
+  active          Boolean              @default(true)
+  features        Json?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  subscriptions TransporterSubscription[]
+  invoices      SubscriptionInvoice[]
+
+  @@index([active])
+}
+
+model TransporterSubscription {
+  id                 String             @id @default(uuid())
+  transporterId      String
+  planId             String
+  status             SubscriptionStatus @default(ACTIVE)
+  startedAt          DateTime           @default(now())
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelledAt        DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  transporter User                  @relation(fields: [transporterId], references: [id], onDelete: Cascade)
+  plan        SubscriptionPlan      @relation(fields: [planId], references: [id])
+  invoices    SubscriptionInvoice[]
+
+  @@index([transporterId])
+  @@index([planId])
+  @@index([status])
+  @@index([currentPeriodEnd])
+}
+
+model SubscriptionInvoice {
+  id                   String        @id @default(uuid())
+  subscriptionId       String
+  planId               String
+  transporterId        String
+  amount               Decimal       @db.Decimal(14, 2)
+  currency             String        @default("NGN")
+  status               PaymentStatus @default(PENDING)
+  transactionReference String?       @unique
+  periodStart          DateTime
+  periodEnd            DateTime
+  paidAt               DateTime?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  subscription TransporterSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  plan         SubscriptionPlan        @relation(fields: [planId], references: [id])
+  transporter  User                    @relation(fields: [transporterId], references: [id])
+
+  @@index([subscriptionId])
+  @@index([transporterId])
+  @@index([status])
+}
+
+model CommissionRule {
+  id              String           @id @default(uuid())
+  name            String
+  description     String?
+  type            CommissionType
+  rate            Decimal          @db.Decimal(14, 4)
+  currency        String?          @default("NGN")
+  minAmount       Decimal?         @db.Decimal(14, 2)
+  maxAmount       Decimal?         @db.Decimal(14, 2)
+  transporterTier TransporterTier?
+  status          CommissionStatus @default(ACTIVE)
+  effectiveFrom   DateTime         @default(now())
+  effectiveTo     DateTime?
+  createdBy       String
+  updatedBy       String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  creator User  @relation("CommissionRuleCreator", fields: [createdBy], references: [id])
+  updater User? @relation("CommissionRuleUpdater", fields: [updatedBy], references: [id])
+
+  settlements Settlement[]
+
+  @@index([status])
+  @@index([effectiveFrom])
+  @@index([transporterTier])
+}
+
+model Settlement {
+  id               String           @id @default(uuid())
+  bookingId        String
+  paymentId        String           @unique
+  transporterId    String
+  commissionRuleId String?
+  grossAmount      Decimal          @db.Decimal(14, 2)
+  commissionAmount Decimal          @db.Decimal(14, 2)
+  netAmount        Decimal          @db.Decimal(14, 2)
+  currency         String           @default("NGN")
+  status           SettlementStatus @default(PENDING)
+  requestedAt      DateTime         @default(now())
+  approvedAt       DateTime?
+  releasedAt       DateTime?
+  rejectedAt       DateTime?
+  rejectionReason  String?
+  approvedBy       String?
+  releasedBy       String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  booking        Booking              @relation(fields: [bookingId], references: [id])
+  payment        Payment              @relation(fields: [paymentId], references: [id])
+  transporter    User                 @relation("TransporterSettlements", fields: [transporterId], references: [id])
+  commissionRule CommissionRule?      @relation(fields: [commissionRuleId], references: [id])
+  approvals      SettlementApproval[]
+
+  @@index([bookingId])
+  @@index([transporterId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SettlementApproval {
+  id              String                   @id @default(uuid())
+  settlementId    String
+  administratorId String
+  status          SettlementApprovalStatus @default(PENDING)
+  decisionNote    String?
+  createdAt       DateTime                 @default(now())
+  decidedAt       DateTime?
+
+  settlement    Settlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+  administrator User       @relation("SettlementApprovals", fields: [administratorId], references: [id])
+
+  @@index([settlementId])
+  @@index([administratorId])
+  @@index([status])
 }

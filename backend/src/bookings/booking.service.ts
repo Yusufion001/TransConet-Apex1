@@ -2,6 +2,7 @@ import { prisma } from "../config/prisma.js";
 import { createShipmentEvent } from "../events/event.service.js";
 import { publishEvent } from "../realtime/event-bus.js";
 import { publishAdminEvent, publishBookingEvent } from "../realtime/realtime.service.js";
+import { createSettlement } from "../settlements/settlement.service.js";
 
 export async function createBooking(data: {
   customerId: string;
@@ -486,55 +487,6 @@ export async function confirmDelivery(
       throw new Error("Successful shipment payment not found");
     }
 
-    const wallet = await tx.wallet.findUnique({
-      where: {
-        transporterId: booking.transporterId,
-      },
-    });
-
-    if (!wallet) {
-      throw new Error("Transporter wallet not found");
-    }
-
-    /*
-     * Atomically release the pending payment.
-     *
-     * The balance condition is part of the UPDATE itself so concurrent
-     * delivery/payment operations cannot release more than the wallet
-     * actually holds in pendingBalance.
-     */
-    const released = await tx.wallet.updateMany({
-      where: {
-        id: wallet.id,
-        pendingBalance: {
-          gte: payment.amount,
-        },
-      },
-      data: {
-        pendingBalance: {
-          decrement: payment.amount,
-        },
-        availableBalance: {
-          increment: payment.amount,
-        },
-      },
-    });
-
-    if (released.count !== 1) {
-      throw new Error("Insufficient pending wallet balance");
-    }
-
-    await tx.walletTransaction.create({
-      data: {
-        walletId: wallet.id,
-        bookingId: booking.id,
-        amount: payment.amount,
-        transactionType: "PAYMENT_RELEASED",
-        description:
-          "Shipment payment released after delivery confirmation",
-      },
-    });
-
     if (booking.vehicleId) {
       await tx.vehicle.update({
         where: {
@@ -559,6 +511,7 @@ export async function confirmDelivery(
       booking: completedBooking,
       transporterId: booking.transporterId,
       vehicleId: booking.vehicleId,
+      paymentId: payment.id,
     };
   });
 
@@ -570,13 +523,18 @@ export async function confirmDelivery(
     data: result.booking,
   });
 
+  const settlement = await createSettlement(
+    bookingId,
+    result.paymentId,
+  );
+
   await createShipmentEvent({
     bookingId,
     actorId: result.transporterId,
     eventType: "DELIVERY_CONFIRMED",
     title: "Delivery confirmed",
     description:
-      "Delivery was confirmed and transporter payment was released.",
+      "Delivery was confirmed and a settlement was created for administrative approval.",
   });
 
   return result.booking;

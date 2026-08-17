@@ -74,6 +74,16 @@ export async function approveDocument(
       throw new Error("Document is already approved");
     }
 
+    if (
+      existingDocument.verificationProvider !== "YOUVERIFY" ||
+      !existingDocument.externalVerificationId ||
+      !existingDocument.verifiedAt
+    ) {
+      throw new Error(
+        "Document must have a successful Youverify verification before admin approval",
+      );
+    }
+
     const document = await tx.document.update({
       where: { id: documentId },
       data: {
