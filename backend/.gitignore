@@ -9,3 +9,8 @@ node_modules
 *.save
 
 .env.test
+
+# Local development snapshots and audit artifacts
+*.before-*
+protection-audit.txt
+routes-audit.txt
