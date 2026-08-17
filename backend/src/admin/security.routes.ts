@@ -5,6 +5,7 @@ import {
 } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
 import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import { requireSuperAdmin } from "../middleware/super-admin.middleware.js";
 import {
   getSecurityOverview,
   getSecurityAuditLogs,
@@ -92,6 +93,7 @@ router.get("/administrators/:id", async (req, res) => {
 
 router.patch(
   "/administrators/:id/unlock",
+  requireSuperAdmin,
   async (req: AuthenticatedRequest, res) => {
     try {
       const administrator = await unlockAdministrator(
@@ -115,6 +117,7 @@ router.patch(
 
 router.patch(
   "/administrators/:id/2fa",
+  requireSuperAdmin,
   async (req: AuthenticatedRequest, res) => {
     try {
       if (typeof req.body.enabled !== "boolean") {

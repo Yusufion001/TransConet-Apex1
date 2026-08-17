@@ -310,3 +310,112 @@ test("changeAdministratorStatus suspends a normal administrator and writes an au
     "admin-2",
   );
 });
+
+test("createAdministrator rejects a missing user", async () => {
+  mockFindUniqueSequence(activeSuperAdmin, null);
+
+  prismaMock.user.findUnique.mock.mockImplementation(
+    async () => null,
+  );
+
+  await assert.rejects(
+    createAdministrator({
+      creatorId: "super-admin-1",
+      userId: "missing-user",
+      administratorType: "SUPPORT_ADMIN",
+      assignedModules: ["SUPPORT_CARE"],
+    }),
+    { message: "User not found" },
+  );
+
+  assert.equal(
+    prismaMock.adminProfile.create.mock.calls.length,
+    0,
+  );
+});
+
+test("createAdministrator rejects a user who is not an ADMIN", async () => {
+  mockFindUniqueSequence(activeSuperAdmin, null);
+
+  prismaMock.user.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "user-2",
+      role: "CUSTOMER",
+    }),
+  );
+
+  await assert.rejects(
+    createAdministrator({
+      creatorId: "super-admin-1",
+      userId: "user-2",
+      administratorType: "SUPPORT_ADMIN",
+      assignedModules: ["SUPPORT_CARE"],
+    }),
+    { message: "The user role must be ADMIN" },
+  );
+
+  assert.equal(
+    prismaMock.adminProfile.create.mock.calls.length,
+    0,
+  );
+});
+
+test("createAdministrator rejects an existing administrator profile", async () => {
+  mockFindUniqueSequence(
+    activeSuperAdmin,
+    {
+      userId: "admin-2",
+      isSuperAdministrator: false,
+      administratorType: "SUPPORT_ADMIN",
+      status: "ACTIVE",
+    },
+  );
+
+  prismaMock.user.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "user-2",
+      role: "ADMIN",
+    }),
+  );
+
+  await assert.rejects(
+    createAdministrator({
+      creatorId: "super-admin-1",
+      userId: "user-2",
+      administratorType: "SUPPORT_ADMIN",
+      assignedModules: ["SUPPORT_CARE"],
+    }),
+    { message: "Administrator profile already exists" },
+  );
+
+  assert.equal(
+    prismaMock.adminProfile.create.mock.calls.length,
+    0,
+  );
+});
+
+test("createAdministrator rejects empty assigned modules", async () => {
+  prismaMock.adminProfile.findUnique.mock.mockImplementation(
+    async () => activeSuperAdmin,
+  );
+
+  await assert.rejects(
+    createAdministrator({
+      creatorId: "super-admin-1",
+      userId: "user-2",
+      administratorType: "SUPPORT_ADMIN",
+      assignedModules: [],
+    }),
+    { message: "At least one administrator module is required" },
+  );
+
+  assert.equal(
+    prismaMock.user.findUnique.mock.calls.length,
+    0,
+  );
+
+  assert.equal(
+    prismaMock.adminProfile.create.mock.calls.length,
+    0,
+  );
+});
