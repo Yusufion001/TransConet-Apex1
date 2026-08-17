@@ -1,4 +1,5 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
+import { z } from "zod";
 import {
   createBookingSchema,
   assignBookingSchema,
@@ -23,6 +24,77 @@ import {
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
 
+function handleBookingRouteError(
+  error: unknown,
+  res: Response,
+) {
+  const message =
+    error instanceof Error ? error.message : "Server error";
+
+  if (error instanceof z.ZodError) {
+    return res.status(400).json({
+      success: false,
+      error: "Invalid request data",
+      details: error.issues,
+    });
+  }
+
+  if (message === "Access denied") {
+    return res.status(403).json({
+      success: false,
+      error: message,
+    });
+  }
+
+  if (message === "Booking not found") {
+    return res.status(404).json({
+      success: false,
+      error: message,
+    });
+  }
+
+  if (
+    message === "Invalid transporter" ||
+    message === "Transporter account is not active" ||
+    message === "Vehicle does not belong to transporter" ||
+    message === "Vehicle is not approved"
+  ) {
+    return res.status(400).json({
+      success: false,
+      error: message,
+    });
+  }
+
+  if (
+    message.startsWith("Invalid booking status transition:") ||
+    message === "Vehicle is not available" ||
+    message === "Vehicle is already assigned to another booking" ||
+    message === "Proof of delivery can only be submitted after arrival" ||
+    message === "Delivery already confirmed" ||
+    message === "Shipment has not arrived" ||
+    message === "Successful shipment payment not found" ||
+    message === "Transporter wallet not found" ||
+    message === "Insufficient pending wallet balance"
+  ) {
+    return res.status(409).json({
+      success: false,
+      error: message,
+    });
+  }
+
+  if (message === "Invalid confirmation code") {
+    return res.status(400).json({
+      success: false,
+      error: message,
+    });
+  }
+
+  return res.status(500).json({
+    success: false,
+    error: message,
+  });
+}
+
 const router = Router();
 router.use(authenticate);
 
@@ -43,10 +115,7 @@ router.post(
       data: booking,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Server error",
-    });
+    handleBookingRouteError(error, res);
   }
 });
 
@@ -64,10 +133,7 @@ router.get("/customer/:customerId", async (req: AuthenticatedRequest, res) => {
       data: bookings,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Server error",
-    });
+    handleBookingRouteError(error, res);
   }
 });
 
@@ -96,13 +162,7 @@ router.get(
         data: bookings,
       });
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Server error",
-      });
+      handleBookingRouteError(error, res);
     }
   },
 );
@@ -130,10 +190,7 @@ router.get("/:id", async (req: AuthenticatedRequest, res) => {
       data: booking,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Server error",
-    });
+    handleBookingRouteError(error, res);
   }
 });
 
@@ -166,40 +223,7 @@ router.patch("/:id/assign", async (req: AuthenticatedRequest, res) => {
       data: booking,
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Server error";
-
-    if (message === "Booking not found" ||
-        message === "Transporter not found" ||
-        message === "Vehicle not found") {
-      return res.status(404).json({
-        success: false,
-        error: message,
-      });
-    }
-
-    if (message === "Vehicle is not available" ||
-        message === "Vehicle is already assigned to another booking") {
-      return res.status(409).json({
-        success: false,
-        error: message,
-      });
-    }
-
-    if (message === "Invalid transporter" ||
-        message === "Transporter account is not active" ||
-        message === "Vehicle does not belong to transporter" ||
-        message === "Vehicle is not approved") {
-      return res.status(400).json({
-        success: false,
-        error: message,
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      error: message,
-    });
+    handleBookingRouteError(error, res);
   }
 });
 
@@ -224,10 +248,7 @@ router.patch("/:id/status", async (req: AuthenticatedRequest, res) => {
       data: booking,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : "Server error",
-    });
+    handleBookingRouteError(error, res);
   }
 });
 router.patch(
@@ -255,13 +276,7 @@ router.patch(
         data: booking,
       });
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Server error",
-      });
+      handleBookingRouteError(error, res);
     }
   },
 );
@@ -289,13 +304,7 @@ router.patch(
         data: booking,
       });
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Server error",
-      });
+      handleBookingRouteError(error, res);
     }
   },
 );
