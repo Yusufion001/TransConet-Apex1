@@ -510,6 +510,7 @@ model Payment {
   currency             String        @default("NGN")
   provider             String
   transactionReference String        @unique
+  checkoutUrl          String?
   idempotencyKey       String?
   status               PaymentStatus @default(PENDING)
   createdAt            DateTime      @default(now())

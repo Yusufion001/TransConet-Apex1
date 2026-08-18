@@ -25,40 +25,78 @@ router.post(
       const rawBody =
         (req as typeof req & { rawBody?: Buffer }).rawBody;
 
-     const signature = req.header("X-Webhook-Signature");
+     const flutterwaveSignature =
+        req.header("flutterwave-signature")?.trim();
+     const legacyFlutterwaveHash =
+        req.header("verif-hash")?.trim();
+     const internalSignature =
+        req.header("X-Webhook-Signature")?.trim();
+
+     const signature =
+        flutterwaveSignature ||
+        legacyFlutterwaveHash ||
+        internalSignature;
+
+     const signatureType =
+        flutterwaveSignature
+          ? "flutterwave-signature"
+          : legacyFlutterwaveHash
+            ? "verif-hash"
+            : "internal";
+
       if (!rawBody || !signature) {
         return res.status(401).json({ success: false, error: "Webhook signature verification required" });
       }
 
 
     try {
-      const provider =
-        req.header("X-Payment-Provider")?.trim() ||
-        req.body?.provider;
+      /*
+       * Flutterwave webhook normalization.
+       *
+       * Flutterwave supplies the provider identity through its webhook
+       * signature and payload structure. We normalize that payload into
+       * the existing secure payment-webhook service contract.
+       */
+      const provider = "FLUTTERWAVE";
 
       const providerEventId =
         req.header("X-Provider-Event-Id")?.trim() ||
-        req.body?.providerEventId;
+        req.body?.providerEventId ||
+        req.body?.id ||
+        req.body?.webhook_id;
 
       const eventType =
         req.header("X-Event-Type")?.trim() ||
-        req.body?.eventType;
+        req.body?.eventType ||
+        req.body?.type ||
+        req.body?.event;
 
       const paymentId =
         req.body?.paymentId ||
+        req.body?.data?.paymentId ||
         req.header("X-Payment-Id")?.trim();
+
+      const transactionId =
+        req.body?.transactionId ||
+        req.body?.transaction_id ||
+        req.body?.data?.id ||
+        req.header("X-Transaction-Id")?.trim();
 
       const transactionReference =
         req.body?.transactionReference ||
         req.body?.transaction_reference ||
         req.body?.reference ||
+        req.body?.data?.tx_ref ||
+        req.body?.data?.transaction_reference ||
         req.header("X-Transaction-Reference")?.trim();
 
       const amount =
-        req.body?.amount;
+        req.body?.amount ??
+        req.body?.data?.amount;
 
       const currency =
-        req.body?.currency;
+        req.body?.currency ??
+        req.body?.data?.currency;
 
       const webhookData = paymentWebhookSchema.safeParse({
         provider,
@@ -66,6 +104,7 @@ router.post(
         eventType,
         paymentId,
         transactionReference,
+        transactionId,
         amount,
         currency,
       });
@@ -84,11 +123,13 @@ router.post(
   eventType,
   paymentId,
   transactionReference,
+  transactionId,
   amount,
   currency,
   payload: req.body,
   rawBody,
   signature,
+  signatureType,
 });
 
       return res.status(200).json({
@@ -146,7 +187,7 @@ router.post(
         });
       }
 
-      await assertBookingAccess(
+      const bookingAccess = await assertBookingAccess(
         bookingId,
         req.user!.id,
         req.user!.role,
@@ -166,17 +207,7 @@ router.post(
       const customerId =
         req.user!.role === "CUSTOMER"
           ? req.user!.id
-          : paymentInput.data.customerId!;
-
-      if (
-        req.user!.role === "CUSTOMER" &&
-        customerId !== req.user!.id
-      ) {
-        return res.status(403).json({
-          success: false,
-          error: "Customer ownership validation failed",
-        });
-      }
+          : bookingAccess.customerId;
 
       const payment = await initializePayment(
         bookingId,
@@ -279,7 +310,7 @@ router.get(
     try {
       const bookingId = String(req.params.bookingId);
 
-      await assertBookingAccess(
+      const bookingAccess = await assertBookingAccess(
         bookingId,
         req.user!.id,
         req.user!.role,

@@ -53,6 +53,7 @@ import {
 } from "./middleware/security-foundation.middleware.js";
 
 import { env } from "./config/env.js";
+import { applicationErrorMiddleware } from "./middleware/error.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 const app = express();
@@ -187,6 +188,8 @@ app.use(
   "/api/events",
   eventRoutes,
 );
+app.use(applicationErrorMiddleware);
+
 applySecurityErrorHandler(app);
 
 app.get("/health", (_req, res) => {

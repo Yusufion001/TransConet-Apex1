@@ -1,6 +1,10 @@
 import test, { mock } from "node:test";
 import assert from "node:assert/strict";
 import { Prisma } from "../generated/prisma/client.js";
+import {
+  toWalletDto,
+  toWithdrawalDto,
+} from "../src/wallet/wallet.dto.js";
 
 const prismaMock = {
   wallet: {
@@ -66,6 +70,8 @@ test("getWallet returns the transporter wallet with transactions and withdrawals
     transporterId: "transporter-1",
     availableBalance: "50000.00",
     pendingBalance: "10000.00",
+    createdAt: new Date("2026-08-18T10:00:00.000Z"),
+    updatedAt: new Date("2026-08-18T10:05:00.000Z"),
     transactions: [],
     withdrawals: [],
   };
@@ -76,7 +82,7 @@ test("getWallet returns the transporter wallet with transactions and withdrawals
 
   const result = await getWallet("transporter-1");
 
-  assert.deepEqual(result, wallet);
+  assert.deepEqual(result, toWalletDto(wallet));
   assert.equal(prismaMock.wallet.findUnique.mock.calls.length, 1);
 
   const call = prismaMock.wallet.findUnique.mock.calls[0];
@@ -105,6 +111,8 @@ test("createWallet creates a wallet and publishes an administration event", asyn
     transporterId: "transporter-1",
     availableBalance: 0,
     pendingBalance: 0,
+    createdAt: new Date("2026-08-18T10:00:00.000Z"),
+    updatedAt: new Date("2026-08-18T10:05:00.000Z"),
   };
 
   prismaMock.wallet.create.mock.mockImplementation(
@@ -113,7 +121,7 @@ test("createWallet creates a wallet and publishes an administration event", asyn
 
   const result = await createWallet("transporter-1");
 
-  assert.deepEqual(result, wallet);
+  assert.deepEqual(result, toWalletDto(wallet));
 
   assert.equal(prismaMock.wallet.create.mock.calls.length, 1);
   assert.deepEqual(
@@ -136,7 +144,7 @@ test("createWallet creates a wallet and publishes an administration event", asyn
         entityType: "WALLET",
         entityId: "wallet-1",
         actorId: "transporter-1",
-        data: wallet,
+        data: toWalletDto(wallet),
       },
     ],
   );
@@ -271,7 +279,11 @@ test("createWithdrawal allows an administrator to manage another transporter's w
     id: "withdrawal-1",
     walletId: "wallet-1",
     amount: "10000.00",
+    bankName: "Test Bank",
+    accountNumber: "0123456789",
+    accountName: "Test User",
     status: "PENDING",
+    createdAt: new Date("2026-08-18T10:00:00.000Z"),
   };
 
   prismaMock.withdrawal.create.mock.mockImplementation(
@@ -299,7 +311,7 @@ test("createWithdrawal allows an administrator to manage another transporter's w
     "ADMIN",
   );
 
-  assert.deepEqual(result, withdrawal);
+  assert.deepEqual(result, toWithdrawalDto(withdrawal));
   assert.equal(prismaMock.wallet.updateMany.mock.calls.length, 1);
   assert.equal(prismaMock.withdrawal.create.mock.calls.length, 1);
   assert.equal(prismaMock.walletTransaction.create.mock.calls.length, 1);
@@ -357,7 +369,11 @@ test("createWithdrawal atomically reserves balance and creates a pending withdra
     id: "withdrawal-1",
     walletId: "wallet-1",
     amount: "10000.00",
+    bankName: "Test Bank",
+    accountNumber: "0123456789",
+    accountName: "Test User",
     status: "PENDING",
+    createdAt: new Date("2026-08-18T10:00:00.000Z"),
   };
 
   prismaMock.withdrawal.create.mock.mockImplementation(
@@ -386,7 +402,7 @@ test("createWithdrawal atomically reserves balance and creates a pending withdra
     "TRANSPORTER",
   );
 
-  assert.deepEqual(result, withdrawal);
+  assert.deepEqual(result, toWithdrawalDto(withdrawal));
 
   assert.equal(prismaMock.$transaction.mock.calls.length, 1);
 

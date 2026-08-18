@@ -1,5 +1,6 @@
 import test, { mock } from "node:test";
 import assert from "node:assert/strict";
+import { toBookingDto } from "../src/bookings/booking.dto.js";
 
 const prismaMock = {
   booking: {
@@ -104,6 +105,43 @@ const {
   confirmDelivery,
 } = await import("../src/bookings/booking.service.js");
 
+function makeBooking(overrides: Record<string, any> = {}) {
+  const now = new Date();
+
+  return {
+    id: "booking-1",
+    customerId: "customer-1",
+    transporterId: null,
+    vehicleId: null,
+    cargoDescription: null,
+    truckCategory: null,
+    transporterTier: null,
+    estimatedFare: null,
+    pickupLocation: "Lagos",
+    destination: "Abuja",
+    pickupLatitude: 6.5244,
+    pickupLongitude: 3.3792,
+    destinationLatitude: 9.0765,
+    destinationLongitude: 7.3986,
+    scheduledDate: null,
+    cargoCategory: null,
+    cargoWeight: null,
+    status: "REQUESTED",
+    fare: 150000,
+    paymentStatus: "PENDING",
+    acceptedAt: null,
+    arrivedAt: null,
+    pickedUpAt: null,
+    inTransitAt: null,
+    deliveredAt: null,
+    completedAt: null,
+    proofOfDelivery: null,
+    createdAt: now,
+    updatedAt: now,
+    ...overrides,
+  };
+}
+
 function resetMocks() {
   createSettlementMock.mock.resetCalls();
   for (const fn of [
@@ -143,18 +181,7 @@ test.beforeEach(() => {
 });
 
 test("createBooking creates a booking and publishes shipment events", async () => {
-  const booking = {
-    id: "booking-1",
-    customerId: "customer-1",
-    pickupLocation: "Lagos",
-    destination: "Abuja",
-    pickupLatitude: 6.5244,
-    pickupLongitude: 3.3792,
-    destinationLatitude: 9.0765,
-    destinationLongitude: 7.3986,
-    fare: 150000,
-    status: "REQUESTED",
-  };
+  const booking = makeBooking();
 
   prismaMock.booking.create.mock.mockImplementation(
     async () => booking,
@@ -247,11 +274,7 @@ test("assertBookingAccess allows an administrator to access any booking", async 
 });
 
 test("getBookingById returns the requested booking", async () => {
-  const booking = {
-    id: "booking-1",
-    customerId: "customer-1",
-    status: "REQUESTED",
-  };
+  const booking = makeBooking();
 
   prismaMock.booking.findUnique.mock.mockImplementation(
     async () => booking,
@@ -259,7 +282,7 @@ test("getBookingById returns the requested booking", async () => {
 
   const result = await getBookingById("booking-1");
 
-  assert.deepEqual(result, booking);
+  assert.deepEqual(result, toBookingDto(booking));
   assert.equal(
     prismaMock.booking.findUnique.mock.calls.length,
     1,
@@ -285,12 +308,11 @@ test("assignBooking assigns an approved available vehicle and transporter", asyn
     verificationStatus: "APPROVED",
   }));
 
-  const updatedBooking = {
-    id: "booking-1",
+  const updatedBooking = makeBooking({
     transporterId: "transporter-1",
     vehicleId: "vehicle-1",
     status: "ASSIGNED",
-  };
+  });
 
   prismaMock.booking.update.mock.mockImplementation(
     async () => updatedBooking,
@@ -384,13 +406,11 @@ test("updateBookingStatus accepts an assigned booking", async () => {
     vehicleId: "vehicle-1",
   }));
 
-  const updatedBooking = {
-    id: "booking-1",
+  const updatedBooking = makeBooking({
     status: "ACCEPTED",
     transporterId: "transporter-1",
     vehicleId: "vehicle-1",
-    updatedAt: new Date(),
-  };
+  });
 
   prismaMock.booking.update.mock.mockImplementation(
     async () => updatedBooking,
@@ -450,8 +470,8 @@ test("updateBookingStatus rejects an invalid status transition", async () => {
 
 test("getCustomerBookings returns bookings ordered by creation time", async () => {
   const bookings = [
-    { id: "booking-2", customerId: "customer-1" },
-    { id: "booking-1", customerId: "customer-1" },
+    makeBooking({ id: "booking-2" }),
+    makeBooking({ id: "booking-1" }),
   ];
 
   prismaMock.booking.findMany.mock.mockImplementation(
@@ -460,7 +480,7 @@ test("getCustomerBookings returns bookings ordered by creation time", async () =
 
   const result = await getCustomerBookings("customer-1");
 
-  assert.deepEqual(result, bookings);
+  assert.deepEqual(result, bookings.map(toBookingDto));
 
   const call =
     prismaMock.booking.findMany.mock.calls[0]?.arguments[0];
@@ -476,8 +496,8 @@ test("getCustomerBookings returns bookings ordered by creation time", async () =
 
 test("getTransporterBookings returns transporter bookings ordered by creation time", async () => {
   const bookings = [
-    { id: "booking-2", transporterId: "transporter-1" },
-    { id: "booking-1", transporterId: "transporter-1" },
+    makeBooking({ id: "booking-2", transporterId: "transporter-1" }),
+    makeBooking({ id: "booking-1", transporterId: "transporter-1" }),
   ];
 
   prismaMock.booking.findMany.mock.mockImplementation(
@@ -487,7 +507,7 @@ test("getTransporterBookings returns transporter bookings ordered by creation ti
   const result =
     await getTransporterBookings("transporter-1");
 
-  assert.deepEqual(result, bookings);
+  assert.deepEqual(result, bookings.map(toBookingDto));
 
   const call =
     prismaMock.booking.findMany.mock.calls[0]?.arguments[0];
@@ -509,12 +529,11 @@ test("uploadProofOfDelivery accepts proof after arrival", async () => {
     }),
   );
 
-  const updatedBooking = {
-    id: "booking-1",
+  const updatedBooking = makeBooking({
     status: "ARRIVED",
     proofOfDelivery: "https://example.com/proof.jpg",
     deliveryConfirmationCode: "123456",
-  };
+  });
 
   prismaMock.booking.update.mock.mockImplementation(
     async () => updatedBooking,
@@ -526,7 +545,7 @@ test("uploadProofOfDelivery accepts proof after arrival", async () => {
     "123456",
   );
 
-  assert.deepEqual(result, updatedBooking);
+  assert.deepEqual(result, toBookingDto(updatedBooking));
 
   const call =
     prismaMock.booking.update.mock.calls[0]?.arguments[0];
@@ -600,11 +619,11 @@ test("confirmDelivery completes delivery and creates a settlement", async () => 
   );
 
   prismaMock.booking.update.mock.mockImplementation(
-    async () => ({
-      id: "booking-1",
-      status: "COMPLETED",
-      paymentStatus: "SUCCESS",
-    }),
+    async () =>
+      makeBooking({
+        status: "COMPLETED",
+        paymentStatus: "SUCCESS",
+      }),
   );
 
   createSettlementMock.mock.mockImplementation(

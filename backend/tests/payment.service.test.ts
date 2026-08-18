@@ -1,6 +1,7 @@
 import test, { mock } from "node:test";
 import assert from "node:assert/strict";
 import { Prisma } from "../generated/prisma/client.js";
+import { toPaymentDto } from "../src/payments/dto/payment.dto.js";
 
 const prismaMock = {
   booking: {
@@ -21,6 +22,7 @@ const prismaMock = {
     findFirst: mock.fn<(...args: any[]) => any>(),
     findUnique: mock.fn<(...args: any[]) => any>(),
     create: mock.fn<(...args: any[]) => any>(),
+    update: mock.fn<(...args: any[]) => any>(),
     updateMany: mock.fn<(...args: any[]) => any>(),
     findMany: mock.fn<(...args: any[]) => any>(),
   },
@@ -65,6 +67,15 @@ mock.module("../src/realtime/event-bus.js", {
   },
 });
 
+const initializeFlutterwavePaymentMock =
+  mock.fn<(...args: any[]) => any>();
+
+mock.module("../src/payments/flutterwave.service.js", {
+  exports: {
+    initializeFlutterwavePayment: initializeFlutterwavePaymentMock,
+  },
+});
+
 const {
   initializePayment,
   getPaymentById,
@@ -83,6 +94,7 @@ function resetMocks() {
     prismaMock.payment.findFirst,
     prismaMock.payment.findUnique,
     prismaMock.payment.create,
+    prismaMock.payment.update,
     prismaMock.payment.updateMany,
     prismaMock.payment.findMany,
     prismaMock.wallet.findUnique,
@@ -92,6 +104,7 @@ function resetMocks() {
     createNotificationMock,
     publishEventMock,
     createSettlementMock,
+    initializeFlutterwavePaymentMock,
   ]) {
     fn.mock.resetCalls();
   }
@@ -116,6 +129,12 @@ test("initializePayment uses the booking fare as the authoritative amount", asyn
     id: "booking-1",
     customerId: "customer-1",
     fare,
+    customer: {
+      firstName: "Test",
+      lastName: "Customer",
+      email: "customer@example.com",
+      phone: "+2348000000000",
+    },
   }));
 
   prismaMock.payment.findFirst.mock.mockImplementation(async () => null);
@@ -125,6 +144,23 @@ test("initializePayment uses the booking fare as the authoritative amount", asyn
     ...data,
     currency: "NGN",
     status: "PENDING",
+  }));
+
+  initializeFlutterwavePaymentMock.mock.mockImplementation(async () => ({
+    link: "https://checkout.example.com/payment-1",
+  }));
+
+  prismaMock.payment.update.mock.mockImplementation(async ({ data }: any) => ({
+    id: "payment-1",
+    bookingId: "booking-1",
+    customerId: "customer-1",
+    amount: fare,
+    currency: "NGN",
+    provider: "FLUTTERWAVE",
+    transactionReference: "TXN-test",
+    idempotencyKey: "idempotency-key-123456",
+    status: "PENDING",
+    checkoutUrl: data.checkoutUrl,
   }));
 
   const result = await initializePayment(
@@ -141,7 +177,7 @@ test("initializePayment uses the booking fare as the authoritative amount", asyn
   assert.equal(createCall.data.customerId, "customer-1");
   assert(createCall.data.amount.equals(fare));
   assert.equal(createCall.data.status, "PENDING");
-  assert.equal(createCall.data.provider, "TEST_PROVIDER");
+  assert.equal(createCall.data.provider, "FLUTTERWAVE");
 
   assert.equal(publishEventMock.mock.calls.length, 1);
   assert.equal(publishEventMock.mock.calls[0]?.arguments[0], "admin");
@@ -269,14 +305,19 @@ test("getPaymentById returns the requested payment", async () => {
     bookingId: "booking-1",
     customerId: "customer-1",
     amount: new Prisma.Decimal("150000.00"),
+    currency: "NGN",
+    provider: "FLUTTERWAVE",
+    transactionReference: "TXN-test-payment-1",
     status: "PENDING",
+    createdAt: new Date("2026-08-18T10:00:00.000Z"),
+    updatedAt: new Date("2026-08-18T10:05:00.000Z"),
   };
 
   prismaMock.payment.findUnique.mock.mockImplementation(async () => payment);
 
   const result = await getPaymentById("payment-1");
 
-  assert.deepEqual(result, payment);
+  assert.deepEqual(result, toPaymentDto(payment));
   assert.deepEqual(
     prismaMock.payment.findUnique.mock.calls[0]?.arguments[0],
     {
@@ -289,15 +330,37 @@ test("getPaymentById returns the requested payment", async () => {
 
 test("getBookingPayments returns payments newest first", async () => {
   const payments = [
-    { id: "payment-2" },
-    { id: "payment-1" },
+    {
+      id: "payment-2",
+      bookingId: "booking-1",
+      customerId: "customer-1",
+      amount: new Prisma.Decimal("200000.00"),
+      currency: "NGN",
+      provider: "FLUTTERWAVE",
+      transactionReference: "TXN-test-payment-2",
+      status: "PENDING",
+      createdAt: new Date("2026-08-18T11:00:00.000Z"),
+      updatedAt: new Date("2026-08-18T11:05:00.000Z"),
+    },
+    {
+      id: "payment-1",
+      bookingId: "booking-1",
+      customerId: "customer-1",
+      amount: new Prisma.Decimal("150000.00"),
+      currency: "NGN",
+      provider: "FLUTTERWAVE",
+      transactionReference: "TXN-test-payment-1",
+      status: "SUCCESS",
+      createdAt: new Date("2026-08-18T10:00:00.000Z"),
+      updatedAt: new Date("2026-08-18T10:05:00.000Z"),
+    },
   ];
 
   prismaMock.payment.findMany.mock.mockImplementation(async () => payments);
 
   const result = await getBookingPayments("booking-1");
 
-  assert.deepEqual(result, payments);
+  assert.deepEqual(result, payments.map(toPaymentDto));
 });
 
 

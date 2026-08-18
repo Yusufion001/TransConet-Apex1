@@ -5,6 +5,7 @@ import { createShipmentEvent } from "../events/event.service.js";
 import { publishEvent } from "../realtime/event-bus.js";
 import { createSettlement } from "../settlements/settlement.service.js";
 import { toPaymentDto } from "./dto/payment.dto.js";
+import { initializeFlutterwavePayment } from "./flutterwave.service.js";
 
 
 function createTransactionReference() {
@@ -30,6 +31,14 @@ export async function initializePayment(
       id: true,
       customerId: true,
       fare: true,
+      customer: {
+        select: {
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+        },
+      },
     },
   });
 
@@ -75,7 +84,7 @@ export async function initializePayment(
         bookingId,
         customerId,
         amount,
-        provider: "TEST_PROVIDER",
+        provider: "FLUTTERWAVE",
         transactionReference:
           createTransactionReference(),
         idempotencyKey,
@@ -120,6 +129,26 @@ export async function initializePayment(
     throw error;
   }
 
+  const flutterwavePayment = await initializeFlutterwavePayment({
+    txRef: payment.transactionReference,
+    amount: payment.amount.toString(),
+    currency: payment.currency,
+    customer: {
+      email: booking.customer.email,
+      name: `${booking.customer.firstName} ${booking.customer.lastName}`.trim(),
+      phonenumber: booking.customer.phone,
+    },
+  });
+
+  const paymentWithCheckout = await prisma.payment.update({
+    where: {
+      id: payment.id,
+    },
+    data: {
+      checkoutUrl: flutterwavePayment.link,
+    },
+  });
+
   publishEvent("admin", {
     eventType: "PAYMENT_INITIALIZED",
     module: "FINANCIAL_OPERATIONS",
@@ -136,7 +165,7 @@ export async function initializePayment(
     },
   });
 
-  return payment;
+  return paymentWithCheckout;
 }
 
 export async function getPaymentById(
