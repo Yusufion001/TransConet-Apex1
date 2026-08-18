@@ -1,0 +1,45 @@
+=================================
+TransConet-Apex1 Backend Summary
+=================================
+
+AUTHENTICATION
+JWT references: 8
+Refresh tokens: 35
+Password reset: 12
+
+AUTHORIZATION
+authenticate(): 82
+authorize(): 17
+requireAdmin(): 100
+
+ZOD VALIDATION
+z.object(): 26
+parse(): 20
+
+DTO EXPOSURE
+password fields: 25
+refreshToken fields: 10
+
+AUDIT LOGGING
+AuditLog references: 5
+
+FINANCIAL CONCURRENCY
+$transaction usage: 26
+idempotency references: 11
+
+WEBHOOKS
+Webhook references: 70
+Signature verification: 2
+
+REALTIME
+publishEvent(): 70
+
+TESTS
+Test files: 15
+
+PRISMA
+Models: 30
+Enums: 31
+
+GIT
+Modified files: 2

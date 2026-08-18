@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { z } from "zod";
+import { contentCreateSchema, contentUpdateSchema } from "../admin/admin.validators.js";
 import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
@@ -19,13 +21,17 @@ router.use(requireAdminModule("CONTENT_MANAGEMENT"));
 
 router.post("/", async (req: AuthenticatedRequest, res) => {
   try {
+    const input = contentCreateSchema.parse(req.body);
     const content = await createContent({
-      ...req.body,
+      ...input,
       createdBy: req.user!.id,
     });
 
     res.json({ success: true, data: content });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, error: error.issues });
+    }
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Server error",
@@ -42,6 +48,9 @@ router.get("/", async (req: AuthenticatedRequest, res) => {
 
     res.json({ success: true, data: content });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, error: error.issues });
+    }
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Server error",
@@ -62,6 +71,9 @@ router.get("/:id", async (req: AuthenticatedRequest, res) => {
 
     res.json({ success: true, data: content });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, error: error.issues });
+    }
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Server error",
@@ -71,16 +83,20 @@ router.get("/:id", async (req: AuthenticatedRequest, res) => {
 
 router.patch("/:id", async (req: AuthenticatedRequest, res) => {
   try {
+    const input = contentUpdateSchema.parse(req.body);
     const content = await updateContent(
       String(req.params.id),
       {
-        ...req.body,
+        ...input,
         updatedBy: req.user!.id,
       },
     );
 
     res.json({ success: true, data: content });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, error: error.issues });
+    }
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Server error",
@@ -97,6 +113,9 @@ router.patch("/:id/publish", async (req: AuthenticatedRequest, res) => {
 
     res.json({ success: true, data: content });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, error: error.issues });
+    }
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Server error",

@@ -1,0 +1,1549 @@
+=========================================
+TransConet-Apex1 Backend Audit
+Generated: Tue Aug 18 07:04:48 WAT 2026
+=========================================
+
+===== GIT STATUS =====
+?? audits/
+?? scripts/
+
+===== TYPESCRIPT =====
+
+> backend@1.0.0 typecheck
+> tsc --noEmit
+
+
+===== TESTS =====
+
+> backend@1.0.0 test
+> node --experimental-test-module-mocks --import tsx --test tests/**/*.test.ts
+
+(node:27781) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ requireAdminModule rejects unauthenticated requests (18.654948ms)
+✔ requireAdminModule rejects non-admin users (0.885ms)
+✔ requireAdminModule rejects an administrator without an AdminProfile (1.278646ms)
+✔ requireAdminModule rejects an inactive administrator (0.918073ms)
+✔ requireAdminModule allows an administrator with the assigned module (1.401458ms)
+✔ requireAdminModule rejects an administrator without the assigned module (1.249948ms)
+✔ requireAdminModule allows an active Super Administrator regardless of assigned modules (2.979323ms)
+✔ requireAdminModule allows SUPER_ADMIN administrator type (2.377136ms)
+✔ requireAdminModule returns 500 when privilege verification fails (2.849688ms)
+(node:27782) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ createAdministrator rejects a non-Super Administrator creator (22.79802ms)
+✔ createAdministrator rejects a second Super Administrator (1.591719ms)
+✔ createAdministrator creates a normal administrator and audit log (6.299166ms)
+✔ updateAdministrator refuses to modify the Super Administrator (9.153958ms)
+✔ changeAdministratorStatus refuses to suspend the Super Administrator (1.437396ms)
+✔ changeAdministratorStatus suspends a normal administrator and writes an audit log (1.738594ms)
+✔ createAdministrator rejects a missing user (1.464323ms)
+✔ createAdministrator rejects a user who is not an ADMIN (0.900052ms)
+✔ createAdministrator rejects an existing administrator profile (0.95974ms)
+✔ createAdministrator rejects empty assigned modules (1.173125ms)
+(node:27783) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ authenticate rejects an invalid JWT (11.598333ms)
+✔ authenticate rejects a refresh token presented as an access token (25.036354ms)
+✔ authenticate rejects an access token signed with the refresh secret (6.210573ms)
+✔ authenticate rejects a valid token when the user does not exist (4.102656ms)
+✔ authenticate rejects a suspended user (6.239271ms)
+✔ authenticate rejects a blocked user (2.262552ms)
+✔ authenticate accepts an active customer (2.300833ms)
+✔ authenticate uses the database role instead of trusting the JWT role (1.759687ms)
+✔ authenticate rejects an inactive administrator (2.265ms)
+✔ authenticate accepts an active administrator (2.060208ms)
+✔ authenticate rejects requests without an Authorization header (8.016302ms)
+✔ authorize rejects unauthenticated requests (0.774375ms)
+✔ authorize rejects a user with an unauthorized role (0.515209ms)
+✔ authorize allows a user with the required role (0.593386ms)
+✔ authorize accepts any of multiple allowed roles (0.644063ms)
+(node:27790) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ registerUser rejects an existing email or phone account (696.423229ms)
+✔ registerUser creates a customer profile and issues tokens (630.411719ms)
+✔ registerUser creates a transporter profile for transporter accounts (552.610677ms)
+✔ loginUser rejects an unknown account (1.877656ms)
+✔ loginUser rejects an incorrect password (10.594375ms)
+✔ loginUser accepts an active customer and issues tokens (9.761719ms)
+✔ loginUser rejects a suspended account before password authentication (1.117916ms)
+✔ loginUser rejects an administrator without an admin profile (1.002188ms)
+✔ loginUser rejects a locked administrator (7.717083ms)
+✔ loginUser locks an administrator after the fifth failed password (9.778333ms)
+✔ loginUser accepts an active administrator and resets security counters (9.019948ms)
+✔ forgotPassword returns a generic response for an unknown account (1.252448ms)
+✔ forgotPassword stores a hashed reset token and sends the reset email (1.425312ms)
+✔ forgotPassword does not expose email delivery failures (1.346458ms)
+✔ resetPassword rejects an invalid reset token (1.05474ms)
+✔ resetPassword rejects an expired reset token (0.874219ms)
+✔ resetPassword updates the password and invalidates refresh sessions (557.448437ms)
+✔ refreshAccessToken rotates a valid refresh token (9.737292ms)
+✔ refreshAccessToken detects reuse of a revoked token and revokes its family (3.185052ms)
+✔ refreshAccessToken detects a rotation race and revokes the refresh-token family (3.682395ms)
+(node:27796) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ createBooking creates a booking and publishes shipment events (8.470052ms)
+✔ assertBookingAccess allows a customer to read their own booking (1.30599ms)
+✔ assertBookingAccess denies a customer access to another customer's booking (5.208229ms)
+✔ assertBookingAccess allows an administrator to access any booking (2.579479ms)
+✔ getBookingById returns the requested booking (3.515938ms)
+✔ assignBooking assigns an approved available vehicle and transporter (10.45026ms)
+✔ assignBooking rejects a vehicle that is not available (3.229896ms)
+✔ updateBookingStatus accepts an assigned booking (4.923698ms)
+✔ updateBookingStatus rejects an invalid status transition (2.152448ms)
+✔ getCustomerBookings returns bookings ordered by creation time (2.402813ms)
+✔ getTransporterBookings returns transporter bookings ordered by creation time (0.805469ms)
+✔ uploadProofOfDelivery accepts proof after arrival (0.952968ms)
+✔ uploadProofOfDelivery rejects proof before arrival (1.571198ms)
+✔ confirmDelivery completes delivery and creates a settlement (4.386302ms)
+✔ confirmDelivery rejects an invalid confirmation code (11.547865ms)
+✔ confirmDelivery rejects delivery when successful payment is missing (3.207448ms)
+✔ confirmDelivery rejects a booking that has no transporter (1.839844ms)
+(node:27837) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ getLiveTrips loads all live trips when no filters are supplied (19.530157ms)
+✔ getLiveTrips filters by a valid live-trip status (1.055052ms)
+✔ getLiveTrips ignores an invalid status and returns all live statuses (0.909166ms)
+✔ getLiveTrips applies transporter and vehicle filters (1.240156ms)
+✔ getLiveTripById only returns a booking that is currently live (1.559115ms)
+✔ getLiveTripById returns null for a non-live booking (0.89276ms)
+✔ getLiveTripSummary returns counts for every live-trip status (1.676459ms)
+✔ getLiveTripTracking returns tracking points in descending time order (1.754375ms)
+✔ getLiveTripTracking respects the requested limit and cursor (1.497031ms)
+✔ getLiveTripTracking caps the requested limit at 500 (1.332656ms)
+✔ getLiveTripTracking returns null for a booking that is not live (0.568021ms)
+(node:27838) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ initializePayment uses the booking fare as the authoritative amount (22.616927ms)
+✔ initializePayment rejects a missing booking (7.414583ms)
+✔ initializePayment rejects access to another customer's booking (4.472709ms)
+✔ initializePayment rejects a booking with an invalid fare (1.224062ms)
+✔ initializePayment returns the existing payment for the same idempotency key (2.563177ms)
+✔ initializePayment rejects idempotency-key reuse with different parameters (1.325104ms)
+✔ getPaymentById returns the requested payment (2.339323ms)
+✔ getBookingPayments returns payments newest first (0.9875ms)
+✔ completePayment marks payment successful and moves funds into transporter pending balance (10.934166ms)
+✔ completePayment rejects a missing payment (2.269895ms)
+✔ completePayment returns an already completed payment without duplicating processing (1.06125ms)
+✔ completePayment rejects a refunded payment (0.839115ms)
+✔ completePayment rejects when the atomic payment claim fails (0.925625ms)
+✔ completePayment rejects when the transporter wallet is missing (1.230781ms)
+(node:27871) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ security routes protect unlock and 2FA with requireSuperAdmin (4.807136ms)
+(node:27896) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ getSecurityOverview returns administrator security counts and recent audit logs (11.167864ms)
+✔ getSecurityAuditLogs applies administrator, affected-user and action filters (1.265938ms)
+✔ getSecurityAuditLogs caps the limit at 200 (0.763437ms)
+✔ getSecurityAuditLogs enforces a minimum limit of 1 (0.929114ms)
+✔ getAdministratorSecurity returns the administrator security profile (1.319375ms)
+✔ getAdministratorSecurity returns null when administrator does not exist (0.931719ms)
+✔ unlockAdministrator rejects a missing administrator (2.064115ms)
+✔ unlockAdministrator resets lock state, writes an audit log and publishes a realtime event (1.694636ms)
+✔ setAdministratorTwoFactor rejects a missing administrator (1.222448ms)
+✔ setAdministratorTwoFactor enables 2FA and records the security change (1.544167ms)
+✔ setAdministratorTwoFactor disables 2FA and publishes the correct event (0.752032ms)
+(node:27897) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ releaseSettlement rejects when pending wallet balance is insufficient (11.064948ms)
+(node:27926) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ requireSuperAdmin rejects unauthenticated requests (10.313802ms)
+✔ requireSuperAdmin rejects non-admin users (0.971823ms)
+✔ requireSuperAdmin rejects a normal administrator (1.238281ms)
+✔ requireSuperAdmin rejects an inactive Super Administrator (1.165678ms)
+✔ requireSuperAdmin allows an active Super Administrator (1.540313ms)
+(node:27944) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ recordVehicleLocation records a valid location and publishes a realtime event (12.242187ms)
+✔ recordVehicleLocation rejects a missing booking (2.968697ms)
+✔ recordVehicleLocation rejects a booking that is not in transit (1.362761ms)
+✔ recordVehicleLocation rejects a transporter who is not assigned to the booking (1.384792ms)
+✔ recordVehicleLocation rejects a booking without an assigned vehicle (1.536093ms)
+✔ recordVehicleLocation rejects a vehicle belonging to another transporter (1.281458ms)
+✔ recordVehicleLocation records a location when optional GPS metadata is omitted (1.564271ms)
+✔ recordVehicleLocation does not publish an event when the transaction fails (0.990416ms)
+(node:27950) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ assertVehicleAccess allows a transporter to access their own vehicle (9.213646ms)
+✔ assertVehicleAccess denies another transporter access to the vehicle (1.898646ms)
+✔ assertVehicleAccess allows an administrator to access any vehicle (0.857448ms)
+✔ assertVehicleAccess rejects a missing vehicle (0.845208ms)
+✔ createVehicle creates the vehicle and publishes an administration event (2.732396ms)
+✔ getVehicleById returns the requested vehicle (1.14573ms)
+✔ updateVehicle updates the vehicle and publishes an administration event (1.259635ms)
+(node:27957) ExperimentalWarning: Module mocking is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ getWallet returns the transporter wallet with transactions and withdrawals (10.296041ms)
+✔ createWallet creates a wallet and publishes an administration event (1.525052ms)
+✔ createWithdrawal rejects a zero withdrawal amount (2.438177ms)
+✔ createWithdrawal rejects a negative withdrawal amount (0.866718ms)
+✔ createWithdrawal rejects a non-finite withdrawal amount (1.00474ms)
+✔ createWithdrawal rejects a missing wallet (1.396666ms)
+✔ createWithdrawal denies a transporter access to another transporter's wallet (0.944844ms)
+✔ createWithdrawal allows an administrator to manage another transporter's wallet (1.850105ms)
+✔ createWithdrawal rejects insufficient available balance (1.237187ms)
+✔ createWithdrawal atomically reserves balance and creates a pending withdrawal (3.189271ms)
+ℹ tests 139
+ℹ suites 0
+ℹ pass 139
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4263.004269
+
+===== AUTHENTICATION =====
+src/config/env.ts:8:  JWT_ACCESS_SECRET: z.string().min(32),
+src/config/env.ts:9:  JWT_REFRESH_SECRET: z.string().min(32),
+src/middleware/auth.middleware.ts:1:import jwt from "jsonwebtoken";
+src/middleware/auth.middleware.ts:11:type AccessTokenPayload = {
+src/middleware/auth.middleware.ts:40:function verifyAccessToken(
+src/middleware/auth.middleware.ts:42:): AccessTokenPayload {
+src/middleware/auth.middleware.ts:43:  const payload = jwt.verify(
+src/middleware/auth.middleware.ts:45:    env.JWT_ACCESS_SECRET,
+src/middleware/auth.middleware.ts:98:      verifyAccessToken(token);
+src/middleware/auth.middleware.ts:153:     * Never trust the role supplied by the JWT.
+src/server.ts:4:import jwt from "jsonwebtoken";
+src/server.ts:82:    const payload = jwt.verify(token, env.JWT_ACCESS_SECRET);
+src/routes/auth.routes.ts:6:  forgotPassword,
+src/routes/auth.routes.ts:9:  refreshAccessToken,
+src/routes/auth.routes.ts:11:  resetPassword,
+src/routes/auth.routes.ts:46:const forgotPasswordSchema = z.object({
+src/routes/auth.routes.ts:50:const resetPasswordSchema = z.object({
+src/routes/auth.routes.ts:55:const refreshSchema = z.object({
+src/routes/auth.routes.ts:56:  refreshToken: z.string().min(1),
+src/routes/auth.routes.ts:122:router.post("/refresh", async (req, res) => {
+src/routes/auth.routes.ts:124:    const input = refreshSchema.parse(req.body);
+src/routes/auth.routes.ts:125:    const result = await refreshAccessToken(input.refreshToken);
+src/routes/auth.routes.ts:128:    return res.status(401).json({ success: false, error: "Invalid refresh token" });
+src/routes/auth.routes.ts:143:    const input = forgotPasswordSchema.parse(req.body);
+src/routes/auth.routes.ts:145:    const result = await forgotPassword(input.identifier);
+src/routes/auth.routes.ts:166:    const input = resetPasswordSchema.parse(req.body);
+src/routes/auth.routes.ts:168:    const result = await resetPassword(
+src/services/auth.service.ts:2:import jwt from "jsonwebtoken";
+src/services/auth.service.ts:11:type RefreshTokenPayload = {
+src/services/auth.service.ts:13:  type: "refresh";
+src/services/auth.service.ts:22:function createAccessToken(userId: string, role: UserRole) {
+src/services/auth.service.ts:23:  return jwt.sign(
+src/services/auth.service.ts:29:    env.JWT_ACCESS_SECRET,
+src/services/auth.service.ts:36:function createRefreshToken(
+src/services/auth.service.ts:41:  return jwt.sign(
+src/services/auth.service.ts:44:      type: "refresh",
+src/services/auth.service.ts:48:    env.JWT_REFRESH_SECRET,
+src/services/auth.service.ts:55:function verifyRefreshToken(
+src/services/auth.service.ts:57:): RefreshTokenPayload {
+src/services/auth.service.ts:58:  const payload = jwt.verify(
+src/services/auth.service.ts:60:    env.JWT_REFRESH_SECRET,
+src/services/auth.service.ts:69:    payload.type !== "refresh"
+src/services/auth.service.ts:71:    throw new Error("Invalid refresh token");
+src/services/auth.service.ts:78:    type: "refresh",
+src/services/auth.service.ts:82:async function createRefreshSession(
+src/services/auth.service.ts:88:  const refreshToken = createRefreshToken(
+src/services/auth.service.ts:99:  await prisma.refreshSession.create({
+src/services/auth.service.ts:104:      tokenHash: hashToken(refreshToken),
+src/services/auth.service.ts:110:    refreshToken,
+src/services/auth.service.ts:121:  const accessToken = createAccessToken(
+src/services/auth.service.ts:127:    await createRefreshSession(userId);
+src/services/auth.service.ts:130:    accessToken,
+src/services/auth.service.ts:131:    refreshToken: session.refreshToken,
+src/services/auth.service.ts:322:export async function forgotPassword(
+src/services/auth.service.ts:359:      resetPasswordToken:
+src/services/auth.service.ts:361:      resetPasswordExpiresAt:
+src/services/auth.service.ts:384:export async function resetPassword(
+src/services/auth.service.ts:394:        resetPasswordToken:
+src/services/auth.service.ts:406:    !user.resetPasswordExpiresAt ||
+src/services/auth.service.ts:407:    user.resetPasswordExpiresAt <=
+src/services/auth.service.ts:429:          resetPasswordToken: null,
+src/services/auth.service.ts:430:          resetPasswordExpiresAt: null,
+src/services/auth.service.ts:436:       * refresh-token family for this user.
+src/services/auth.service.ts:438:      await tx.refreshSession.updateMany({
+src/services/auth.service.ts:456:async function revokeRefreshFamily(
+src/services/auth.service.ts:460:  await prisma.refreshSession.updateMany({
+src/services/auth.service.ts:477:export async function refreshAccessToken(
+src/services/auth.service.ts:478:  refreshToken: string,
+src/services/auth.service.ts:480:  let payload: RefreshTokenPayload;
+src/services/auth.service.ts:484:      verifyRefreshToken(
+src/services/auth.service.ts:485:        refreshToken,
+src/services/auth.service.ts:489:      "Invalid refresh token",
+src/services/auth.service.ts:494:    await prisma.refreshSession.findUnique({
+src/services/auth.service.ts:502:      "Invalid refresh token",
+src/services/auth.service.ts:508:   * using it again is a refresh-token reuse event.
+src/services/auth.service.ts:516:    await revokeRefreshFamily(
+src/services/auth.service.ts:522:      "Refresh token reuse detected",
+src/services/auth.service.ts:533:      "Invalid refresh token",
+src/services/auth.service.ts:541:    await revokeRefreshFamily(
+src/services/auth.service.ts:546:      "Refresh token expired",
+src/services/auth.service.ts:551:    hashToken(refreshToken) !==
+src/services/auth.service.ts:554:    await revokeRefreshFamily(
+src/services/auth.service.ts:560:      "Refresh token reuse detected",
+src/services/auth.service.ts:582:    await revokeRefreshFamily(
+src/services/auth.service.ts:587:      "Invalid refresh token",
+src/services/auth.service.ts:595:    await revokeRefreshFamily(
+src/services/auth.service.ts:607:   * to obtain a new access token from an existing refresh token.
+src/services/auth.service.ts:613:    await revokeRefreshFamily(
+src/services/auth.service.ts:630:  const newRefreshToken =
+src/services/auth.service.ts:631:    createRefreshToken(
+src/services/auth.service.ts:643:  const accessToken =
+src/services/auth.service.ts:644:    createAccessToken(
+src/services/auth.service.ts:653:          await tx.refreshSession.updateMany({
+src/services/auth.service.ts:671:            "Refresh token reuse detected",
+src/services/auth.service.ts:675:        await tx.refreshSession.create({
+src/services/auth.service.ts:684:                newRefreshToken,
+src/services/auth.service.ts:698:        "Refresh token reuse detected"
+src/services/auth.service.ts:700:      await revokeRefreshFamily(
+src/services/auth.service.ts:710:    accessToken,
+src/services/auth.service.ts:711:    refreshToken:
+src/services/auth.service.ts:712:      newRefreshToken,
+src/services/auth.service.ts:721:      await tx.refreshSession.updateMany({
+
+===== AUTHORIZATION =====
+src/middleware/auth.middleware.ts:17:export interface AuthenticatedRequest extends Request {
+src/middleware/auth.middleware.ts:80:export async function authenticate(
+src/middleware/auth.middleware.ts:81:  req: AuthenticatedRequest,
+src/middleware/auth.middleware.ts:173:export function authorize(...roles: string[]) {
+src/middleware/auth.middleware.ts:175:    req: AuthenticatedRequest,
+src/middleware/admin.middleware.ts:4:  AuthenticatedRequest,
+src/middleware/admin.middleware.ts:7:export function requireAdmin(
+src/middleware/admin.middleware.ts:8:  req: AuthenticatedRequest,
+src/middleware/super-admin.middleware.ts:4:  AuthenticatedRequest,
+src/middleware/super-admin.middleware.ts:10:  req: AuthenticatedRequest,
+src/middleware/admin-module.middleware.ts:3:import { AuthenticatedRequest } from "./auth.middleware.js";
+src/middleware/admin-module.middleware.ts:6:export function requireAdminModule(module: AdminModule) {
+src/middleware/admin-module.middleware.ts:8:    req: AuthenticatedRequest,
+src/transporters/transporter.routes.ts:9:  authenticate,
+src/transporters/transporter.routes.ts:10:  authorize,
+src/transporters/transporter.routes.ts:11:  type AuthenticatedRequest,
+src/transporters/transporter.routes.ts:15:router.use(authenticate);
+src/transporters/transporter.routes.ts:17:router.post("/", authorize("TRANSPORTER"), async (req: AuthenticatedRequest, res) => {
+src/transporters/transporter.routes.ts:33:router.get("/:id", async (req: AuthenticatedRequest, res) => {
+src/transporters/transporter.routes.ts:61:router.get("/:id/vehicles", async (req: AuthenticatedRequest, res) => {
+src/transporters/transporter.routes.ts:84:  authorize("ADMIN"),
+src/transporters/transporter.routes.ts:85:  async (req: AuthenticatedRequest, res) => {
+src/vehicles/vehicle.routes.ts:9:  authenticate,
+src/vehicles/vehicle.routes.ts:10:  authorize,
+src/vehicles/vehicle.routes.ts:11:  type AuthenticatedRequest,
+src/vehicles/vehicle.routes.ts:15:router.use(authenticate);
+src/vehicles/vehicle.routes.ts:19:  authorize("TRANSPORTER"),
+src/vehicles/vehicle.routes.ts:36:router.get("/:id", async (req: AuthenticatedRequest, res) => {
+src/vehicles/vehicle.routes.ts:65:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:22:  authenticate,
+src/bookings/booking.routes.ts:23:  authorize,
+src/bookings/booking.routes.ts:24:  type AuthenticatedRequest,
+src/bookings/booking.routes.ts:99:router.use(authenticate);
+src/bookings/booking.routes.ts:103:  authorize("CUSTOMER"),
+src/bookings/booking.routes.ts:104:  async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:122:router.get("/customer/:customerId", async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:142:  async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:170:router.get("/:id", async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:197:router.patch("/:id/assign", async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:230:router.patch("/:id/status", async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:256:  async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:285:  async (req: AuthenticatedRequest, res) => {
+src/payments/payment.routes.ts:5:  authenticate,
+src/payments/payment.routes.ts:6:  type AuthenticatedRequest,
+src/payments/payment.routes.ts:106:  authenticate,
+src/payments/payment.routes.ts:107:  async (req: AuthenticatedRequest, res) => {
+src/payments/payment.routes.ts:152:          error: "Customer ownership validation failed",
+src/payments/payment.routes.ts:204:  authenticate,
+src/payments/payment.routes.ts:205:  async (req: AuthenticatedRequest, res) => {
+src/payments/payment.routes.ts:252:  authenticate,
+src/payments/payment.routes.ts:253:  async (req: AuthenticatedRequest, res) => {
+src/messages/message.routes.ts:7:  authenticate,
+src/messages/message.routes.ts:8:  type AuthenticatedRequest,
+src/messages/message.routes.ts:19:router.use(authenticate);
+src/messages/message.routes.ts:24:  async (req: AuthenticatedRequest, res) => {
+src/messages/message.routes.ts:97:  async (req: AuthenticatedRequest, res) => {
+src/notifications/notification.routes.ts:8:  authenticate,
+src/notifications/notification.routes.ts:9:  authorize,
+src/notifications/notification.routes.ts:10:  type AuthenticatedRequest,
+src/notifications/notification.routes.ts:12:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/notifications/notification.routes.ts:16:router.use(authenticate);
+src/notifications/notification.routes.ts:20:  authorize("ADMIN"),
+src/notifications/notification.routes.ts:21:  async (req: AuthenticatedRequest, res) => {
+src/notifications/notification.routes.ts:37:  async (req: AuthenticatedRequest, res) => {
+src/notifications/notification.routes.ts:62:  async (req: AuthenticatedRequest, res) => {
+src/documents/document.routes.ts:4:  authenticate,
+src/documents/document.routes.ts:5:  authorize,
+src/documents/document.routes.ts:6:  type AuthenticatedRequest,
+src/documents/document.routes.ts:8:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/documents/document.routes.ts:21:router.use(authenticate);
+src/documents/document.routes.ts:25:  authorize("CUSTOMER", "TRANSPORTER"),
+src/documents/document.routes.ts:26:  async (req: AuthenticatedRequest, res) => {
+src/documents/document.routes.ts:43:router.get("/user/:userId", async (req: AuthenticatedRequest, res) => {
+src/documents/document.routes.ts:70:  requireAdmin,
+src/documents/document.routes.ts:71:  async (_req: AuthenticatedRequest, res) => {
+src/documents/document.routes.ts:86:  requireAdmin,
+src/documents/document.routes.ts:87:  async (_req: AuthenticatedRequest, res) => {
+src/documents/document.routes.ts:102:  requireAdmin,
+src/documents/document.routes.ts:103:  async (req: AuthenticatedRequest, res) => {
+src/documents/document.routes.ts:122:  requireAdmin,
+src/documents/document.routes.ts:123:  async (req: AuthenticatedRequest, res) => {
+src/support/support.service.ts:50:      "Administrator is not authorized for SUPPORT_CARE",
+src/support/support.routes.ts:8:  authenticate,
+src/support/support.routes.ts:9:  type AuthenticatedRequest,
+src/support/support.routes.ts:12:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/support/support.routes.ts:22:router.use(authenticate);
+src/support/support.routes.ts:27:  async (req: AuthenticatedRequest, res) => {
+src/support/support.routes.ts:65:  async (req: AuthenticatedRequest, res) => {
+src/support/support.routes.ts:91:  requireAdmin,
+src/support/support.routes.ts:94:  async (req: AuthenticatedRequest, res) => {
+src/disputes/dispute.routes.ts:9:  authenticate,
+src/disputes/dispute.routes.ts:10:  type AuthenticatedRequest,
+src/disputes/dispute.routes.ts:12:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/disputes/dispute.routes.ts:16:router.use(authenticate);
+src/disputes/dispute.routes.ts:18:router.post("/", async (req: AuthenticatedRequest, res) => {
+src/disputes/dispute.routes.ts:60:  async (req: AuthenticatedRequest, res) => {
+src/disputes/dispute.routes.ts:95:  requireAdmin,
+src/disputes/dispute.routes.ts:96:  async (req: AuthenticatedRequest, res) => {
+src/admin/admin.routes.ts:3:import { authenticate } from "../middleware/auth.middleware.js";
+src/admin/admin.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/admin.routes.ts:12:router.use(authenticate);
+src/admin/admin.routes.ts:13:router.use(requireAdmin);
+src/admin/administrator.routes.ts:11:  AuthenticatedRequest,
+src/admin/administrator.routes.ts:71:    req: AuthenticatedRequest,
+src/admin/administrator.routes.ts:110:    req: AuthenticatedRequest,
+src/admin/administrator.routes.ts:132:    req: AuthenticatedRequest,
+src/admin/administrator.routes.ts:155:    req: AuthenticatedRequest,
+src/admin/administrator.routes.ts:191:    req: AuthenticatedRequest,
+src/admin/administrator.routes.ts:215:    req: AuthenticatedRequest,
+src/admin/administrator.routes.ts:239:    req: AuthenticatedRequest,
+src/admin/activity.routes.ts:2:import { authenticate } from "../middleware/auth.middleware.js";
+src/admin/activity.routes.ts:3:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/activity.routes.ts:4:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/activity.routes.ts:9:router.use(authenticate);
+src/admin/activity.routes.ts:10:router.use(requireAdmin);
+src/admin/activity.routes.ts:11:router.use(requireAdminModule("ACTIVITY_TIMELINE"));
+src/admin/support.routes.ts:3:  authenticate,
+src/admin/support.routes.ts:4:  type AuthenticatedRequest,
+src/admin/support.routes.ts:6:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/support.routes.ts:7:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/support.routes.ts:23:router.use(authenticate);
+src/admin/support.routes.ts:24:router.use(requireAdmin);
+src/admin/support.routes.ts:25:router.use(requireAdminModule("SUPPORT_CARE"));
+src/admin/support.routes.ts:49:  async (req: AuthenticatedRequest, res) => {
+src/admin/support.routes.ts:71:  async (req: AuthenticatedRequest, res) => {
+src/admin/notification.routes.ts:2:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+src/admin/notification.routes.ts:3:import { authenticate } from "../middleware/auth.middleware.js";
+src/admin/notification.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/notification.routes.ts:5:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/notification.routes.ts:14:router.use(authenticate);
+src/admin/notification.routes.ts:15:router.use(requireAdmin);
+src/admin/notification.routes.ts:16:router.use(requireAdminModule("NOTIFICATION_CENTER"));
+src/admin/notification.routes.ts:59:router.patch("/:id/read", async (req: AuthenticatedRequest, res) => {
+src/admin/financial.routes.ts:2:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+src/admin/financial.routes.ts:3:import { authenticate } from "../middleware/auth.middleware.js";
+src/admin/financial.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/financial.routes.ts:5:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/financial.routes.ts:28:router.use(authenticate);
+src/admin/financial.routes.ts:29:router.use(requireAdmin);
+src/admin/financial.routes.ts:30:router.use(requireAdminModule("FINANCIAL_OPERATIONS"));
+src/admin/financial.routes.ts:215:  async (req: AuthenticatedRequest, res) => {
+src/admin/financial.routes.ts:243:  async (req: AuthenticatedRequest, res) => {
+src/admin/financial.routes.ts:303:  async (req: AuthenticatedRequest, res) => {
+src/admin/financial.routes.ts:353:  async (req: AuthenticatedRequest, res) => {
+src/admin/financial.routes.ts:388:    req: AuthenticatedRequest,
+src/admin/verification.routes.ts:2:import { authenticate, type AuthenticatedRequest } from "../middleware/auth.middleware.js";
+src/admin/verification.routes.ts:3:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/verification.routes.ts:4:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/verification.routes.ts:14:router.use(authenticate);
+src/admin/verification.routes.ts:15:router.use(requireAdmin);
+src/admin/verification.routes.ts:16:router.use(requireAdminModule("VERIFICATION_CENTER"));
+src/admin/verification.routes.ts:42:router.patch("/:id/approve", async (req: AuthenticatedRequest, res) => {
+src/admin/verification.routes.ts:57:router.patch("/:id/reject", async (req: AuthenticatedRequest, res) => {
+src/admin/fleet.routes.ts:2:import { authenticate, type AuthenticatedRequest } from "../middleware/auth.middleware.js";
+src/admin/fleet.routes.ts:3:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/fleet.routes.ts:4:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/fleet.routes.ts:13:router.use(authenticate);
+src/admin/fleet.routes.ts:14:router.use(requireAdmin);
+src/admin/fleet.routes.ts:15:router.use(requireAdminModule("FLEET_MARKETPLACE"));
+src/admin/fleet.routes.ts:56:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+src/admin/live-trips.routes.ts:3:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+src/admin/live-trips.routes.ts:4:import { authenticate } from "../middleware/auth.middleware.js";
+src/admin/live-trips.routes.ts:5:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/live-trips.routes.ts:6:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/live-trips.routes.ts:17:router.use(authenticate);
+src/admin/live-trips.routes.ts:18:router.use(requireAdmin);
+src/admin/live-trips.routes.ts:19:router.use(requireAdminModule("LIVE_TRIPS"));
+src/admin/live-trips.routes.ts:40:router.get("/", async (req: AuthenticatedRequest, res) => {
+src/admin/partner.routes.ts:2:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+src/admin/partner.routes.ts:3:import { authenticate } from "../middleware/auth.middleware.js";
+src/admin/partner.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/partner.routes.ts:5:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/partner.routes.ts:14:router.use(authenticate);
+src/admin/partner.routes.ts:15:router.use(requireAdmin);
+src/admin/partner.routes.ts:16:router.use(requireAdminModule("PARTNER_MANAGEMENT"));
+src/admin/partner.routes.ts:57:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+src/admin/marketing.routes.ts:2:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+src/admin/marketing.routes.ts:3:import { authenticate } from "../middleware/auth.middleware.js";
+src/admin/marketing.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/marketing.routes.ts:5:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/marketing.routes.ts:16:router.use(authenticate);
+src/admin/marketing.routes.ts:17:router.use(requireAdmin);
+src/admin/marketing.routes.ts:18:router.use(requireAdminModule("MARKETING_CENTER"));
+src/admin/marketing.routes.ts:76:router.post("/", async (req: AuthenticatedRequest, res) => {
+src/admin/marketing.routes.ts:98:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+src/admin/marketing.routes.ts:123:  async (req: AuthenticatedRequest, res) => {
+src/admin/role-permission.routes.ts:2:import { authenticate, type AuthenticatedRequest } from "../middleware/auth.middleware.js";
+src/admin/role-permission.routes.ts:3:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/role-permission.routes.ts:4:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/role-permission.routes.ts:13:router.use(authenticate);
+src/admin/role-permission.routes.ts:14:router.use(requireAdmin);
+src/admin/role-permission.routes.ts:15:router.use(requireAdminModule("ROLE_PERMISSION"));
+src/admin/role-permission.routes.ts:49:router.patch("/:id/permissions", async (req: AuthenticatedRequest, res) => {
+src/admin/platform-config.routes.ts:3:  authenticate,
+src/admin/platform-config.routes.ts:4:  type AuthenticatedRequest,
+src/admin/platform-config.routes.ts:6:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/platform-config.routes.ts:7:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/platform-config.routes.ts:17:router.use(authenticate);
+src/admin/platform-config.routes.ts:18:router.use(requireAdmin);
+src/admin/platform-config.routes.ts:19:router.use(requireAdminModule("PLATFORM_CONFIG"));
+src/admin/platform-config.routes.ts:55:router.put("/:key", async (req: AuthenticatedRequest, res) => {
+src/admin/platform-config.routes.ts:80:router.delete("/:key", async (req: AuthenticatedRequest, res) => {
+src/admin/security.routes.ts:3:  authenticate,
+src/admin/security.routes.ts:4:  type AuthenticatedRequest,
+src/admin/security.routes.ts:6:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/security.routes.ts:7:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/security.routes.ts:19:router.use(authenticate);
+src/admin/security.routes.ts:20:router.use(requireAdmin);
+src/admin/security.routes.ts:21:router.use(requireAdminModule("SECURITY_CENTER"));
+src/admin/security.routes.ts:97:  async (req: AuthenticatedRequest, res) => {
+src/admin/security.routes.ts:121:  async (req: AuthenticatedRequest, res) => {
+src/admin/error.routes.ts:2:import { authenticate } from "../middleware/auth.middleware.js";
+src/admin/error.routes.ts:3:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/error.routes.ts:4:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/error.routes.ts:12:router.use(authenticate);
+src/admin/error.routes.ts:13:router.use(requireAdmin);
+src/admin/error.routes.ts:14:router.use(requireAdminModule("ERROR_CENTER"));
+src/admin/api-management.routes.ts:2:import { authenticate } from "../middleware/auth.middleware.js";
+src/admin/api-management.routes.ts:3:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/api-management.routes.ts:4:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/api-management.routes.ts:12:router.use(authenticate);
+src/admin/api-management.routes.ts:13:router.use(requireAdmin);
+src/admin/api-management.routes.ts:14:router.use(requireAdminModule("API_MANAGEMENT"));
+src/admin/database-health.routes.ts:2:import { authenticate } from "../middleware/auth.middleware.js";
+src/admin/database-health.routes.ts:3:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/database-health.routes.ts:4:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/database-health.routes.ts:9:router.use(authenticate);
+src/admin/database-health.routes.ts:10:router.use(requireAdmin);
+src/admin/database-health.routes.ts:11:router.use(requireAdminModule("DATABASE_HEALTH"));
+src/admin/backup-recovery.routes.ts:2:import { authenticate } from "../middleware/auth.middleware.js";
+src/admin/backup-recovery.routes.ts:3:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+src/admin/backup-recovery.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/backup-recovery.routes.ts:5:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/backup-recovery.routes.ts:13:router.use(authenticate);
+src/admin/backup-recovery.routes.ts:14:router.use(requireAdmin);
+src/admin/backup-recovery.routes.ts:15:router.use(requireAdminModule("BACKUP_RECOVERY"));
+src/admin/backup-recovery.routes.ts:36:router.post("/snapshot", async (req: AuthenticatedRequest, res) => {
+src/admin/risk-fraud.routes.ts:2:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+src/admin/risk-fraud.routes.ts:3:import { authenticate } from "../middleware/auth.middleware.js";
+src/admin/risk-fraud.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/risk-fraud.routes.ts:5:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/risk-fraud.routes.ts:13:router.use(authenticate);
+src/admin/risk-fraud.routes.ts:14:router.use(requireAdmin);
+src/admin/risk-fraud.routes.ts:15:router.use(requireAdminModule("RISK_FRAUD"));
+src/admin/risk-fraud.routes.ts:38:  async (req: AuthenticatedRequest, res) => {
+src/admin/reports.routes.ts:2:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+src/admin/reports.routes.ts:3:import { authenticate } from "../middleware/auth.middleware.js";
+src/admin/reports.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/reports.routes.ts:5:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/reports.routes.ts:13:router.use(authenticate);
+src/admin/reports.routes.ts:14:router.use(requireAdmin);
+src/admin/reports.routes.ts:15:router.use(requireAdminModule("REPORTS_CENTER"));
+src/admin/reports.routes.ts:36:router.post("/generate", async (req: AuthenticatedRequest, res) => {
+src/admin/ai-automation.routes.ts:2:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+src/admin/ai-automation.routes.ts:3:import { authenticate } from "../middleware/auth.middleware.js";
+src/admin/ai-automation.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/ai-automation.routes.ts:5:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/ai-automation.routes.ts:13:router.use(authenticate);
+src/admin/ai-automation.routes.ts:14:router.use(requireAdmin);
+src/admin/ai-automation.routes.ts:15:router.use(requireAdminModule("AI_AUTOMATION"));
+src/admin/ai-automation.routes.ts:36:router.post("/run", async (req: AuthenticatedRequest, res) => {
+src/admin/subscription.routes.ts:2:import { authenticate } from "../middleware/auth.middleware.js";
+src/admin/subscription.routes.ts:3:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/admin/subscription.routes.ts:4:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/admin/subscription.routes.ts:9:router.use(authenticate);
+src/admin/subscription.routes.ts:10:router.use(requireAdmin);
+src/admin/subscription.routes.ts:11:router.use(requireAdminModule("SUBSCRIPTION_BILLING"));
+src/routes/auth.routes.ts:3:import { authenticate, AuthenticatedRequest } from "../middleware/auth.middleware.js";
+src/routes/auth.routes.ts:132:router.post("/logout", authenticate, async (req: AuthenticatedRequest, res) => {
+src/routes/user.routes.ts:2:import { authenticate, type AuthenticatedRequest } from "../middleware/auth.middleware.js";
+src/routes/user.routes.ts:12:router.get("/:id", authenticate, async (req: AuthenticatedRequest, res) => {
+src/routes/user.routes.ts:51:router.patch("/:id", authenticate, async (req: AuthenticatedRequest, res) => {
+src/events/event.routes.ts:7:  authenticate,
+src/events/event.routes.ts:8:  type AuthenticatedRequest,
+src/events/event.routes.ts:10:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/events/event.routes.ts:15:router.use(authenticate);
+src/events/event.routes.ts:19:  requireAdmin,
+src/events/event.routes.ts:42:  async (req: AuthenticatedRequest, res) => {
+src/wallet/wallet.routes.ts:3:  authenticate,
+src/wallet/wallet.routes.ts:4:  type AuthenticatedRequest,
+src/wallet/wallet.routes.ts:16:router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
+src/wallet/wallet.routes.ts:51:  authenticate,
+src/wallet/wallet.routes.ts:52:  async (req: AuthenticatedRequest, res) => {
+src/wallet/wallet.routes.ts:87:  authenticate,
+src/wallet/wallet.routes.ts:88:  async (req: AuthenticatedRequest, res) => {
+src/verification/verification.routes.ts:3:  authenticate,
+src/verification/verification.routes.ts:4:  authorize,
+src/verification/verification.routes.ts:5:  type AuthenticatedRequest,
+src/verification/verification.routes.ts:13:  authenticate,
+src/verification/verification.routes.ts:14:  authorize("CUSTOMER", "TRANSPORTER"),
+src/verification/verification.routes.ts:15:  async (req: AuthenticatedRequest, res) => {
+src/verification/youverify/youverify.webhook.service.ts:145:   * A SHA-256 digest of the authenticated raw payload gives us
+src/verification/youverify/youverify.webhook.service.ts:328:   * An authenticated event with no matching document is retained
+src/content/content.routes.ts:2:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+src/content/content.routes.ts:3:import { authenticate } from "../middleware/auth.middleware.js";
+src/content/content.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+src/content/content.routes.ts:5:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+src/content/content.routes.ts:16:router.use(authenticate);
+src/content/content.routes.ts:17:router.use(requireAdmin);
+src/content/content.routes.ts:18:router.use(requireAdminModule("CONTENT_MANAGEMENT"));
+src/content/content.routes.ts:20:router.post("/", async (req: AuthenticatedRequest, res) => {
+src/content/content.routes.ts:36:router.get("/", async (req: AuthenticatedRequest, res) => {
+src/content/content.routes.ts:52:router.get("/:id", async (req: AuthenticatedRequest, res) => {
+src/content/content.routes.ts:72:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+src/content/content.routes.ts:91:router.patch("/:id/publish", async (req: AuthenticatedRequest, res) => {
+src/subscriptions/subscription.routes.ts:3:  authenticate,
+src/subscriptions/subscription.routes.ts:4:  authorize,
+src/subscriptions/subscription.routes.ts:5:  type AuthenticatedRequest,
+src/subscriptions/subscription.routes.ts:17:router.use(authenticate);
+src/subscriptions/subscription.routes.ts:18:router.use(authorize("TRANSPORTER"));
+src/subscriptions/subscription.routes.ts:32:router.get("/me", async (req: AuthenticatedRequest, res) => {
+src/subscriptions/subscription.routes.ts:44:router.get("/invoices", async (req: AuthenticatedRequest, res) => {
+src/subscriptions/subscription.routes.ts:56:router.post("/", async (req: AuthenticatedRequest, res) => {
+src/subscriptions/subscription.routes.ts:81:router.post("/cancel", async (req: AuthenticatedRequest, res) => {
+
+===== ZOD VALIDATION =====
+src/config/env.ts:2:import { z } from "zod";
+src/config/env.ts:4:const envSchema = z.object({
+src/config/env.ts:20:export const env = envSchema.parse(process.env);
+src/middleware/validate.middleware.ts:2:import { z } from "zod";
+src/middleware/validate.middleware.ts:7:  schema: z.ZodType,
+src/middleware/validate.middleware.ts:15:    const result = schema.safeParse(req[target]);
+src/users/user.validators.ts:1:import { z } from "zod";
+src/users/user.validators.ts:3:export const updateUserSchema = z.object({
+src/users/user.validators.ts:10:export const userIdSchema = z.object({
+src/bookings/booking.routes.ts:2:import { z } from "zod";
+src/bookings/booking.routes.ts:34:  if (error instanceof z.ZodError) {
+src/bookings/booking.routes.ts:106:    const input = createBookingSchema.parse(req.body);
+src/bookings/booking.routes.ts:213:    const input = assignBookingSchema.parse(req.body);
+src/bookings/booking.routes.ts:239:    const input = updateBookingStatusSchema.parse(req.body);
+src/bookings/booking.routes.ts:265:      const input = proofOfDeliverySchema.parse(req.body);
+src/bookings/booking.routes.ts:294:      const input = confirmDeliverySchema.parse(req.body);
+src/bookings/booking.validators.ts:1:import { z } from "zod";
+src/bookings/booking.validators.ts:15:export const createBookingSchema = z.object({
+src/bookings/booking.validators.ts:33:export const assignBookingSchema = z.object({
+src/bookings/booking.validators.ts:38:export const updateBookingStatusSchema = z.object({
+src/bookings/booking.validators.ts:48:export const proofOfDeliverySchema = z.object({
+src/bookings/booking.validators.ts:53:export const confirmDeliverySchema = z.object({
+src/messages/message.validators.ts:1:import { z } from "zod";
+src/messages/message.validators.ts:3:export const createMessageSchema = z.object({
+src/messages/message.validators.ts:10:export const messageIdSchema = z.object({
+src/messages/message.validators.ts:14:export const bookingMessageParamsSchema = z.object({
+src/support/support.validators.ts:1:import { z } from "zod";
+src/support/support.validators.ts:3:export const createSupportTicketSchema = z.object({
+src/support/support.validators.ts:13:export const supportTicketIdSchema = z.object({
+src/support/support.validators.ts:17:export const supportTicketStatusSchema = z.object({
+src/support/support.validators.ts:21:export const assignSupportTicketSchema = z.object({
+src/support/support.validators.ts:25:export const adminSupportQuerySchema = z.object({
+src/admin/administrator.routes.ts:2:import { z } from "zod";
+src/admin/administrator.routes.ts:27:const createAdministratorSchema = z.object({
+src/admin/administrator.routes.ts:35:const updateAdministratorSchema = z.object({
+src/admin/administrator.routes.ts:76:        createAdministratorSchema.parse(
+src/admin/administrator.routes.ts:95:      if (error instanceof z.ZodError) {
+src/admin/administrator.routes.ts:160:        updateAdministratorSchema.parse(
+src/admin/administrator.routes.ts:176:      if (error instanceof z.ZodError) {
+src/routes/auth.routes.ts:4:import { z } from "zod";
+src/routes/auth.routes.ts:32:const registerSchema = z.object({
+src/routes/auth.routes.ts:41:const loginSchema = z.object({
+src/routes/auth.routes.ts:46:const forgotPasswordSchema = z.object({
+src/routes/auth.routes.ts:50:const resetPasswordSchema = z.object({
+src/routes/auth.routes.ts:55:const refreshSchema = z.object({
+src/routes/auth.routes.ts:61:    const input = registerSchema.parse(req.body);
+src/routes/auth.routes.ts:77:    if (error instanceof z.ZodError) {
+src/routes/auth.routes.ts:96:    const input = loginSchema.parse(req.body);
+src/routes/auth.routes.ts:108:    if (error instanceof z.ZodError) {
+src/routes/auth.routes.ts:124:    const input = refreshSchema.parse(req.body);
+src/routes/auth.routes.ts:143:    const input = forgotPasswordSchema.parse(req.body);
+src/routes/auth.routes.ts:166:    const input = resetPasswordSchema.parse(req.body);
+src/routes/user.routes.ts:3:import { z } from "zod";
+src/routes/user.routes.ts:14:    const { id } = userIdSchema.parse(req.params);
+src/routes/user.routes.ts:37:    if (error instanceof z.ZodError) {
+src/routes/user.routes.ts:53:    const { id } = userIdSchema.parse(req.params);
+src/routes/user.routes.ts:62:    const data = updateUserSchema.parse(req.body);
+src/routes/user.routes.ts:71:    if (error instanceof z.ZodError) {
+src/wallet/wallet.routes.ts:18:    const input = createWalletSchema.parse(req.body);
+src/wallet/wallet.routes.ts:90:      const input = withdrawalSchema.parse(req.body);
+src/wallet/wallet.validators.ts:1:import { z } from "zod";
+src/wallet/wallet.validators.ts:3:export const createWalletSchema = z.object({
+src/wallet/wallet.validators.ts:7:export const withdrawalSchema = z.object({
+src/verification/youverify.client.ts:28:      body = text ? JSON.parse(text) : null;
+src/verification/youverify/youverify.webhook.service.ts:215:    parsedPayload = JSON.parse(
+src/verification/youverify/youverify.webhook.service.ts:223:    youverifyWebhookSchema.safeParse(parsedPayload);
+src/verification/youverify/youverify.validators.ts:1:import { z } from "zod";
+src/verification/youverify/youverify.validators.ts:4:  z.object({
+
+===== DTO EXPOSURE =====
+src/config/env.ts:17:  PASSWORD_RESET_URL: z.string().url(),
+src/routes/auth.routes.ts:6:  forgotPassword,
+src/routes/auth.routes.ts:11:  resetPassword,
+src/routes/auth.routes.ts:16:const passwordResetLimiter = rateLimit({
+src/routes/auth.routes.ts:27:      error: "Too many password reset requests. Please try again later.",
+src/routes/auth.routes.ts:37:  password: z.string().min(8).max(128),
+src/routes/auth.routes.ts:43:  password: z.string().min(1),
+src/routes/auth.routes.ts:46:const forgotPasswordSchema = z.object({
+src/routes/auth.routes.ts:50:const resetPasswordSchema = z.object({
+src/routes/auth.routes.ts:52:  password: z.string().min(8),
+src/routes/auth.routes.ts:56:  refreshToken: z.string().min(1),
+src/routes/auth.routes.ts:100:      input.password,
+src/routes/auth.routes.ts:125:    const result = await refreshAccessToken(input.refreshToken);
+src/routes/auth.routes.ts:141:router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
+src/routes/auth.routes.ts:143:    const input = forgotPasswordSchema.parse(req.body);
+src/routes/auth.routes.ts:145:    const result = await forgotPassword(input.identifier);
+src/routes/auth.routes.ts:155:        : "Password reset request failed";
+src/routes/auth.routes.ts:164:router.post("/reset-password", async (req, res) => {
+src/routes/auth.routes.ts:166:    const input = resetPasswordSchema.parse(req.body);
+src/routes/auth.routes.ts:168:    const result = await resetPassword(
+src/routes/auth.routes.ts:170:      input.password,
+src/routes/auth.routes.ts:181:        : "Password reset failed";
+src/services/auth.service.ts:7:import { sendPasswordResetEmail } from "./email.service.js";
+src/services/auth.service.ts:11:type RefreshTokenPayload = {
+src/services/auth.service.ts:36:function createRefreshToken(
+src/services/auth.service.ts:55:function verifyRefreshToken(
+src/services/auth.service.ts:57:): RefreshTokenPayload {
+src/services/auth.service.ts:88:  const refreshToken = createRefreshToken(
+src/services/auth.service.ts:104:      tokenHash: hashToken(refreshToken),
+src/services/auth.service.ts:110:    refreshToken,
+src/services/auth.service.ts:131:    refreshToken: session.refreshToken,
+src/services/auth.service.ts:140:  password: string;
+src/services/auth.service.ts:143:  const passwordHash =
+src/services/auth.service.ts:144:    await bcrypt.hash(input.password, 12);
+src/services/auth.service.ts:173:        passwordHash,
+src/services/auth.service.ts:207:  password: string,
+src/services/auth.service.ts:257:  const validPassword = await bcrypt.compare(
+src/services/auth.service.ts:258:    password,
+src/services/auth.service.ts:259:    user.passwordHash,
+src/services/auth.service.ts:262:  if (!validPassword) {
+src/services/auth.service.ts:322:export async function forgotPassword(
+src/services/auth.service.ts:359:      resetPasswordToken:
+src/services/auth.service.ts:361:      resetPasswordExpiresAt:
+src/services/auth.service.ts:368:      await sendPasswordResetEmail(
+src/services/auth.service.ts:380:      "If an account exists, a password reset email has been sent.",
+src/services/auth.service.ts:384:export async function resetPassword(
+src/services/auth.service.ts:386:  password: string,
+src/services/auth.service.ts:394:        resetPasswordToken:
+src/services/auth.service.ts:406:    !user.resetPasswordExpiresAt ||
+src/services/auth.service.ts:407:    user.resetPasswordExpiresAt <=
+src/services/auth.service.ts:415:  const passwordHash =
+src/services/auth.service.ts:417:      password,
+src/services/auth.service.ts:428:          passwordHash,
+src/services/auth.service.ts:429:          resetPasswordToken: null,
+src/services/auth.service.ts:430:          resetPasswordExpiresAt: null,
+src/services/auth.service.ts:435:       * Password reset invalidates every active
+src/services/auth.service.ts:452:      "Password updated successfully",
+src/services/auth.service.ts:478:  refreshToken: string,
+src/services/auth.service.ts:480:  let payload: RefreshTokenPayload;
+src/services/auth.service.ts:484:      verifyRefreshToken(
+src/services/auth.service.ts:485:        refreshToken,
+src/services/auth.service.ts:551:    hashToken(refreshToken) !==
+src/services/auth.service.ts:630:  const newRefreshToken =
+src/services/auth.service.ts:631:    createRefreshToken(
+src/services/auth.service.ts:684:                newRefreshToken,
+src/services/auth.service.ts:711:    refreshToken:
+src/services/auth.service.ts:712:      newRefreshToken,
+src/services/email.service.ts:6:export async function sendPasswordResetEmail(
+src/services/email.service.ts:11:    `${env.PASSWORD_RESET_URL}?token=${encodeURIComponent(resetToken)}`;
+src/services/email.service.ts:16:    subject: "Reset your TransConet password",
+src/services/email.service.ts:19:        <h2>Reset your TransConet password</h2>
+src/services/email.service.ts:20:        <p>We received a request to reset your TransConet password.</p>
+src/services/email.service.ts:24:            Reset Password
+src/services/email.service.ts:34:    throw new Error("Failed to send password reset email");
+
+===== AUDIT LOG COVERAGE =====
+src/admin/administrator.service.ts:137:    await tx.auditLog.create({
+src/admin/administrator.service.ts:299:    await tx.auditLog.create({
+src/admin/administrator.service.ts:368:    await tx.auditLog.create({
+src/admin/financial.service.ts:230:  await prisma.auditLog.create({
+src/admin/financial.service.ts:420:    await tx.auditLog.create({
+src/admin/fleet.service.ts:68:    await tx.auditLog.create({
+src/admin/security.service.ts:10:    recentAuditLogs,
+src/admin/security.service.ts:28:    prisma.auditLog.findMany({
+src/admin/security.service.ts:59:    recentAuditLogs,
+src/admin/security.service.ts:64:export async function getSecurityAuditLogs(options?: {
+src/admin/security.service.ts:75:  return prisma.auditLog.findMany({
+src/admin/security.service.ts:165:  await prisma.auditLog.create({
+src/admin/security.service.ts:213:  await prisma.auditLog.create({
+src/admin/security.routes.ts:11:  getSecurityAuditLogs,
+src/admin/security.routes.ts:39:    const logs = await getSecurityAuditLogs({
+src/admin/backup-recovery.service.ts:13:    auditLogs,
+src/admin/backup-recovery.service.ts:20:    prisma.auditLog.count(),
+src/admin/backup-recovery.service.ts:35:      auditLogs,
+src/settlements/settlement.service.ts:319:  await prisma.auditLog.create({
+src/settlements/settlement.service.ts:417:  await prisma.auditLog.create({
+src/settlements/settlement.service.ts:610:  await prisma.auditLog.create({
+
+===== FINANCIAL CONCURRENCY =====
+src/bookings/booking.service.ts:5:import { createSettlement } from "../settlements/settlement.service.js";
+src/bookings/booking.service.ts:97:  const result = await prisma.$transaction(async (tx) => {
+src/bookings/booking.service.ts:219:  const result = await prisma.$transaction(async (tx) => {
+src/bookings/booking.service.ts:404:  return prisma.$transaction(async (tx) => {
+src/bookings/booking.service.ts:434:  const result = await prisma.$transaction(async (tx) => {
+src/bookings/booking.service.ts:526:  const settlement = await createSettlement(
+src/bookings/booking.service.ts:537:      "Delivery was confirmed and a settlement was created for administrative approval.",
+src/payments/payment.service.ts:6:import { createSettlement } from "../settlements/settlement.service.js";
+src/payments/payment.service.ts:9:function createTransactionReference() {
+src/payments/payment.service.ts:78:        transactionReference:
+src/payments/payment.service.ts:79:          createTransactionReference(),
+src/payments/payment.service.ts:168:  const result = await prisma.$transaction(async (tx) => {
+src/payments/payment.service.ts:183:      const existingSettlement = await tx.settlement.findUnique({
+src/payments/payment.service.ts:192:        settlementExists: Boolean(existingSettlement),
+src/payments/payment.service.ts:286:      await tx.walletTransaction.create({
+src/payments/payment.service.ts:291:          transactionType: "PAYMENT_PENDING",
+src/payments/payment.service.ts:311:      settlementExists: false,
+src/payments/payment.service.ts:316:   * A successful payment must always have a settlement record.
+src/payments/payment.service.ts:318:   * This is intentionally idempotent: createSettlement() returns the
+src/payments/payment.service.ts:319:   * existing settlement when a webhook is retried or an administrator
+src/payments/payment.service.ts:322:  if (!result.settlementExists) {
+src/payments/payment.service.ts:323:    await createSettlement(
+src/payments/payment.routes.ts:47:      const transactionReference =
+src/payments/payment.routes.ts:48:        req.body?.transactionReference ||
+src/payments/payment.routes.ts:49:        req.body?.transaction_reference ||
+src/payments/payment.routes.ts:51:        req.header("X-Transaction-Reference")?.trim();
+src/payments/payment.routes.ts:71:  transactionReference,
+src/payments/payment-webhook.service.ts:11:  transactionReference?: string;
+src/payments/payment-webhook.service.ts:46:    transactionReference,
+src/payments/payment-webhook.service.ts:60:   * The provider transaction reference is the authoritative external
+src/payments/payment-webhook.service.ts:71:        transactionReference: true,
+src/payments/payment-webhook.service.ts:86:      !transactionReference ||
+src/payments/payment-webhook.service.ts:87:      transactionReference !== payment.transactionReference
+src/payments/payment-webhook.service.ts:89:      throw new Error("Webhook transaction does not match payment");
+src/payments/payment-webhook.service.ts:107:  } else if (transactionReference) {
+src/payments/payment-webhook.service.ts:109:      where: { transactionReference },
+src/documents/document.service.ts:56:  const result = await prisma.$transaction(async (tx) => {
+src/documents/document.service.ts:141:  const result = await prisma.$transaction(async (tx) => {
+src/admin/admin.service.ts:139:        transactionReference: true,
+src/admin/administrator.service.ts:107:  return prisma.$transaction(async (tx) => {
+src/admin/administrator.service.ts:264:  return prisma.$transaction(async (tx) => {
+src/admin/administrator.service.ts:357:  return prisma.$transaction(async (tx) => {
+src/admin/financial.service.ts:11:    totalWithdrawals,
+src/admin/financial.service.ts:12:    pendingWithdrawals,
+src/admin/financial.service.ts:13:    processingWithdrawals,
+src/admin/financial.service.ts:14:    completedWithdrawals,
+src/admin/financial.service.ts:15:    failedWithdrawals,
+src/admin/financial.service.ts:22:    prisma.withdrawal.count(),
+src/admin/financial.service.ts:23:    prisma.withdrawal.count({ where: { status: "PENDING" } }),
+src/admin/financial.service.ts:24:    prisma.withdrawal.count({ where: { status: "PROCESSING" } }),
+src/admin/financial.service.ts:25:    prisma.withdrawal.count({ where: { status: "COMPLETED" } }),
+src/admin/financial.service.ts:26:    prisma.withdrawal.count({ where: { status: "FAILED" } }),
+src/admin/financial.service.ts:43:  const withdrawalTotals =
+src/admin/financial.service.ts:44:    await prisma.withdrawal.aggregate({
+src/admin/financial.service.ts:61:    withdrawals: {
+src/admin/financial.service.ts:62:      total: totalWithdrawals,
+src/admin/financial.service.ts:63:      pending: pendingWithdrawals,
+src/admin/financial.service.ts:64:      processing: processingWithdrawals,
+src/admin/financial.service.ts:65:      completed: completedWithdrawals,
+src/admin/financial.service.ts:66:      failed: failedWithdrawals,
+src/admin/financial.service.ts:67:      totalAmount: withdrawalTotals._sum.amount ?? 0,
+src/admin/financial.service.ts:104:export async function getAdminWithdrawals(filters?: {
+src/admin/financial.service.ts:107:  return prisma.withdrawal.findMany({
+src/admin/financial.service.ts:279:export async function updateWithdrawalStatus(
+src/admin/financial.service.ts:280:  withdrawalId: string,
+src/admin/financial.service.ts:292:    throw new Error("Invalid withdrawal status");
+src/admin/financial.service.ts:295:  const result = await prisma.$transaction(async (tx) => {
+src/admin/financial.service.ts:296:    const withdrawal = await tx.withdrawal.findUnique({
+src/admin/financial.service.ts:298:        id: withdrawalId,
+src/admin/financial.service.ts:309:    if (!withdrawal) {
+src/admin/financial.service.ts:310:      throw new Error("Withdrawal not found");
+src/admin/financial.service.ts:314:      withdrawal.status === "COMPLETED" ||
+src/admin/financial.service.ts:315:      withdrawal.status === "FAILED"
+src/admin/financial.service.ts:318:        withdrawal.status === "COMPLETED"
+src/admin/financial.service.ts:319:          ? "Withdrawal already completed"
+src/admin/financial.service.ts:320:          : "Withdrawal already failed",
+src/admin/financial.service.ts:325:     * Enforce the withdrawal state machine:
+src/admin/financial.service.ts:334:      (withdrawal.status === "PENDING" &&
+src/admin/financial.service.ts:336:      (withdrawal.status === "PROCESSING" &&
+src/admin/financial.service.ts:341:        `Invalid withdrawal transition: ${withdrawal.status} -> ${status}`,
+src/admin/financial.service.ts:350:     * same withdrawal.
+src/admin/financial.service.ts:352:    const updated = await tx.withdrawal.updateMany({
+src/admin/financial.service.ts:354:        id: withdrawalId,
+src/admin/financial.service.ts:355:        status: withdrawal.status,
+src/admin/financial.service.ts:363:      const current = await tx.withdrawal.findUnique({
+src/admin/financial.service.ts:365:          id: withdrawalId,
+src/admin/financial.service.ts:373:        throw new Error("Withdrawal not found");
+src/admin/financial.service.ts:377:        throw new Error("Withdrawal already completed");
+src/admin/financial.service.ts:381:        throw new Error("Withdrawal already failed");
+src/admin/financial.service.ts:384:      throw new Error("Withdrawal status could not be updated");
+src/admin/financial.service.ts:390:          id: withdrawal.walletId,
+src/admin/financial.service.ts:394:            increment: withdrawal.amount,
+src/admin/financial.service.ts:399:      await tx.walletTransaction.create({
+src/admin/financial.service.ts:401:          walletId: withdrawal.walletId,
+src/admin/financial.service.ts:402:          amount: withdrawal.amount,
+src/admin/financial.service.ts:403:          transactionType: "WITHDRAWAL_REFUNDED",
+src/admin/financial.service.ts:404:          description: `Failed withdrawal ${withdrawal.id} refunded`,
+src/admin/financial.service.ts:410:      await tx.walletTransaction.create({
+src/admin/financial.service.ts:412:          walletId: withdrawal.walletId,
+src/admin/financial.service.ts:413:          amount: withdrawal.amount,
+src/admin/financial.service.ts:414:          transactionType: "WITHDRAWAL_COMPLETED",
+src/admin/financial.service.ts:415:          description: `Withdrawal ${withdrawal.id} completed`,
+src/admin/financial.service.ts:423:        affectedUserId: withdrawal.wallet.transporterId,
+src/admin/financial.service.ts:424:        action: "WITHDRAWAL_STATUS_UPDATED",
+src/admin/financial.service.ts:426:          withdrawalId: withdrawal.id,
+src/admin/financial.service.ts:427:          status: withdrawal.status,
+src/admin/financial.service.ts:428:          amount: withdrawal.amount,
+src/admin/financial.service.ts:429:          walletId: withdrawal.walletId,
+src/admin/financial.service.ts:432:          withdrawalId: withdrawal.id,
+src/admin/financial.service.ts:434:          amount: withdrawal.amount,
+src/admin/financial.service.ts:435:          walletId: withdrawal.walletId,
+src/admin/financial.service.ts:440:    return tx.withdrawal.findUnique({
+src/admin/financial.service.ts:442:        id: withdrawalId,
+src/admin/financial.service.ts:451:    throw new Error("Withdrawal not found");
+src/admin/financial.service.ts:455:    eventType: "WITHDRAWAL_STATUS_UPDATED",
+src/admin/financial.service.ts:457:    entityType: "WITHDRAWAL",
+src/admin/financial.routes.ts:10:  getAdminWithdrawals,
+src/admin/financial.routes.ts:11:  updateWithdrawalStatus,
+src/admin/financial.routes.ts:17:  getSettlementById,
+src/admin/financial.routes.ts:18:  listSettlements,
+src/admin/financial.routes.ts:19:  submitSettlementForApproval,
+src/admin/financial.routes.ts:20:  approveSettlement,
+src/admin/financial.routes.ts:21:  rejectSettlement,
+src/admin/financial.routes.ts:22:  resubmitSettlementForApproval,
+src/admin/financial.routes.ts:23:  releaseSettlement,
+src/admin/financial.routes.ts:24:} from "../settlements/settlement.service.js";
+src/admin/financial.routes.ts:118:router.get("/settlements", async (req, res) => {
+src/admin/financial.routes.ts:137:    const settlements = await listSettlements({
+src/admin/financial.routes.ts:147:      data: settlements,
+src/admin/financial.routes.ts:160:router.get("/settlements/:id", async (req, res) => {
+src/admin/financial.routes.ts:162:    const settlement = await getSettlementById(
+src/admin/financial.routes.ts:166:    if (!settlement) {
+src/admin/financial.routes.ts:169:        error: "Settlement not found",
+src/admin/financial.routes.ts:175:      data: settlement,
+src/admin/financial.routes.ts:189:  "/settlements/:id/submit",
+src/admin/financial.routes.ts:192:      const settlement =
+src/admin/financial.routes.ts:193:        await submitSettlementForApproval(
+src/admin/financial.routes.ts:199:        data: settlement,
+src/admin/financial.routes.ts:214:  "/settlements/:id/approve",
+src/admin/financial.routes.ts:217:      const result = await approveSettlement(
+src/admin/financial.routes.ts:242:  "/settlements/:id/reject",
+src/admin/financial.routes.ts:255:      const result = await rejectSettlement(
+src/admin/financial.routes.ts:278:  "/settlements/:id/resubmit",
+src/admin/financial.routes.ts:281:      const settlement = await resubmitSettlementForApproval(
+src/admin/financial.routes.ts:287:        data: settlement,
+src/admin/financial.routes.ts:302:  "/settlements/:id/release",
+src/admin/financial.routes.ts:305:      const settlement = await releaseSettlement(
+src/admin/financial.routes.ts:312:        data: settlement,
+src/admin/financial.routes.ts:326:router.get("/withdrawals", async (req, res) => {
+src/admin/financial.routes.ts:328:    const withdrawals =
+src/admin/financial.routes.ts:329:      await getAdminWithdrawals({
+src/admin/financial.routes.ts:338:      data: withdrawals,
+src/admin/financial.routes.ts:386:  "/withdrawals/:id/status",
+src/admin/financial.routes.ts:392:      const withdrawal =
+src/admin/financial.routes.ts:393:        await updateWithdrawalStatus(
+src/admin/financial.routes.ts:401:        data: withdrawal,
+src/admin/fleet.service.ts:62:  const vehicle = await prisma.$transaction(async (tx) => {
+src/admin/partner.service.ts:111:  const partner = await prisma.$transaction(async (tx) => {
+src/admin/risk-fraud.service.ts:13:    failedWithdrawals,
+src/admin/risk-fraud.service.ts:22:    prisma.withdrawal.count({ where: { status: "FAILED" } }),
+src/admin/risk-fraud.service.ts:52:      code: "FAILED_WITHDRAWALS",
+src/admin/risk-fraud.service.ts:53:      severity: failedWithdrawals > 0 ? "MEDIUM" : "LOW",
+src/admin/risk-fraud.service.ts:54:      count: failedWithdrawals,
+src/admin/risk-fraud.service.ts:69:      failedWithdrawals,
+src/admin/reports.service.ts:17:    withdrawals,
+src/admin/reports.service.ts:34:    prisma.withdrawal.count(),
+src/admin/reports.service.ts:63:      withdrawals,
+src/realtime/tracking.service.ts:13:  const result = await prisma.$transaction(async (tx) => {
+src/services/auth.service.ts:421:  await prisma.$transaction(
+src/services/auth.service.ts:624:   * The database transaction ensures the old token
+src/services/auth.service.ts:650:    await prisma.$transaction(
+src/services/auth.service.ts:719:  await prisma.$transaction(
+src/wallet/wallet.service.ts:13:      transactions: {
+src/wallet/wallet.service.ts:18:      withdrawals: {
+src/wallet/wallet.service.ts:48:export async function createWithdrawal(
+src/wallet/wallet.service.ts:60:    throw new Error("Withdrawal amount must be greater than zero");
+src/wallet/wallet.service.ts:65:  const result = await prisma.$transaction(async (tx) => {
+src/wallet/wallet.service.ts:86:     * Atomically reserve the withdrawal amount.
+src/wallet/wallet.service.ts:89:     * concurrent withdrawal requests from spending the same balance.
+src/wallet/wallet.service.ts:109:    const withdrawal = await tx.withdrawal.create({
+src/wallet/wallet.service.ts:120:    await tx.walletTransaction.create({
+src/wallet/wallet.service.ts:124:        transactionType: "WITHDRAWAL_PENDING",
+src/wallet/wallet.service.ts:125:        description: `Withdrawal ${withdrawal.id} reserved`,
+src/wallet/wallet.service.ts:129:    return withdrawal;
+src/wallet/wallet.service.ts:133:    eventType: "WITHDRAWAL_CREATED",
+src/wallet/wallet.service.ts:135:    entityType: "WITHDRAWAL",
+src/wallet/wallet.service.ts:139:      withdrawalId: result.id,
+src/wallet/wallet.routes.ts:6:import { createWalletSchema, withdrawalSchema } from "./wallet.validators.js";
+src/wallet/wallet.routes.ts:10:  createWithdrawal,
+src/wallet/wallet.routes.ts:90:      const input = withdrawalSchema.parse(req.body);
+src/wallet/wallet.routes.ts:92:      const withdrawal = await createWithdrawal(
+src/wallet/wallet.routes.ts:100:        data: withdrawal,
+src/wallet/wallet.validators.ts:7:export const withdrawalSchema = z.object({
+src/wallet/wallet.validators.ts:9:  amount: z.coerce.number().finite().positive("Withdrawal amount must be greater than zero"),
+src/subscriptions/subscription.service.ts:5:function transactionReference() {
+src/subscriptions/subscription.service.ts:50:  const result = await prisma.$transaction(async (tx) => {
+src/subscriptions/subscription.service.ts:128:          transactionReference: transactionReference(),
+src/subscriptions/subscription.service.ts:204:  const result = await prisma.$transaction(async (tx) => {
+src/settlements/settlement.service.ts:5:export async function createSettlement(
+src/settlements/settlement.service.ts:9:  const result = await prisma.$transaction(async (tx) => {
+src/settlements/settlement.service.ts:10:    const existing = await tx.settlement.findUnique({
+src/settlements/settlement.service.ts:46:        "Settlement can only be created for a successful payment",
+src/settlements/settlement.service.ts:75:    const settlement = await tx.settlement.create({
+src/settlements/settlement.service.ts:91:    return settlement;
+src/settlements/settlement.service.ts:95:    eventType: "SETTLEMENT_CREATED",
+src/settlements/settlement.service.ts:97:    entityType: "SETTLEMENT",
+src/settlements/settlement.service.ts:100:      settlementId: result.id,
+src/settlements/settlement.service.ts:115:export async function getSettlementById(
+src/settlements/settlement.service.ts:116:  settlementId: string,
+src/settlements/settlement.service.ts:118:  return prisma.settlement.findUnique({
+src/settlements/settlement.service.ts:120:      id: settlementId,
+src/settlements/settlement.service.ts:155:export async function listSettlements(filters?: {
+src/settlements/settlement.service.ts:165:  return prisma.settlement.findMany({
+src/settlements/settlement.service.ts:199:export async function submitSettlementForApproval(
+src/settlements/settlement.service.ts:200:  settlementId: string,
+src/settlements/settlement.service.ts:202:  const result = await prisma.$transaction(async (tx) => {
+src/settlements/settlement.service.ts:203:    const settlement = await tx.settlement.findUnique({
+src/settlements/settlement.service.ts:205:        id: settlementId,
+src/settlements/settlement.service.ts:209:    if (!settlement) {
+src/settlements/settlement.service.ts:210:      throw new Error("Settlement not found");
+src/settlements/settlement.service.ts:213:    if (settlement.status !== "PENDING") {
+src/settlements/settlement.service.ts:215:        `Invalid settlement transition: ${settlement.status} -> AWAITING_APPROVAL`,
+src/settlements/settlement.service.ts:219:    const updated = await tx.settlement.updateMany({
+src/settlements/settlement.service.ts:221:        id: settlementId,
+src/settlements/settlement.service.ts:231:        "Settlement could not be submitted for approval",
+src/settlements/settlement.service.ts:235:    return tx.settlement.findUniqueOrThrow({
+src/settlements/settlement.service.ts:237:        id: settlementId,
+src/settlements/settlement.service.ts:243:    eventType: "SETTLEMENT_AWAITING_APPROVAL",
+src/settlements/settlement.service.ts:245:    entityType: "SETTLEMENT",
+src/settlements/settlement.service.ts:248:      settlementId: result.id,
+src/settlements/settlement.service.ts:256:export async function approveSettlement(
+src/settlements/settlement.service.ts:257:  settlementId: string,
+src/settlements/settlement.service.ts:261:  const result = await prisma.$transaction(async (tx) => {
+src/settlements/settlement.service.ts:262:    const settlement = await tx.settlement.findUnique({
+src/settlements/settlement.service.ts:264:        id: settlementId,
+src/settlements/settlement.service.ts:268:    if (!settlement) {
+src/settlements/settlement.service.ts:269:      throw new Error("Settlement not found");
+src/settlements/settlement.service.ts:272:    if (settlement.status !== "AWAITING_APPROVAL") {
+src/settlements/settlement.service.ts:274:        `Settlement cannot be approved from status ${settlement.status}`,
+src/settlements/settlement.service.ts:279:      await tx.settlementApproval.create({
+src/settlements/settlement.service.ts:281:          settlementId,
+src/settlements/settlement.service.ts:290:      await tx.settlement.updateMany({
+src/settlements/settlement.service.ts:292:          id: settlementId,
+src/settlements/settlement.service.ts:304:        "Settlement could not be approved",
+src/settlements/settlement.service.ts:310:      settlement:
+src/settlements/settlement.service.ts:311:        await tx.settlement.findUniqueOrThrow({
+src/settlements/settlement.service.ts:313:            id: settlementId,
+src/settlements/settlement.service.ts:322:      affectedBookingId: result.settlement.bookingId,
+src/settlements/settlement.service.ts:323:      action: "SETTLEMENT_APPROVED",
+src/settlements/settlement.service.ts:325:        settlementId,
+src/settlements/settlement.service.ts:334:    eventType: "SETTLEMENT_APPROVED",
+src/settlements/settlement.service.ts:336:    entityType: "SETTLEMENT",
+src/settlements/settlement.service.ts:337:    entityId: settlementId,
+src/settlements/settlement.service.ts:340:      settlementId,
+src/settlements/settlement.service.ts:342:      status: result.settlement.status,
+src/settlements/settlement.service.ts:349:export async function rejectSettlement(
+src/settlements/settlement.service.ts:350:  settlementId: string,
+src/settlements/settlement.service.ts:358:  const result = await prisma.$transaction(async (tx) => {
+src/settlements/settlement.service.ts:359:    const settlement = await tx.settlement.findUnique({
+src/settlements/settlement.service.ts:361:        id: settlementId,
+src/settlements/settlement.service.ts:365:    if (!settlement) {
+src/settlements/settlement.service.ts:366:      throw new Error("Settlement not found");
+src/settlements/settlement.service.ts:369:    if (settlement.status !== "AWAITING_APPROVAL") {
+src/settlements/settlement.service.ts:371:        `Settlement cannot be rejected from status ${settlement.status}`,
+src/settlements/settlement.service.ts:376:      await tx.settlementApproval.create({
+src/settlements/settlement.service.ts:378:          settlementId,
+src/settlements/settlement.service.ts:387:      await tx.settlement.updateMany({
+src/settlements/settlement.service.ts:389:          id: settlementId,
+src/settlements/settlement.service.ts:390:          status: settlement.status,
+src/settlements/settlement.service.ts:402:        "Settlement could not be rejected",
+src/settlements/settlement.service.ts:408:      settlement:
+src/settlements/settlement.service.ts:409:        await tx.settlement.findUniqueOrThrow({
+src/settlements/settlement.service.ts:411:            id: settlementId,
+src/settlements/settlement.service.ts:420:      affectedBookingId: result.settlement.bookingId,
+src/settlements/settlement.service.ts:421:      action: "SETTLEMENT_REJECTED",
+src/settlements/settlement.service.ts:423:        settlementId,
+src/settlements/settlement.service.ts:426:          result.settlement.rejectionReason,
+src/settlements/settlement.service.ts:432:    eventType: "SETTLEMENT_REJECTED",
+src/settlements/settlement.service.ts:434:    entityType: "SETTLEMENT",
+src/settlements/settlement.service.ts:435:    entityId: settlementId,
+src/settlements/settlement.service.ts:438:      settlementId,
+src/settlements/settlement.service.ts:439:      status: result.settlement.status,
+src/settlements/settlement.service.ts:441:        result.settlement.rejectionReason,
+src/settlements/settlement.service.ts:448:export async function resubmitSettlementForApproval(
+src/settlements/settlement.service.ts:449:  settlementId: string,
+src/settlements/settlement.service.ts:451:  const result = await prisma.$transaction(async (tx) => {
+src/settlements/settlement.service.ts:452:    const settlement = await tx.settlement.findUnique({
+src/settlements/settlement.service.ts:454:        id: settlementId,
+src/settlements/settlement.service.ts:458:    if (!settlement) {
+src/settlements/settlement.service.ts:459:      throw new Error("Settlement not found");
+src/settlements/settlement.service.ts:462:    if (settlement.status !== "REJECTED") {
+src/settlements/settlement.service.ts:464:        `Settlement cannot be resubmitted from status ${settlement.status}`,
+src/settlements/settlement.service.ts:468:    const updated = await tx.settlement.updateMany({
+src/settlements/settlement.service.ts:470:        id: settlementId,
+src/settlements/settlement.service.ts:482:        "Settlement could not be resubmitted for approval",
+src/settlements/settlement.service.ts:486:    return tx.settlement.findUniqueOrThrow({
+src/settlements/settlement.service.ts:488:        id: settlementId,
+src/settlements/settlement.service.ts:494:    eventType: "SETTLEMENT_RESUBMITTED",
+src/settlements/settlement.service.ts:496:    entityType: "SETTLEMENT",
+src/settlements/settlement.service.ts:499:      settlementId: result.id,
+src/settlements/settlement.service.ts:509:export async function releaseSettlement(
+src/settlements/settlement.service.ts:510:  settlementId: string,
+src/settlements/settlement.service.ts:513:  const result = await prisma.$transaction(async (tx) => {
+src/settlements/settlement.service.ts:514:    const settlement = await tx.settlement.findUnique({
+src/settlements/settlement.service.ts:516:        id: settlementId,
+src/settlements/settlement.service.ts:520:    if (!settlement) {
+src/settlements/settlement.service.ts:521:      throw new Error("Settlement not found");
+src/settlements/settlement.service.ts:524:    if (settlement.status === "RELEASED") {
+src/settlements/settlement.service.ts:525:      throw new Error("Settlement already released");
+src/settlements/settlement.service.ts:528:    if (settlement.status !== "APPROVED") {
+src/settlements/settlement.service.ts:530:        `Settlement cannot be released from status ${settlement.status}`,
+src/settlements/settlement.service.ts:536:        transporterId: settlement.transporterId,
+src/settlements/settlement.service.ts:544:    const updatedSettlement =
+src/settlements/settlement.service.ts:545:      await tx.settlement.updateMany({
+src/settlements/settlement.service.ts:547:          id: settlementId,
+src/settlements/settlement.service.ts:557:    if (updatedSettlement.count !== 1) {
+src/settlements/settlement.service.ts:559:        "Settlement could not be released",
+src/settlements/settlement.service.ts:567:     * settlement-release requests cannot both spend the same pending funds.
+src/settlements/settlement.service.ts:573:          gte: settlement.grossAmount,
+src/settlements/settlement.service.ts:578:          decrement: settlement.grossAmount,
+src/settlements/settlement.service.ts:581:          increment: settlement.netAmount,
+src/settlements/settlement.service.ts:588:        "Insufficient pending wallet balance for settlement",
+src/settlements/settlement.service.ts:592:    await tx.walletTransaction.create({
+src/settlements/settlement.service.ts:595:        bookingId: settlement.bookingId,
+src/settlements/settlement.service.ts:596:        amount: settlement.netAmount,
+src/settlements/settlement.service.ts:597:        transactionType: "SETTLEMENT_RELEASED",
+src/settlements/settlement.service.ts:599:          "Net shipment settlement released after administrative approval",
+src/settlements/settlement.service.ts:603:    return tx.settlement.findUniqueOrThrow({
+src/settlements/settlement.service.ts:605:        id: settlementId,
+src/settlements/settlement.service.ts:614:      action: "SETTLEMENT_RELEASED",
+src/settlements/settlement.service.ts:616:        settlementId: result.id,
+src/settlements/settlement.service.ts:627:    eventType: "SETTLEMENT_RELEASED",
+src/settlements/settlement.service.ts:629:    entityType: "SETTLEMENT",
+src/settlements/settlement.service.ts:633:      settlementId: result.id,
+
+===== WEBHOOKS =====
+src/config/env.ts:11:  PAYMENT_WEBHOOK_SECRET: z.string().min(32),
+src/config/env.ts:14:  YOUVERIFY_WEBHOOK_SECRET: z.string().min(32),
+src/middleware/security-foundation.middleware.ts:241:      if (req.url === "/api/payments/webhook" || req.url === "/api/verification/youverify/webhook") {
+src/payments/payment.service.ts:204:     * This prevents concurrent webhook/admin requests from both
+src/payments/payment.service.ts:319:   * existing settlement when a webhook is retried or an administrator
+src/payments/payment.routes.ts:2:import { processPaymentWebhook } from "./payment-webhook.service.js";
+src/payments/payment.routes.ts:19:  "/webhook",
+src/payments/payment.routes.ts:24:     const signature = req.header("X-Webhook-Signature");
+src/payments/payment.routes.ts:26:        return res.status(401).json({ success: false, error: "Webhook signature verification required" });
+src/payments/payment.routes.ts:62:          error: "Missing required webhook event information",
+src/payments/payment.routes.ts:66:      const result = await processPaymentWebhook({
+src/payments/payment.routes.ts:84:      console.error("Payment webhook route error:", error);
+src/payments/payment.routes.ts:88:        error.message === "Invalid webhook signature"
+src/payments/payment.routes.ts:92:          error: "Invalid webhook signature",
+src/payments/payment.routes.ts:98:        error: "Webhook processing failed",
+src/payments/payment-webhook.service.ts:6:export type PaymentWebhookInput = {
+src/payments/payment-webhook.service.ts:19:function verifyWebhookSignature(
+src/payments/payment-webhook.service.ts:24:    .createHmac("sha256", env.PAYMENT_WEBHOOK_SECRET)
+src/payments/payment-webhook.service.ts:38:export async function processPaymentWebhook(
+src/payments/payment-webhook.service.ts:39:  input: PaymentWebhookInput,
+src/payments/payment-webhook.service.ts:52:  if (!verifyWebhookSignature(input.rawBody, input.signature)) {
+src/payments/payment-webhook.service.ts:53:    throw new Error("Invalid webhook signature");
+src/payments/payment-webhook.service.ts:59:   * Never trust a webhook-supplied paymentId by itself.
+src/payments/payment-webhook.service.ts:82:      throw new Error("Webhook provider does not match payment");
+src/payments/payment-webhook.service.ts:89:      throw new Error("Webhook transaction does not match payment");
+src/payments/payment-webhook.service.ts:96:      throw new Error("Webhook amount does not match payment");
+src/payments/payment-webhook.service.ts:103:      throw new Error("Webhook currency does not match payment");
+src/payments/payment-webhook.service.ts:123:      throw new Error("Webhook provider does not match payment");
+src/payments/payment-webhook.service.ts:130:      throw new Error("Webhook amount does not match payment");
+src/payments/payment-webhook.service.ts:137:      throw new Error("Webhook currency does not match payment");
+src/payments/payment-webhook.service.ts:147:  const existing = await prisma.paymentWebhookEvent.findUnique({
+src/payments/payment-webhook.service.ts:160:      webhookEventId: existing.id,
+src/payments/payment-webhook.service.ts:164:  let webhookEvent;
+src/payments/payment-webhook.service.ts:167:    webhookEvent = await prisma.paymentWebhookEvent.create({
+src/payments/payment-webhook.service.ts:192:        await prisma.paymentWebhookEvent.findUnique({
+src/payments/payment-webhook.service.ts:205:          webhookEventId: concurrentEvent.id,
+src/payments/payment-webhook.service.ts:242:      await prisma.paymentWebhookEvent.update({
+src/payments/payment-webhook.service.ts:244:          id: webhookEvent.id,
+src/payments/payment-webhook.service.ts:255:      webhookEventId: processedEvent.id,
+src/payments/payment-webhook.service.ts:259:     * Keep the webhook record when processing fails.
+src/payments/payment-webhook.service.ts:264:      `Payment webhook processing failed: ${provider}:${providerEventId}`,
+src/admin/financial.service.ts:134:export async function getPaymentWebhookEvents(filters?: {
+src/admin/financial.service.ts:138:  return prisma.paymentWebhookEvent.findMany({
+src/admin/financial.service.ts:156:export async function retryPaymentWebhook(
+src/admin/financial.service.ts:157:  webhookEventId: string,
+src/admin/financial.service.ts:160:  const webhookEvent = await prisma.paymentWebhookEvent.findUnique({
+src/admin/financial.service.ts:162:      id: webhookEventId,
+src/admin/financial.service.ts:166:  if (!webhookEvent) {
+src/admin/financial.service.ts:167:    throw new Error("Payment webhook event not found");
+src/admin/financial.service.ts:170:  if (webhookEvent.processed) {
+src/admin/financial.service.ts:174:      webhookEventId: webhookEvent.id,
+src/admin/financial.service.ts:178:  const webhookPayment = webhookEvent.paymentId
+src/admin/financial.service.ts:180:        where: { id: webhookEvent.paymentId },
+src/admin/financial.service.ts:192:  if (webhookEvent.paymentId && !webhookPayment) {
+src/admin/financial.service.ts:193:    throw new Error("Payment associated with webhook event not found");
+src/admin/financial.service.ts:197:    webhookEvent.paymentId &&
+src/admin/financial.service.ts:203:    ].includes(webhookEvent.eventType)
+src/admin/financial.service.ts:209:      await completePayment(webhookEvent.paymentId);
+src/admin/financial.service.ts:220:  const updated = await prisma.paymentWebhookEvent.update({
+src/admin/financial.service.ts:222:      id: webhookEvent.id,
+src/admin/financial.service.ts:233:      affectedUserId: webhookPayment?.customerId,
+src/admin/financial.service.ts:234:      affectedBookingId: webhookPayment?.bookingId,
+src/admin/financial.service.ts:235:      action: "PAYMENT_WEBHOOK_REPROCESSED",
+src/admin/financial.service.ts:237:        webhookEventId: webhookEvent.id,
+src/admin/financial.service.ts:238:        processed: webhookEvent.processed,
+src/admin/financial.service.ts:239:        paymentId: webhookEvent.paymentId,
+src/admin/financial.service.ts:240:        paymentStatus: webhookPayment?.status,
+src/admin/financial.service.ts:243:        webhookEventId: updated.id,
+src/admin/financial.service.ts:247:        paymentStatus: webhookPayment?.status === "PENDING"
+src/admin/financial.service.ts:249:          : webhookPayment?.status,
+src/admin/financial.service.ts:250:        amount: webhookPayment?.amount,
+src/admin/financial.service.ts:251:        currency: webhookPayment?.currency,
+src/admin/financial.service.ts:257:    eventType: "PAYMENT_WEBHOOK_REPROCESSED",
+src/admin/financial.service.ts:259:    entityType: "PAYMENT_WEBHOOK_EVENT",
+src/admin/financial.service.ts:263:      webhookEventId: updated.id,
+src/admin/financial.service.ts:275:    webhookEventId: updated.id,
+src/admin/financial.routes.ts:12:  getPaymentWebhookEvents,
+src/admin/financial.routes.ts:13:  retryPaymentWebhook,
+src/admin/financial.routes.ts:84:router.get("/webhooks", async (req, res) => {
+src/admin/financial.routes.ts:95:    const events = await getPaymentWebhookEvents({
+src/admin/financial.routes.ts:352:  "/webhooks/:id/retry",
+src/admin/financial.routes.ts:355:      const result = await retryPaymentWebhook(
+src/admin/financial.routes.ts:370:      if (message === "Payment webhook event not found") {
+src/admin/payment-webhook.service.ts:3:export async function getWebhookEvents(filters?: {
+src/admin/payment-webhook.service.ts:7:  return prisma.paymentWebhookEvent.findMany({
+src/admin/payment-webhook.service.ts:28:export async function getWebhookEventById(
+src/admin/payment-webhook.service.ts:31:  return prisma.paymentWebhookEvent.findUnique({
+src/admin/payment-webhook.service.ts:42:export async function getFailedWebhookEvents() {
+src/admin/payment-webhook.service.ts:43:  return prisma.paymentWebhookEvent.findMany({
+src/server.ts:18:import youverifyWebhookRoutes from "./verification/youverify/youverify.webhook.routes.js";
+src/server.ts:139:app.use("/api/verification/youverify", youverifyWebhookRoutes);
+src/verification/youverify/youverify.webhook.service.ts:6:import { youverifyWebhookSchema } from "./youverify.validators.js";
+src/verification/youverify/youverify.webhook.service.ts:15:    .createHmac("sha256", env.YOUVERIFY_WEBHOOK_SECRET)
+src/verification/youverify/youverify.webhook.service.ts:146:   * deterministic idempotency for identical webhook deliveries.
+src/verification/youverify/youverify.webhook.service.ts:173:  return "VERIFICATION_WEBHOOK";
+src/verification/youverify/youverify.webhook.service.ts:204:export async function processYouverifyWebhook(
+src/verification/youverify/youverify.webhook.service.ts:209:    throw new Error("Invalid Youverify webhook signature");
+src/verification/youverify/youverify.webhook.service.ts:219:    throw new Error("Invalid Youverify webhook JSON");
+src/verification/youverify/youverify.webhook.service.ts:223:    youverifyWebhookSchema.safeParse(parsedPayload);
+src/verification/youverify/youverify.webhook.service.ts:226:    throw new Error("Invalid Youverify webhook payload");
+src/verification/youverify/youverify.webhook.service.ts:244:    await prisma.youverifyWebhookEvent.findUnique({
+src/verification/youverify/youverify.webhook.service.ts:257:      webhookEventId: existing.id,
+src/verification/youverify/youverify.webhook.service.ts:266:      "Youverify webhook does not contain a verification ID",
+src/verification/youverify/youverify.webhook.service.ts:285:  let webhookEvent;
+src/verification/youverify/youverify.webhook.service.ts:288:    webhookEvent =
+src/verification/youverify/youverify.webhook.service.ts:289:      await prisma.youverifyWebhookEvent.create({
+src/verification/youverify/youverify.webhook.service.ts:306:        await prisma.youverifyWebhookEvent.findUnique({
+src/verification/youverify/youverify.webhook.service.ts:319:          webhookEventId: concurrentEvent.id,
+src/verification/youverify/youverify.webhook.service.ts:337:      webhookEventId: webhookEvent.id,
+src/verification/youverify/youverify.webhook.service.ts:437:      await prisma.youverifyWebhookEvent.update({
+src/verification/youverify/youverify.webhook.service.ts:439:          id: webhookEvent.id,
+src/verification/youverify/youverify.webhook.service.ts:451:      webhookEventId: processedEvent.id,
+src/verification/youverify/youverify.webhook.service.ts:458:     * Keep the webhook event unprocessed when business processing
+src/verification/youverify/youverify.webhook.service.ts:463:      `Youverify webhook processing failed: ${providerEventId}`,
+src/verification/youverify/youverify.validators.ts:3:export const youverifyWebhookSchema =
+src/verification/youverify/youverify.webhook.routes.ts:3:  processYouverifyWebhook,
+src/verification/youverify/youverify.webhook.routes.ts:4:} from "./youverify.webhook.service.js";
+src/verification/youverify/youverify.webhook.routes.ts:9:  "/webhook",
+src/verification/youverify/youverify.webhook.routes.ts:15:      req.header("X-Webhook-Signature")?.trim();
+src/verification/youverify/youverify.webhook.routes.ts:20:        error: "Webhook signature verification required",
+src/verification/youverify/youverify.webhook.routes.ts:26:        await processYouverifyWebhook(
+src/verification/youverify/youverify.webhook.routes.ts:39:          "Invalid Youverify webhook signature"
+src/verification/youverify/youverify.webhook.routes.ts:43:          error: "Invalid webhook signature",
+src/verification/youverify/youverify.webhook.routes.ts:48:        "Youverify webhook route error:",
+src/verification/youverify/youverify.webhook.routes.ts:54:        error: "Webhook processing failed",
+
+===== REALTIME EVENTS =====
+src/vehicles/vehicle.service.ts:14:    eventType: "vehicle.created",
+src/vehicles/vehicle.service.ts:68:    eventType: "vehicle.updated",
+src/bookings/booking.service.ts:3:import { publishEvent } from "../realtime/event-bus.js";
+src/bookings/booking.service.ts:24:    eventType: "booking.created",
+src/bookings/booking.service.ts:34:    eventType: "SHIPMENT_CREATED",
+src/bookings/booking.service.ts:39:  publishEvent("booking", {
+src/bookings/booking.service.ts:40:    eventType: "SHIPMENT_CREATED",
+src/bookings/booking.service.ts:173:    eventType: "booking.assigned",
+src/bookings/booking.service.ts:188:    eventType: "TRANSPORTER_ASSIGNED",
+src/bookings/booking.service.ts:193:  publishEvent("booking", {
+src/bookings/booking.service.ts:194:    eventType: "TRANSPORTER_ASSIGNED",
+src/bookings/booking.service.ts:311:      eventType:
+src/bookings/booking.service.ts:319:      eventType: "SHIPMENT_ACCEPTED",
+src/bookings/booking.service.ts:323:      eventType: "IN_TRANSIT",
+src/bookings/booking.service.ts:333:      eventType: shipmentEvent.eventType,
+src/bookings/booking.service.ts:338:  publishEvent("booking", {
+src/bookings/booking.service.ts:339:    eventType: status,
+src/bookings/booking.service.ts:354:    publishEvent("vehicle", {
+src/bookings/booking.service.ts:355:      eventType: "VEHICLE_AVAILABILITY_UPDATED",
+src/bookings/booking.service.ts:519:    eventType: "booking.completed",
+src/bookings/booking.service.ts:534:    eventType: "DELIVERY_CONFIRMED",
+src/payments/payment.service.ts:5:import { publishEvent } from "../realtime/event-bus.js";
+src/payments/payment.service.ts:122:  publishEvent("admin", {
+src/payments/payment.service.ts:123:    eventType: "PAYMENT_INITIALIZED",
+src/payments/payment.service.ts:329:  publishEvent("admin", {
+src/payments/payment.service.ts:330:    eventType: "PAYMENT_COMPLETED",
+src/payments/payment.routes.ts:39:      const eventType =
+src/payments/payment.routes.ts:41:        req.body?.eventType;
+src/payments/payment.routes.ts:59:      if (!provider || !providerEventId || !eventType) {
+src/payments/payment.routes.ts:69:  eventType,
+src/payments/payment-webhook.service.ts:9:  eventType: string;
+src/payments/payment-webhook.service.ts:44:    eventType,
+src/payments/payment-webhook.service.ts:172:        eventType,
+src/payments/payment-webhook.service.ts:227:      ].includes(eventType)
+src/messages/message.service.ts:20:    eventType: "MESSAGE_CREATED",
+src/notifications/notification.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+src/notifications/notification.service.ts:16:  publishEvent("admin", {
+src/notifications/notification.service.ts:17:    eventType: "NOTIFICATION_CREATED",
+src/documents/document.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+src/documents/document.service.ts:28:  publishEvent("admin", {
+src/documents/document.service.ts:29:    eventType: "DOCUMENT_SUBMITTED",
+src/documents/document.service.ts:124:  publishEvent("admin", {
+src/documents/document.service.ts:125:    eventType: "DOCUMENT_APPROVED",
+src/documents/document.service.ts:217:  publishEvent("admin", {
+src/documents/document.service.ts:218:    eventType: "DOCUMENT_REJECTED",
+src/support/support.service.ts:3:import { publishEvent } from "../realtime/event-bus.js";
+src/support/support.service.ts:87:      eventType: "SUPPORT_OPENED",
+src/support/support.service.ts:93:  publishEvent("admin", {
+src/support/support.service.ts:94:    eventType: "SUPPORT_TICKET_CREATED",
+src/support/support.service.ts:135:  publishEvent("admin", {
+src/support/support.service.ts:136:    eventType: "SUPPORT_TICKET_STATUS_UPDATED",
+src/support/support.service.ts:220:  publishEvent("admin", {
+src/support/support.service.ts:221:    eventType: "SUPPORT_TICKET_ASSIGNED",
+src/support/support.service.ts:249:  publishEvent("admin", {
+src/support/support.service.ts:250:    eventType: "SUPPORT_TICKET_STATUS_UPDATED",
+src/disputes/dispute.service.ts:17:    eventType: "DISPUTE_OPENED",
+src/admin/activity.service.ts:5:  eventType?: string;
+src/admin/activity.service.ts:14:    ...(options.eventType ? { eventType: options.eventType } : {}),
+src/admin/activity.routes.ts:20:      eventType:
+src/admin/activity.routes.ts:21:        typeof req.query.eventType === "string"
+src/admin/activity.routes.ts:22:          ? req.query.eventType
+src/admin/financial.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+src/admin/financial.service.ts:203:    ].includes(webhookEvent.eventType)
+src/admin/financial.service.ts:256:  publishEvent("admin", {
+src/admin/financial.service.ts:257:    eventType: "PAYMENT_WEBHOOK_REPROCESSED",
+src/admin/financial.service.ts:266:      eventType: updated.eventType,
+src/admin/financial.service.ts:454:  publishEvent("admin", {
+src/admin/financial.service.ts:455:    eventType: "WITHDRAWAL_STATUS_UPDATED",
+src/admin/fleet.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+src/admin/fleet.service.ts:89:  publishEvent("admin", {
+src/admin/fleet.service.ts:90:    eventType: "VEHICLE_UPDATED",
+src/admin/partner.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+src/admin/partner.service.ts:131:  publishEvent("admin", {
+src/admin/partner.service.ts:132:    eventType: "PARTNER_UPDATED",
+src/admin/marketing.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+src/admin/marketing.service.ts:77:  publishEvent("admin", {
+src/admin/marketing.service.ts:78:    eventType: "MARKETING_CAMPAIGN_CREATED",
+src/admin/marketing.service.ts:136:  publishEvent("admin", {
+src/admin/marketing.service.ts:137:    eventType: "MARKETING_CAMPAIGN_UPDATED",
+src/admin/marketing.service.ts:168:  publishEvent("admin", {
+src/admin/marketing.service.ts:169:    eventType: "MARKETING_CAMPAIGN_STATUS_UPDATED",
+src/admin/role-permission.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+src/admin/role-permission.service.ts:75:  publishEvent("admin", {
+src/admin/role-permission.service.ts:76:    eventType: "ADMIN_PERMISSIONS_UPDATED",
+src/admin/platform-config.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+src/admin/platform-config.service.ts:56:  publishEvent("admin", {
+src/admin/platform-config.service.ts:57:    eventType: "PLATFORM_CONFIG_UPDATED",
+src/admin/platform-config.service.ts:84:  publishEvent("admin", {
+src/admin/platform-config.service.ts:85:    eventType: "PLATFORM_CONFIG_DELETED",
+src/admin/security.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+src/admin/security.service.ts:181:  publishEvent("admin", {
+src/admin/security.service.ts:182:    eventType: "ADMINISTRATOR_UNLOCKED",
+src/admin/security.service.ts:229:  publishEvent("admin", {
+src/admin/security.service.ts:230:    eventType: enabled
+src/admin/error.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+src/admin/error.service.ts:11:        { eventType: { contains: "ERROR", mode: "insensitive" } },
+src/admin/error.service.ts:12:        { eventType: { contains: "FAILED", mode: "insensitive" } },
+src/admin/error.service.ts:20:    /ERROR|FAILED/i.test(item.eventType),
+src/admin/error.service.ts:31:  eventType?: string;
+src/admin/error.service.ts:39:      ...(options?.eventType
+src/admin/error.service.ts:40:        ? { eventType: options.eventType }
+src/admin/error.service.ts:49:  eventType: string;
+src/admin/error.service.ts:60:      eventType: data.eventType,
+src/admin/error.service.ts:70:  publishEvent("admin", {
+src/admin/error.service.ts:71:    eventType: data.eventType,
+src/admin/error.routes.ts:36:      eventType:
+src/admin/error.routes.ts:37:        typeof req.query.eventType === "string"
+src/admin/error.routes.ts:38:          ? req.query.eventType
+src/admin/api-management.service.ts:40:  eventType: string,
+src/admin/api-management.service.ts:44:    eventType,
+src/admin/database-health.service.ts:44:  eventType: string,
+src/admin/database-health.service.ts:48:    eventType,
+src/admin/backup-recovery.service.ts:53:    eventType: "BACKUP_SNAPSHOT_REQUESTED",
+src/admin/risk-fraud.service.ts:86:    eventType: "RISK_ALERT_CREATED",
+src/admin/reports.service.ts:82:    eventType: "REPORT_GENERATED",
+src/admin/ai-automation.service.ts:110:    eventType: "AI_AUTOMATION_RUN",
+src/realtime/realtime.service.ts:29:  eventType: string;
+src/realtime/realtime.service.ts:40:  // Socket.IO delivery is initialized by socket-events.ts.
+src/realtime/realtime.service.ts:46:  const { publishEvent } = await import("./event-bus.js");
+src/realtime/realtime.service.ts:48:  publishEvent("admin", event);
+src/realtime/realtime.service.ts:58:  const { publishEvent } = await import("./event-bus.js");
+src/realtime/realtime.service.ts:60:  publishEvent("booking", {
+src/realtime/event-bus.ts:13:export function publishEvent(
+src/realtime/socket-events.ts:1:import type { Server } from "socket.io";
+src/realtime/socket-events.ts:4:export function initializeSocketEvents(io: Server) {
+src/realtime/activity.service.ts:10:      eventType: event.eventType,
+src/realtime/activity.service.ts:16:      title: event.eventType,
+src/realtime/socket-authorization.ts:3:export type SocketUser = {
+src/realtime/socket-authorization.ts:16:  user: SocketUser,
+src/realtime/socket-authorization.ts:42:  user: SocketUser,
+src/realtime/tracking.service.ts:2:import { publishEvent } from "./event-bus.js";
+src/realtime/tracking.service.ts:92:  publishEvent("vehicle", {
+src/realtime/tracking.service.ts:93:    eventType: "VEHICLE_LOCATION_UPDATED",
+src/server.ts:3:import { Server } from "socket.io";
+src/server.ts:43:import { initializeSocketEvents } from "./realtime/socket-events.js";
+src/server.ts:49:} from "./realtime/socket-authorization.js";
+src/server.ts:68:io.use(async (socket, next) => {
+src/server.ts:70:    const authToken = socket.handshake.auth?.token as string | undefined;
+src/server.ts:71:    const header = socket.handshake.headers.authorization;
+src/server.ts:117:    socket.data.user = user;
+src/server.ts:132:initializeSocketEvents(io);
+src/server.ts:200:io.on("connection", (socket) => {
+src/server.ts:201:  console.log(`Realtime client connected: ${socket.id}`);
+src/server.ts:202:  socket.on("join-booking", async (bookingId: string) => {
+src/server.ts:203:    const user = socket.data.user;
+src/server.ts:206:      socket.emit("booking:access-denied", {
+src/server.ts:218:      socket.emit("booking:access-denied", {
+src/server.ts:224:    socket.join(bookingId);
+src/server.ts:227:      `${socket.id} joined booking ${bookingId}`,
+src/server.ts:231:  socket.on("join-administration", () => {
+src/server.ts:232:    const user = socket.data.user;
+src/server.ts:235:      socket.emit("admin:access-denied", {
+src/server.ts:241:    socket.join("administration");
+src/server.ts:244:      `${socket.id} joined administration`,
+src/server.ts:248:  socket.on(
+src/server.ts:251:      const user = socket.data.user;
+src/server.ts:255:        socket.emit("admin:access-denied", {
+src/server.ts:262:        socket.emit("admin:access-denied", {
+src/server.ts:274:        socket.emit("admin:access-denied", {
+src/server.ts:280:      socket.join(`admin:${module}`);
+src/server.ts:283:        `${socket.id} joined admin module ${module}`,
+src/server.ts:288:  socket.on(
+src/server.ts:291:      socket.leave(`admin:${module}`);
+src/server.ts:294:        `${socket.id} left admin module ${module}`,
+src/server.ts:299:  socket.on("leave-booking", (bookingId: string) => {
+src/server.ts:300:    socket.leave(bookingId);
+src/server.ts:303:      `${socket.id} left booking ${bookingId}`,
+src/server.ts:306:  socket.on(
+src/server.ts:317:        const user = socket.data.user;
+src/server.ts:320:          socket.emit("vehicle:access-denied", {
+src/server.ts:334:          socket.emit("vehicle:update-rejected", {
+src/server.ts:347:          socket.emit("vehicle:access-denied", {
+src/server.ts:370:        socket.emit("vehicle:location-updated", location);
+src/server.ts:372:        socket.emit("vehicle:update-rejected", {
+src/events/event.service.ts:6:  eventType:
+src/wallet/wallet.service.ts:3:import { publishEvent } from "../realtime/event-bus.js";
+src/wallet/wallet.service.ts:36:  publishEvent("admin", {
+src/wallet/wallet.service.ts:37:    eventType: "WALLET_CREATED",
+src/wallet/wallet.service.ts:132:  publishEvent("admin", {
+src/wallet/wallet.service.ts:133:    eventType: "WITHDRAWAL_CREATED",
+src/verification/verification.service.ts:3:import { publishEvent } from "../realtime/event-bus.js";
+src/verification/verification.service.ts:134:  publishEvent("admin", {
+src/verification/verification.service.ts:135:    eventType: "VERIFICATION_STARTED",
+src/verification/youverify/youverify.webhook.service.ts:4:import { publishEvent } from "../../realtime/event-bus.js";
+src/verification/youverify/youverify.webhook.service.ts:154:function extractEventType(
+src/verification/youverify/youverify.webhook.service.ts:159:    payload.eventType,
+src/verification/youverify/youverify.webhook.service.ts:235:  const eventType =
+src/verification/youverify/youverify.webhook.service.ts:236:    extractEventType(payload);
+src/verification/youverify/youverify.webhook.service.ts:294:          eventType,
+src/verification/youverify/youverify.webhook.service.ts:372:      publishEvent("admin", {
+src/verification/youverify/youverify.webhook.service.ts:373:        eventType: "VERIFICATION_COMPLETED",
+src/verification/youverify/youverify.webhook.service.ts:412:      publishEvent("admin", {
+src/verification/youverify/youverify.webhook.service.ts:413:        eventType: "VERIFICATION_FAILED",
+src/content/content.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+src/content/content.service.ts:27:  publishEvent("admin", {
+src/content/content.service.ts:28:    eventType: "CONTENT_CREATED",
+src/content/content.service.ts:78:  publishEvent("admin", {
+src/content/content.service.ts:79:    eventType: "CONTENT_UPDATED",
+src/content/content.service.ts:103:  publishEvent("admin", {
+src/content/content.service.ts:104:    eventType: "CONTENT_PUBLISHED",
+src/subscriptions/subscription.service.ts:3:import { publishEvent } from "../realtime/event-bus.js";
+src/subscriptions/subscription.service.ts:140:  publishEvent("admin", {
+src/subscriptions/subscription.service.ts:141:    eventType: "SUBSCRIPTION_CREATED",
+src/subscriptions/subscription.service.ts:187:  publishEvent("admin", {
+src/subscriptions/subscription.service.ts:188:    eventType: "SUBSCRIPTION_CANCELLED",
+src/subscriptions/subscription.service.ts:245:  publishEvent("admin", {
+src/subscriptions/subscription.service.ts:246:    eventType: "SUBSCRIPTION_PAYMENT_COMPLETED",
+src/settlements/settlement.service.ts:3:import { publishEvent } from "../realtime/event-bus.js";
+src/settlements/settlement.service.ts:94:  publishEvent("admin", {
+src/settlements/settlement.service.ts:95:    eventType: "SETTLEMENT_CREATED",
+src/settlements/settlement.service.ts:242:  publishEvent("admin", {
+src/settlements/settlement.service.ts:243:    eventType: "SETTLEMENT_AWAITING_APPROVAL",
+src/settlements/settlement.service.ts:333:  publishEvent("admin", {
+src/settlements/settlement.service.ts:334:    eventType: "SETTLEMENT_APPROVED",
+src/settlements/settlement.service.ts:431:  publishEvent("admin", {
+src/settlements/settlement.service.ts:432:    eventType: "SETTLEMENT_REJECTED",
+src/settlements/settlement.service.ts:493:  publishEvent("admin", {
+src/settlements/settlement.service.ts:494:    eventType: "SETTLEMENT_RESUBMITTED",
+src/settlements/settlement.service.ts:626:  publishEvent("admin", {
+src/settlements/settlement.service.ts:627:    eventType: "SETTLEMENT_RELEASED",
+
+===== PRISMA SCHEMA =====
+10:enum UserRole {
+16:enum AdminType {
+35:enum AdminStatus {
+41:enum AdminModule {
+68:enum UserStatus {
+75:enum VerificationStatus {
+81:enum VehicleVerificationStatus {
+88:enum VehicleAvailabilityStatus {
+94:enum BookingStatus {
+107:enum PaymentStatus {
+115:enum SubscriptionStatus {
+123:enum SubscriptionInterval {
+128:enum CommissionType {
+133:enum CommissionStatus {
+138:enum SettlementStatus {
+147:enum SettlementApprovalStatus {
+153:enum string {
+158:enum WithdrawalStatus {
+165:enum DocumentType {
+174:enum DocumentStatus {
+180:enum MessageType {
+186:enum SupportStatus {
+193:enum Priority {
+200:enum DisputeStatus {
+207:enum ShipmentEventType {
+223:enum CargoCategory {
+235:enum VehicleClass {
+250:enum TransporterTier {
+255:model User {
+316:model CustomerProfile {
+329:model TransporterProfile {
+348:model AdminProfile {
+380:model Vehicle {
+389:  model              String?
+406:enum TruckCategory {
+417:model Booking {
+480:model TrackingPoint {
+505:model Payment {
+529:model PaymentWebhookEvent {
+551:model YouverifyWebhookEvent {
+570:model Wallet {
+586:model WalletTransaction {
+604:model Withdrawal {
+626:model Notification {
+642:model Message {
+660:model Review {
+676:model Document {
+702:model SupportTicket {
+720:model Dispute {
+739:model AdminActivity {
+761:model AuditLog {
+777:model ShipmentEvent {
+792:enum ContentStatus {
+798:enum ContentType {
+808:model ContentItem {
+832:model RefreshSession {
+888:model SubscriptionPlan {
+907:model TransporterSubscription {
+929:model SubscriptionInvoice {
+956:model CommissionRule {
+984:model Settlement {
+1017:model SettlementApproval {
+
+===== CONSOLE LOGGING =====
+src/payments/payment.routes.ts:84:      console.error("Payment webhook route error:", error);
+src/payments/payment-webhook.service.ts:263:    console.error(
+src/realtime/event-bus.ts:26:      console.error("Failed to persist admin activity:", error);
+src/server.ts:201:  console.log(`Realtime client connected: ${socket.id}`);
+src/server.ts:226:    console.log(
+src/server.ts:243:    console.log(
+src/server.ts:282:      console.log(
+src/server.ts:293:      console.log(
+src/server.ts:302:    console.log(
+src/server.ts:383:  console.log(
+src/verification/youverify/youverify.webhook.service.ts:462:    console.error(
+src/verification/youverify/youverify.webhook.routes.ts:47:      console.error(
+
+Audit saved to: audits/backend-audit-20260818-070448.txt

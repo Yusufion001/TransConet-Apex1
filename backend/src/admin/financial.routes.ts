@@ -1,8 +1,14 @@
 import { Router } from "express";
+import { z } from "zod";
 import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
 import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import {
+  withdrawalStatusSchema,
+  settlementApprovalSchema,
+  settlementRejectionSchema,
+} from "./admin.validators.js";
 
 import {
   getFinancialOverview,
@@ -217,9 +223,7 @@ router.post(
       const result = await approveSettlement(
         String(req.params.id),
         req.user!.id,
-        typeof req.body?.decisionNote === "string"
-          ? req.body.decisionNote
-          : undefined,
+        settlementApprovalSchema.parse(req.body).decisionNote,
       );
 
       res.json({
@@ -227,6 +231,13 @@ router.post(
         data: result,
       });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
       res.status(500).json({
         success: false,
         error:
