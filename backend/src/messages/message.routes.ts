@@ -8,6 +8,7 @@ import {
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
 import { assertBookingAccess } from "../bookings/booking.service.js";
+import { toMessageDto } from "./message.dto.js";
 import { validate } from "../middleware/validate.middleware.js";
 import {
   createMessageSchema,
@@ -68,7 +69,7 @@ router.post(
 
       return res.json({
         success: true,
-        data: message,
+        data: toMessageDto(message),
       });
     } catch (error) {
       const status =
@@ -111,7 +112,7 @@ router.get(
 
       return res.json({
         success: true,
-        data: messages,
+        data: messages.map(toMessageDto),
       });
     } catch (error) {
       const status =

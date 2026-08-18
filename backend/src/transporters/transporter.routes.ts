@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { toTransporterDto } from "./transporter.dto.js";
+import { toVehicleDto } from "../vehicles/vehicle.dto.js";
 import {
   createTransporterProfile,
   getTransporterProfile,
@@ -10,18 +12,32 @@ import {
   authorize,
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
+import {
+  createTransporterProfileSchema,
+  updateTransporterVerificationSchema,
+} from "./transporter.validators.js";
 
 const router = Router();
 router.use(authenticate);
 
 router.post("/", authorize("TRANSPORTER"), async (req: AuthenticatedRequest, res) => {
   try {
+    const input = createTransporterProfileSchema.safeParse(req.body);
+
+    if (!input.success) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid transporter profile data",
+        details: input.error.flatten(),
+      });
+    }
+
     const transporter = await createTransporterProfile({
-      ...req.body,
+      ...input.data,
       userId: req.user!.id,
     });
 
-    res.json({ success: true, data: transporter });
+    res.json({ success: true, data: toTransporterDto(transporter) });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -49,7 +65,7 @@ router.get("/:id", async (req: AuthenticatedRequest, res) => {
       });
     }
 
-    res.json({ success: true, data: transporter });
+    res.json({ success: true, data: toTransporterDto(transporter) });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -70,7 +86,7 @@ router.get("/:id/vehicles", async (req: AuthenticatedRequest, res) => {
 
     const vehicles = await getTransporterVehicles(String(req.params.id));
 
-    res.json({ success: true, data: vehicles });
+    res.json({ success: true, data: vehicles.map(toVehicleDto) });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -84,12 +100,22 @@ router.patch(
   authorize("ADMIN"),
   async (req: AuthenticatedRequest, res) => {
     try {
+      const input = updateTransporterVerificationSchema.safeParse(req.body);
+
+      if (!input.success) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid transporter verification status",
+          details: input.error.flatten(),
+        });
+      }
+
       const transporter = await updateTransporterVerification(
         String(req.params.id),
-        req.body.status,
+        input.data.status,
       );
 
-      res.json({ success: true, data: transporter });
+      res.json({ success: true, data: toTransporterDto(transporter) });
     } catch (error) {
       res.status(500).json({
         success: false,

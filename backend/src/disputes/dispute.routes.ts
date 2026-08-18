@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { toDisputeDto } from "./dispute.dto.js";
+import { z } from "zod";
 
 import {
   createDispute,
@@ -10,13 +12,27 @@ import {
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
+import {
+  disputeCreateSchema,
+  disputeStatusSchema,
+} from "../admin/admin.validators.js";
 
 const router = Router();
+
+const disputeIdParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
+const customerIdParamsSchema = z.object({
+  customerId: z.string().uuid(),
+});
 
 router.use(authenticate);
 
 router.post("/", async (req: AuthenticatedRequest, res) => {
   try {
+    const input = disputeCreateSchema.parse(req.body);
+
     if (req.user!.role !== "CUSTOMER" && req.user!.role !== "ADMIN") {
       return res.status(403).json({
         success: false,
@@ -26,7 +42,7 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
 
     if (
       req.user!.role === "CUSTOMER" &&
-      String(req.body.customerId) !== req.user!.id
+      input.customerId !== req.user!.id
     ) {
       return res.status(403).json({
         success: false,
@@ -35,18 +51,25 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
     }
 
     const dispute = await createDispute({
-      ...req.body,
+      ...input,
       customerId:
         req.user!.role === "CUSTOMER"
           ? req.user!.id
-          : String(req.body.customerId),
+          : input.customerId,
     });
 
     res.json({
       success: true,
-      data: dispute,
+      data: toDisputeDto(dispute),
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
     res.status(500).json({
       success: false,
       error:
@@ -59,11 +82,13 @@ router.get(
   "/customer/:customerId",
   async (req: AuthenticatedRequest, res) => {
     try {
+      const params = customerIdParamsSchema.parse(req.params);
+
       if (
         req.user!.role !== "ADMIN" &&
         (
           req.user!.role !== "CUSTOMER" ||
-          req.user!.id !== String(req.params.customerId)
+          req.user!.id !== params.customerId
         )
       ) {
         return res.status(403).json({
@@ -73,14 +98,21 @@ router.get(
       }
 
       const disputes = await getCustomerDisputes(
-        String(req.params.customerId),
+        params.customerId,
       );
 
       res.json({
         success: true,
-        data: disputes,
+        data: disputes.map(toDisputeDto),
       });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
       res.status(500).json({
         success: false,
         error:
@@ -95,16 +127,26 @@ router.patch(
   requireAdmin,
   async (req: AuthenticatedRequest, res) => {
     try {
+      const params = disputeIdParamsSchema.parse(req.params);
+      const input = disputeStatusSchema.parse(req.body);
+
       const dispute = await updateDisputeStatus(
-        String(req.params.id),
-        req.body.status,
+        params.id,
+        input.status,
       );
 
       res.json({
         success: true,
-        data: dispute,
+        data: toDisputeDto(dispute),
       });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
       res.status(500).json({
         success: false,
         error:

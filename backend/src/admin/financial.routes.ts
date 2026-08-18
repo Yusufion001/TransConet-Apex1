@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { toWithdrawalDto } from "../wallet/wallet.dto.js";
+import { toSettlementDto, toSettlementDecisionDto } from "../settlements/settlement.dto.js";
 import { z } from "zod";
 import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { authenticate } from "../middleware/auth.middleware.js";
@@ -8,6 +10,7 @@ import {
   withdrawalStatusSchema,
   settlementApprovalSchema,
   settlementRejectionSchema,
+  emptyBodySchema,
 } from "./admin.validators.js";
 
 import {
@@ -150,7 +153,7 @@ router.get("/settlements", async (req, res) => {
 
     res.json({
       success: true,
-      data: settlements,
+      data: settlements.map(toSettlementDto),
     });
   } catch (error) {
     res.status(500).json({
@@ -178,7 +181,7 @@ router.get("/settlements/:id", async (req, res) => {
 
     return res.json({
       success: true,
-      data: settlement,
+      data: toSettlementDto(settlement),
     });
   } catch (error) {
     return res.status(500).json({
@@ -202,7 +205,7 @@ router.post(
 
       res.json({
         success: true,
-        data: settlement,
+        data: toSettlementDto(settlement),
       });
     } catch (error) {
       res.status(500).json({
@@ -228,7 +231,7 @@ router.post(
 
       res.json({
         success: true,
-        data: result,
+        data: toSettlementDecisionDto(result),
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -253,27 +256,26 @@ router.post(
   "/settlements/:id/reject",
   async (req: AuthenticatedRequest, res) => {
     try {
-      if (
-        typeof req.body?.rejectionReason !== "string" ||
-        !req.body.rejectionReason.trim()
-      ) {
-        return res.status(400).json({
-          success: false,
-          error: "Rejection reason is required",
-        });
-      }
+      const input = settlementRejectionSchema.parse(req.body);
 
       const result = await rejectSettlement(
         String(req.params.id),
         req.user!.id,
-        req.body.rejectionReason,
+        input.rejectionReason,
       );
 
       return res.json({
         success: true,
-        data: result,
+        data: toSettlementDecisionDto(result),
       });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
       return res.status(500).json({
         success: false,
         error:
@@ -289,13 +291,15 @@ router.post(
   "/settlements/:id/resubmit",
   async (req, res) => {
     try {
+      emptyBodySchema.parse(req.body);
+
       const settlement = await resubmitSettlementForApproval(
         String(req.params.id),
       );
 
       return res.json({
         success: true,
-        data: settlement,
+        data: toSettlementDto(settlement),
       });
     } catch (error) {
       return res.status(500).json({
@@ -313,6 +317,8 @@ router.post(
   "/settlements/:id/release",
   async (req: AuthenticatedRequest, res) => {
     try {
+      emptyBodySchema.parse(req.body);
+
       const settlement = await releaseSettlement(
         String(req.params.id),
         req.user!.id,
@@ -320,7 +326,7 @@ router.post(
 
       res.json({
         success: true,
-        data: settlement,
+        data: toSettlementDto(settlement),
       });
     } catch (error) {
       res.status(500).json({
@@ -363,6 +369,8 @@ router.post(
   "/webhooks/:id/retry",
   async (req: AuthenticatedRequest, res) => {
     try {
+      emptyBodySchema.parse(req.body);
+
       const result = await retryPaymentWebhook(
         String(req.params.id),
         req.user!.id,
@@ -400,10 +408,12 @@ router.patch(
     res,
   ) => {
     try {
+      const input = withdrawalStatusSchema.parse(req.body);
+
       const withdrawal =
         await updateWithdrawalStatus(
           String(req.params.id),
-          req.body.status,
+          input.status,
           req.user!.id,
         );
 

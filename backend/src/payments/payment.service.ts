@@ -4,6 +4,7 @@ import { createNotification } from "../notifications/notification.service.js";
 import { createShipmentEvent } from "../events/event.service.js";
 import { publishEvent } from "../realtime/event-bus.js";
 import { createSettlement } from "../settlements/settlement.service.js";
+import { toPaymentDto } from "./dto/payment.dto.js";
 
 
 function createTransactionReference() {
@@ -141,17 +142,19 @@ export async function initializePayment(
 export async function getPaymentById(
   id: string,
 ) {
-  return prisma.payment.findUnique({
+  const payment = await prisma.payment.findUnique({
     where: {
       id,
     },
   });
+
+  return payment ? toPaymentDto(payment) : null;
 }
 
 export async function getBookingPayments(
   bookingId: string,
 ) {
-  return prisma.payment.findMany({
+  const payments = await prisma.payment.findMany({
     where: {
       bookingId,
     },
@@ -159,6 +162,8 @@ export async function getBookingPayments(
       createdAt: "desc",
     },
   });
+
+  return payments.map(toPaymentDto);
 }
 
 

@@ -3,6 +3,7 @@ import { createShipmentEvent } from "../events/event.service.js";
 import { publishEvent } from "../realtime/event-bus.js";
 import { publishAdminEvent, publishBookingEvent } from "../realtime/realtime.service.js";
 import { createSettlement } from "../settlements/settlement.service.js";
+import { toBookingDto } from "./booking.dto.js";
 
 export async function createBooking(data: {
   customerId: string;
@@ -20,13 +21,15 @@ export async function createBooking(data: {
     data,
   });
 
+  const bookingDto = toBookingDto(booking);
+
   publishBookingEvent(booking.id, {
     eventType: "booking.created",
     module: "PLATFORM_OVERVIEW",
     actorId: booking.customerId,
     entityType: "BOOKING",
     entityId: booking.id,
-    data: booking,
+    data: bookingDto,
   });
 
   await createShipmentEvent({
@@ -51,7 +54,7 @@ export async function createBooking(data: {
     },
   });
 
-  return booking;
+  return bookingDto;
 }
 
 export async function assertBookingAccess(
@@ -82,11 +85,13 @@ export async function assertBookingAccess(
 }
 
 export async function getBookingById(id: string) {
-  return prisma.booking.findUnique({
+  const booking = await prisma.booking.findUnique({
     where: {
       id,
     },
   });
+
+  return booking ? toBookingDto(booking) : null;
 }
 
 export async function assignBooking(
@@ -169,6 +174,8 @@ export async function assignBooking(
     return updated;
   });
 
+  const resultDto = toBookingDto(result);
+
   publishBookingEvent(bookingId, {
     eventType: "booking.assigned",
     module: "LIVE_TRIPS",
@@ -178,7 +185,7 @@ export async function assignBooking(
     data: {
       transporterId,
       vehicleId,
-      status: result.status,
+      status: resultDto.status,
     },
   });
 
@@ -204,7 +211,7 @@ export async function assignBooking(
     },
   });
 
-  return result;
+  return resultDto;
 }
 
 export async function updateBookingStatus(
@@ -335,18 +342,20 @@ export async function updateBookingStatus(
     });
   }
 
+  const resultBookingDto = toBookingDto(result.booking);
+
   publishEvent("booking", {
     eventType: status,
     module: "LIVE_TRIPS",
     entityType: "BOOKING",
-    entityId: result.booking.id,
-    bookingId: result.booking.id,
+    entityId: resultBookingDto.id,
+    bookingId: resultBookingDto.id,
     data: {
-      status: result.booking.status,
+      status: resultBookingDto.status,
       previousStatus: result.previousStatus,
-      transporterId: result.booking.transporterId,
-      vehicleId: result.booking.vehicleId,
-      updatedAt: result.booking.updatedAt,
+      transporterId: resultBookingDto.transporterId,
+      vehicleId: resultBookingDto.vehicleId,
+      updatedAt: resultBookingDto.updatedAt,
     },
   });
 
@@ -366,14 +375,14 @@ export async function updateBookingStatus(
     });
   }
 
-  return result.booking;
+  return resultBookingDto;
 }
 
 
 export async function getCustomerBookings(
   customerId: string,
 ) {
-  return prisma.booking.findMany({
+  const bookings = await prisma.booking.findMany({
     where: {
       customerId,
     },
@@ -381,12 +390,14 @@ export async function getCustomerBookings(
       createdAt: "desc",
     },
   });
+
+  return bookings.map(toBookingDto);
 }
 
 export async function getTransporterBookings(
   transporterId: string,
 ) {
-  return prisma.booking.findMany({
+  const bookings = await prisma.booking.findMany({
     where: {
       transporterId,
     },
@@ -394,6 +405,8 @@ export async function getTransporterBookings(
       createdAt: "desc",
     },
   });
+
+  return bookings.map(toBookingDto);
 }
 
 export async function uploadProofOfDelivery(
@@ -415,7 +428,7 @@ export async function uploadProofOfDelivery(
       throw new Error("Proof of delivery can only be submitted after arrival");
     }
 
-    return tx.booking.update({
+    const updatedBooking = await tx.booking.update({
       where: {
         id: bookingId,
       },
@@ -424,6 +437,8 @@ export async function uploadProofOfDelivery(
         deliveryConfirmationCode,
       },
     });
+
+    return toBookingDto(updatedBooking);
   });
 }
 
@@ -515,12 +530,14 @@ export async function confirmDelivery(
     };
   });
 
+  const completedBookingDto = toBookingDto(result.booking);
+
   publishBookingEvent(bookingId, {
     eventType: "booking.completed",
     module: "LIVE_TRIPS",
     entityType: "BOOKING",
     entityId: bookingId,
-    data: result.booking,
+    data: completedBookingDto,
   });
 
   const settlement = await createSettlement(
@@ -537,6 +554,6 @@ export async function confirmDelivery(
       "Delivery was confirmed and a settlement was created for administrative approval.",
   });
 
-  return result.booking;
+  return completedBookingDto;
 }
 

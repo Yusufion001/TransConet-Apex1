@@ -3,6 +3,8 @@ import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
 import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import { z } from "zod";
+import { notificationIdParamsSchema } from "./admin.validators.js";
 import {
   getAdminNotifications,
   getAdminNotificationSummary,
@@ -58,8 +60,10 @@ router.get("/summary", async (_req, res) => {
 
 router.patch("/:id/read", async (req: AuthenticatedRequest, res) => {
   try {
+    const params = notificationIdParamsSchema.parse(req.params);
+
     const notification = await markNotificationAsRead(
-      String(req.params.id),
+      params.id,
       req.user!.id,
       req.user!.role,
     );
@@ -69,6 +73,13 @@ router.patch("/:id/read", async (req: AuthenticatedRequest, res) => {
       data: notification,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Server error",

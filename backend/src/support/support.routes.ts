@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { toSupportTicketDto } from "./support.dto.js";
 import {
   createTicket,
   getUserTickets,
@@ -40,7 +41,7 @@ router.post(
         requesterId: req.user!.id,
       });
 
-      res.status(201).json({ success: true, data: ticket });
+      res.status(201).json({ success: true, data: toSupportTicketDto(ticket) });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Server error";
@@ -75,7 +76,7 @@ router.get(
 
       const tickets = await getUserTickets(userId);
 
-      res.json({ success: true, data: tickets });
+      res.json({ success: true, data: tickets.map(toSupportTicketDto) });
     } catch (error) {
       res.status(500).json({
         success: false,
@@ -99,7 +100,7 @@ router.patch(
         req.user!.id,
       );
 
-      res.json({ success: true, data: ticket });
+      res.json({ success: true, data: toSupportTicketDto(ticket) });
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Server error";

@@ -1,13 +1,27 @@
 import { Router } from "express";
+import { z } from "zod";
 import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
 import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import { TransporterTier } from "../../generated/prisma/enums.js";
 import {
   getAdminPartners,
   getAdminPartner,
   updateAdminPartner,
 } from "./partner.service.js";
+
+const updateAdminPartnerSchema = z.object({
+  tier: z.nativeEnum(TransporterTier).optional(),
+  tier2Approved: z.boolean().optional(),
+}).refine(
+  (value) =>
+    value.tier !== undefined ||
+    value.tier2Approved !== undefined,
+  {
+    message: "At least one partner field must be provided",
+  },
+).strict();
 
 const router = Router();
 
@@ -56,10 +70,12 @@ router.get("/:id", async (req, res) => {
 
 router.patch("/:id", async (req: AuthenticatedRequest, res) => {
   try {
+    const input = updateAdminPartnerSchema.parse(req.body);
+
     const partner = await updateAdminPartner(
       String(req.params.id),
       req.user!.id,
-      req.body,
+      input,
     );
 
     return res.json({
@@ -67,6 +83,13 @@ router.patch("/:id", async (req: AuthenticatedRequest, res) => {
       data: partner,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Server error",

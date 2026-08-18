@@ -1,11 +1,15 @@
 import { prisma } from "../config/prisma.js";
 import { Prisma } from "../../generated/prisma/client.js";
 import { publishEvent } from "../realtime/event-bus.js";
+import {
+  toWalletDto,
+  toWithdrawalDto,
+} from "./wallet.dto.js";
 
 export async function getWallet(
   transporterId: string,
 ) {
-  return prisma.wallet.findUnique({
+  const wallet = await prisma.wallet.findUnique({
     where: {
       transporterId,
     },
@@ -22,6 +26,8 @@ export async function getWallet(
       },
     },
   });
+
+  return wallet ? toWalletDto(wallet) : null;
 }
 
 export async function createWallet(
@@ -39,10 +45,10 @@ export async function createWallet(
     entityType: "WALLET",
     entityId: wallet.id,
     actorId: transporterId,
-    data: wallet,
+    data: toWalletDto(wallet),
   });
 
-  return wallet;
+  return toWalletDto(wallet);
 }
 
 export async function createWithdrawal(
@@ -129,6 +135,8 @@ export async function createWithdrawal(
     return withdrawal;
   });
 
+  const withdrawalDto = toWithdrawalDto(result);
+
   publishEvent("admin", {
     eventType: "WITHDRAWAL_CREATED",
     module: "FINANCIAL_OPERATIONS",
@@ -136,12 +144,12 @@ export async function createWithdrawal(
     entityId: result.id,
     actorId: userId,
     data: {
-      withdrawalId: result.id,
-      walletId: result.walletId,
-      amount: result.amount,
-      status: result.status,
+      withdrawalId: withdrawalDto.id,
+      walletId: withdrawalDto.walletId,
+      amount: withdrawalDto.amount,
+      status: withdrawalDto.status,
     },
   });
 
-  return result;
+  return withdrawalDto;
 }

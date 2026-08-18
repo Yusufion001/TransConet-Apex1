@@ -1,5 +1,6 @@
 import { prisma } from "../config/prisma.js";
 import { publishEvent } from "../realtime/event-bus.js";
+import { toWithdrawalDto } from "../wallet/wallet.dto.js";
 
 export async function getFinancialOverview() {
   const [
@@ -104,7 +105,7 @@ export async function getAdminPayments(filters?: {
 export async function getAdminWithdrawals(filters?: {
   status?: string;
 }) {
-  return prisma.withdrawal.findMany({
+  const withdrawals = await prisma.withdrawal.findMany({
     where: {
       ...(filters?.status
         ? { status: filters.status }
@@ -129,6 +130,11 @@ export async function getAdminWithdrawals(filters?: {
       createdAt: "desc",
     },
   });
+
+  return withdrawals.map((withdrawal) => ({
+    ...toWithdrawalDto(withdrawal),
+    transporter: withdrawal.wallet.transporter,
+  }));
 }
 
 export async function getPaymentWebhookEvents(filters?: {
@@ -451,14 +457,26 @@ export async function updateWithdrawalStatus(
     throw new Error("Withdrawal not found");
   }
 
+  const withdrawalDto = toWithdrawalDto(result);
+
+  const adminWithdrawal = {
+    ...withdrawalDto,
+    wallet: {
+      id: result.wallet.id,
+      transporterId: result.wallet.transporterId,
+      availableBalance: String(result.wallet.availableBalance),
+      pendingBalance: String(result.wallet.pendingBalance),
+    },
+  };
+
   publishEvent("admin", {
     eventType: "WITHDRAWAL_STATUS_UPDATED",
     module: "FINANCIAL_OPERATIONS",
     entityType: "WITHDRAWAL",
     entityId: result.id,
     actorId: administratorId,
-    data: result,
+    data: adminWithdrawal,
   });
 
-  return result;
+  return adminWithdrawal;
 }

@@ -3,6 +3,8 @@ import { authenticate } from "../middleware/auth.middleware.js";
 import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
 import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import { z } from "zod";
+import { emptyBodySchema } from "./admin.validators.js";
 import {
   getBackupRecoveryStatus,
   createBackupSnapshotRecord,
@@ -35,6 +37,8 @@ router.get("/", async (_req, res) => {
 
 router.post("/snapshot", async (req: AuthenticatedRequest, res) => {
   try {
+    emptyBodySchema.parse(req.body);
+
     const snapshot = await createBackupSnapshotRecord(req.user!.id);
 
     return res.status(202).json({
@@ -42,6 +46,10 @@ router.post("/snapshot", async (req: AuthenticatedRequest, res) => {
       data: snapshot,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ success: false, error: error.issues });
+    }
+
     return res.status(500).json({
       success: false,
       error:

@@ -77,3 +77,37 @@ export const documentCreateSchema = z.object({
 export const documentRejectionSchema = z.object({
   rejectionReason: z.string().trim().min(1).max(1000),
 });
+
+export const marketingCampaignCreateSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(2000).optional(),
+  channel: z.string().trim().min(1).max(100),
+  audience: z.string().trim().min(1).max(100).optional(),
+  status: z.string().trim().min(1).max(50).optional(),
+  budget: z.number().nonnegative().optional(),
+  startsAt: z.string().datetime().optional(),
+  endsAt: z.string().datetime().optional(),
+  content: z.unknown().optional(),
+});
+
+export const marketingCampaignUpdateSchema =
+  marketingCampaignCreateSchema.partial();
+
+export const marketingCampaignStatusSchema = z.object({
+  status: z.string().trim().min(1).max(50),
+});
+
+export const notificationCreateSchema = z.object({
+  recipientId: z.string().uuid(),
+  type: z.string().trim().min(1).max(100),
+  title: z.string().trim().min(1).max(200),
+  message: z.string().trim().min(1).max(5000),
+  relatedType: z.string().trim().min(1).max(100).optional(),
+  relatedId: z.string().uuid().optional(),
+});
+
+export const notificationIdParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
+export const emptyBodySchema = z.object({}).strict();

@@ -1,4 +1,10 @@
 import { Router } from "express";
+import { z } from "zod";
+import {
+  marketingCampaignCreateSchema,
+  marketingCampaignUpdateSchema,
+  marketingCampaignStatusSchema,
+} from "./admin.validators.js";
 import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
@@ -35,6 +41,13 @@ router.get("/", async (req, res) => {
       data: campaigns,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       error:
@@ -63,6 +76,13 @@ router.get("/:id", async (req, res) => {
       data: campaign,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       error:
@@ -75,9 +95,11 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req: AuthenticatedRequest, res) => {
   try {
+    const input = marketingCampaignCreateSchema.parse(req.body);
+
     const campaign = await createMarketingCampaign(
       req.user!.id,
-      req.body,
+      input,
     );
 
     return res.status(201).json({
@@ -85,6 +107,13 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
       data: campaign,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       error:
@@ -97,10 +126,12 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
 
 router.patch("/:id", async (req: AuthenticatedRequest, res) => {
   try {
+    const input = marketingCampaignUpdateSchema.parse(req.body);
+
     const campaign = await updateMarketingCampaign(
       String(req.params.id),
       req.user!.id,
-      req.body,
+      input,
     );
 
     return res.json({
@@ -108,6 +139,13 @@ router.patch("/:id", async (req: AuthenticatedRequest, res) => {
       data: campaign,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       error:
@@ -122,9 +160,11 @@ router.patch(
   "/:id/status",
   async (req: AuthenticatedRequest, res) => {
     try {
+      const input = marketingCampaignStatusSchema.parse(req.body);
+
       const campaign = await updateMarketingCampaignStatus(
         String(req.params.id),
-        req.body.status,
+        input.status,
         req.user!.id,
       );
 

@@ -32,6 +32,10 @@ const createAdministratorSchema = z.object({
     .min(1),
 });
 
+const administratorIdParamsSchema = z.object({
+  userId: z.string().uuid(),
+});
+
 const updateAdministratorSchema = z.object({
   administratorType: z
     .nativeEnum(AdminType)
@@ -192,10 +196,12 @@ router.post(
     res,
   ) => {
     try {
+      const params = administratorIdParamsSchema.parse(req.params);
+
       const administrator =
         await changeAdministratorStatus(
           req.user!.id,
-          String(req.params.userId),
+          params.userId,
           AdminStatus.SUSPENDED,
         );
 
@@ -204,6 +210,13 @@ router.post(
         data: administrator,
       });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
       return handleError(error, res);
     }
   },
@@ -216,10 +229,12 @@ router.post(
     res,
   ) => {
     try {
+      const params = administratorIdParamsSchema.parse(req.params);
+
       const administrator =
         await changeAdministratorStatus(
           req.user!.id,
-          String(req.params.userId),
+          params.userId,
           AdminStatus.ACTIVE,
         );
 
@@ -228,6 +243,13 @@ router.post(
         data: administrator,
       });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
       return handleError(error, res);
     }
   },
@@ -240,10 +262,12 @@ router.post(
     res,
   ) => {
     try {
+      const params = administratorIdParamsSchema.parse(req.params);
+
       const administrator =
         await changeAdministratorStatus(
           req.user!.id,
-          String(req.params.userId),
+          params.userId,
           AdminStatus.DISABLED,
         );
 
@@ -252,6 +276,13 @@ router.post(
         data: administrator,
       });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
       return handleError(error, res);
     }
   },

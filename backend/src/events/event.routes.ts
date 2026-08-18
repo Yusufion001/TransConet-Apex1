@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { z } from "zod";
 import {
   createShipmentEvent,
   getBookingEvents,
@@ -12,6 +13,27 @@ import { assertBookingAccess } from "../bookings/booking.service.js";
 
 const router = Router();
 
+const shipmentEventSchema = z.object({
+  bookingId: z.string().uuid(),
+  actorId: z.string().uuid().optional(),
+  eventType: z.enum([
+    "SHIPMENT_CREATED",
+    "TRANSPORTER_ASSIGNED",
+    "VEHICLE_ASSIGNED",
+    "SHIPMENT_ACCEPTED",
+    "VEHICLE_ARRIVED",
+    "CARGO_LOADED",
+    "IN_TRANSIT",
+    "DOCUMENT_UPLOADED",
+    "PROOF_OF_DELIVERY",
+    "DELIVERY_CONFIRMED",
+    "SUPPORT_OPENED",
+    "DISPUTE_OPENED",
+  ]),
+  title: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(5000).optional(),
+});
+
 router.use(authenticate);
 
 router.post(
@@ -19,13 +41,21 @@ router.post(
   requireAdmin,
   async (req, res) => {
     try {
-      const event = await createShipmentEvent(req.body);
+      const data = shipmentEventSchema.parse(req.body);
+      const event = await createShipmentEvent(data);
 
       res.json({
         success: true,
         data: event,
       });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
       res.status(500).json({
         success: false,
         error:

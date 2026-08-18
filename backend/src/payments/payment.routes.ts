@@ -1,5 +1,9 @@
 import { Router } from "express";
 import { processPaymentWebhook } from "./payment-webhook.service.js";
+import {
+  initializePaymentSchema,
+  paymentWebhookSchema,
+} from "./payment.validators.js";
 
 import {
   authenticate,
@@ -56,10 +60,21 @@ router.post(
       const currency =
         req.body?.currency;
 
-      if (!provider || !providerEventId || !eventType) {
+      const webhookData = paymentWebhookSchema.safeParse({
+        provider,
+        providerEventId,
+        eventType,
+        paymentId,
+        transactionReference,
+        amount,
+        currency,
+      });
+
+      if (!webhookData.success) {
         return res.status(400).json({
           success: false,
-          error: "Missing required webhook event information",
+          error: "Invalid webhook event information",
+          details: webhookData.error.flatten(),
         });
       }
 
@@ -106,7 +121,17 @@ router.post(
   authenticate,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const bookingId = String(req.body.bookingId);
+      const paymentInput = initializePaymentSchema.safeParse(req.body);
+
+      if (!paymentInput.success) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid payment request",
+          details: paymentInput.error.flatten(),
+        });
+      }
+
+      const { bookingId } = paymentInput.data;
       const idempotencyKey = req.header("X-Idempotency-Key")?.trim();
 
       if (
@@ -141,7 +166,7 @@ router.post(
       const customerId =
         req.user!.role === "CUSTOMER"
           ? req.user!.id
-          : String(req.body.customerId);
+          : paymentInput.data.customerId!;
 
       if (
         req.user!.role === "CUSTOMER" &&

@@ -15,6 +15,10 @@ import {
 
 const router = Router();
 
+const contentIdParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
 router.use(authenticate);
 router.use(requireAdmin);
 router.use(requireAdminModule("CONTENT_MANAGEMENT"));
@@ -106,8 +110,10 @@ router.patch("/:id", async (req: AuthenticatedRequest, res) => {
 
 router.patch("/:id/publish", async (req: AuthenticatedRequest, res) => {
   try {
+    const params = contentIdParamsSchema.parse(req.params);
+
     const content = await publishContent(
-      String(req.params.id),
+      params.id,
       req.user!.id,
     );
 

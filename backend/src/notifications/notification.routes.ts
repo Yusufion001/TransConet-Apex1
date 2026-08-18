@@ -1,4 +1,9 @@
 import { Router } from "express";
+import { z } from "zod";
+import {
+  notificationCreateSchema,
+  notificationIdParamsSchema,
+} from "../admin/admin.validators.js";
 import {
   createNotification,
   getUserNotifications,
@@ -10,6 +15,7 @@ import {
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
+import { toNotificationDto } from "./notification.dto.js";
 
 const router = Router();
 
@@ -20,10 +26,18 @@ router.post(
   authorize("ADMIN"),
   async (req: AuthenticatedRequest, res) => {
     try {
-      const notification = await createNotification(req.body);
+      const input = notificationCreateSchema.parse(req.body);
+      const notification = await createNotification(input);
 
-      res.json({ success: true, data: notification });
+      res.json({ success: true, data: toNotificationDto(notification) });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : "Server error",
@@ -47,7 +61,7 @@ router.get(
 
       const notifications = await getUserNotifications(userId);
 
-      res.json({ success: true, data: notifications });
+      res.json({ success: true, data: notifications.map(toNotificationDto) });
     } catch (error) {
       res.status(500).json({
         success: false,
@@ -61,14 +75,23 @@ router.patch(
   "/:id/read",
   async (req: AuthenticatedRequest, res) => {
     try {
+      const params = notificationIdParamsSchema.parse(req.params);
+
       const notification = await markNotificationAsRead(
-        String(req.params.id),
+        params.id,
         req.user!.id,
         req.user!.role,
       );
 
-      res.json({ success: true, data: notification });
+      res.json({ success: true, data: toNotificationDto(notification) });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
       const status =
         error instanceof Error && error.message === "Access denied"
           ? 403

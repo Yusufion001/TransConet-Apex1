@@ -1,4 +1,9 @@
 import { Router } from "express";
+import { toVehicleDto } from "./vehicle.dto.js";
+import {
+  createVehicleSchema,
+  updateVehicleSchema,
+} from "./vehicle.validators.js";
 import {
   createVehicle,
   getVehicleById,
@@ -19,11 +24,21 @@ router.post(
   authorize("TRANSPORTER"),
   async (req, res) => {
   try {
-    const vehicle = await createVehicle(req.body);
+    const parsed = createVehicleSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid vehicle data",
+        details: parsed.error.flatten(),
+      });
+    }
+
+    const vehicle = await createVehicle(parsed.data);
 
     res.json({
       success: true,
-      data: vehicle,
+      data: toVehicleDto(vehicle),
     });
   } catch (error) {
     res.status(500).json({
@@ -52,7 +67,7 @@ router.get("/:id", async (req: AuthenticatedRequest, res) => {
 
     res.json({
       success: true,
-      data: vehicle,
+      data: toVehicleDto(vehicle),
     });
   } catch (error) {
     res.status(500).json({
@@ -70,14 +85,24 @@ router.patch("/:id", async (req: AuthenticatedRequest, res) => {
       req.user!.role,
     );
 
+    const parsed = updateVehicleSchema.safeParse(req.body);
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid vehicle update data",
+        details: parsed.error.flatten(),
+      });
+    }
+
     const vehicle = await updateVehicle(
       String(req.params.id),
-      req.body,
+      parsed.data,
     );
 
     res.json({
       success: true,
-      data: vehicle,
+      data: toVehicleDto(vehicle),
     });
   } catch (error) {
     res.status(500).json({

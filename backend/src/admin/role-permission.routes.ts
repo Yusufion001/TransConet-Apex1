@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { z } from "zod";
+import { adminPermissionsSchema } from "./admin.validators.js";
 import { authenticate, type AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
 import { requireAdminModule } from "../middleware/admin-module.middleware.js";
@@ -10,6 +12,10 @@ import {
 
 const router = Router();
 
+const administratorIdParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
 router.use(authenticate);
 router.use(requireAdmin);
 router.use(requireAdminModule("ROLE_PERMISSION"));
@@ -19,6 +25,13 @@ router.get("/", async (_req, res) => {
     const data = await getAdminRoles();
     return res.json({ success: true, data });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Server error",
@@ -48,19 +61,13 @@ router.get("/:id", async (req, res) => {
 
 router.patch("/:id/permissions", async (req: AuthenticatedRequest, res) => {
   try {
-    const assignedModules = req.body.assignedModules;
-
-    if (!Array.isArray(assignedModules)) {
-      return res.status(400).json({
-        success: false,
-        error: "assignedModules must be an array",
-      });
-    }
+    const params = administratorIdParamsSchema.parse(req.params);
+    const input = adminPermissionsSchema.parse(req.body);
 
     const data = await updateAdminPermissions(
-      String(req.params.id),
+      params.id,
       req.user!.id,
-      assignedModules,
+      input.assignedModules,
     );
 
     return res.json({ success: true, data });

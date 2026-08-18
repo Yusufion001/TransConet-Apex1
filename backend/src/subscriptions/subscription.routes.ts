@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { z } from "zod";
 import {
   authenticate,
   authorize,
@@ -13,6 +14,12 @@ import {
 } from "./subscription.service.js";
 
 const router = Router();
+
+const subscriptionCreateSchema = z.object({
+  planId: z.string().uuid(),
+});
+
+const subscriptionCancelSchema = z.object({}).strict();
 
 router.use(authenticate);
 router.use(authorize("TRANSPORTER"));
@@ -55,14 +62,7 @@ router.get("/invoices", async (req: AuthenticatedRequest, res) => {
 
 router.post("/", async (req: AuthenticatedRequest, res) => {
   try {
-    const planId = String(req.body?.planId ?? "");
-
-    if (!planId) {
-      return res.status(400).json({
-        success: false,
-        error: "planId is required",
-      });
-    }
+    const { planId } = subscriptionCreateSchema.parse(req.body);
 
     const result = await createSubscription(req.user!.id, planId);
 
@@ -71,6 +71,13 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
       data: result,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
     return res.status(400).json({
       success: false,
       error: error instanceof Error ? error.message : "Subscription failed",
@@ -80,6 +87,8 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
 
 router.post("/cancel", async (req: AuthenticatedRequest, res) => {
   try {
+    subscriptionCancelSchema.parse(req.body);
+
     const subscription = await cancelSubscription(req.user!.id);
 
     return res.json({
@@ -87,6 +96,13 @@ router.post("/cancel", async (req: AuthenticatedRequest, res) => {
       data: subscription,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
     return res.status(400).json({
       success: false,
       error: error instanceof Error ? error.message : "Cancellation failed",

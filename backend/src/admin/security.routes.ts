@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { z } from "zod";
 import {
   authenticate,
   type AuthenticatedRequest,
@@ -15,6 +16,13 @@ import {
 } from "./security.service.js";
 
 const router = Router();
+const administratorIdParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
+const administratorTwoFactorSchema = z.object({
+  enabled: z.boolean(),
+}).strict();
 
 router.use(authenticate);
 router.use(requireAdmin);
@@ -96,8 +104,10 @@ router.patch(
   requireSuperAdmin,
   async (req: AuthenticatedRequest, res) => {
     try {
+      const params = administratorIdParamsSchema.parse(req.params);
+
       const administrator = await unlockAdministrator(
-        String(req.params.id),
+        params.id,
         req.user!.id,
       );
 
@@ -106,6 +116,13 @@ router.patch(
         data: administrator,
       });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
       return res.status(500).json({
         success: false,
         error:
@@ -120,16 +137,12 @@ router.patch(
   requireSuperAdmin,
   async (req: AuthenticatedRequest, res) => {
     try {
-      if (typeof req.body.enabled !== "boolean") {
-        return res.status(400).json({
-          success: false,
-          error: "enabled must be a boolean",
-        });
-      }
+      const params = administratorIdParamsSchema.parse(req.params);
+      const input = administratorTwoFactorSchema.parse(req.body);
 
       const administrator = await setAdministratorTwoFactor(
-        String(req.params.id),
-        req.body.enabled,
+        params.id,
+        input.enabled,
         req.user!.id,
       );
 
@@ -138,6 +151,13 @@ router.patch(
         data: administrator,
       });
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
       return res.status(500).json({
         success: false,
         error:

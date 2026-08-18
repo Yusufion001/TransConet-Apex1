@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { z } from "zod";
 import {
   authenticate,
   type AuthenticatedRequest,
@@ -11,6 +12,11 @@ import {
   upsertPlatformConfig,
   deletePlatformConfig,
 } from "./platform-config.service.js";
+
+const platformConfigUpdateSchema = z.object({
+  value: z.unknown(),
+  description: z.string().trim().max(1000).nullable().optional(),
+}).strict();
 
 const router = Router();
 
@@ -54,22 +60,24 @@ router.get("/:key", async (req, res) => {
 
 router.put("/:key", async (req: AuthenticatedRequest, res) => {
   try {
-    if (!("value" in req.body)) {
-      return res.status(400).json({
-        success: false,
-        error: "Configuration value is required",
-      });
-    }
+    const input = platformConfigUpdateSchema.parse(req.body);
 
     const config = await upsertPlatformConfig(
       String(req.params.key),
-      req.body.value,
-      req.body.description ?? null,
+      input.value,
+      input.description ?? null,
       req.user!.id,
     );
 
     return res.json({ success: true, data: config });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Server error",
