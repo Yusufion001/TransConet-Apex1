@@ -13,9 +13,6 @@ const longitudeSchema = z.coerce
   .max(180);
 
 export const createBookingSchema = z.object({
-  transporterId: z.string().uuid("Invalid transporter ID").optional(),
-  vehicleId: z.string().uuid("Invalid vehicle ID").optional(),
-
   pickupLocation: z.string().trim().min(1).max(500),
   destination: z.string().trim().min(1).max(500),
 
@@ -24,11 +21,36 @@ export const createBookingSchema = z.object({
   destinationLatitude: latitudeSchema,
   destinationLongitude: longitudeSchema,
 
-  fare: z.coerce
+  cargoDescription: z.string().trim().max(2000).optional(),
+
+  truckCategory: z.enum([
+    "MINI_TRUCK",
+    "LIGHT_TRUCK",
+    "MEDIUM_TRUCK",
+    "HEAVY_TRUCK",
+    "CONTAINER_TRUCK",
+    "REFRIGERATED_TRUCK",
+    "TANKER",
+    "SPECIALIZED",
+  ]),
+
+  cargoCategory: z.enum([
+    "GENERAL",
+    "FRAGILE",
+    "ELECTRONICS",
+    "FURNITURE",
+    "AGRICULTURAL",
+    "INDUSTRIAL",
+    "CONSTRUCTION",
+    "HAZARDOUS",
+    "REFRIGERATED",
+  ]).optional(),
+
+  cargoWeight: z.coerce
     .number()
     .finite()
-    .positive("Fare must be greater than zero"),
-});
+    .positive("Cargo weight must be greater than zero"),
+}).strict()
 
 export const assignBookingSchema = z.object({
   transporterId: z.string().uuid("Invalid transporter ID"),

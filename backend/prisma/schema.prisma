@@ -252,6 +252,22 @@ enum TransporterTier {
   TIER_2
 }
 
+enum MarketplaceRequestStatus {
+  OPEN
+  BIDDING_CLOSED
+  AGREED
+  CANCELLED
+  EXPIRED
+}
+
+enum MarketplaceBidStatus {
+  PENDING
+  SELECTED
+  REJECTED
+  WITHDRAWN
+  EXPIRED
+}
+
 model User {
   id                     String           @id @default(uuid())
   firstName              String
@@ -280,7 +296,8 @@ model User {
   vehicles            Vehicle[] @relation("TransporterVehicles")
   payments            Payment[] @relation("CustomerPayments")
   wallet              Wallet?
-
+  marketplaceRequests MarketplaceRequest[] @relation("MarketplaceRequests")
+  marketplaceBids     MarketplaceBid[]     @relation("MarketplaceBids")
   subscriptions        TransporterSubscription[]
   subscriptionInvoices SubscriptionInvoice[]
 
@@ -397,7 +414,7 @@ model Vehicle {
   currentLongitude   Decimal?                  @db.Decimal(10, 7)
   createdAt          DateTime                  @default(now())
   updatedAt          DateTime                  @updatedAt
-
+  marketplaceBids MarketplaceBid[]
   transporter    User            @relation("TransporterVehicles", fields: [transporterId], references: [id], onDelete: Cascade)
   bookings       Booking[]
   trackingPoints TrackingPoint[]
@@ -424,6 +441,7 @@ model Booking {
 
   truckCategory   TruckCategory?
   transporterTier TransporterTier?
+  marketplaceRequest MarketplaceRequest?
 
   settlements Settlement[]
 
@@ -475,6 +493,69 @@ model Booking {
   @@index([vehicleId])
   @@index([status])
   @@index([scheduledDate])
+}
+
+model MarketplaceRequest {
+  id          String @id @default(uuid())
+  customerId  String
+  bookingId   String? @unique
+
+  cargoDescription String?
+  truckCategory    TruckCategory?
+  cargoCategory    CargoCategory?
+  cargoWeight      Decimal? @db.Decimal(14, 2)
+
+  pickupLocation       String
+  destination          String
+  pickupLatitude       Decimal @db.Decimal(10, 7)
+  pickupLongitude      Decimal @db.Decimal(10, 7)
+  destinationLatitude  Decimal @db.Decimal(10, 7)
+  destinationLongitude Decimal @db.Decimal(10, 7)
+
+  scheduledDate DateTime?
+  estimatedFare Decimal? @db.Decimal(14, 2)
+
+  status MarketplaceRequestStatus @default(OPEN)
+
+  agreedBidId String? @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  closedAt    DateTime?
+
+  customer User @relation("MarketplaceRequests", fields: [customerId], references: [id], onDelete: Cascade)
+  booking  Booking? @relation(fields: [bookingId], references: [id])
+
+  bids MarketplaceBid[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([scheduledDate])
+}
+
+model MarketplaceBid {
+  id            String @id @default(uuid())
+  requestId     String
+  transporterId String
+  vehicleId     String
+
+  amount  Decimal @db.Decimal(14, 2)
+  message String?
+
+  status MarketplaceBidStatus @default(PENDING)
+
+  expiresAt  DateTime?
+  selectedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  transporter User               @relation("MarketplaceBids", fields: [transporterId], references: [id], onDelete: Cascade)
+  vehicle     Vehicle            @relation(fields: [vehicleId], references: [id])
+
+  @@unique([requestId, transporterId])
+  @@index([requestId, status])
+  @@index([transporterId, status])
+  @@index([vehicleId])
 }
 
 model TrackingPoint {

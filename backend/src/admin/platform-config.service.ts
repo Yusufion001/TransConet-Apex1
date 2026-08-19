@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { Prisma } from "../../generated/prisma/client.js";
 import { publishEvent } from "../realtime/event-bus.js";
 
 type ConfigRow = {
@@ -36,22 +37,58 @@ export async function upsertPlatformConfig(
   description: string | null,
   administratorId: string,
 ) {
-  const rows = await prisma.$queryRaw<ConfigRow[]>`
-    INSERT INTO "PlatformConfig"
-      (id, key, value, description, "updatedBy", "createdAt", "updatedAt")
-    VALUES
-      (gen_random_uuid()::text, ${key}, ${JSON.stringify(value)}::jsonb,
-       ${description}, ${administratorId}, NOW(), NOW())
-    ON CONFLICT (key)
-    DO UPDATE SET
-      value = EXCLUDED.value,
-      description = EXCLUDED.description,
-      "updatedBy" = EXCLUDED."updatedBy",
-      "updatedAt" = NOW()
-    RETURNING id, key, value, description, "updatedBy", "createdAt", "updatedAt"
-  `;
+  const config = await prisma.$transaction(async (tx) => {
+    const previousRows = await tx.$queryRaw<ConfigRow[]>`
+      SELECT id, key, value, description, "updatedBy", "createdAt", "updatedAt"
+      FROM "PlatformConfig"
+      WHERE key = ${key}
+      LIMIT 1
+    `;
 
-  const config = rows[0];
+    const previous = previousRows[0] ?? null;
+
+    const rows = await tx.$queryRaw<ConfigRow[]>`
+      INSERT INTO "PlatformConfig"
+        (id, key, value, description, "updatedBy", "createdAt", "updatedAt")
+      VALUES
+        (gen_random_uuid()::text, ${key}, ${JSON.stringify(value)}::jsonb,
+         ${description}, ${administratorId}, NOW(), NOW())
+      ON CONFLICT (key)
+      DO UPDATE SET
+        value = EXCLUDED.value,
+        description = EXCLUDED.description,
+        "updatedBy" = EXCLUDED."updatedBy",
+        "updatedAt" = NOW()
+      RETURNING id, key, value, description, "updatedBy", "createdAt", "updatedAt"
+    `;
+
+    const updated = rows[0];
+
+    if (!updated) {
+      throw new Error("Failed to update platform configuration");
+    }
+
+    await tx.auditLog.create({
+      data: {
+        administratorId,
+        action: "PLATFORM_CONFIG_UPDATED",
+        previousValue: previous
+          ? {
+              key: previous.key,
+              value: previous.value as Prisma.InputJsonValue,
+              description: previous.description,
+            }
+          : Prisma.JsonNull,
+        newValue: {
+          key: updated.key,
+          value: updated.value as Prisma.InputJsonValue,
+          description: updated.description,
+        },
+      },
+    });
+
+    return updated;
+  });
 
   publishEvent("admin", {
     eventType: "PLATFORM_CONFIG_UPDATED",
@@ -69,17 +106,34 @@ export async function deletePlatformConfig(
   key: string,
   administratorId: string,
 ) {
-  const rows = await prisma.$queryRaw<ConfigRow[]>`
-    DELETE FROM "PlatformConfig"
-    WHERE key = ${key}
-    RETURNING id, key, value, description, "updatedBy", "createdAt", "updatedAt"
-  `;
+  const config = await prisma.$transaction(async (tx) => {
+    const rows = await tx.$queryRaw<ConfigRow[]>`
+      DELETE FROM "PlatformConfig"
+      WHERE key = ${key}
+      RETURNING id, key, value, description, "updatedBy", "createdAt", "updatedAt"
+    `;
 
-  const config = rows[0];
+    const deleted = rows[0];
 
-  if (!config) {
-    throw new Error("Platform configuration not found");
-  }
+    if (!deleted) {
+      throw new Error("Platform configuration not found");
+    }
+
+    await tx.auditLog.create({
+      data: {
+        administratorId,
+        action: "PLATFORM_CONFIG_DELETED",
+        previousValue: {
+          key: deleted.key,
+          value: deleted.value as Prisma.InputJsonValue,
+          description: deleted.description,
+        },
+        newValue: Prisma.JsonNull,
+      },
+    });
+
+    return deleted;
+  });
 
   publishEvent("admin", {
     eventType: "PLATFORM_CONFIG_DELETED",

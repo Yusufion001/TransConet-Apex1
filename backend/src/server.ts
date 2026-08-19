@@ -9,6 +9,7 @@ import vehicleRoutes from "./vehicles/vehicle.routes.js";
 import transporterRoutes from "./transporters/transporter.routes.js";
 import walletRoutes from "./wallet/wallet.routes.js";
 import bookingRoutes from "./bookings/booking.routes.js";
+import marketplaceRoutes from "./marketplace/marketplace.routes.js";
 import messageRoutes from "./messages/message.routes.js";
 import notificationRoutes from "./notifications/notification.routes.js";
 import supportRoutes from "./support/support.routes.js";
@@ -134,6 +135,7 @@ initializeSocketEvents(io);
 
 applySecurityFoundation(app);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/marketplace", marketplaceRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/documents", documentRoutes);

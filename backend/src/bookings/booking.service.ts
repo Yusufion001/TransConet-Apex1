@@ -4,21 +4,61 @@ import { publishEvent } from "../realtime/event-bus.js";
 import { publishAdminEvent, publishBookingEvent } from "../realtime/realtime.service.js";
 import { createSettlement } from "../settlements/settlement.service.js";
 import { toBookingDto } from "./booking.dto.js";
+import { estimateFare } from "../pricing/pricing.service.js";
 
 export async function createBooking(data: {
   customerId: string;
-  transporterId?: string;
-  vehicleId?: string;
   pickupLocation: string;
   destination: string;
   pickupLatitude: number;
   pickupLongitude: number;
   destinationLatitude: number;
   destinationLongitude: number;
-  fare: number;
+  cargoDescription?: string;
+  truckCategory: "MINI_TRUCK"
+    | "LIGHT_TRUCK"
+    | "MEDIUM_TRUCK"
+    | "HEAVY_TRUCK"
+    | "CONTAINER_TRUCK"
+    | "REFRIGERATED_TRUCK"
+    | "TANKER"
+    | "SPECIALIZED";
+  cargoCategory?: "GENERAL"
+    | "FRAGILE"
+    | "ELECTRONICS"
+    | "FURNITURE"
+    | "AGRICULTURAL"
+    | "INDUSTRIAL"
+    | "CONSTRUCTION"
+    | "HAZARDOUS"
+    | "REFRIGERATED";
+  cargoWeight: number;
 }) {
+  const pricing = await estimateFare({
+    weight: data.cargoWeight,
+    truck: data.truckCategory,
+    pickupLatitude: data.pickupLatitude,
+    pickupLongitude: data.pickupLongitude,
+    destinationLatitude: data.destinationLatitude,
+    destinationLongitude: data.destinationLongitude,
+  });
+
   const booking = await prisma.booking.create({
-    data,
+    data: {
+      customerId: data.customerId,
+      pickupLocation: data.pickupLocation,
+      destination: data.destination,
+      pickupLatitude: data.pickupLatitude,
+      pickupLongitude: data.pickupLongitude,
+      destinationLatitude: data.destinationLatitude,
+      destinationLongitude: data.destinationLongitude,
+      cargoDescription: data.cargoDescription,
+      truckCategory: data.truckCategory,
+      cargoCategory: data.cargoCategory,
+      cargoWeight: data.cargoWeight,
+      estimatedFare: pricing.fare,
+      fare: pricing.fare,
+    },
   });
 
   const bookingDto = toBookingDto(booking);

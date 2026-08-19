@@ -12,6 +12,13 @@ import {
   upsertPlatformConfig,
   deletePlatformConfig,
 } from "./platform-config.service.js";
+import {
+  platformConfigSchema,
+  pricingConfigSchema,
+} from "./admin.validators.js";
+import {
+  marketplaceVisibilityConfigSchema,
+} from "../marketplace/visibility.policy.js";
 
 const platformConfigUpdateSchema = z.object({
   value: z.unknown(),
@@ -62,8 +69,18 @@ router.put("/:key", async (req: AuthenticatedRequest, res) => {
   try {
     const input = platformConfigUpdateSchema.parse(req.body);
 
+    const key = String(req.params.key);
+
+      if (key === "PRICING_CONFIG") {
+        pricingConfigSchema.parse(input.value);
+      } else if (key === "MARKETPLACE_VISIBILITY_CONFIG") {
+        marketplaceVisibilityConfigSchema.parse(input.value);
+      } else {
+        platformConfigSchema.parse(input);
+      }
+
     const config = await upsertPlatformConfig(
-      String(req.params.key),
+      key,
       input.value,
       input.description ?? null,
       req.user!.id,

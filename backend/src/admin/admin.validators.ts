@@ -19,6 +19,34 @@ export const adminPermissionsSchema = z.object({
     .min(1),
 });
 
+const positivePricingNumber = z.coerce
+  .number()
+  .finite()
+  .positive();
+
+const pricingWeightMultipliersSchema = z.object({
+  upTo100: positivePricingNumber,
+  upTo1000: positivePricingNumber,
+  upTo5000: positivePricingNumber,
+  upTo10000: positivePricingNumber,
+  above10000: positivePricingNumber,
+}).strict();
+
+const pricingTruckMultipliersSchema = z.record(
+  z.string().trim().min(1).max(100),
+  positivePricingNumber,
+);
+
+export const pricingConfigSchema = z.object({
+  baseRate: positivePricingNumber,
+
+  weightMultipliers: pricingWeightMultipliersSchema,
+
+  truckMultipliers: pricingTruckMultipliersSchema,
+
+  distanceRatePerKm: positivePricingNumber,
+}).strict();
+
 export const platformConfigSchema = z.object({
   value: z.unknown(),
   description: z.string().trim().max(1000).nullable().optional(),

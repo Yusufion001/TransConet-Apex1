@@ -44,6 +44,7 @@ const prismaMock = {
   },
 
   $transaction: mock.fn<(...args: any[]) => any>(),
+  $queryRaw: mock.fn<(...args: any[]) => any>(),
 };
 
 const createShipmentEventMock =
@@ -162,6 +163,7 @@ function resetMocks() {
     prismaMock.wallet.updateMany,
     prismaMock.walletTransaction.create,
     prismaMock.$transaction,
+    prismaMock.$queryRaw,
     createShipmentEventMock,
     createSettlementMock,
     publishEventMock,
@@ -178,6 +180,8 @@ test.beforeEach(() => {
   prismaMock.$transaction.mock.mockImplementation(
     async (callback: any) => callback(prismaMock),
   );
+
+  prismaMock.$queryRaw.mock.mockImplementation(async () => []);
 });
 
 test("createBooking creates a booking and publishes shipment events", async () => {
@@ -195,7 +199,10 @@ test("createBooking creates a booking and publishes shipment events", async () =
     pickupLongitude: 3.3792,
     destinationLatitude: 9.0765,
     destinationLongitude: 7.3986,
-    fare: 150000,
+    truckCategory: "MEDIUM_TRUCK",
+    transporterTier: "TIER_1",
+    cargoCategory: "GENERAL",
+    cargoWeight: 2000,
   });
 
   assert.equal(result.id, "booking-1");
