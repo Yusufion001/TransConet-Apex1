@@ -1,0 +1,520 @@
+import { useMemo, useState } from "react";
+import "./App.css";
+import { useAuthStore } from "./auth/auth.store";
+
+type NavItem = {
+  label: string;
+  section?: string;
+  description: string;
+};
+
+const primaryNav: NavItem[] = [
+  {
+    label: "Command Center",
+    description: "Platform-wide operational overview",
+  },
+  {
+    label: "Live Operations",
+    section: "OPERATIONS",
+    description: "Monitor active transport operations",
+  },
+  {
+    label: "Bookings & Shipments",
+    description: "Manage bookings and shipment lifecycles",
+  },
+  {
+    label: "Customers",
+    description: "Customer accounts and activity",
+  },
+  {
+    label: "Transporters",
+    description: "Transporter accounts and performance",
+  },
+  {
+    label: "Fleet",
+    description: "Vehicles and fleet operations",
+  },
+  {
+    label: "Marketplace",
+    section: "MARKETPLACE",
+    description: "Transport requests and marketplace activity",
+  },
+  {
+    label: "Bidding",
+    description: "Monitor marketplace bidding",
+  },
+  {
+    label: "Payments",
+    section: "FINANCIAL",
+    description: "Payment operations and transactions",
+  },
+  {
+    label: "Wallets",
+    description: "Wallet and withdrawal operations",
+  },
+  {
+    label: "Subscriptions",
+    description: "Subscription administration",
+  },
+  {
+    label: "Verification",
+    section: "GOVERNANCE",
+    description: "Verification and compliance",
+  },
+  {
+    label: "Support",
+    description: "Customer and transporter support",
+  },
+  {
+    label: "Disputes",
+    description: "Dispute management and resolution",
+  },
+  {
+    label: "Risk & Fraud",
+    description: "Risk signals and suspicious activity",
+  },
+  {
+    label: "Reports",
+    section: "INTELLIGENCE",
+    description: "Operational and platform intelligence",
+  },
+  {
+    label: "Notifications",
+    description: "Platform notification operations",
+  },
+  {
+    label: "Messages",
+    description: "Platform communication",
+  },
+  {
+    label: "Security",
+    section: "SYSTEM",
+    description: "Security events and controls",
+  },
+  {
+    label: "Audit Logs",
+    description: "Administrative activity history",
+  },
+  {
+    label: "Settings",
+    description: "Platform configuration",
+  },
+];
+
+function getInitial(label: string) {
+  return label
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function App() {
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+
+  const [active, setActive] = useState("Command Center");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const activeItem = useMemo(
+    () =>
+      primaryNav.find((item) => item.label === active) ??
+      primaryNav[0],
+    [active],
+  );
+
+  const administratorName =
+    [user?.firstName, user?.lastName]
+      .filter(Boolean)
+      .join(" ") || "Administrator";
+
+  const administratorType =
+    user?.adminProfile?.administratorType ??
+    "Administrator";
+
+  const isSuperAdministrator =
+    Boolean(
+      user?.adminProfile?.isSuperAdministrator,
+    );
+
+  return (
+    <div className="admin-shell">
+      <aside
+        className={`sidebar ${
+          sidebarOpen ? "sidebar-open" : "sidebar-collapsed"
+        }`}
+      >
+        <div className="brand">
+          <div className="brand-mark">A</div>
+
+          {sidebarOpen && (
+            <div className="brand-copy">
+              <strong>TransConet-Apex1</strong>
+              <span>Administration Management</span>
+            </div>
+          )}
+        </div>
+
+        <nav className="navigation">
+          {primaryNav.map((item) => (
+            <div key={item.label}>
+              {item.section && sidebarOpen && (
+                <div className="nav-section">
+                  {item.section}
+                </div>
+              )}
+
+              <button
+                type="button"
+                className={`nav-item ${
+                  active === item.label ? "active" : ""
+                }`}
+                title={
+                  sidebarOpen
+                    ? undefined
+                    : item.label
+                }
+                onClick={() => setActive(item.label)}
+              >
+                <span className="nav-icon">
+                  {getInitial(item.label)}
+                </span>
+
+                {sidebarOpen && (
+                  <span className="nav-label">
+                    {item.label}
+                  </span>
+                )}
+              </button>
+            </div>
+          ))}
+        </nav>
+
+        <div className="sidebar-footer">
+          <span className="status-dot" />
+
+          {sidebarOpen && (
+            <span>Administration API connected</span>
+          )}
+        </div>
+      </aside>
+
+      <main className="main">
+        <header className="topbar">
+          <div className="topbar-left">
+            <button
+              type="button"
+              className="menu-button"
+              onClick={() =>
+                setSidebarOpen((value) => !value)
+              }
+              aria-label="Toggle navigation"
+            >
+              ☰
+            </button>
+
+            <div>
+              <div className="breadcrumb">
+                TransConet-Apex1 / Administration /{" "}
+                {active}
+              </div>
+
+              <h1>{active}</h1>
+
+              <p className="page-description">
+                {activeItem.description}
+              </p>
+            </div>
+          </div>
+
+          <div className="topbar-actions">
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Search"
+            >
+              ⌕
+            </button>
+
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Notifications"
+            >
+              ◉
+            </button>
+
+            <div className="admin-profile">
+              <div className="avatar">
+                {getInitial(administratorName)}
+              </div>
+
+              <div className="admin-profile-copy">
+                <strong>{administratorName}</strong>
+
+                <span>
+                  {isSuperAdministrator
+                    ? "Super Administrator"
+                    : administratorType}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                className="logout-button"
+                onClick={logout}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {active === "Command Center" ? (
+          <CommandCenter
+            administratorName={administratorName}
+          />
+        ) : (
+          <ModuleWorkspace
+            title={active}
+            description={activeItem.description}
+          />
+        )}
+      </main>
+    </div>
+  );
+}
+
+function CommandCenter({
+  administratorName,
+}: {
+  administratorName: string;
+}) {
+  return (
+    <div className="dashboard">
+      <section className="welcome-panel">
+        <div>
+          <span className="eyebrow">
+            TRANSCONET-APEX1 COMMAND CENTER
+          </span>
+
+          <h2>
+            Welcome back, {administratorName}.
+          </h2>
+
+          <p>
+            This is the central administration workspace
+            for monitoring and governing the TransConet-Apex1
+            transportation and logistics ecosystem.
+          </p>
+        </div>
+
+        <div className="command-status">
+          <span className="status-dot" />
+          <span>Platform monitoring active</span>
+        </div>
+      </section>
+
+      <section className="stats-grid">
+        <StatCard
+          label="Customers"
+          value="—"
+          detail="Awaiting live API data"
+        />
+
+        <StatCard
+          label="Transporters"
+          value="—"
+          detail="Awaiting live API data"
+        />
+
+        <StatCard
+          label="Active Operations"
+          value="—"
+          detail="Awaiting live API data"
+        />
+
+        <StatCard
+          label="Marketplace Activity"
+          value="—"
+          detail="Awaiting live API data"
+        />
+      </section>
+
+      <section className="dashboard-grid">
+        <div className="panel operations-panel">
+          <div className="panel-header">
+            <div>
+              <h2>Live Operations</h2>
+              <p>
+                Real-time transport activity will appear
+                here.
+              </p>
+            </div>
+
+            <span className="live-badge">
+              <span className="status-dot" />
+              LIVE
+            </span>
+          </div>
+
+          <div className="operations-canvas">
+            <div className="operations-grid" />
+
+            <div className="operations-message">
+              <div className="operations-symbol">
+                A
+              </div>
+
+              <strong>
+                Operational intelligence workspace
+              </strong>
+
+              <span>
+                Live trips, shipment movement and authorized
+                vehicle visibility will connect here.
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h2>Platform Health</h2>
+              <p>Administration infrastructure status</p>
+            </div>
+          </div>
+
+          <div className="health-list">
+            <HealthRow label="Backend API" />
+            <HealthRow label="Database" />
+            <HealthRow label="Realtime" />
+            <HealthRow label="Payments" />
+            <HealthRow label="Notifications" />
+          </div>
+        </div>
+      </section>
+
+      <section className="panel activity-panel">
+        <div className="panel-header">
+          <div>
+            <h2>Recent Activity</h2>
+            <p>
+              Administrative and platform events
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="text-button"
+          >
+            View audit activity
+          </button>
+        </div>
+
+        <div className="empty-activity">
+          <div className="empty-icon">◷</div>
+
+          <strong>
+            Waiting for authorized platform events
+          </strong>
+
+          <span>
+            Realtime activity will populate this workspace
+            once the administration event stream is connected.
+          </span>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function ModuleWorkspace({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <section className="module-workspace">
+      <div className="module-header">
+        <span className="module-kicker">
+          TRANSCONET-APEX1 ADMINISTRATION
+        </span>
+
+        <h2>{title}</h2>
+
+        <p>{description}</p>
+      </div>
+
+      <div className="module-grid">
+        <div className="module-card">
+          <span>MODULE STATUS</span>
+          <strong>Ready for API integration</strong>
+          <p>
+            The workspace is established without
+            displaying fabricated operational data.
+          </p>
+        </div>
+
+        <div className="module-card">
+          <span>AUTHORIZATION</span>
+          <strong>Administrator protected</strong>
+          <p>
+            Access will follow the authenticated
+            administrator's backend permissions.
+          </p>
+        </div>
+
+        <div className="module-card">
+          <span>REALTIME</span>
+          <strong>Event integration ready</strong>
+          <p>
+            Realtime data will be connected to the
+            appropriate backend event channels.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) {
+  return (
+    <div className="stat-card">
+      <span>{label}</span>
+      <strong>{value}</strong>
+      <small>{detail}</small>
+    </div>
+  );
+}
+
+function HealthRow({
+  label,
+}: {
+  label: string;
+}) {
+  return (
+    <div className="health-row">
+      <span>{label}</span>
+
+      <span className="health-status">
+        <span className="status-dot" />
+        Monitoring
+      </span>
+    </div>
+  );
+}
+
+export default App;

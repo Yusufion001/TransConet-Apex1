@@ -1,6 +1,7 @@
 import { prisma } from "../config/prisma.js";
 import { publishEvent } from "../realtime/event-bus.js";
 import { toWithdrawalDto } from "../wallet/wallet.dto.js";
+import { toPaymentWebhookEventDto } from "./financial.dto.js";
 
 export async function getFinancialOverview() {
   const [
@@ -141,7 +142,7 @@ export async function getPaymentWebhookEvents(filters?: {
   processed?: boolean;
   provider?: string;
 }) {
-  return prisma.paymentWebhookEvent.findMany({
+  const events = await prisma.paymentWebhookEvent.findMany({
     where: {
       ...(filters?.processed !== undefined
         ? { processed: filters.processed }
@@ -151,12 +152,22 @@ export async function getPaymentWebhookEvents(filters?: {
         : {}),
     },
     include: {
-      payment: true,
+      payment: {
+        select: {
+          id: true,
+          amount: true,
+          currency: true,
+          provider: true,
+          status: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
     },
   });
+
+  return events.map(toPaymentWebhookEventDto);
 }
 
 export async function retryPaymentWebhook(

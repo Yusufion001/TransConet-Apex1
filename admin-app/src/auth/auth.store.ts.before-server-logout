@@ -1,0 +1,121 @@
+import { create } from "zustand";
+import { apiClient } from "../api/client";
+import type { AdminSession, AdminUser, LoginResponse } from "./auth.types";
+
+const ACCESS_TOKEN_KEY = "transconet_admin_access_token";
+const REFRESH_TOKEN_KEY = "transconet_admin_refresh_token";
+const USER_KEY = "transconet_admin_user";
+
+type AuthState = {
+  user: AdminUser | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+
+  login: (identifier: string, password: string) => Promise<void>;
+  logout: () => void;
+  restore: () => void;
+};
+
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  accessToken: null,
+  refreshToken: null,
+  isAuthenticated: false,
+  isLoading: true,
+
+  login: async (identifier, password) => {
+    const response = await apiClient.post<LoginResponse>("/auth/login", {
+      identifier,
+      password,
+    });
+
+    const session: AdminSession = response.data.data;
+
+    if (session.user.role !== "ADMIN") {
+      throw new Error("Administrator access required");
+    }
+
+    if (session.user.status && session.user.status !== "ACTIVE") {
+      throw new Error("Administrator account is not active");
+    }
+
+    if (
+      session.user.adminProfile &&
+      session.user.adminProfile.status &&
+      session.user.adminProfile.status !== "ACTIVE"
+    ) {
+      throw new Error("Administrator account is not active");
+    }
+
+    localStorage.setItem(ACCESS_TOKEN_KEY, session.accessToken);
+
+    if (session.refreshToken) {
+      localStorage.setItem(REFRESH_TOKEN_KEY, session.refreshToken);
+    }
+
+    localStorage.setItem(USER_KEY, JSON.stringify(session.user));
+
+    set({
+      user: session.user,
+      accessToken: session.accessToken,
+      refreshToken: session.refreshToken ?? null,
+      isAuthenticated: true,
+      isLoading: false,
+    });
+  },
+
+  logout: () => {
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+
+    set({
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      isAuthenticated: false,
+      isLoading: false,
+    });
+  },
+
+  restore: () => {
+    const accessToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+    const storedUser = localStorage.getItem(USER_KEY);
+
+    if (!accessToken || !storedUser) {
+      set({ isLoading: false });
+      return;
+    }
+
+    try {
+      const user = JSON.parse(storedUser) as AdminUser;
+
+      if (user.role !== "ADMIN") {
+        throw new Error("Invalid administrator session");
+      }
+
+      set({
+        user,
+        accessToken,
+        refreshToken,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+    } catch {
+      localStorage.removeItem(ACCESS_TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+
+      set({
+        user: null,
+        accessToken: null,
+        refreshToken: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+    }
+  },
+}));

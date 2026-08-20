@@ -145,22 +145,54 @@ export async function updateMarketingCampaign(
   return campaign;
 }
 
+const allowedMarketingTransitions: Record<string, string[]> = {
+  DRAFT: ["SCHEDULED", "ACTIVE", "CANCELLED"],
+  SCHEDULED: ["ACTIVE", "PAUSED", "CANCELLED"],
+  ACTIVE: ["PAUSED", "COMPLETED", "CANCELLED"],
+  PAUSED: ["ACTIVE", "COMPLETED", "CANCELLED"],
+  COMPLETED: [],
+  CANCELLED: [],
+};
+
 export async function updateMarketingCampaignStatus(
   id: string,
   status: string,
   administratorId: string,
 ) {
+  const existing = await getMarketingCampaign(id);
+
+  if (!existing) {
+    const error = new Error("Marketing campaign not found");
+    error.name = "NOT_FOUND";
+    throw error;
+  }
+
+  const allowed = allowedMarketingTransitions[existing.status] ?? [];
+
+  if (!allowed.includes(status)) {
+    const error = new Error(
+      `Invalid marketing campaign status transition: ${existing.status} -> ${status}`,
+    );
+    error.name = "INVALID_TRANSITION";
+    throw error;
+  }
+
   const rows = await prisma.$queryRaw`
     UPDATE marketing_campaigns
     SET
       status = ${status},
       updated_at = NOW()
     WHERE id = ${id}::uuid
+      AND status = ${existing.status}
     RETURNING *
   `;
 
   if (!(rows as unknown[]).length) {
-    throw new Error("Marketing campaign not found");
+    const error = new Error(
+      "Marketing campaign changed before the status update completed",
+    );
+    error.name = "CONFLICT";
+    throw error;
   }
 
   const campaign = (rows as any[])[0];

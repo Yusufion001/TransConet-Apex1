@@ -1,0 +1,4665 @@
+============================================================
+TRANSCONET-APEX1 MARKETPLACE INTEGRATION CONTEXT
+Generated: Thu Aug 20 06:40:55 WAT 2026
+============================================================
+
+### PROJECT STATUS
+## agent/live-trip-tracking...origin/agent/live-trip-tracking [ahead 1]
+ M backend/src/server.ts
+?? admin-app/
+?? backend/marketplace-audit-report.txt
+?? backend/marketplace-audit.sh
+?? backend/src/marketing/
+?? marketplace-integration-context.txt
+?? mobile-app/src/
+
+### DIRECTORY STRUCTURE — BACKEND
+backend/src/admin/activity.routes.ts
+backend/src/admin/activity.service.ts
+backend/src/admin/admin.routes.ts
+backend/src/admin/admin.service.ts
+backend/src/admin/admin.validators.ts
+backend/src/admin/administrator.routes.ts
+backend/src/admin/administrator.service.ts
+backend/src/admin/administrator.service.ts.bak
+backend/src/admin/administrator.service.ts.bak2
+backend/src/admin/ai-automation.routes.ts
+backend/src/admin/ai-automation.service.ts
+backend/src/admin/api-management.routes.ts
+backend/src/admin/api-management.service.ts
+backend/src/admin/backup-recovery.routes.ts
+backend/src/admin/backup-recovery.service.ts
+backend/src/admin/database-health.routes.ts
+backend/src/admin/database-health.service.ts
+backend/src/admin/error.routes.ts
+backend/src/admin/error.service.ts
+backend/src/admin/financial.routes.ts
+backend/src/admin/financial.service.ts
+backend/src/admin/financial.service.ts.before-idempotency-fix
+backend/src/admin/fleet.routes.ts
+backend/src/admin/fleet.routes.ts.bak
+backend/src/admin/fleet.service.ts
+backend/src/admin/live-trips.routes.ts
+backend/src/admin/live-trips.service.ts
+backend/src/admin/marketing.routes.ts
+backend/src/admin/marketing.service.ts
+backend/src/admin/notification.routes.ts
+backend/src/admin/partner.routes.ts
+backend/src/admin/partner.service.ts
+backend/src/admin/payment-webhook.service.ts
+backend/src/admin/platform-config.routes.ts
+backend/src/admin/platform-config.service.ts
+backend/src/admin/reports.routes.ts
+backend/src/admin/reports.service.ts
+backend/src/admin/risk-fraud.routes.ts
+backend/src/admin/risk-fraud.service.ts
+backend/src/admin/role-permission.routes.ts
+backend/src/admin/role-permission.service.ts
+backend/src/admin/security.routes.ts
+backend/src/admin/security.service.ts
+backend/src/admin/subscription.routes.ts
+backend/src/admin/support.routes.ts
+backend/src/admin/verification.routes.ts
+backend/src/bookings/booking.dto.ts
+backend/src/bookings/booking.routes.ts
+backend/src/bookings/booking.service.ts
+backend/src/bookings/booking.service.ts.bak
+backend/src/bookings/booking.validators.ts
+backend/src/config/env.ts
+backend/src/config/env.ts.before-youverify
+backend/src/config/prisma.ts
+backend/src/content/content.routes.ts
+backend/src/content/content.service.ts
+backend/src/disputes/dispute.dto.ts
+backend/src/disputes/dispute.routes.ts
+backend/src/disputes/dispute.service.ts
+backend/src/documents/document.dto.ts
+backend/src/documents/document.routes.ts
+backend/src/documents/document.routes.ts.auth.bak
+backend/src/documents/document.routes.ts.bak
+backend/src/documents/document.service.ts
+backend/src/documents/document.service.ts.bak
+backend/src/events/event.routes.ts
+backend/src/events/event.service.ts
+backend/src/marketing/marketing.dto.ts
+backend/src/marketing/marketing.routes.ts
+backend/src/marketing/marketing.service.ts
+backend/src/marketplace/marketplace.routes.ts
+backend/src/marketplace/marketplace.service.ts
+backend/src/marketplace/marketplace.validators.ts
+backend/src/marketplace/visibility.policy.ts
+backend/src/marketplace/visibility.service.ts
+backend/src/messages/message.dto.ts
+backend/src/messages/message.routes.ts
+backend/src/messages/message.routes.ts.before-final-audit
+backend/src/messages/message.service.ts
+backend/src/messages/message.service.ts.before-final-audit
+backend/src/messages/message.validators.ts
+backend/src/middleware/admin-module.middleware.ts
+backend/src/middleware/admin.middleware.ts
+backend/src/middleware/auth.middleware.ts
+backend/src/middleware/error.middleware.ts
+backend/src/middleware/security-foundation.middleware.ts
+backend/src/middleware/security-foundation.middleware.ts.bak
+backend/src/middleware/security-foundation.middleware.ts.before-youverify
+backend/src/middleware/super-admin.middleware.ts
+backend/src/middleware/validate.middleware.ts
+backend/src/notifications/notification.dto.ts
+backend/src/notifications/notification.routes.ts
+backend/src/notifications/notification.service.ts
+backend/src/payments/dto/payment.dto.ts
+backend/src/payments/flutterwave.service.ts
+backend/src/payments/payment-webhook.service.ts
+backend/src/payments/payment-webhook.service.ts.before-cross-payment-fix
+backend/src/payments/payment-webhook.service.ts.before-idempotency-fix
+backend/src/payments/payment.routes.ts
+backend/src/payments/payment.routes.ts.auth.bak
+backend/src/payments/payment.service.ts
+backend/src/payments/payment.service.ts.before-settlement
+backend/src/payments/payment.service.ts.complete.bak
+backend/src/payments/payment.service.ts.flow.bak
+backend/src/payments/payment.validators.ts
+backend/src/pricing/pricing.service.ts
+backend/src/realtime/activity.service.ts
+backend/src/realtime/admin-events.ts
+backend/src/realtime/event-bus.ts
+backend/src/realtime/realtime.service.ts
+backend/src/realtime/socket-authorization.ts
+backend/src/realtime/socket-events.ts
+backend/src/realtime/tracking.service.ts
+backend/src/routes/auth.routes.ts
+backend/src/routes/user.routes.ts
+backend/src/routes/user.routes.ts.before-security-fix
+backend/src/server.ts
+backend/src/server.ts.security-backup
+backend/src/server.ts.security-foundation-backup
+backend/src/services/auth.service.ts
+backend/src/services/auth.service.ts.auth.bak
+backend/src/services/auth.service.ts.before-refresh-rotation
+backend/src/services/auth.service.ts.refresh-session-backup
+backend/src/services/auth.service.ts.security-backup
+backend/src/services/email.service.ts
+backend/src/settlements/commission.service.ts
+backend/src/settlements/settlement.dto.ts
+backend/src/settlements/settlement.service.ts
+backend/src/subscriptions/subscription.routes.ts
+backend/src/subscriptions/subscription.service.ts
+backend/src/support/support.dto.ts
+backend/src/support/support.routes.ts
+backend/src/support/support.service.ts
+backend/src/support/support.validators.ts
+backend/src/transporters/transporter.dto.ts
+backend/src/transporters/transporter.routes.ts
+backend/src/transporters/transporter.service.ts
+backend/src/transporters/transporter.validators.ts
+backend/src/users/user.dto.ts
+backend/src/users/user.service.ts
+backend/src/users/user.types.ts
+backend/src/users/user.validators.ts
+backend/src/vehicles/vehicle.dto.ts
+backend/src/vehicles/vehicle.routes.ts
+backend/src/vehicles/vehicle.service.ts
+backend/src/vehicles/vehicle.validators.ts
+backend/src/verification/verification.routes.ts
+backend/src/verification/verification.routes.ts.auth.bak
+backend/src/verification/verification.routes.ts.bak
+backend/src/verification/verification.routes.ts.before-ownership-fix
+backend/src/verification/verification.routes.ts.before-webhook-cleanup
+backend/src/verification/verification.service.ts
+backend/src/verification/verification.service.ts.bak
+backend/src/verification/verification.service.ts.before-ownership-fix
+backend/src/verification/verification.validators.ts
+backend/src/verification/youverify.client.ts
+backend/src/verification/youverify/youverify.service.ts
+backend/src/verification/youverify/youverify.service.ts.before-client-integration
+backend/src/verification/youverify/youverify.validators.ts
+backend/src/verification/youverify/youverify.webhook.routes.ts
+backend/src/verification/youverify/youverify.webhook.service.ts
+backend/src/wallet/wallet.dto.ts
+backend/src/wallet/wallet.routes.ts
+backend/src/wallet/wallet.routes.ts.auth.bak
+backend/src/wallet/wallet.service.ts
+backend/src/wallet/wallet.service.ts.bak
+backend/src/wallet/wallet.validators.ts
+
+### DIRECTORY STRUCTURE — ADMIN APP
+admin-app/src/App.css
+admin-app/src/App.tsx
+admin-app/src/App.tsx.before-command-center-api
+admin-app/src/api/admin.ts
+admin-app/src/api/administrators.ts
+admin-app/src/api/client.ts
+admin-app/src/api/client.ts.before-refresh
+admin-app/src/api/live-trips.ts
+admin-app/src/api/role-permissions.ts
+admin-app/src/assets/hero.png
+admin-app/src/assets/react.svg
+admin-app/src/assets/vite.svg
+admin-app/src/auth/Login.tsx
+admin-app/src/auth/ProtectedApp.tsx
+admin-app/src/auth/auth.store.ts
+admin-app/src/auth/auth.store.ts.before-server-logout
+admin-app/src/auth/auth.types.ts
+admin-app/src/index.css
+admin-app/src/main.tsx
+admin-app/src/modules/Administrators.tsx
+admin-app/src/modules/RolePermissions.tsx
+admin-app/src/types/auth.ts
+
+============================================================
+### MARKETPLACE BACKEND FILES
+============================================================
+
+----- FILE: backend/src/marketplace/marketplace.routes.ts -----
+import { Router } from "express";
+import { z } from "zod";
+import {
+  authenticate,
+  authorize,
+  type AuthenticatedRequest,
+} from "../middleware/auth.middleware.js";
+import {
+  createMarketplaceRequestSchema,
+  createMarketplaceBidSchema,
+  withdrawMarketplaceBidSchema,
+  selectMarketplaceBidSchema,
+  marketplaceVisibilityQuerySchema,
+} from "./marketplace.validators.js";
+import {
+  createMarketplaceRequest,
+  getMarketplaceRequest,
+  createMarketplaceBid,
+  withdrawMarketplaceBid,
+  selectMarketplaceBid,
+} from "./marketplace.service.js";
+import { getVisibleMarketplaceLoads } from "./visibility.service.js";
+
+const router = Router();
+
+router.use(authenticate);
+
+
+router.get(
+  "/loads",
+  authorize("TRANSPORTER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const query = marketplaceVisibilityQuerySchema.parse(
+        req.query,
+      );
+
+      const loads = await getVisibleMarketplaceLoads(
+        req.user!.id,
+        query.radiusKm,
+      );
+
+      return res.json({
+        success: true,
+        data: loads,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid marketplace visibility query",
+          details: error.issues,
+        });
+      }
+
+      const message =
+        error instanceof Error ? error.message : "Server error";
+
+      if (
+        message === "Transporter not found" ||
+        message === "Only transporters can access marketplace visibility"
+      ) {
+        return res.status(403).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      if (
+        message === "Transporter account is not active" ||
+        message === "Transporter is not approved"
+      ) {
+        return res.status(403).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      if (
+        message === "Invalid marketplace visibility radius" ||
+        message.startsWith(
+          "Marketplace visibility radius cannot exceed",
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
+
+router.post(
+  "/requests",
+  authorize("CUSTOMER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const input = createMarketplaceRequestSchema.parse(req.body);
+
+      const request = await createMarketplaceRequest({
+        ...input,
+        customerId: req.user!.id,
+      });
+
+      return res.status(201).json({
+        success: true,
+        data: request,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid request data",
+          details: error.issues,
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Server error",
+      });
+    }
+  },
+);
+
+router.get(
+  "/requests/:id",
+  authorize("CUSTOMER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const request = await getMarketplaceRequest(
+        String(req.params.id),
+        req.user!.id,
+      );
+
+      if (!request) {
+        return res.status(404).json({
+          success: false,
+          error: "Marketplace request not found",
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: request,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Server error",
+      });
+    }
+  },
+);
+
+router.post(
+  "/requests/:id/bids",
+  authorize("TRANSPORTER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const input = createMarketplaceBidSchema.parse(req.body);
+
+      const bid = await createMarketplaceBid({
+        ...input,
+        requestId: String(req.params.id),
+        transporterId: req.user!.id,
+      });
+
+      return res.status(201).json({
+        success: true,
+        data: bid,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid bid data",
+          details: error.issues,
+        });
+      }
+
+      const message =
+        error instanceof Error ? error.message : "Server error";
+
+      const conflictMessages = [
+        "Marketplace request is no longer accepting bids",
+        "Vehicle is not available",
+        "Vehicle does not match requested truck category",
+        "Transporter has already submitted a bid for this request",
+      ];
+
+      return res.status(
+        conflictMessages.includes(message) ? 409 : 400,
+      ).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
+
+
+router.post(
+  "/requests/:id/bids/:bidId/select",
+  authorize("CUSTOMER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      selectMarketplaceBidSchema.parse(req.body);
+
+      const result = await selectMarketplaceBid(
+        String(req.params.id),
+        String(req.params.bidId),
+        req.user!.id,
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid bid selection request",
+          details: error.issues,
+        });
+      }
+
+      const message =
+        error instanceof Error ? error.message : "Server error";
+
+      const conflictMessages = [
+        "Marketplace request is no longer accepting bid selection",
+        "Marketplace request has already been processed",
+        "Only pending bids can be selected",
+        "Marketplace bid has expired",
+        "Selected vehicle is no longer available",
+        "Selected vehicle is not approved",
+        "Selected vehicle no longer matches truck category",
+        "Selected bid is no longer available",
+      ];
+
+      return res.status(
+        conflictMessages.includes(message) ? 409 :
+        message === "Access denied" ? 403 :
+        message.includes("not found") ? 404 :
+        400,
+      ).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
+
+router.post(
+  "/bids/:id/withdraw",
+  authorize("TRANSPORTER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      withdrawMarketplaceBidSchema.parse(req.body);
+
+      const bid = await withdrawMarketplaceBid(
+        String(req.params.id),
+        req.user!.id,
+      );
+
+      return res.json({
+        success: true,
+        data: bid,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
+      const message =
+        error instanceof Error ? error.message : "Server error";
+
+      return res.status(
+        message === "Access denied" ? 403 : 400,
+      ).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
+
+export default router;
+
+----- FILE: backend/src/marketplace/marketplace.service.ts -----
+import { prisma } from "../config/prisma.js";
+import { publishEvent } from "../realtime/event-bus.js";
+import { estimateFare } from "../pricing/pricing.service.js";
+
+
+async function expireMarketplaceLifecycle() {
+  const now = new Date();
+
+  return prisma.$transaction(async (tx) => {
+    const expiredBids = await tx.marketplaceBid.findMany({
+      where: {
+        status: "PENDING",
+        expiresAt: {
+          not: null,
+          lte: now,
+        },
+      },
+      select: {
+        id: true,
+        requestId: true,
+        transporterId: true,
+      },
+    });
+
+    if (expiredBids.length > 0) {
+      await tx.marketplaceBid.updateMany({
+        where: {
+          id: {
+            in: expiredBids.map((bid) => bid.id),
+          },
+          status: "PENDING",
+          expiresAt: {
+            not: null,
+            lte: now,
+          },
+        },
+        data: {
+          status: "EXPIRED",
+        },
+      });
+    }
+
+    /*
+     * MarketplaceRequest.scheduledDate represents the planned
+     * shipment/pickup date. It is NOT the marketplace request's
+     * expiration timestamp.
+     *
+     * Therefore a scheduled load must remain OPEN until:
+     * - a bid is selected, or
+     * - the request is explicitly closed by another lifecycle action.
+     *
+     * Only MarketplaceBid.expiresAt controls bid expiration.
+     */
+
+    return {
+      expiredBidIds: expiredBids.map((bid) => bid.id),
+    };
+  });
+}
+
+
+function serializeMarketplaceBid(bid: {
+  id: string;
+  requestId: string;
+  transporterId: string;
+  vehicleId: string;
+  amount: unknown;
+  message: string | null;
+  status: string;
+  expiresAt: Date | null;
+  selectedAt?: Date | null;
+  createdAt: Date;
+  vehicle?: {
+    id: string;
+    vehicleType: unknown;
+    vehicleClass: unknown;
+  } | null;
+  transporter?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    transporterTier: unknown;
+    transporterProfile?: {
+      rating: unknown;
+      totalTrips: number;
+    } | null;
+  } | null;
+}) {
+  return {
+    id: bid.id,
+    requestId: bid.requestId,
+    transporterId: bid.transporterId,
+    vehicleId: bid.vehicleId,
+    amount: bid.amount,
+    message: bid.message,
+    status: bid.status,
+    expiresAt: bid.expiresAt,
+    selectedAt: bid.selectedAt ?? null,
+    createdAt: bid.createdAt,
+    vehicle: bid.vehicle
+      ? {
+          id: bid.vehicle.id,
+          vehicleType: bid.vehicle.vehicleType,
+          vehicleClass: bid.vehicle.vehicleClass,
+        }
+      : undefined,
+    transporter: bid.transporter
+      ? {
+          id: bid.transporter.id,
+          firstName: bid.transporter.firstName,
+          lastName: bid.transporter.lastName,
+          transporterTier: bid.transporter.transporterTier,
+          rating: bid.transporter.transporterProfile?.rating ?? null,
+          totalTrips:
+            bid.transporter.transporterProfile?.totalTrips ?? 0,
+        }
+      : undefined,
+  };
+}
+
+export async function createMarketplaceRequest(data: {
+  customerId: string;
+  pickupLocation: string;
+  destination: string;
+  pickupLatitude: number;
+  pickupLongitude: number;
+  destinationLatitude: number;
+  destinationLongitude: number;
+  cargoDescription?: string;
+  truckCategory:
+    | "MINI_TRUCK"
+    | "LIGHT_TRUCK"
+    | "MEDIUM_TRUCK"
+    | "HEAVY_TRUCK"
+    | "CONTAINER_TRUCK"
+    | "REFRIGERATED_TRUCK"
+    | "TANKER"
+    | "SPECIALIZED";
+  cargoCategory?:
+    | "GENERAL"
+    | "FRAGILE"
+    | "ELECTRONICS"
+    | "FURNITURE"
+    | "AGRICULTURAL"
+    | "INDUSTRIAL"
+    | "CONSTRUCTION"
+    | "HAZARDOUS"
+    | "REFRIGERATED";
+  cargoWeight: number;
+  scheduledDate?: Date;
+}) {
+  const pricing = await estimateFare({
+    weight: data.cargoWeight,
+    truck: data.truckCategory,
+    pickupLatitude: data.pickupLatitude,
+    pickupLongitude: data.pickupLongitude,
+    destinationLatitude: data.destinationLatitude,
+    destinationLongitude: data.destinationLongitude,
+  });
+
+  const request = await prisma.marketplaceRequest.create({
+    data: {
+      customerId: data.customerId,
+      pickupLocation: data.pickupLocation,
+      destination: data.destination,
+      pickupLatitude: data.pickupLatitude,
+      pickupLongitude: data.pickupLongitude,
+      destinationLatitude: data.destinationLatitude,
+      destinationLongitude: data.destinationLongitude,
+      cargoDescription: data.cargoDescription,
+      truckCategory: data.truckCategory,
+      cargoCategory: data.cargoCategory,
+      cargoWeight: data.cargoWeight,
+      scheduledDate: data.scheduledDate,
+      estimatedFare: pricing.fare,
+      status: "OPEN",
+    },
+  });
+
+  publishEvent("marketplace", {
+    eventType: "LOAD_POSTED",
+    module: "FLEET_MARKETPLACE",
+    entityType: "MARKETPLACE_REQUEST",
+    entityId: request.id,
+    actorId: data.customerId,
+    data: {
+      requestId: request.id,
+      status: request.status,
+      pickupLocation: request.pickupLocation,
+      destination: request.destination,
+      truckCategory: request.truckCategory,
+      cargoWeight: request.cargoWeight,
+      estimatedFare: request.estimatedFare,
+    },
+  });
+
+  return request;
+}
+
+export async function getMarketplaceRequest(
+  requestId: string,
+  customerId: string,
+) {
+  await expireMarketplaceLifecycle();
+
+  const request = await prisma.marketplaceRequest.findFirst({
+    where: {
+      id: requestId,
+      customerId,
+    },
+    select: {
+      id: true,
+      customerId: true,
+      bookingId: true,
+      cargoDescription: true,
+      truckCategory: true,
+      cargoCategory: true,
+      cargoWeight: true,
+      pickupLocation: true,
+      destination: true,
+      pickupLatitude: true,
+      pickupLongitude: true,
+      destinationLatitude: true,
+      destinationLongitude: true,
+      scheduledDate: true,
+      estimatedFare: true,
+      status: true,
+      agreedBidId: true,
+      createdAt: true,
+      updatedAt: true,
+      closedAt: true,
+      bids: {
+        orderBy: {
+          createdAt: "asc",
+        },
+        select: {
+          id: true,
+          requestId: true,
+          transporterId: true,
+          vehicleId: true,
+          amount: true,
+          message: true,
+          status: true,
+          expiresAt: true,
+          selectedAt: true,
+          createdAt: true,
+          vehicle: {
+            select: {
+              id: true,
+              vehicleType: true,
+              vehicleClass: true,
+            },
+          },
+          transporter: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              transporterTier: true,
+              transporterProfile: {
+                select: {
+                  rating: true,
+                  totalTrips: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!request) {
+    return null;
+  }
+
+  return {
+    ...request,
+    bids: request.bids.map(serializeMarketplaceBid),
+  };
+}
+
+export async function createMarketplaceBid(data: {
+  requestId: string;
+  transporterId: string;
+  vehicleId: string;
+  amount: number;
+  message?: string;
+  expiresAt?: Date;
+}) {
+  await expireMarketplaceLifecycle();
+
+  const request = await prisma.marketplaceRequest.findUnique({
+    where: { id: data.requestId },
+    select: {
+      id: true,
+      status: true,
+      truckCategory: true,
+      scheduledDate: true,
+      customerId: true,
+    },
+  });
+
+  if (!request) {
+    throw new Error("Marketplace request not found");
+  }
+
+  if (request.status !== "OPEN") {
+    throw new Error("Marketplace request is no longer accepting bids");
+  }
+
+  if (request.customerId === data.transporterId) {
+    throw new Error("Customer cannot bid on their own marketplace request");
+  }
+
+  const transporter = await prisma.user.findUnique({
+    where: { id: data.transporterId },
+    select: {
+      id: true,
+      role: true,
+      status: true,
+      transporterProfile: {
+        select: {
+          verificationStatus: true,
+        },
+      },
+    },
+  });
+
+  if (!transporter || transporter.role !== "TRANSPORTER") {
+    throw new Error("Only transporters can submit bids");
+  }
+
+  if (transporter.status !== "ACTIVE") {
+    throw new Error("Transporter account is not active");
+  }
+
+  if (
+    !transporter.transporterProfile ||
+    transporter.transporterProfile.verificationStatus !== "APPROVED"
+  ) {
+    throw new Error("Transporter is not approved");
+  }
+
+  const vehicle = await prisma.vehicle.findUnique({
+    where: { id: data.vehicleId },
+    select: {
+      id: true,
+      transporterId: true,
+      vehicleType: true,
+      vehicleClass: true,
+      verificationStatus: true,
+      availabilityStatus: true,
+    },
+  });
+
+  if (!vehicle) {
+    throw new Error("Vehicle not found");
+  }
+
+  if (vehicle.transporterId !== data.transporterId) {
+    throw new Error("Vehicle does not belong to transporter");
+  }
+
+  if (vehicle.verificationStatus !== "APPROVED") {
+    throw new Error("Vehicle is not approved");
+  }
+
+  if (vehicle.availabilityStatus !== "AVAILABLE") {
+    throw new Error("Vehicle is not available");
+  }
+
+  if (
+    request.truckCategory &&
+    vehicle.vehicleType !== request.truckCategory &&
+    vehicle.vehicleClass !== request.truckCategory
+  ) {
+    throw new Error("Vehicle does not match requested truck category");
+  }
+
+  if (data.expiresAt && data.expiresAt <= new Date()) {
+    throw new Error("Bid expiration must be in the future");
+  }
+
+  try {
+    const bid = await prisma.marketplaceBid.create({
+      data: {
+        requestId: data.requestId,
+        transporterId: data.transporterId,
+        vehicleId: data.vehicleId,
+        amount: data.amount,
+        message: data.message,
+        expiresAt: data.expiresAt,
+        status: "PENDING",
+      },
+      include: {
+        vehicle: true,
+      },
+    });
+
+    publishEvent("marketplace", {
+      eventType: "BID_SUBMITTED",
+      module: "FLEET_MARKETPLACE",
+      entityType: "MARKETPLACE_BID",
+      entityId: bid.id,
+      actorId: data.transporterId,
+      data: {
+        bidId: bid.id,
+        requestId: data.requestId,
+        transporterId: data.transporterId,
+        vehicleId: data.vehicleId,
+        amount: bid.amount,
+        status: bid.status,
+      },
+    });
+
+    return bid;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("Unique constraint")
+    ) {
+      throw new Error("Transporter has already submitted a bid for this request");
+    }
+
+    throw error;
+  }
+}
+
+export async function withdrawMarketplaceBid(
+  bidId: string,
+  transporterId: string,
+) {
+  await expireMarketplaceLifecycle();
+  const bid = await prisma.marketplaceBid.findUnique({
+    where: { id: bidId },
+    select: {
+      id: true,
+      requestId: true,
+      transporterId: true,
+      status: true,
+    },
+  });
+
+  if (!bid) {
+    throw new Error("Marketplace bid not found");
+  }
+
+  if (bid.transporterId !== transporterId) {
+    throw new Error("Access denied");
+  }
+
+  if (bid.status !== "PENDING") {
+    throw new Error("Only pending bids can be withdrawn");
+  }
+
+  const updated = await prisma.marketplaceBid.update({
+    where: { id: bidId },
+    data: {
+      status: "WITHDRAWN",
+    },
+  });
+
+  publishEvent("marketplace", {
+    eventType: "BID_WITHDRAWN",
+    module: "FLEET_MARKETPLACE",
+    entityType: "MARKETPLACE_BID",
+    entityId: updated.id,
+    actorId: transporterId,
+    data: {
+      bidId: updated.id,
+      requestId: updated.requestId,
+      status: updated.status,
+    },
+  });
+
+  return updated;
+}
+
+export async function selectMarketplaceBid(
+  requestId: string,
+  bidId: string,
+  customerId: string,
+) {
+  await expireMarketplaceLifecycle();
+  const result = await prisma.$transaction(async (tx) => {
+    /*
+     * Read the marketplace request and verify ownership.
+     * The request must still be OPEN when the selection begins.
+     */
+    const request = await tx.marketplaceRequest.findUnique({
+      where: {
+        id: requestId,
+      },
+      select: {
+        id: true,
+        customerId: true,
+        status: true,
+        cargoDescription: true,
+        truckCategory: true,
+        cargoCategory: true,
+        cargoWeight: true,
+        pickupLocation: true,
+        destination: true,
+        pickupLatitude: true,
+        pickupLongitude: true,
+        destinationLatitude: true,
+        destinationLongitude: true,
+        scheduledDate: true,
+        estimatedFare: true,
+        bookingId: true,
+        agreedBidId: true,
+      },
+    });
+
+    if (!request) {
+      throw new Error("Marketplace request not found");
+    }
+
+    if (request.customerId !== customerId) {
+      throw new Error("Access denied");
+    }
+
+    if (request.status !== "OPEN") {
+      throw new Error("Marketplace request is no longer accepting bid selection");
+    }
+
+    /*
+     * Locate the requested bid and make sure it belongs to this request.
+     */
+    const bid = await tx.marketplaceBid.findFirst({
+      where: {
+        id: bidId,
+        requestId,
+      },
+      select: {
+        id: true,
+        requestId: true,
+        transporterId: true,
+        vehicleId: true,
+        amount: true,
+        message: true,
+        status: true,
+        expiresAt: true,
+      },
+    });
+
+    if (!bid) {
+      throw new Error("Marketplace bid not found");
+    }
+
+    if (bid.status !== "PENDING") {
+      throw new Error("Only pending bids can be selected");
+    }
+
+    if (bid.expiresAt && bid.expiresAt <= new Date()) {
+      throw new Error("Marketplace bid has expired");
+    }
+
+    /*
+     * Revalidate the transporter at the moment of acceptance.
+     * Visibility at bid-submission time is not sufficient because
+     * transporter status can change before the customer accepts.
+     */
+    const transporter = await tx.user.findUnique({
+      where: {
+        id: bid.transporterId,
+      },
+      select: {
+        id: true,
+        role: true,
+        status: true,
+        transporterTier: true,
+        transporterProfile: {
+          select: {
+            verificationStatus: true,
+          },
+        },
+      },
+    });
+
+    if (!transporter || transporter.role !== "TRANSPORTER") {
+      throw new Error("Selected transporter is invalid");
+    }
+
+    if (transporter.status !== "ACTIVE") {
+      throw new Error("Selected transporter account is not active");
+    }
+
+    if (
+      !transporter.transporterProfile ||
+      transporter.transporterProfile.verificationStatus !== "APPROVED"
+    ) {
+      throw new Error("Selected transporter is not approved");
+    }
+
+    /*
+     * Revalidate the vehicle and reserve it atomically.
+     * This prevents two concurrent operations from assigning the same
+     * available vehicle to separate trips.
+     */
+    const vehicle = await tx.vehicle.findUnique({
+      where: {
+        id: bid.vehicleId,
+      },
+      select: {
+        id: true,
+        transporterId: true,
+        vehicleType: true,
+        vehicleClass: true,
+        verificationStatus: true,
+        availabilityStatus: true,
+      },
+    });
+
+    if (!vehicle) {
+      throw new Error("Selected vehicle not found");
+    }
+
+    if (vehicle.transporterId !== bid.transporterId) {
+      throw new Error("Selected vehicle does not belong to transporter");
+    }
+
+    if (vehicle.verificationStatus !== "APPROVED") {
+      throw new Error("Selected vehicle is not approved");
+    }
+
+    if (vehicle.availabilityStatus !== "AVAILABLE") {
+      throw new Error("Selected vehicle is no longer available");
+    }
+
+    if (
+      request.truckCategory &&
+      vehicle.vehicleType !== request.truckCategory &&
+      vehicle.vehicleClass !== request.truckCategory
+    ) {
+      throw new Error("Selected vehicle no longer matches truck category");
+    }
+
+    /*
+     * Claim the marketplace request first.
+     *
+     * The conditional update is the concurrency guard:
+     * only one transaction can successfully move OPEN -> AGREED.
+     */
+    const claimedRequest = await tx.marketplaceRequest.updateMany({
+      where: {
+        id: requestId,
+        customerId,
+        status: "OPEN",
+      },
+      data: {
+        status: "AGREED",
+      },
+    });
+
+    if (claimedRequest.count !== 1) {
+      throw new Error("Marketplace request has already been processed");
+    }
+
+    /*
+     * Reserve the vehicle.
+     */
+    const reservedVehicle = await tx.vehicle.updateMany({
+      where: {
+        id: vehicle.id,
+        transporterId: bid.transporterId,
+        availabilityStatus: "AVAILABLE",
+        verificationStatus: "APPROVED",
+      },
+      data: {
+        availabilityStatus: "ON_TRIP",
+      },
+    });
+
+    if (reservedVehicle.count !== 1) {
+      throw new Error("Selected vehicle is no longer available");
+    }
+
+    /*
+     * Select exactly this bid.
+     */
+    const selectedAt = new Date();
+
+    const selectedBid = await tx.marketplaceBid.updateMany({
+      where: {
+        id: bid.id,
+        requestId,
+        status: "PENDING",
+      },
+      data: {
+        status: "SELECTED",
+        selectedAt,
+      },
+    });
+
+    if (selectedBid.count !== 1) {
+      throw new Error("Selected bid is no longer available");
+    }
+
+    /*
+     * All other pending bids lose the competition.
+     */
+    await tx.marketplaceBid.updateMany({
+      where: {
+        requestId,
+        id: {
+          not: bid.id,
+        },
+        status: "PENDING",
+      },
+      data: {
+        status: "REJECTED",
+      },
+    });
+
+    /*
+     * Marketplace acceptance creates the operational Booking.
+     *
+     * The accepted bid amount is authoritative for this booking.
+     * We deliberately do NOT call createBooking(), because that
+     * function creates a customer-originated booking and calculates
+     * a fresh pricing-engine fare.
+     */
+    const booking = await tx.booking.create({
+      data: {
+        customerId,
+        transporterId: bid.transporterId,
+        vehicleId: bid.vehicleId,
+
+        cargoDescription: request.cargoDescription,
+        truckCategory: request.truckCategory,
+        transporterTier: transporter.transporterTier,
+
+        estimatedFare: request.estimatedFare,
+        fare: bid.amount,
+
+        pickupLocation: request.pickupLocation,
+        destination: request.destination,
+
+        pickupLatitude: request.pickupLatitude,
+        pickupLongitude: request.pickupLongitude,
+        destinationLatitude: request.destinationLatitude,
+        destinationLongitude: request.destinationLongitude,
+
+        scheduledDate: request.scheduledDate,
+
+        cargoCategory: request.cargoCategory,
+        cargoWeight: request.cargoWeight,
+
+        status: "ASSIGNED",
+        paymentStatus: "PENDING",
+      },
+    });
+
+    /*
+     * Complete the marketplace <-> booking relationship.
+     */
+    const linkedRequest = await tx.marketplaceRequest.update({
+      where: {
+        id: requestId,
+      },
+      data: {
+        agreedBidId: bid.id,
+        bookingId: booking.id,
+        closedAt: new Date(),
+      },
+    });
+
+    /*
+     * Return all identifiers needed by realtime/admin consumers.
+     */
+    return {
+      request: linkedRequest,
+      bid: {
+        ...bid,
+        status: "SELECTED",
+        selectedAt,
+      },
+      booking,
+      vehicleId: vehicle.id,
+      transporterId: bid.transporterId,
+    };
+  });
+
+  /*
+   * Publish marketplace events after the transaction commits.
+   * This prevents realtime consumers from receiving an event for
+   * a transaction that subsequently rolled back.
+   */
+  publishEvent("marketplace", {
+    eventType: "BID_SELECTED",
+    module: "FLEET_MARKETPLACE",
+    entityType: "MARKETPLACE_BID",
+    entityId: result.bid.id,
+    actorId: customerId,
+    data: {
+      bidId: result.bid.id,
+      requestId: result.request.id,
+      transporterId: result.transporterId,
+      vehicleId: result.vehicleId,
+      amount: result.bid.amount,
+      status: "SELECTED",
+      bookingId: result.booking.id,
+    },
+  });
+
+  publishEvent("marketplace", {
+    eventType: "MARKETPLACE_REQUEST_AGREED",
+    module: "FLEET_MARKETPLACE",
+    entityType: "MARKETPLACE_REQUEST",
+    entityId: result.request.id,
+    actorId: customerId,
+    data: {
+      requestId: result.request.id,
+      bidId: result.bid.id,
+      bookingId: result.booking.id,
+      status: result.request.status,
+    },
+  });
+
+  publishEvent("booking", {
+    eventType: "SHIPMENT_ASSIGNED",
+    module: "LIVE_TRIPS",
+    entityType: "BOOKING",
+    entityId: result.booking.id,
+    bookingId: result.booking.id,
+    actorId: customerId,
+    data: {
+      bookingId: result.booking.id,
+      customerId,
+      transporterId: result.transporterId,
+      vehicleId: result.vehicleId,
+      status: result.booking.status,
+      fare: result.booking.fare,
+      marketplaceRequestId: result.request.id,
+      marketplaceBidId: result.bid.id,
+    },
+  });
+
+  publishEvent("vehicle", {
+    eventType: "VEHICLE_AVAILABILITY_UPDATED",
+    module: "FLEET_MARKETPLACE",
+    entityType: "VEHICLE",
+    entityId: result.vehicleId,
+    actorId: customerId,
+    data: {
+      vehicleId: result.vehicleId,
+      transporterId: result.transporterId,
+      availabilityStatus: "ON_TRIP",
+      bookingId: result.booking.id,
+    },
+  });
+
+  return result;
+}
+
+----- FILE: backend/src/marketplace/marketplace.validators.ts -----
+import { z } from "zod";
+
+const latitudeSchema = z.coerce.number().finite().min(-90).max(90);
+const longitudeSchema = z.coerce.number().finite().min(-180).max(180);
+const positiveNumber = z.coerce.number().finite().positive();
+
+export const createMarketplaceRequestSchema = z.object({
+  pickupLocation: z.string().trim().min(1).max(500),
+  destination: z.string().trim().min(1).max(500),
+
+  pickupLatitude: latitudeSchema,
+  pickupLongitude: longitudeSchema,
+  destinationLatitude: latitudeSchema,
+  destinationLongitude: longitudeSchema,
+
+  cargoDescription: z.string().trim().max(2000).optional(),
+
+  truckCategory: z.enum([
+    "MINI_TRUCK",
+    "LIGHT_TRUCK",
+    "MEDIUM_TRUCK",
+    "HEAVY_TRUCK",
+    "CONTAINER_TRUCK",
+    "REFRIGERATED_TRUCK",
+    "TANKER",
+    "SPECIALIZED",
+  ]),
+
+  cargoCategory: z.enum([
+    "GENERAL",
+    "FRAGILE",
+    "ELECTRONICS",
+    "FURNITURE",
+    "AGRICULTURAL",
+    "INDUSTRIAL",
+    "CONSTRUCTION",
+    "HAZARDOUS",
+    "REFRIGERATED",
+  ]).optional(),
+
+  cargoWeight: positiveNumber,
+
+  scheduledDate: z.coerce.date().optional(),
+}).strict();
+
+export const createMarketplaceBidSchema = z.object({
+  vehicleId: z.string().uuid("Invalid vehicle ID"),
+  amount: positiveNumber,
+  message: z.string().trim().max(1000).optional(),
+  expiresAt: z.coerce.date().optional(),
+}).strict();
+
+export const withdrawMarketplaceBidSchema = z.object({}).strict();
+
+export const selectMarketplaceBidSchema = z.object({}).strict();
+
+export const marketplaceVisibilityQuerySchema = z.object({
+  radiusKm: positiveNumber.optional(),
+}).strict();
+
+----- FILE: backend/src/marketplace/visibility.policy.ts -----
+import { prisma } from "../config/prisma.js";
+import { z } from "zod";
+
+const positiveNumber = z.coerce.number().finite().positive();
+
+export const marketplaceVisibilityConfigSchema = z
+  .object({
+    defaultRadiusKm: positiveNumber,
+
+    maxRadiusKm: positiveNumber,
+
+    subscriptionBoosts: z
+      .object({
+        FREE: positiveNumber,
+        SILVER: positiveNumber,
+        GOLD: positiveNumber,
+        PLATINUM: positiveNumber,
+        ENTERPRISE: positiveNumber,
+      })
+      .strict(),
+
+    tierScores: z
+      .object({
+        TIER_1: positiveNumber,
+        TIER_2: positiveNumber,
+      })
+      .strict(),
+
+    requireApprovedTransporter: z.boolean(),
+
+    requireApprovedVehicle: z.boolean(),
+
+    requireAvailableVehicle: z.boolean(),
+
+    requireVehicleLocation: z.boolean(),
+  })
+  .strict()
+  .superRefine((config, ctx) => {
+    if (config.maxRadiusKm < config.defaultRadiusKm) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["maxRadiusKm"],
+        message:
+          "Maximum radius cannot be less than default radius",
+      });
+    }
+  });
+
+export type MarketplaceVisibilityConfig = z.infer<
+  typeof marketplaceVisibilityConfigSchema
+>;
+
+const DEFAULT_MARKETPLACE_VISIBILITY_CONFIG: MarketplaceVisibilityConfig =
+  {
+    defaultRadiusKm: 100,
+
+    maxRadiusKm: 500,
+
+    subscriptionBoosts: {
+      FREE: 1,
+      SILVER: 2,
+      GOLD: 3,
+      PLATINUM: 4,
+      ENTERPRISE: 5,
+    },
+
+    tierScores: {
+      TIER_1: 1,
+      TIER_2: 2,
+    },
+
+    requireApprovedTransporter: true,
+
+    requireApprovedVehicle: true,
+
+    requireAvailableVehicle: true,
+
+    requireVehicleLocation: true,
+  };
+
+type ConfigRow = {
+  value: unknown;
+};
+
+export async function getMarketplaceVisibilityConfig(): Promise<MarketplaceVisibilityConfig> {
+  const rows = await prisma.$queryRaw<ConfigRow[]>`
+    SELECT value
+    FROM "PlatformConfig"
+    WHERE key = 'MARKETPLACE_VISIBILITY_CONFIG'
+    LIMIT 1
+  `;
+
+  const value = rows[0]?.value;
+
+  if (!value || typeof value !== "object") {
+    return DEFAULT_MARKETPLACE_VISIBILITY_CONFIG;
+  }
+
+  const parsed =
+    marketplaceVisibilityConfigSchema.safeParse(value);
+
+  if (!parsed.success) {
+    return DEFAULT_MARKETPLACE_VISIBILITY_CONFIG;
+  }
+
+  return parsed.data;
+}
+
+----- FILE: backend/src/marketplace/visibility.service.ts -----
+import { prisma } from "../config/prisma.js";
+import {
+  getMarketplaceVisibilityConfig,
+} from "./visibility.policy.js";
+
+const EARTH_RADIUS_KM = 6371;
+
+function distanceKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
+  const toRadians = (value: number) =>
+    (value * Math.PI) / 180;
+
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+
+  const clampedA = Math.min(1, Math.max(0, a));
+
+  return (
+    EARTH_RADIUS_KM *
+    2 *
+    Math.atan2(
+      Math.sqrt(clampedA),
+      Math.sqrt(1 - clampedA),
+    )
+  );
+}
+
+function subscriptionBoost(
+  planName: string | undefined,
+  config: Awaited<
+    ReturnType<typeof getMarketplaceVisibilityConfig>
+  >,
+) {
+  const name = planName?.toUpperCase() ?? "FREE";
+
+  return (
+    config.subscriptionBoosts[
+      name as keyof typeof config.subscriptionBoosts
+    ] ?? config.subscriptionBoosts.FREE
+  );
+}
+
+function tierScore(
+  tier: string | null | undefined,
+  config: Awaited<
+    ReturnType<typeof getMarketplaceVisibilityConfig>
+  >,
+) {
+  return (
+    config.tierScores[
+      tier as keyof typeof config.tierScores
+    ] ?? config.tierScores.TIER_1
+  );
+}
+
+function hasValidCoordinates(
+  latitude: unknown,
+  longitude: unknown,
+): boolean {
+  if (
+    latitude === null ||
+    latitude === undefined ||
+    longitude === null ||
+    longitude === undefined
+  ) {
+    return false;
+  }
+
+  const lat = Number(latitude);
+  const lon = Number(longitude);
+
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lon) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lon >= -180 &&
+    lon <= 180
+  );
+}
+
+export async function getVisibleMarketplaceLoads(
+  transporterId: string,
+  radiusKm?: number,
+) {
+  const visibilityPolicy =
+    await getMarketplaceVisibilityConfig();
+
+  const effectiveRadiusKm =
+    radiusKm ?? visibilityPolicy.defaultRadiusKm;
+
+  if (
+    !Number.isFinite(effectiveRadiusKm) ||
+    effectiveRadiusKm <= 0
+  ) {
+    throw new Error(
+      "Invalid marketplace visibility radius",
+    );
+  }
+
+  if (
+    effectiveRadiusKm >
+    visibilityPolicy.maxRadiusKm
+  ) {
+    throw new Error(
+      `Marketplace visibility radius cannot exceed ${visibilityPolicy.maxRadiusKm} km`,
+    );
+  }
+
+  const vehicleWhere: Record<string, unknown> = {};
+
+  if (visibilityPolicy.requireApprovedVehicle) {
+    vehicleWhere.verificationStatus = "APPROVED";
+  }
+
+  if (visibilityPolicy.requireAvailableVehicle) {
+    vehicleWhere.availabilityStatus = "AVAILABLE";
+  }
+
+  const transporter =
+    await prisma.user.findUnique({
+      where: {
+        id: transporterId,
+      },
+      select: {
+        id: true,
+        role: true,
+        status: true,
+        transporterTier: true,
+
+        transporterProfile: {
+          select: {
+            verificationStatus: true,
+            rating: true,
+            totalTrips: true,
+          },
+        },
+
+        vehicles: {
+          where: vehicleWhere,
+          select: {
+            id: true,
+            vehicleClass: true,
+            vehicleType: true,
+            currentLatitude: true,
+            currentLongitude: true,
+          },
+        },
+
+        subscriptions: {
+          where: {
+            status: "ACTIVE",
+            currentPeriodEnd: {
+              gt: new Date(),
+            },
+          },
+          include: {
+            plan: {
+              select: {
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            currentPeriodEnd: "desc",
+          },
+          take: 1,
+        },
+      },
+    });
+
+  if (!transporter) {
+    throw new Error("Transporter not found");
+  }
+
+  if (transporter.role !== "TRANSPORTER") {
+    throw new Error(
+      "Only transporters can access marketplace visibility",
+    );
+  }
+
+  if (transporter.status !== "ACTIVE") {
+    throw new Error(
+      "Transporter account is not active",
+    );
+  }
+
+  if (
+    visibilityPolicy.requireApprovedTransporter &&
+    (
+      !transporter.transporterProfile ||
+      transporter.transporterProfile
+        .verificationStatus !== "APPROVED"
+    )
+  ) {
+    throw new Error(
+      "Transporter is not approved",
+    );
+  }
+
+  const subscriptionBoostValue =
+    subscriptionBoost(
+      transporter.subscriptions[0]?.plan.name,
+      visibilityPolicy,
+    );
+
+  const transporterTierScore =
+    tierScore(
+      transporter.transporterTier,
+      visibilityPolicy,
+    );
+
+  const now = new Date();
+
+  const loads =
+    await prisma.marketplaceRequest.findMany({
+      where: {
+        status: "OPEN",
+        OR: [
+          {
+            scheduledDate: null,
+          },
+          {
+            scheduledDate: {
+              gt: now,
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        customerId: true,
+        bookingId: true,
+        cargoDescription: true,
+        truckCategory: true,
+        cargoCategory: true,
+        cargoWeight: true,
+        pickupLocation: true,
+        destination: true,
+        pickupLatitude: true,
+        pickupLongitude: true,
+        destinationLatitude: true,
+        destinationLongitude: true,
+        scheduledDate: true,
+        estimatedFare: true,
+        status: true,
+        agreedBidId: true,
+        createdAt: true,
+        updatedAt: true,
+        closedAt: true,
+
+        customer: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+  const visible = loads
+    .map((load) => {
+      /*
+       * First establish whether the transporter has at least
+       * one approved/available vehicle capable of handling
+       * this load.
+       */
+      const matchingVehicles =
+        transporter.vehicles.filter(
+          (vehicle) =>
+            vehicle.vehicleType ===
+              load.truckCategory ||
+            vehicle.vehicleClass ===
+              load.truckCategory,
+        );
+
+      if (matchingVehicles.length === 0) {
+        return null;
+      }
+
+      /*
+       * Only vehicles with real, valid GPS coordinates can
+       * participate in geographic distance calculation.
+       */
+      const locatedVehicles =
+        matchingVehicles
+          .filter((vehicle) =>
+            hasValidCoordinates(
+              vehicle.currentLatitude,
+              vehicle.currentLongitude,
+            ),
+          )
+          .map((vehicle) => {
+            const distance =
+              distanceKm(
+                Number(load.pickupLatitude),
+                Number(load.pickupLongitude),
+                Number(vehicle.currentLatitude),
+                Number(vehicle.currentLongitude),
+              );
+
+            return {
+              vehicle,
+              distanceKm: distance,
+            };
+          })
+          .filter((item) =>
+            Number.isFinite(item.distanceKm),
+          )
+          .sort(
+            (a, b) =>
+              a.distanceKm -
+              b.distanceKm,
+          );
+
+      const nearestVehicle =
+        locatedVehicles[0];
+
+      /*
+       * When geographic location is required, a load is visible
+       * only when a real vehicle location exists and is inside
+       * the configured radius.
+       */
+      if (
+        visibilityPolicy.requireVehicleLocation &&
+        (
+          !nearestVehicle ||
+          nearestVehicle.distanceKm >
+            effectiveRadiusKm
+        )
+      ) {
+        return null;
+      }
+
+      return {
+        load,
+        nearestVehicle,
+        subscriptionBoost:
+          subscriptionBoostValue,
+        tierScore:
+          transporterTierScore,
+      };
+    })
+    .filter(
+      (
+        item,
+      ): item is NonNullable<typeof item> =>
+        item !== null,
+    )
+    .sort((a, b) => {
+      const boostDifference =
+        b.subscriptionBoost -
+        a.subscriptionBoost;
+
+      if (boostDifference !== 0) {
+        return boostDifference;
+      }
+
+      const tierDifference =
+        b.tierScore -
+        a.tierScore;
+
+      if (tierDifference !== 0) {
+        return tierDifference;
+      }
+
+      /*
+       * Real geographic distance is used when both loads have
+       * a calculated nearest vehicle. Missing location is sorted
+       * after geographically located loads rather than causing
+       * a runtime error.
+       */
+      const aDistance =
+        a.nearestVehicle?.distanceKm ??
+        Number.POSITIVE_INFINITY;
+
+      const bDistance =
+        b.nearestVehicle?.distanceKm ??
+        Number.POSITIVE_INFINITY;
+
+      const distanceDifference =
+        aDistance - bDistance;
+
+      if (distanceDifference !== 0) {
+        return distanceDifference;
+      }
+
+      /*
+       * Finally use estimated fare as a deterministic ranking
+       * fallback.
+       */
+      return (
+        Number(b.load.estimatedFare ?? 0) -
+        Number(a.load.estimatedFare ?? 0)
+      );
+    });
+
+  return visible.map((item) => ({
+    ...item.load,
+
+    visibility: {
+      /*
+       * This is the actual calculated distance from the
+       * nearest eligible vehicle's current GPS location to
+       * the load pickup location.
+       *
+       * null means no usable vehicle GPS position was available.
+       */
+      distanceKm: item.nearestVehicle
+        ? Number(
+            item.nearestVehicle.distanceKm.toFixed(
+              2,
+            ),
+          )
+        : null,
+
+      subscriptionBoost:
+        item.subscriptionBoost,
+
+      transporterTier:
+        transporter.transporterTier,
+    },
+  }));
+}
+
+============================================================
+### MARKETPLACE-RELATED ROUTES
+============================================================
+backend/src/vehicles/vehicle.service.ts:15:    module: "FLEET_MARKETPLACE",
+backend/src/vehicles/vehicle.service.ts:69:    module: "FLEET_MARKETPLACE",
+backend/src/bookings/booking.service.ts:405:      module: "FLEET_MARKETPLACE",
+backend/src/admin/fleet.routes.ts:49:router.use(requireAdminModule("FLEET_MARKETPLACE"));
+backend/src/admin/fleet.service.ts:91:    module: "FLEET_MARKETPLACE",
+backend/src/admin/platform-config.routes.ts:20:  marketplaceVisibilityConfigSchema,
+backend/src/admin/platform-config.routes.ts:21:} from "../marketplace/visibility.policy.js";
+backend/src/admin/platform-config.routes.ts:76:      } else if (key === "MARKETPLACE_VISIBILITY_CONFIG") {
+backend/src/admin/platform-config.routes.ts:77:        marketplaceVisibilityConfigSchema.parse(input.value);
+backend/src/realtime/realtime.service.ts:16:  | "FLEET_MARKETPLACE"
+backend/src/server.ts:12:import marketplaceRoutes from "./marketplace/marketplace.routes.js";
+backend/src/server.ts:139:app.use("/api/marketplace", marketplaceRoutes);
+backend/src/marketplace/marketplace.validators.ts:7:export const createMarketplaceRequestSchema = z.object({
+backend/src/marketplace/marketplace.validators.ts:46:export const createMarketplaceBidSchema = z.object({
+backend/src/marketplace/marketplace.validators.ts:53:export const withdrawMarketplaceBidSchema = z.object({}).strict();
+backend/src/marketplace/marketplace.validators.ts:55:export const selectMarketplaceBidSchema = z.object({}).strict();
+backend/src/marketplace/marketplace.validators.ts:57:export const marketplaceVisibilityQuerySchema = z.object({
+backend/src/marketplace/marketplace.service.ts:6:async function expireMarketplaceLifecycle() {
+backend/src/marketplace/marketplace.service.ts:10:    const expiredBids = await tx.marketplaceBid.findMany({
+backend/src/marketplace/marketplace.service.ts:26:      await tx.marketplaceBid.updateMany({
+backend/src/marketplace/marketplace.service.ts:44:     * MarketplaceRequest.scheduledDate represents the planned
+backend/src/marketplace/marketplace.service.ts:45:     * shipment/pickup date. It is NOT the marketplace request's
+backend/src/marketplace/marketplace.service.ts:52:     * Only MarketplaceBid.expiresAt controls bid expiration.
+backend/src/marketplace/marketplace.service.ts:62:function serializeMarketplaceBid(bid: {
+backend/src/marketplace/marketplace.service.ts:121:export async function createMarketplaceRequest(data: {
+backend/src/marketplace/marketplace.service.ts:161:  const request = await prisma.marketplaceRequest.create({
+backend/src/marketplace/marketplace.service.ts:180:  publishEvent("marketplace", {
+backend/src/marketplace/marketplace.service.ts:182:    module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:183:    entityType: "MARKETPLACE_REQUEST",
+backend/src/marketplace/marketplace.service.ts:200:export async function getMarketplaceRequest(
+backend/src/marketplace/marketplace.service.ts:204:  await expireMarketplaceLifecycle();
+backend/src/marketplace/marketplace.service.ts:206:  const request = await prisma.marketplaceRequest.findFirst({
+backend/src/marketplace/marketplace.service.ts:279:    bids: request.bids.map(serializeMarketplaceBid),
+backend/src/marketplace/marketplace.service.ts:283:export async function createMarketplaceBid(data: {
+backend/src/marketplace/marketplace.service.ts:291:  await expireMarketplaceLifecycle();
+backend/src/marketplace/marketplace.service.ts:293:  const request = await prisma.marketplaceRequest.findUnique({
+backend/src/marketplace/marketplace.service.ts:305:    throw new Error("Marketplace request not found");
+backend/src/marketplace/marketplace.service.ts:309:    throw new Error("Marketplace request is no longer accepting bids");
+backend/src/marketplace/marketplace.service.ts:313:    throw new Error("Customer cannot bid on their own marketplace request");
+backend/src/marketplace/marketplace.service.ts:386:    const bid = await prisma.marketplaceBid.create({
+backend/src/marketplace/marketplace.service.ts:401:    publishEvent("marketplace", {
+backend/src/marketplace/marketplace.service.ts:403:      module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:404:      entityType: "MARKETPLACE_BID",
+backend/src/marketplace/marketplace.service.ts:430:export async function withdrawMarketplaceBid(
+backend/src/marketplace/marketplace.service.ts:434:  await expireMarketplaceLifecycle();
+backend/src/marketplace/marketplace.service.ts:435:  const bid = await prisma.marketplaceBid.findUnique({
+backend/src/marketplace/marketplace.service.ts:446:    throw new Error("Marketplace bid not found");
+backend/src/marketplace/marketplace.service.ts:457:  const updated = await prisma.marketplaceBid.update({
+backend/src/marketplace/marketplace.service.ts:464:  publishEvent("marketplace", {
+backend/src/marketplace/marketplace.service.ts:466:    module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:467:    entityType: "MARKETPLACE_BID",
+backend/src/marketplace/marketplace.service.ts:480:export async function selectMarketplaceBid(
+backend/src/marketplace/marketplace.service.ts:485:  await expireMarketplaceLifecycle();
+backend/src/marketplace/marketplace.service.ts:488:     * Read the marketplace request and verify ownership.
+backend/src/marketplace/marketplace.service.ts:491:    const request = await tx.marketplaceRequest.findUnique({
+backend/src/marketplace/marketplace.service.ts:517:      throw new Error("Marketplace request not found");
+backend/src/marketplace/marketplace.service.ts:525:      throw new Error("Marketplace request is no longer accepting bid selection");
+backend/src/marketplace/marketplace.service.ts:531:    const bid = await tx.marketplaceBid.findFirst({
+backend/src/marketplace/marketplace.service.ts:549:      throw new Error("Marketplace bid not found");
+backend/src/marketplace/marketplace.service.ts:557:      throw new Error("Marketplace bid has expired");
+backend/src/marketplace/marketplace.service.ts:562:     * Visibility at bid-submission time is not sufficient because
+backend/src/marketplace/marketplace.service.ts:641:     * Claim the marketplace request first.
+backend/src/marketplace/marketplace.service.ts:646:    const claimedRequest = await tx.marketplaceRequest.updateMany({
+backend/src/marketplace/marketplace.service.ts:658:      throw new Error("Marketplace request has already been processed");
+backend/src/marketplace/marketplace.service.ts:685:    const selectedBid = await tx.marketplaceBid.updateMany({
+backend/src/marketplace/marketplace.service.ts:704:    await tx.marketplaceBid.updateMany({
+backend/src/marketplace/marketplace.service.ts:718:     * Marketplace acceptance creates the operational Booking.
+backend/src/marketplace/marketplace.service.ts:757:     * Complete the marketplace <-> booking relationship.
+backend/src/marketplace/marketplace.service.ts:759:    const linkedRequest = await tx.marketplaceRequest.update({
+backend/src/marketplace/marketplace.service.ts:787:   * Publish marketplace events after the transaction commits.
+backend/src/marketplace/marketplace.service.ts:791:  publishEvent("marketplace", {
+backend/src/marketplace/marketplace.service.ts:793:    module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:794:    entityType: "MARKETPLACE_BID",
+backend/src/marketplace/marketplace.service.ts:808:  publishEvent("marketplace", {
+backend/src/marketplace/marketplace.service.ts:809:    eventType: "MARKETPLACE_REQUEST_AGREED",
+backend/src/marketplace/marketplace.service.ts:810:    module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:811:    entityType: "MARKETPLACE_REQUEST",
+backend/src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+backend/src/marketplace/marketplace.service.ts:837:      marketplaceBidId: result.bid.id,
+backend/src/marketplace/marketplace.service.ts:843:    module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.routes.ts:9:  createMarketplaceRequestSchema,
+backend/src/marketplace/marketplace.routes.ts:10:  createMarketplaceBidSchema,
+backend/src/marketplace/marketplace.routes.ts:11:  withdrawMarketplaceBidSchema,
+backend/src/marketplace/marketplace.routes.ts:12:  selectMarketplaceBidSchema,
+backend/src/marketplace/marketplace.routes.ts:13:  marketplaceVisibilityQuerySchema,
+backend/src/marketplace/marketplace.routes.ts:14:} from "./marketplace.validators.js";
+backend/src/marketplace/marketplace.routes.ts:16:  createMarketplaceRequest,
+backend/src/marketplace/marketplace.routes.ts:17:  getMarketplaceRequest,
+backend/src/marketplace/marketplace.routes.ts:18:  createMarketplaceBid,
+backend/src/marketplace/marketplace.routes.ts:19:  withdrawMarketplaceBid,
+backend/src/marketplace/marketplace.routes.ts:20:  selectMarketplaceBid,
+backend/src/marketplace/marketplace.routes.ts:21:} from "./marketplace.service.js";
+backend/src/marketplace/marketplace.routes.ts:22:import { getVisibleMarketplaceLoads } from "./visibility.service.js";
+backend/src/marketplace/marketplace.routes.ts:34:      const query = marketplaceVisibilityQuerySchema.parse(
+backend/src/marketplace/marketplace.routes.ts:38:      const loads = await getVisibleMarketplaceLoads(
+backend/src/marketplace/marketplace.routes.ts:51:          error: "Invalid marketplace visibility query",
+backend/src/marketplace/marketplace.routes.ts:61:        message === "Only transporters can access marketplace visibility"
+backend/src/marketplace/marketplace.routes.ts:80:        message === "Invalid marketplace visibility radius" ||
+backend/src/marketplace/marketplace.routes.ts:82:          "Marketplace visibility radius cannot exceed",
+backend/src/marketplace/marketplace.routes.ts:104:      const input = createMarketplaceRequestSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:106:      const request = await createMarketplaceRequest({
+backend/src/marketplace/marketplace.routes.ts:137:      const request = await getMarketplaceRequest(
+backend/src/marketplace/marketplace.routes.ts:145:          error: "Marketplace request not found",
+backend/src/marketplace/marketplace.routes.ts:167:      const input = createMarketplaceBidSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:169:      const bid = await createMarketplaceBid({
+backend/src/marketplace/marketplace.routes.ts:192:        "Marketplace request is no longer accepting bids",
+backend/src/marketplace/marketplace.routes.ts:214:      selectMarketplaceBidSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:216:      const result = await selectMarketplaceBid(
+backend/src/marketplace/marketplace.routes.ts:239:        "Marketplace request is no longer accepting bid selection",
+backend/src/marketplace/marketplace.routes.ts:240:        "Marketplace request has already been processed",
+backend/src/marketplace/marketplace.routes.ts:242:        "Marketplace bid has expired",
+backend/src/marketplace/marketplace.routes.ts:267:      withdrawMarketplaceBidSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:269:      const bid = await withdrawMarketplaceBid(
+backend/src/marketplace/visibility.service.ts:3:  getMarketplaceVisibilityConfig,
+backend/src/marketplace/visibility.service.ts:4:} from "./visibility.policy.js";
+backend/src/marketplace/visibility.service.ts:41:    ReturnType<typeof getMarketplaceVisibilityConfig>
+backend/src/marketplace/visibility.service.ts:56:    ReturnType<typeof getMarketplaceVisibilityConfig>
+backend/src/marketplace/visibility.service.ts:92:export async function getVisibleMarketplaceLoads(
+backend/src/marketplace/visibility.service.ts:96:  const visibilityPolicy =
+backend/src/marketplace/visibility.service.ts:97:    await getMarketplaceVisibilityConfig();
+backend/src/marketplace/visibility.service.ts:100:    radiusKm ?? visibilityPolicy.defaultRadiusKm;
+backend/src/marketplace/visibility.service.ts:107:      "Invalid marketplace visibility radius",
+backend/src/marketplace/visibility.service.ts:113:    visibilityPolicy.maxRadiusKm
+backend/src/marketplace/visibility.service.ts:116:      `Marketplace visibility radius cannot exceed ${visibilityPolicy.maxRadiusKm} km`,
+backend/src/marketplace/visibility.service.ts:122:  if (visibilityPolicy.requireApprovedVehicle) {
+backend/src/marketplace/visibility.service.ts:126:  if (visibilityPolicy.requireAvailableVehicle) {
+backend/src/marketplace/visibility.service.ts:188:      "Only transporters can access marketplace visibility",
+backend/src/marketplace/visibility.service.ts:199:    visibilityPolicy.requireApprovedTransporter &&
+backend/src/marketplace/visibility.service.ts:214:      visibilityPolicy,
+backend/src/marketplace/visibility.service.ts:220:      visibilityPolicy,
+backend/src/marketplace/visibility.service.ts:226:    await prisma.marketplaceRequest.findMany({
+backend/src/marketplace/visibility.service.ts:340:        visibilityPolicy.requireVehicleLocation &&
+backend/src/marketplace/visibility.service.ts:416:    visibility: {
+backend/src/marketplace/visibility.policy.ts:6:export const marketplaceVisibilityConfigSchema = z
+backend/src/marketplace/visibility.policy.ts:49:export type MarketplaceVisibilityConfig = z.infer<
+backend/src/marketplace/visibility.policy.ts:50:  typeof marketplaceVisibilityConfigSchema
+backend/src/marketplace/visibility.policy.ts:53:const DEFAULT_MARKETPLACE_VISIBILITY_CONFIG: MarketplaceVisibilityConfig =
+backend/src/marketplace/visibility.policy.ts:85:export async function getMarketplaceVisibilityConfig(): Promise<MarketplaceVisibilityConfig> {
+backend/src/marketplace/visibility.policy.ts:89:    WHERE key = 'MARKETPLACE_VISIBILITY_CONFIG'
+backend/src/marketplace/visibility.policy.ts:96:    return DEFAULT_MARKETPLACE_VISIBILITY_CONFIG;
+backend/src/marketplace/visibility.policy.ts:100:    marketplaceVisibilityConfigSchema.safeParse(value);
+backend/src/marketplace/visibility.policy.ts:103:    return DEFAULT_MARKETPLACE_VISIBILITY_CONFIG;
+
+============================================================
+### MARKETPLACE API ROUTES
+============================================================
+backend/src/marketplace/marketplace.routes.ts:24:const router = Router();
+backend/src/marketplace/marketplace.routes.ts:29:router.get(
+backend/src/marketplace/marketplace.routes.ts:99:router.post(
+backend/src/marketplace/marketplace.routes.ts:132:router.get(
+backend/src/marketplace/marketplace.routes.ts:162:router.post(
+backend/src/marketplace/marketplace.routes.ts:209:router.post(
+backend/src/marketplace/marketplace.routes.ts:262:router.post(
+backend/src/marketplace/marketplace.routes.ts:24:const router = Router();
+backend/src/marketplace/marketplace.routes.ts:29:router.get(
+backend/src/marketplace/marketplace.routes.ts:99:router.post(
+backend/src/marketplace/marketplace.routes.ts:132:router.get(
+backend/src/marketplace/marketplace.routes.ts:162:router.post(
+backend/src/marketplace/marketplace.routes.ts:209:router.post(
+backend/src/marketplace/marketplace.routes.ts:262:router.post(
+
+============================================================
+### VALIDATORS / DTOs
+============================================================
+
+----- FILE: backend/src/marketplace/marketplace.validators.ts -----
+import { z } from "zod";
+
+const latitudeSchema = z.coerce.number().finite().min(-90).max(90);
+const longitudeSchema = z.coerce.number().finite().min(-180).max(180);
+const positiveNumber = z.coerce.number().finite().positive();
+
+export const createMarketplaceRequestSchema = z.object({
+  pickupLocation: z.string().trim().min(1).max(500),
+  destination: z.string().trim().min(1).max(500),
+
+  pickupLatitude: latitudeSchema,
+  pickupLongitude: longitudeSchema,
+  destinationLatitude: latitudeSchema,
+  destinationLongitude: longitudeSchema,
+
+  cargoDescription: z.string().trim().max(2000).optional(),
+
+  truckCategory: z.enum([
+    "MINI_TRUCK",
+    "LIGHT_TRUCK",
+    "MEDIUM_TRUCK",
+    "HEAVY_TRUCK",
+    "CONTAINER_TRUCK",
+    "REFRIGERATED_TRUCK",
+    "TANKER",
+    "SPECIALIZED",
+  ]),
+
+  cargoCategory: z.enum([
+    "GENERAL",
+    "FRAGILE",
+    "ELECTRONICS",
+    "FURNITURE",
+    "AGRICULTURAL",
+    "INDUSTRIAL",
+    "CONSTRUCTION",
+    "HAZARDOUS",
+    "REFRIGERATED",
+  ]).optional(),
+
+  cargoWeight: positiveNumber,
+
+  scheduledDate: z.coerce.date().optional(),
+}).strict();
+
+export const createMarketplaceBidSchema = z.object({
+  vehicleId: z.string().uuid("Invalid vehicle ID"),
+  amount: positiveNumber,
+  message: z.string().trim().max(1000).optional(),
+  expiresAt: z.coerce.date().optional(),
+}).strict();
+
+export const withdrawMarketplaceBidSchema = z.object({}).strict();
+
+export const selectMarketplaceBidSchema = z.object({}).strict();
+
+export const marketplaceVisibilityQuerySchema = z.object({
+  radiusKm: positiveNumber.optional(),
+}).strict();
+
+============================================================
+### MARKETPLACE SERVICES
+============================================================
+
+----- FILE: backend/src/admin/fleet.routes.ts -----
+import { Router } from "express";
+import { z } from "zod";
+import { authenticate, type AuthenticatedRequest } from "../middleware/auth.middleware.js";
+import { requireAdmin } from "../middleware/admin.middleware.js";
+import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import {
+  getAdminVehicles,
+  getAdminVehicle,
+  updateAdminVehicle,
+} from "./fleet.service.js";
+
+const fleetVehicleUpdateSchema = z.object({
+  registrationNumber: z.string().trim().min(1).max(100).optional(),
+  vehicleType: z.string().trim().min(1).max(100).optional(),
+  vehicleClass: z.enum([
+    "MOTORCYCLE",
+    "MINI_VAN",
+    "CARGO_VAN",
+    "PICKUP",
+    "LIGHT_TRUCK",
+    "MEDIUM_TRUCK",
+    "HEAVY_TRUCK",
+    "CONTAINER",
+    "FLATBED",
+    "REFRIGERATED_TRUCK",
+  ]).optional(),
+  make: z.string().trim().min(1).max(100).optional(),
+  model: z.string().trim().min(1).max(100).optional(),
+  year: z.number().int().min(1900).max(2100).optional(),
+  color: z.string().trim().min(1).max(50).optional(),
+  capacity: z.number().nonnegative().optional(),
+  availabilityStatus: z.enum([
+    "AVAILABLE",
+    "UNAVAILABLE",
+    "ON_TRIP",
+  ]).optional(),
+  verificationStatus: z.enum([
+    "PENDING",
+    "APPROVED",
+    "REJECTED",
+    "SUSPENDED",
+  ]).optional(),
+}).strict();
+
+const router = Router();
+
+router.use(authenticate);
+router.use(requireAdmin);
+router.use(requireAdminModule("FLEET_MARKETPLACE"));
+
+router.get("/", async (_req, res) => {
+  try {
+    const vehicles = await getAdminVehicles();
+
+    return res.json({
+      success: true,
+      data: vehicles,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Server error",
+    });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  try {
+    const vehicle = await getAdminVehicle(String(req.params.id));
+
+    if (!vehicle) {
+      return res.status(404).json({
+        success: false,
+        error: "Vehicle not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: vehicle,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Server error",
+    });
+  }
+});
+
+router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+  try {
+    const input = fleetVehicleUpdateSchema.parse(req.body);
+
+    const vehicle = await updateAdminVehicle(
+      String(req.params.id),
+      req.user!.id,
+      input,
+    );
+
+    return res.json({
+      success: true,
+      data: vehicle,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
+    const message =
+      error instanceof Error ? error.message : "Server error";
+
+    if (message === "Vehicle not found") {
+      return res.status(404).json({
+        success: false,
+        error: message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: message,
+    });
+  }
+});
+
+export default router;
+
+----- FILE: backend/src/admin/fleet.service.ts -----
+import { prisma } from "../config/prisma.js";
+import { publishEvent } from "../realtime/event-bus.js";
+
+export async function getAdminVehicles() {
+  return prisma.vehicle.findMany({
+    include: {
+      transporter: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getAdminVehicle(id: string) {
+  return prisma.vehicle.findUnique({
+    where: { id },
+    include: {
+      transporter: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+        },
+      },
+    },
+  });
+}
+
+export async function updateAdminVehicle(
+  vehicleId: string,
+  administratorId: string,
+  data: {
+    registrationNumber?: string;
+    vehicleType?: string;
+    vehicleClass?: any;
+    make?: string;
+    model?: string;
+    year?: number;
+    color?: string;
+    capacity?: number;
+    availabilityStatus?: any;
+    verificationStatus?: any;
+  },
+) {
+  const existing = await prisma.vehicle.findUnique({
+    where: { id: vehicleId },
+  });
+
+  if (!existing) {
+    throw new Error("Vehicle not found");
+  }
+
+  const vehicle = await prisma.$transaction(async (tx) => {
+    const updated = await tx.vehicle.update({
+      where: { id: vehicleId },
+      data,
+    });
+
+    await tx.auditLog.create({
+      data: {
+        administratorId,
+        action: "VEHICLE_UPDATED",
+        newValue: {
+          vehicleId: updated.id,
+          changes: data,
+        },
+        previousValue: {
+          vehicleId: existing.id,
+          registrationNumber: existing.registrationNumber,
+          vehicleType: existing.vehicleType,
+          vehicleClass: existing.vehicleClass,
+          availabilityStatus: existing.availabilityStatus,
+        },
+      },
+    });
+
+    return updated;
+  });
+
+  publishEvent("admin", {
+    eventType: "VEHICLE_UPDATED",
+    module: "FLEET_MARKETPLACE",
+    entityType: "VEHICLE",
+    entityId: vehicle.id,
+    actorId: administratorId,
+    data: vehicle,
+  });
+
+  return vehicle;
+}
+
+----- FILE: backend/src/admin/platform-config.routes.ts -----
+import { Router } from "express";
+import { z } from "zod";
+import {
+  authenticate,
+  type AuthenticatedRequest,
+} from "../middleware/auth.middleware.js";
+import { requireAdmin } from "../middleware/admin.middleware.js";
+import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import {
+  getPlatformConfig,
+  getPlatformConfigValue,
+  upsertPlatformConfig,
+  deletePlatformConfig,
+} from "./platform-config.service.js";
+import {
+  platformConfigSchema,
+  pricingConfigSchema,
+} from "./admin.validators.js";
+import {
+  marketplaceVisibilityConfigSchema,
+} from "../marketplace/visibility.policy.js";
+
+const platformConfigUpdateSchema = z.object({
+  value: z.unknown(),
+  description: z.string().trim().max(1000).nullable().optional(),
+}).strict();
+
+const router = Router();
+
+router.use(authenticate);
+router.use(requireAdmin);
+router.use(requireAdminModule("PLATFORM_CONFIG"));
+
+router.get("/", async (_req, res) => {
+  try {
+    return res.json({
+      success: true,
+      data: await getPlatformConfig(),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Server error",
+    });
+  }
+});
+
+router.get("/:key", async (req, res) => {
+  try {
+    const config = await getPlatformConfigValue(String(req.params.key));
+
+    if (!config) {
+      return res.status(404).json({
+        success: false,
+        error: "Platform configuration not found",
+      });
+    }
+
+    return res.json({ success: true, data: config });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Server error",
+    });
+  }
+});
+
+router.put("/:key", async (req: AuthenticatedRequest, res) => {
+  try {
+    const input = platformConfigUpdateSchema.parse(req.body);
+
+    const key = String(req.params.key);
+
+      if (key === "PRICING_CONFIG") {
+        pricingConfigSchema.parse(input.value);
+      } else if (key === "MARKETPLACE_VISIBILITY_CONFIG") {
+        marketplaceVisibilityConfigSchema.parse(input.value);
+      } else {
+        platformConfigSchema.parse(input);
+      }
+
+    const config = await upsertPlatformConfig(
+      key,
+      input.value,
+      input.description ?? null,
+      req.user!.id,
+    );
+
+    return res.json({ success: true, data: config });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Server error",
+    });
+  }
+});
+
+router.delete("/:key", async (req: AuthenticatedRequest, res) => {
+  try {
+    const config = await deletePlatformConfig(
+      String(req.params.key),
+      req.user!.id,
+    );
+
+    return res.json({ success: true, data: config });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Server error",
+    });
+  }
+});
+
+export default router;
+
+----- FILE: backend/src/bookings/booking.service.ts -----
+import { prisma } from "../config/prisma.js";
+import { createShipmentEvent } from "../events/event.service.js";
+import { publishEvent } from "../realtime/event-bus.js";
+import { publishAdminEvent, publishBookingEvent } from "../realtime/realtime.service.js";
+import { createSettlement } from "../settlements/settlement.service.js";
+import { toBookingDto } from "./booking.dto.js";
+import { estimateFare } from "../pricing/pricing.service.js";
+
+export async function createBooking(data: {
+  customerId: string;
+  pickupLocation: string;
+  destination: string;
+  pickupLatitude: number;
+  pickupLongitude: number;
+  destinationLatitude: number;
+  destinationLongitude: number;
+  cargoDescription?: string;
+  truckCategory: "MINI_TRUCK"
+    | "LIGHT_TRUCK"
+    | "MEDIUM_TRUCK"
+    | "HEAVY_TRUCK"
+    | "CONTAINER_TRUCK"
+    | "REFRIGERATED_TRUCK"
+    | "TANKER"
+    | "SPECIALIZED";
+  cargoCategory?: "GENERAL"
+    | "FRAGILE"
+    | "ELECTRONICS"
+    | "FURNITURE"
+    | "AGRICULTURAL"
+    | "INDUSTRIAL"
+    | "CONSTRUCTION"
+    | "HAZARDOUS"
+    | "REFRIGERATED";
+  cargoWeight: number;
+}) {
+  const pricing = await estimateFare({
+    weight: data.cargoWeight,
+    truck: data.truckCategory,
+    pickupLatitude: data.pickupLatitude,
+    pickupLongitude: data.pickupLongitude,
+    destinationLatitude: data.destinationLatitude,
+    destinationLongitude: data.destinationLongitude,
+  });
+
+  const booking = await prisma.booking.create({
+    data: {
+      customerId: data.customerId,
+      pickupLocation: data.pickupLocation,
+      destination: data.destination,
+      pickupLatitude: data.pickupLatitude,
+      pickupLongitude: data.pickupLongitude,
+      destinationLatitude: data.destinationLatitude,
+      destinationLongitude: data.destinationLongitude,
+      cargoDescription: data.cargoDescription,
+      truckCategory: data.truckCategory,
+      cargoCategory: data.cargoCategory,
+      cargoWeight: data.cargoWeight,
+      estimatedFare: pricing.fare,
+      fare: pricing.fare,
+    },
+  });
+
+  const bookingDto = toBookingDto(booking);
+
+  publishBookingEvent(booking.id, {
+    eventType: "booking.created",
+    module: "PLATFORM_OVERVIEW",
+    actorId: booking.customerId,
+    entityType: "BOOKING",
+    entityId: booking.id,
+    data: bookingDto,
+  });
+
+  await createShipmentEvent({
+    bookingId: booking.id,
+    eventType: "SHIPMENT_CREATED",
+    title: "Shipment created",
+    description: `${booking.pickupLocation} → ${booking.destination}`,
+  });
+
+  publishEvent("booking", {
+    eventType: "SHIPMENT_CREATED",
+    module: "LIVE_TRIPS",
+    entityType: "BOOKING",
+    entityId: booking.id,
+    bookingId: booking.id,
+    actorId: booking.customerId,
+    data: {
+      status: booking.status,
+      pickupLocation: booking.pickupLocation,
+      destination: booking.destination,
+      fare: booking.fare,
+    },
+  });
+
+  return bookingDto;
+}
+
+export async function assertBookingAccess(
+  bookingId: string,
+  userId: string,
+  role: string,
+  action: "read" | "assign" | "status" | "proof" | "confirm" = "read",
+) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: { id: true, customerId: true, transporterId: true },
+  });
+
+  if (!booking) throw new Error("Booking not found");
+  if (role === "ADMIN") return booking;
+
+  if (action === "read" &&
+      ((role === "CUSTOMER" && booking.customerId === userId) ||
+       (role === "TRANSPORTER" && booking.transporterId === userId))) return booking;
+
+  if ((action === "status" || action === "proof") &&
+      role === "TRANSPORTER" && booking.transporterId === userId) return booking;
+
+  if (action === "confirm" &&
+      role === "CUSTOMER" && booking.customerId === userId) return booking;
+
+  throw new Error("Access denied");
+}
+
+export async function getBookingById(id: string) {
+  const booking = await prisma.booking.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  return booking ? toBookingDto(booking) : null;
+}
+
+export async function assignBooking(
+  bookingId: string,
+  transporterId: string,
+  vehicleId: string,
+) {
+  const result = await prisma.$transaction(async (tx) => {
+    const booking = await tx.booking.findUnique({
+      where: { id: bookingId },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    const transporter = await tx.user.findUnique({
+      where: { id: transporterId },
+      select: {
+        id: true,
+        role: true,
+        status: true,
+      },
+    });
+
+    if (!transporter || transporter.role !== "TRANSPORTER") {
+      throw new Error("Invalid transporter");
+    }
+
+    if (transporter.status !== "ACTIVE") {
+      throw new Error("Transporter account is not active");
+    }
+
+    const vehicle = await tx.vehicle.findUnique({
+      where: { id: vehicleId },
+      select: {
+        id: true,
+        transporterId: true,
+        availabilityStatus: true,
+        verificationStatus: true,
+      },
+    });
+
+    if (!vehicle) {
+      throw new Error("Vehicle not found");
+    }
+
+    if (vehicle.transporterId !== transporterId) {
+      throw new Error("Vehicle does not belong to transporter");
+    }
+
+    if (vehicle.verificationStatus !== "APPROVED") {
+      throw new Error("Vehicle is not approved");
+    }
+
+    if (vehicle.availabilityStatus !== "AVAILABLE") {
+      throw new Error("Vehicle is not available");
+    }
+
+    const updated = await tx.booking.update({
+      where: { id: bookingId },
+      data: {
+        transporterId,
+        vehicleId,
+        status: "ASSIGNED",
+      },
+    });
+
+    await tx.vehicle.update({
+      where: { id: vehicleId },
+      data: {
+        availabilityStatus: "ON_TRIP",
+      },
+    });
+
+    return updated;
+  });
+
+  const resultDto = toBookingDto(result);
+
+  publishBookingEvent(bookingId, {
+    eventType: "booking.assigned",
+    module: "LIVE_TRIPS",
+    actorId: transporterId,
+    entityType: "BOOKING",
+    entityId: bookingId,
+    data: {
+      transporterId,
+      vehicleId,
+      status: resultDto.status,
+    },
+  });
+
+  await createShipmentEvent({
+    bookingId,
+    actorId: transporterId,
+    eventType: "TRANSPORTER_ASSIGNED",
+    title: "Transporter assigned",
+    description: `Vehicle ${vehicleId} assigned`,
+  });
+
+  publishEvent("booking", {
+    eventType: "TRANSPORTER_ASSIGNED",
+    module: "LIVE_TRIPS",
+    entityType: "BOOKING",
+    entityId: result.id,
+    bookingId: result.id,
+    actorId: transporterId,
+    data: {
+      transporterId,
+      vehicleId,
+      status: result.status,
+    },
+  });
+
+  return resultDto;
+}
+
+export async function updateBookingStatus(
+  bookingId: string,
+  status:
+    | "ACCEPTED"
+    | "DRIVER_ARRIVING"
+    | "ARRIVED"
+    | "IN_TRANSIT"
+    | "CANCELLED",
+) {
+  const result = await prisma.$transaction(async (tx) => {
+    const booking = await tx.booking.findUnique({
+      where: { id: bookingId },
+      select: {
+        id: true,
+        status: true,
+        transporterId: true,
+        vehicleId: true,
+      },
+    });
+
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    const allowedTransitions: Record<string, string[]> = {
+      REQUESTED: ["CANCELLED"],
+      SEARCHING: ["CANCELLED"],
+      ASSIGNED: ["ACCEPTED", "CANCELLED"],
+      ACCEPTED: ["DRIVER_ARRIVING", "CANCELLED"],
+      DRIVER_ARRIVING: ["ARRIVED", "CANCELLED"],
+      ARRIVED: ["IN_TRANSIT", "CANCELLED"],
+      IN_TRANSIT: ["CANCELLED"],
+      DISPUTED: ["CANCELLED"],
+      COMPLETED: [],
+      CANCELLED: [],
+    };
+
+    const allowed = allowedTransitions[booking.status] ?? [];
+
+    if (!allowed.includes(status)) {
+      throw new Error(
+        `Invalid booking status transition: ${booking.status} -> ${status}`,
+      );
+    }
+
+    const timestampData: {
+      status: typeof status;
+      acceptedAt?: Date;
+      arrivedAt?: Date;
+      pickedUpAt?: Date;
+      inTransitAt?: Date;
+      deliveredAt?: Date;
+      completedAt?: Date;
+    } = {
+      status,
+    };
+
+    switch (status) {
+      case "ACCEPTED":
+        timestampData.acceptedAt = new Date();
+        break;
+
+      case "ARRIVED":
+        timestampData.arrivedAt = new Date();
+        break;
+
+      case "IN_TRANSIT":
+        timestampData.inTransitAt = new Date();
+        timestampData.pickedUpAt = new Date();
+        break;
+
+      /*
+       * COMPLETED is intentionally excluded from this service.
+       * Delivery completion must go through confirmDelivery(), which
+       * atomically verifies payment and releases the transporter funds.
+       */
+    }
+
+    const updatedBooking = await tx.booking.update({
+      where: { id: bookingId },
+      data: timestampData,
+    });
+
+    if (status === "CANCELLED" && booking.vehicleId) {
+      await tx.vehicle.update({
+        where: { id: booking.vehicleId },
+        data: {
+          availabilityStatus: "AVAILABLE",
+        },
+      });
+    }
+
+    return {
+      booking: updatedBooking,
+      previousStatus: booking.status,
+    };
+  });
+
+  const eventMap: Partial<Record<
+    typeof status,
+    {
+      eventType:
+        | "SHIPMENT_ACCEPTED"
+        | "IN_TRANSIT"
+        | "DELIVERY_CONFIRMED";
+      title: string;
+    }
+  >> = {
+    ACCEPTED: {
+      eventType: "SHIPMENT_ACCEPTED",
+      title: "Shipment accepted",
+    },
+    IN_TRANSIT: {
+      eventType: "IN_TRANSIT",
+      title: "Shipment in transit",
+    },
+  };
+
+  const shipmentEvent = eventMap[status];
+
+  if (shipmentEvent) {
+    await createShipmentEvent({
+      bookingId,
+      eventType: shipmentEvent.eventType,
+      title: shipmentEvent.title,
+    });
+  }
+
+  const resultBookingDto = toBookingDto(result.booking);
+
+  publishEvent("booking", {
+    eventType: status,
+    module: "LIVE_TRIPS",
+    entityType: "BOOKING",
+    entityId: resultBookingDto.id,
+    bookingId: resultBookingDto.id,
+    data: {
+      status: resultBookingDto.status,
+      previousStatus: result.previousStatus,
+      transporterId: resultBookingDto.transporterId,
+      vehicleId: resultBookingDto.vehicleId,
+      updatedAt: resultBookingDto.updatedAt,
+    },
+  });
+
+  if (status === "CANCELLED" && result.booking.vehicleId) {
+    publishEvent("vehicle", {
+      eventType: "VEHICLE_AVAILABILITY_UPDATED",
+      module: "FLEET_MARKETPLACE",
+      entityType: "VEHICLE",
+      entityId: result.booking.vehicleId,
+      actorId: result.booking.transporterId ?? undefined,
+      data: {
+        vehicleId: result.booking.vehicleId,
+        transporterId: result.booking.transporterId,
+        availabilityStatus: "AVAILABLE",
+        bookingId: result.booking.id,
+      },
+    });
+  }
+
+  return resultBookingDto;
+}
+
+
+export async function getCustomerBookings(
+  customerId: string,
+) {
+  const bookings = await prisma.booking.findMany({
+    where: {
+      customerId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return bookings.map(toBookingDto);
+}
+
+export async function getTransporterBookings(
+  transporterId: string,
+) {
+  const bookings = await prisma.booking.findMany({
+    where: {
+      transporterId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return bookings.map(toBookingDto);
+}
+
+export async function uploadProofOfDelivery(
+  bookingId: string,
+  proofOfDelivery: string,
+  deliveryConfirmationCode: string,
+) {
+  return prisma.$transaction(async (tx) => {
+    const booking = await tx.booking.findUnique({
+      where: { id: bookingId },
+      select: { id: true, status: true },
+    });
+
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    if (booking.status !== "ARRIVED") {
+      throw new Error("Proof of delivery can only be submitted after arrival");
+    }
+
+    const updatedBooking = await tx.booking.update({
+      where: {
+        id: bookingId,
+      },
+      data: {
+        proofOfDelivery,
+        deliveryConfirmationCode,
+      },
+    });
+
+    return toBookingDto(updatedBooking);
+  });
+}
+
+export async function confirmDelivery(
+  bookingId: string,
+  code: string,
+) {
+  const result = await prisma.$transaction(async (tx) => {
+    const booking = await tx.booking.findUnique({
+      where: {
+        id: bookingId,
+      },
+    });
+
+    if (!booking) {
+      throw new Error("Booking not found");
+    }
+
+    if (booking.status === "COMPLETED") {
+      throw new Error("Delivery already confirmed");
+    }
+
+    if (!booking.transporterId) {
+      throw new Error("No transporter assigned");
+    }
+
+    if (booking.status !== "ARRIVED") {
+      throw new Error("Shipment has not arrived");
+    }
+
+    if (booking.deliveryConfirmationCode !== code) {
+      throw new Error("Invalid confirmation code");
+    }
+
+    const claimed = await tx.booking.updateMany({
+      where: {
+        id: bookingId,
+        status: "ARRIVED",
+      },
+      data: {
+        status: "COMPLETED",
+        completedAt: new Date(),
+      },
+    });
+
+    if (claimed.count !== 1) {
+      throw new Error("Delivery already confirmed");
+    }
+
+    const payment = await tx.payment.findFirst({
+      where: {
+        bookingId: booking.id,
+        status: "SUCCESS",
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    if (!payment) {
+      throw new Error("Successful shipment payment not found");
+    }
+
+    if (booking.vehicleId) {
+      await tx.vehicle.update({
+        where: {
+          id: booking.vehicleId,
+        },
+        data: {
+          availabilityStatus: "AVAILABLE",
+        },
+      });
+    }
+
+    const completedBooking = await tx.booking.update({
+      where: {
+        id: bookingId,
+      },
+      data: {
+        paymentStatus: "SUCCESS",
+      },
+    });
+
+    return {
+      booking: completedBooking,
+      transporterId: booking.transporterId,
+      vehicleId: booking.vehicleId,
+      paymentId: payment.id,
+    };
+  });
+
+  const completedBookingDto = toBookingDto(result.booking);
+
+  publishBookingEvent(bookingId, {
+    eventType: "booking.completed",
+    module: "LIVE_TRIPS",
+    entityType: "BOOKING",
+    entityId: bookingId,
+    data: completedBookingDto,
+  });
+
+  const settlement = await createSettlement(
+    bookingId,
+    result.paymentId,
+  );
+
+  await createShipmentEvent({
+    bookingId,
+    actorId: result.transporterId,
+    eventType: "DELIVERY_CONFIRMED",
+    title: "Delivery confirmed",
+    description:
+      "Delivery was confirmed and a settlement was created for administrative approval.",
+  });
+
+  return completedBookingDto;
+}
+
+
+----- FILE: backend/src/marketplace/marketplace.routes.ts -----
+import { Router } from "express";
+import { z } from "zod";
+import {
+  authenticate,
+  authorize,
+  type AuthenticatedRequest,
+} from "../middleware/auth.middleware.js";
+import {
+  createMarketplaceRequestSchema,
+  createMarketplaceBidSchema,
+  withdrawMarketplaceBidSchema,
+  selectMarketplaceBidSchema,
+  marketplaceVisibilityQuerySchema,
+} from "./marketplace.validators.js";
+import {
+  createMarketplaceRequest,
+  getMarketplaceRequest,
+  createMarketplaceBid,
+  withdrawMarketplaceBid,
+  selectMarketplaceBid,
+} from "./marketplace.service.js";
+import { getVisibleMarketplaceLoads } from "./visibility.service.js";
+
+const router = Router();
+
+router.use(authenticate);
+
+
+router.get(
+  "/loads",
+  authorize("TRANSPORTER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const query = marketplaceVisibilityQuerySchema.parse(
+        req.query,
+      );
+
+      const loads = await getVisibleMarketplaceLoads(
+        req.user!.id,
+        query.radiusKm,
+      );
+
+      return res.json({
+        success: true,
+        data: loads,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid marketplace visibility query",
+          details: error.issues,
+        });
+      }
+
+      const message =
+        error instanceof Error ? error.message : "Server error";
+
+      if (
+        message === "Transporter not found" ||
+        message === "Only transporters can access marketplace visibility"
+      ) {
+        return res.status(403).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      if (
+        message === "Transporter account is not active" ||
+        message === "Transporter is not approved"
+      ) {
+        return res.status(403).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      if (
+        message === "Invalid marketplace visibility radius" ||
+        message.startsWith(
+          "Marketplace visibility radius cannot exceed",
+        )
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
+
+router.post(
+  "/requests",
+  authorize("CUSTOMER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const input = createMarketplaceRequestSchema.parse(req.body);
+
+      const request = await createMarketplaceRequest({
+        ...input,
+        customerId: req.user!.id,
+      });
+
+      return res.status(201).json({
+        success: true,
+        data: request,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid request data",
+          details: error.issues,
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Server error",
+      });
+    }
+  },
+);
+
+router.get(
+  "/requests/:id",
+  authorize("CUSTOMER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const request = await getMarketplaceRequest(
+        String(req.params.id),
+        req.user!.id,
+      );
+
+      if (!request) {
+        return res.status(404).json({
+          success: false,
+          error: "Marketplace request not found",
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: request,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Server error",
+      });
+    }
+  },
+);
+
+router.post(
+  "/requests/:id/bids",
+  authorize("TRANSPORTER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const input = createMarketplaceBidSchema.parse(req.body);
+
+      const bid = await createMarketplaceBid({
+        ...input,
+        requestId: String(req.params.id),
+        transporterId: req.user!.id,
+      });
+
+      return res.status(201).json({
+        success: true,
+        data: bid,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid bid data",
+          details: error.issues,
+        });
+      }
+
+      const message =
+        error instanceof Error ? error.message : "Server error";
+
+      const conflictMessages = [
+        "Marketplace request is no longer accepting bids",
+        "Vehicle is not available",
+        "Vehicle does not match requested truck category",
+        "Transporter has already submitted a bid for this request",
+      ];
+
+      return res.status(
+        conflictMessages.includes(message) ? 409 : 400,
+      ).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
+
+
+router.post(
+  "/requests/:id/bids/:bidId/select",
+  authorize("CUSTOMER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      selectMarketplaceBidSchema.parse(req.body);
+
+      const result = await selectMarketplaceBid(
+        String(req.params.id),
+        String(req.params.bidId),
+        req.user!.id,
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid bid selection request",
+          details: error.issues,
+        });
+      }
+
+      const message =
+        error instanceof Error ? error.message : "Server error";
+
+      const conflictMessages = [
+        "Marketplace request is no longer accepting bid selection",
+        "Marketplace request has already been processed",
+        "Only pending bids can be selected",
+        "Marketplace bid has expired",
+        "Selected vehicle is no longer available",
+        "Selected vehicle is not approved",
+        "Selected vehicle no longer matches truck category",
+        "Selected bid is no longer available",
+      ];
+
+      return res.status(
+        conflictMessages.includes(message) ? 409 :
+        message === "Access denied" ? 403 :
+        message.includes("not found") ? 404 :
+        400,
+      ).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
+
+router.post(
+  "/bids/:id/withdraw",
+  authorize("TRANSPORTER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      withdrawMarketplaceBidSchema.parse(req.body);
+
+      const bid = await withdrawMarketplaceBid(
+        String(req.params.id),
+        req.user!.id,
+      );
+
+      return res.json({
+        success: true,
+        data: bid,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
+      const message =
+        error instanceof Error ? error.message : "Server error";
+
+      return res.status(
+        message === "Access denied" ? 403 : 400,
+      ).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
+
+export default router;
+
+----- FILE: backend/src/marketplace/marketplace.service.ts -----
+import { prisma } from "../config/prisma.js";
+import { publishEvent } from "../realtime/event-bus.js";
+import { estimateFare } from "../pricing/pricing.service.js";
+
+
+async function expireMarketplaceLifecycle() {
+  const now = new Date();
+
+  return prisma.$transaction(async (tx) => {
+    const expiredBids = await tx.marketplaceBid.findMany({
+      where: {
+        status: "PENDING",
+        expiresAt: {
+          not: null,
+          lte: now,
+        },
+      },
+      select: {
+        id: true,
+        requestId: true,
+        transporterId: true,
+      },
+    });
+
+    if (expiredBids.length > 0) {
+      await tx.marketplaceBid.updateMany({
+        where: {
+          id: {
+            in: expiredBids.map((bid) => bid.id),
+          },
+          status: "PENDING",
+          expiresAt: {
+            not: null,
+            lte: now,
+          },
+        },
+        data: {
+          status: "EXPIRED",
+        },
+      });
+    }
+
+    /*
+     * MarketplaceRequest.scheduledDate represents the planned
+     * shipment/pickup date. It is NOT the marketplace request's
+     * expiration timestamp.
+     *
+     * Therefore a scheduled load must remain OPEN until:
+     * - a bid is selected, or
+     * - the request is explicitly closed by another lifecycle action.
+     *
+     * Only MarketplaceBid.expiresAt controls bid expiration.
+     */
+
+    return {
+      expiredBidIds: expiredBids.map((bid) => bid.id),
+    };
+  });
+}
+
+
+function serializeMarketplaceBid(bid: {
+  id: string;
+  requestId: string;
+  transporterId: string;
+  vehicleId: string;
+  amount: unknown;
+  message: string | null;
+  status: string;
+  expiresAt: Date | null;
+  selectedAt?: Date | null;
+  createdAt: Date;
+  vehicle?: {
+    id: string;
+    vehicleType: unknown;
+    vehicleClass: unknown;
+  } | null;
+  transporter?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    transporterTier: unknown;
+    transporterProfile?: {
+      rating: unknown;
+      totalTrips: number;
+    } | null;
+  } | null;
+}) {
+  return {
+    id: bid.id,
+    requestId: bid.requestId,
+    transporterId: bid.transporterId,
+    vehicleId: bid.vehicleId,
+    amount: bid.amount,
+    message: bid.message,
+    status: bid.status,
+    expiresAt: bid.expiresAt,
+    selectedAt: bid.selectedAt ?? null,
+    createdAt: bid.createdAt,
+    vehicle: bid.vehicle
+      ? {
+          id: bid.vehicle.id,
+          vehicleType: bid.vehicle.vehicleType,
+          vehicleClass: bid.vehicle.vehicleClass,
+        }
+      : undefined,
+    transporter: bid.transporter
+      ? {
+          id: bid.transporter.id,
+          firstName: bid.transporter.firstName,
+          lastName: bid.transporter.lastName,
+          transporterTier: bid.transporter.transporterTier,
+          rating: bid.transporter.transporterProfile?.rating ?? null,
+          totalTrips:
+            bid.transporter.transporterProfile?.totalTrips ?? 0,
+        }
+      : undefined,
+  };
+}
+
+export async function createMarketplaceRequest(data: {
+  customerId: string;
+  pickupLocation: string;
+  destination: string;
+  pickupLatitude: number;
+  pickupLongitude: number;
+  destinationLatitude: number;
+  destinationLongitude: number;
+  cargoDescription?: string;
+  truckCategory:
+    | "MINI_TRUCK"
+    | "LIGHT_TRUCK"
+    | "MEDIUM_TRUCK"
+    | "HEAVY_TRUCK"
+    | "CONTAINER_TRUCK"
+    | "REFRIGERATED_TRUCK"
+    | "TANKER"
+    | "SPECIALIZED";
+  cargoCategory?:
+    | "GENERAL"
+    | "FRAGILE"
+    | "ELECTRONICS"
+    | "FURNITURE"
+    | "AGRICULTURAL"
+    | "INDUSTRIAL"
+    | "CONSTRUCTION"
+    | "HAZARDOUS"
+    | "REFRIGERATED";
+  cargoWeight: number;
+  scheduledDate?: Date;
+}) {
+  const pricing = await estimateFare({
+    weight: data.cargoWeight,
+    truck: data.truckCategory,
+    pickupLatitude: data.pickupLatitude,
+    pickupLongitude: data.pickupLongitude,
+    destinationLatitude: data.destinationLatitude,
+    destinationLongitude: data.destinationLongitude,
+  });
+
+  const request = await prisma.marketplaceRequest.create({
+    data: {
+      customerId: data.customerId,
+      pickupLocation: data.pickupLocation,
+      destination: data.destination,
+      pickupLatitude: data.pickupLatitude,
+      pickupLongitude: data.pickupLongitude,
+      destinationLatitude: data.destinationLatitude,
+      destinationLongitude: data.destinationLongitude,
+      cargoDescription: data.cargoDescription,
+      truckCategory: data.truckCategory,
+      cargoCategory: data.cargoCategory,
+      cargoWeight: data.cargoWeight,
+      scheduledDate: data.scheduledDate,
+      estimatedFare: pricing.fare,
+      status: "OPEN",
+    },
+  });
+
+  publishEvent("marketplace", {
+    eventType: "LOAD_POSTED",
+    module: "FLEET_MARKETPLACE",
+    entityType: "MARKETPLACE_REQUEST",
+    entityId: request.id,
+    actorId: data.customerId,
+    data: {
+      requestId: request.id,
+      status: request.status,
+      pickupLocation: request.pickupLocation,
+      destination: request.destination,
+      truckCategory: request.truckCategory,
+      cargoWeight: request.cargoWeight,
+      estimatedFare: request.estimatedFare,
+    },
+  });
+
+  return request;
+}
+
+export async function getMarketplaceRequest(
+  requestId: string,
+  customerId: string,
+) {
+  await expireMarketplaceLifecycle();
+
+  const request = await prisma.marketplaceRequest.findFirst({
+    where: {
+      id: requestId,
+      customerId,
+    },
+    select: {
+      id: true,
+      customerId: true,
+      bookingId: true,
+      cargoDescription: true,
+      truckCategory: true,
+      cargoCategory: true,
+      cargoWeight: true,
+      pickupLocation: true,
+      destination: true,
+      pickupLatitude: true,
+      pickupLongitude: true,
+      destinationLatitude: true,
+      destinationLongitude: true,
+      scheduledDate: true,
+      estimatedFare: true,
+      status: true,
+      agreedBidId: true,
+      createdAt: true,
+      updatedAt: true,
+      closedAt: true,
+      bids: {
+        orderBy: {
+          createdAt: "asc",
+        },
+        select: {
+          id: true,
+          requestId: true,
+          transporterId: true,
+          vehicleId: true,
+          amount: true,
+          message: true,
+          status: true,
+          expiresAt: true,
+          selectedAt: true,
+          createdAt: true,
+          vehicle: {
+            select: {
+              id: true,
+              vehicleType: true,
+              vehicleClass: true,
+            },
+          },
+          transporter: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              transporterTier: true,
+              transporterProfile: {
+                select: {
+                  rating: true,
+                  totalTrips: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!request) {
+    return null;
+  }
+
+  return {
+    ...request,
+    bids: request.bids.map(serializeMarketplaceBid),
+  };
+}
+
+export async function createMarketplaceBid(data: {
+  requestId: string;
+  transporterId: string;
+  vehicleId: string;
+  amount: number;
+  message?: string;
+  expiresAt?: Date;
+}) {
+  await expireMarketplaceLifecycle();
+
+  const request = await prisma.marketplaceRequest.findUnique({
+    where: { id: data.requestId },
+    select: {
+      id: true,
+      status: true,
+      truckCategory: true,
+      scheduledDate: true,
+      customerId: true,
+    },
+  });
+
+  if (!request) {
+    throw new Error("Marketplace request not found");
+  }
+
+  if (request.status !== "OPEN") {
+    throw new Error("Marketplace request is no longer accepting bids");
+  }
+
+  if (request.customerId === data.transporterId) {
+    throw new Error("Customer cannot bid on their own marketplace request");
+  }
+
+  const transporter = await prisma.user.findUnique({
+    where: { id: data.transporterId },
+    select: {
+      id: true,
+      role: true,
+      status: true,
+      transporterProfile: {
+        select: {
+          verificationStatus: true,
+        },
+      },
+    },
+  });
+
+  if (!transporter || transporter.role !== "TRANSPORTER") {
+    throw new Error("Only transporters can submit bids");
+  }
+
+  if (transporter.status !== "ACTIVE") {
+    throw new Error("Transporter account is not active");
+  }
+
+  if (
+    !transporter.transporterProfile ||
+    transporter.transporterProfile.verificationStatus !== "APPROVED"
+  ) {
+    throw new Error("Transporter is not approved");
+  }
+
+  const vehicle = await prisma.vehicle.findUnique({
+    where: { id: data.vehicleId },
+    select: {
+      id: true,
+      transporterId: true,
+      vehicleType: true,
+      vehicleClass: true,
+      verificationStatus: true,
+      availabilityStatus: true,
+    },
+  });
+
+  if (!vehicle) {
+    throw new Error("Vehicle not found");
+  }
+
+  if (vehicle.transporterId !== data.transporterId) {
+    throw new Error("Vehicle does not belong to transporter");
+  }
+
+  if (vehicle.verificationStatus !== "APPROVED") {
+    throw new Error("Vehicle is not approved");
+  }
+
+  if (vehicle.availabilityStatus !== "AVAILABLE") {
+    throw new Error("Vehicle is not available");
+  }
+
+  if (
+    request.truckCategory &&
+    vehicle.vehicleType !== request.truckCategory &&
+    vehicle.vehicleClass !== request.truckCategory
+  ) {
+    throw new Error("Vehicle does not match requested truck category");
+  }
+
+  if (data.expiresAt && data.expiresAt <= new Date()) {
+    throw new Error("Bid expiration must be in the future");
+  }
+
+  try {
+    const bid = await prisma.marketplaceBid.create({
+      data: {
+        requestId: data.requestId,
+        transporterId: data.transporterId,
+        vehicleId: data.vehicleId,
+        amount: data.amount,
+        message: data.message,
+        expiresAt: data.expiresAt,
+        status: "PENDING",
+      },
+      include: {
+        vehicle: true,
+      },
+    });
+
+    publishEvent("marketplace", {
+      eventType: "BID_SUBMITTED",
+      module: "FLEET_MARKETPLACE",
+      entityType: "MARKETPLACE_BID",
+      entityId: bid.id,
+      actorId: data.transporterId,
+      data: {
+        bidId: bid.id,
+        requestId: data.requestId,
+        transporterId: data.transporterId,
+        vehicleId: data.vehicleId,
+        amount: bid.amount,
+        status: bid.status,
+      },
+    });
+
+    return bid;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("Unique constraint")
+    ) {
+      throw new Error("Transporter has already submitted a bid for this request");
+    }
+
+    throw error;
+  }
+}
+
+export async function withdrawMarketplaceBid(
+  bidId: string,
+  transporterId: string,
+) {
+  await expireMarketplaceLifecycle();
+  const bid = await prisma.marketplaceBid.findUnique({
+    where: { id: bidId },
+    select: {
+      id: true,
+      requestId: true,
+      transporterId: true,
+      status: true,
+    },
+  });
+
+  if (!bid) {
+    throw new Error("Marketplace bid not found");
+  }
+
+  if (bid.transporterId !== transporterId) {
+    throw new Error("Access denied");
+  }
+
+  if (bid.status !== "PENDING") {
+    throw new Error("Only pending bids can be withdrawn");
+  }
+
+  const updated = await prisma.marketplaceBid.update({
+    where: { id: bidId },
+    data: {
+      status: "WITHDRAWN",
+    },
+  });
+
+  publishEvent("marketplace", {
+    eventType: "BID_WITHDRAWN",
+    module: "FLEET_MARKETPLACE",
+    entityType: "MARKETPLACE_BID",
+    entityId: updated.id,
+    actorId: transporterId,
+    data: {
+      bidId: updated.id,
+      requestId: updated.requestId,
+      status: updated.status,
+    },
+  });
+
+  return updated;
+}
+
+export async function selectMarketplaceBid(
+  requestId: string,
+  bidId: string,
+  customerId: string,
+) {
+  await expireMarketplaceLifecycle();
+  const result = await prisma.$transaction(async (tx) => {
+    /*
+     * Read the marketplace request and verify ownership.
+     * The request must still be OPEN when the selection begins.
+     */
+    const request = await tx.marketplaceRequest.findUnique({
+      where: {
+        id: requestId,
+      },
+      select: {
+        id: true,
+        customerId: true,
+        status: true,
+        cargoDescription: true,
+        truckCategory: true,
+        cargoCategory: true,
+        cargoWeight: true,
+        pickupLocation: true,
+        destination: true,
+        pickupLatitude: true,
+        pickupLongitude: true,
+        destinationLatitude: true,
+        destinationLongitude: true,
+        scheduledDate: true,
+        estimatedFare: true,
+        bookingId: true,
+        agreedBidId: true,
+      },
+    });
+
+    if (!request) {
+      throw new Error("Marketplace request not found");
+    }
+
+    if (request.customerId !== customerId) {
+      throw new Error("Access denied");
+    }
+
+    if (request.status !== "OPEN") {
+      throw new Error("Marketplace request is no longer accepting bid selection");
+    }
+
+    /*
+     * Locate the requested bid and make sure it belongs to this request.
+     */
+    const bid = await tx.marketplaceBid.findFirst({
+      where: {
+        id: bidId,
+        requestId,
+      },
+      select: {
+        id: true,
+        requestId: true,
+        transporterId: true,
+        vehicleId: true,
+        amount: true,
+        message: true,
+        status: true,
+        expiresAt: true,
+      },
+    });
+
+    if (!bid) {
+      throw new Error("Marketplace bid not found");
+    }
+
+    if (bid.status !== "PENDING") {
+      throw new Error("Only pending bids can be selected");
+    }
+
+    if (bid.expiresAt && bid.expiresAt <= new Date()) {
+      throw new Error("Marketplace bid has expired");
+    }
+
+    /*
+     * Revalidate the transporter at the moment of acceptance.
+     * Visibility at bid-submission time is not sufficient because
+     * transporter status can change before the customer accepts.
+     */
+    const transporter = await tx.user.findUnique({
+      where: {
+        id: bid.transporterId,
+      },
+      select: {
+        id: true,
+        role: true,
+        status: true,
+        transporterTier: true,
+        transporterProfile: {
+          select: {
+            verificationStatus: true,
+          },
+        },
+      },
+    });
+
+    if (!transporter || transporter.role !== "TRANSPORTER") {
+      throw new Error("Selected transporter is invalid");
+    }
+
+    if (transporter.status !== "ACTIVE") {
+      throw new Error("Selected transporter account is not active");
+    }
+
+    if (
+      !transporter.transporterProfile ||
+      transporter.transporterProfile.verificationStatus !== "APPROVED"
+    ) {
+      throw new Error("Selected transporter is not approved");
+    }
+
+    /*
+     * Revalidate the vehicle and reserve it atomically.
+     * This prevents two concurrent operations from assigning the same
+     * available vehicle to separate trips.
+     */
+    const vehicle = await tx.vehicle.findUnique({
+      where: {
+        id: bid.vehicleId,
+      },
+      select: {
+        id: true,
+        transporterId: true,
+        vehicleType: true,
+        vehicleClass: true,
+        verificationStatus: true,
+        availabilityStatus: true,
+      },
+    });
+
+    if (!vehicle) {
+      throw new Error("Selected vehicle not found");
+    }
+
+    if (vehicle.transporterId !== bid.transporterId) {
+      throw new Error("Selected vehicle does not belong to transporter");
+    }
+
+    if (vehicle.verificationStatus !== "APPROVED") {
+      throw new Error("Selected vehicle is not approved");
+    }
+
+    if (vehicle.availabilityStatus !== "AVAILABLE") {
+      throw new Error("Selected vehicle is no longer available");
+    }
+
+    if (
+      request.truckCategory &&
+      vehicle.vehicleType !== request.truckCategory &&
+      vehicle.vehicleClass !== request.truckCategory
+    ) {
+      throw new Error("Selected vehicle no longer matches truck category");
+    }
+
+    /*
+     * Claim the marketplace request first.
+     *
+     * The conditional update is the concurrency guard:
+     * only one transaction can successfully move OPEN -> AGREED.
+     */
+    const claimedRequest = await tx.marketplaceRequest.updateMany({
+      where: {
+        id: requestId,
+        customerId,
+        status: "OPEN",
+      },
+      data: {
+        status: "AGREED",
+      },
+    });
+
+    if (claimedRequest.count !== 1) {
+      throw new Error("Marketplace request has already been processed");
+    }
+
+    /*
+     * Reserve the vehicle.
+     */
+    const reservedVehicle = await tx.vehicle.updateMany({
+      where: {
+        id: vehicle.id,
+        transporterId: bid.transporterId,
+        availabilityStatus: "AVAILABLE",
+        verificationStatus: "APPROVED",
+      },
+      data: {
+        availabilityStatus: "ON_TRIP",
+      },
+    });
+
+    if (reservedVehicle.count !== 1) {
+      throw new Error("Selected vehicle is no longer available");
+    }
+
+    /*
+     * Select exactly this bid.
+     */
+    const selectedAt = new Date();
+
+    const selectedBid = await tx.marketplaceBid.updateMany({
+      where: {
+        id: bid.id,
+        requestId,
+        status: "PENDING",
+      },
+      data: {
+        status: "SELECTED",
+        selectedAt,
+      },
+    });
+
+    if (selectedBid.count !== 1) {
+      throw new Error("Selected bid is no longer available");
+    }
+
+    /*
+     * All other pending bids lose the competition.
+     */
+    await tx.marketplaceBid.updateMany({
+      where: {
+        requestId,
+        id: {
+          not: bid.id,
+        },
+        status: "PENDING",
+      },
+      data: {
+        status: "REJECTED",
+      },
+    });
+
+    /*
+     * Marketplace acceptance creates the operational Booking.
+     *
+     * The accepted bid amount is authoritative for this booking.
+     * We deliberately do NOT call createBooking(), because that
+     * function creates a customer-originated booking and calculates
+     * a fresh pricing-engine fare.
+     */
+    const booking = await tx.booking.create({
+      data: {
+        customerId,
+        transporterId: bid.transporterId,
+        vehicleId: bid.vehicleId,
+
+        cargoDescription: request.cargoDescription,
+        truckCategory: request.truckCategory,
+        transporterTier: transporter.transporterTier,
+
+        estimatedFare: request.estimatedFare,
+        fare: bid.amount,
+
+        pickupLocation: request.pickupLocation,
+        destination: request.destination,
+
+        pickupLatitude: request.pickupLatitude,
+        pickupLongitude: request.pickupLongitude,
+        destinationLatitude: request.destinationLatitude,
+        destinationLongitude: request.destinationLongitude,
+
+        scheduledDate: request.scheduledDate,
+
+        cargoCategory: request.cargoCategory,
+        cargoWeight: request.cargoWeight,
+
+        status: "ASSIGNED",
+        paymentStatus: "PENDING",
+      },
+    });
+
+    /*
+     * Complete the marketplace <-> booking relationship.
+     */
+    const linkedRequest = await tx.marketplaceRequest.update({
+      where: {
+        id: requestId,
+      },
+      data: {
+        agreedBidId: bid.id,
+        bookingId: booking.id,
+        closedAt: new Date(),
+      },
+    });
+
+    /*
+     * Return all identifiers needed by realtime/admin consumers.
+     */
+    return {
+      request: linkedRequest,
+      bid: {
+        ...bid,
+        status: "SELECTED",
+        selectedAt,
+      },
+      booking,
+      vehicleId: vehicle.id,
+      transporterId: bid.transporterId,
+    };
+  });
+
+  /*
+   * Publish marketplace events after the transaction commits.
+   * This prevents realtime consumers from receiving an event for
+   * a transaction that subsequently rolled back.
+   */
+  publishEvent("marketplace", {
+    eventType: "BID_SELECTED",
+    module: "FLEET_MARKETPLACE",
+    entityType: "MARKETPLACE_BID",
+    entityId: result.bid.id,
+    actorId: customerId,
+    data: {
+      bidId: result.bid.id,
+      requestId: result.request.id,
+      transporterId: result.transporterId,
+      vehicleId: result.vehicleId,
+      amount: result.bid.amount,
+      status: "SELECTED",
+      bookingId: result.booking.id,
+    },
+  });
+
+  publishEvent("marketplace", {
+    eventType: "MARKETPLACE_REQUEST_AGREED",
+    module: "FLEET_MARKETPLACE",
+    entityType: "MARKETPLACE_REQUEST",
+    entityId: result.request.id,
+    actorId: customerId,
+    data: {
+      requestId: result.request.id,
+      bidId: result.bid.id,
+      bookingId: result.booking.id,
+      status: result.request.status,
+    },
+  });
+
+  publishEvent("booking", {
+    eventType: "SHIPMENT_ASSIGNED",
+    module: "LIVE_TRIPS",
+    entityType: "BOOKING",
+    entityId: result.booking.id,
+    bookingId: result.booking.id,
+    actorId: customerId,
+    data: {
+      bookingId: result.booking.id,
+      customerId,
+      transporterId: result.transporterId,
+      vehicleId: result.vehicleId,
+      status: result.booking.status,
+      fare: result.booking.fare,
+      marketplaceRequestId: result.request.id,
+      marketplaceBidId: result.bid.id,
+    },
+  });
+
+  publishEvent("vehicle", {
+    eventType: "VEHICLE_AVAILABILITY_UPDATED",
+    module: "FLEET_MARKETPLACE",
+    entityType: "VEHICLE",
+    entityId: result.vehicleId,
+    actorId: customerId,
+    data: {
+      vehicleId: result.vehicleId,
+      transporterId: result.transporterId,
+      availabilityStatus: "ON_TRIP",
+      bookingId: result.booking.id,
+    },
+  });
+
+  return result;
+}
+
+----- FILE: backend/src/marketplace/marketplace.validators.ts -----
+import { z } from "zod";
+
+const latitudeSchema = z.coerce.number().finite().min(-90).max(90);
+const longitudeSchema = z.coerce.number().finite().min(-180).max(180);
+const positiveNumber = z.coerce.number().finite().positive();
+
+export const createMarketplaceRequestSchema = z.object({
+  pickupLocation: z.string().trim().min(1).max(500),
+  destination: z.string().trim().min(1).max(500),
+
+  pickupLatitude: latitudeSchema,
+  pickupLongitude: longitudeSchema,
+  destinationLatitude: latitudeSchema,
+  destinationLongitude: longitudeSchema,
+
+  cargoDescription: z.string().trim().max(2000).optional(),
+
+  truckCategory: z.enum([
+    "MINI_TRUCK",
+    "LIGHT_TRUCK",
+    "MEDIUM_TRUCK",
+    "HEAVY_TRUCK",
+    "CONTAINER_TRUCK",
+    "REFRIGERATED_TRUCK",
+    "TANKER",
+    "SPECIALIZED",
+  ]),
+
+  cargoCategory: z.enum([
+    "GENERAL",
+    "FRAGILE",
+    "ELECTRONICS",
+    "FURNITURE",
+    "AGRICULTURAL",
+    "INDUSTRIAL",
+    "CONSTRUCTION",
+    "HAZARDOUS",
+    "REFRIGERATED",
+  ]).optional(),
+
+  cargoWeight: positiveNumber,
+
+  scheduledDate: z.coerce.date().optional(),
+}).strict();
+
+export const createMarketplaceBidSchema = z.object({
+  vehicleId: z.string().uuid("Invalid vehicle ID"),
+  amount: positiveNumber,
+  message: z.string().trim().max(1000).optional(),
+  expiresAt: z.coerce.date().optional(),
+}).strict();
+
+export const withdrawMarketplaceBidSchema = z.object({}).strict();
+
+export const selectMarketplaceBidSchema = z.object({}).strict();
+
+export const marketplaceVisibilityQuerySchema = z.object({
+  radiusKm: positiveNumber.optional(),
+}).strict();
+
+----- FILE: backend/src/marketplace/visibility.policy.ts -----
+import { prisma } from "../config/prisma.js";
+import { z } from "zod";
+
+const positiveNumber = z.coerce.number().finite().positive();
+
+export const marketplaceVisibilityConfigSchema = z
+  .object({
+    defaultRadiusKm: positiveNumber,
+
+    maxRadiusKm: positiveNumber,
+
+    subscriptionBoosts: z
+      .object({
+        FREE: positiveNumber,
+        SILVER: positiveNumber,
+        GOLD: positiveNumber,
+        PLATINUM: positiveNumber,
+        ENTERPRISE: positiveNumber,
+      })
+      .strict(),
+
+    tierScores: z
+      .object({
+        TIER_1: positiveNumber,
+        TIER_2: positiveNumber,
+      })
+      .strict(),
+
+    requireApprovedTransporter: z.boolean(),
+
+    requireApprovedVehicle: z.boolean(),
+
+    requireAvailableVehicle: z.boolean(),
+
+    requireVehicleLocation: z.boolean(),
+  })
+  .strict()
+  .superRefine((config, ctx) => {
+    if (config.maxRadiusKm < config.defaultRadiusKm) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["maxRadiusKm"],
+        message:
+          "Maximum radius cannot be less than default radius",
+      });
+    }
+  });
+
+export type MarketplaceVisibilityConfig = z.infer<
+  typeof marketplaceVisibilityConfigSchema
+>;
+
+const DEFAULT_MARKETPLACE_VISIBILITY_CONFIG: MarketplaceVisibilityConfig =
+  {
+    defaultRadiusKm: 100,
+
+    maxRadiusKm: 500,
+
+    subscriptionBoosts: {
+      FREE: 1,
+      SILVER: 2,
+      GOLD: 3,
+      PLATINUM: 4,
+      ENTERPRISE: 5,
+    },
+
+    tierScores: {
+      TIER_1: 1,
+      TIER_2: 2,
+    },
+
+    requireApprovedTransporter: true,
+
+    requireApprovedVehicle: true,
+
+    requireAvailableVehicle: true,
+
+    requireVehicleLocation: true,
+  };
+
+type ConfigRow = {
+  value: unknown;
+};
+
+export async function getMarketplaceVisibilityConfig(): Promise<MarketplaceVisibilityConfig> {
+  const rows = await prisma.$queryRaw<ConfigRow[]>`
+    SELECT value
+    FROM "PlatformConfig"
+    WHERE key = 'MARKETPLACE_VISIBILITY_CONFIG'
+    LIMIT 1
+  `;
+
+  const value = rows[0]?.value;
+
+  if (!value || typeof value !== "object") {
+    return DEFAULT_MARKETPLACE_VISIBILITY_CONFIG;
+  }
+
+  const parsed =
+    marketplaceVisibilityConfigSchema.safeParse(value);
+
+  if (!parsed.success) {
+    return DEFAULT_MARKETPLACE_VISIBILITY_CONFIG;
+  }
+
+  return parsed.data;
+}
+
+----- FILE: backend/src/marketplace/visibility.service.ts -----
+import { prisma } from "../config/prisma.js";
+import {
+  getMarketplaceVisibilityConfig,
+} from "./visibility.policy.js";
+
+const EARTH_RADIUS_KM = 6371;
+
+function distanceKm(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
+  const toRadians = (value: number) =>
+    (value * Math.PI) / 180;
+
+  const dLat = toRadians(lat2 - lat1);
+  const dLon = toRadians(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(lat1)) *
+      Math.cos(toRadians(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+
+  const clampedA = Math.min(1, Math.max(0, a));
+
+  return (
+    EARTH_RADIUS_KM *
+    2 *
+    Math.atan2(
+      Math.sqrt(clampedA),
+      Math.sqrt(1 - clampedA),
+    )
+  );
+}
+
+function subscriptionBoost(
+  planName: string | undefined,
+  config: Awaited<
+    ReturnType<typeof getMarketplaceVisibilityConfig>
+  >,
+) {
+  const name = planName?.toUpperCase() ?? "FREE";
+
+  return (
+    config.subscriptionBoosts[
+      name as keyof typeof config.subscriptionBoosts
+    ] ?? config.subscriptionBoosts.FREE
+  );
+}
+
+function tierScore(
+  tier: string | null | undefined,
+  config: Awaited<
+    ReturnType<typeof getMarketplaceVisibilityConfig>
+  >,
+) {
+  return (
+    config.tierScores[
+      tier as keyof typeof config.tierScores
+    ] ?? config.tierScores.TIER_1
+  );
+}
+
+function hasValidCoordinates(
+  latitude: unknown,
+  longitude: unknown,
+): boolean {
+  if (
+    latitude === null ||
+    latitude === undefined ||
+    longitude === null ||
+    longitude === undefined
+  ) {
+    return false;
+  }
+
+  const lat = Number(latitude);
+  const lon = Number(longitude);
+
+  return (
+    Number.isFinite(lat) &&
+    Number.isFinite(lon) &&
+    lat >= -90 &&
+    lat <= 90 &&
+    lon >= -180 &&
+    lon <= 180
+  );
+}
+
+export async function getVisibleMarketplaceLoads(
+  transporterId: string,
+  radiusKm?: number,
+) {
+  const visibilityPolicy =
+    await getMarketplaceVisibilityConfig();
+
+  const effectiveRadiusKm =
+    radiusKm ?? visibilityPolicy.defaultRadiusKm;
+
+  if (
+    !Number.isFinite(effectiveRadiusKm) ||
+    effectiveRadiusKm <= 0
+  ) {
+    throw new Error(
+      "Invalid marketplace visibility radius",
+    );
+  }
+
+  if (
+    effectiveRadiusKm >
+    visibilityPolicy.maxRadiusKm
+  ) {
+    throw new Error(
+      `Marketplace visibility radius cannot exceed ${visibilityPolicy.maxRadiusKm} km`,
+    );
+  }
+
+  const vehicleWhere: Record<string, unknown> = {};
+
+  if (visibilityPolicy.requireApprovedVehicle) {
+    vehicleWhere.verificationStatus = "APPROVED";
+  }
+
+  if (visibilityPolicy.requireAvailableVehicle) {
+    vehicleWhere.availabilityStatus = "AVAILABLE";
+  }
+
+  const transporter =
+    await prisma.user.findUnique({
+      where: {
+        id: transporterId,
+      },
+      select: {
+        id: true,
+        role: true,
+        status: true,
+        transporterTier: true,
+
+        transporterProfile: {
+          select: {
+            verificationStatus: true,
+            rating: true,
+            totalTrips: true,
+          },
+        },
+
+        vehicles: {
+          where: vehicleWhere,
+          select: {
+            id: true,
+            vehicleClass: true,
+            vehicleType: true,
+            currentLatitude: true,
+            currentLongitude: true,
+          },
+        },
+
+        subscriptions: {
+          where: {
+            status: "ACTIVE",
+            currentPeriodEnd: {
+              gt: new Date(),

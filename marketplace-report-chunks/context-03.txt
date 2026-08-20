@@ -1,0 +1,1546 @@
+backend/src/marketplace/marketplace.service.ts:830:      bookingId: result.booking.id,
+backend/src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+backend/src/marketplace/marketplace.service.ts:837:      marketplaceBidId: result.bid.id,
+backend/src/marketplace/marketplace.service.ts:851:      bookingId: result.booking.id,
+backend/src/marketplace/marketplace.routes.ts:9:  createMarketplaceRequestSchema,
+backend/src/marketplace/marketplace.routes.ts:10:  createMarketplaceBidSchema,
+backend/src/marketplace/marketplace.routes.ts:11:  withdrawMarketplaceBidSchema,
+backend/src/marketplace/marketplace.routes.ts:12:  selectMarketplaceBidSchema,
+backend/src/marketplace/marketplace.routes.ts:16:  createMarketplaceRequest,
+backend/src/marketplace/marketplace.routes.ts:17:  getMarketplaceRequest,
+backend/src/marketplace/marketplace.routes.ts:18:  createMarketplaceBid,
+backend/src/marketplace/marketplace.routes.ts:19:  withdrawMarketplaceBid,
+backend/src/marketplace/marketplace.routes.ts:20:  selectMarketplaceBid,
+backend/src/marketplace/marketplace.routes.ts:104:      const input = createMarketplaceRequestSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:106:      const request = await createMarketplaceRequest({
+backend/src/marketplace/marketplace.routes.ts:137:      const request = await getMarketplaceRequest(
+backend/src/marketplace/marketplace.routes.ts:167:      const input = createMarketplaceBidSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:169:      const bid = await createMarketplaceBid({
+backend/src/marketplace/marketplace.routes.ts:214:      selectMarketplaceBidSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:216:      const result = await selectMarketplaceBid(
+backend/src/marketplace/marketplace.routes.ts:267:      withdrawMarketplaceBidSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:269:      const bid = await withdrawMarketplaceBid(
+backend/src/marketplace/visibility.service.ts:226:    await prisma.marketplaceRequest.findMany({
+backend/src/marketplace/visibility.service.ts:243:        bookingId: true,
+backend/src/marketplace/visibility.service.ts:257:        agreedBidId: true,
+backend/prisma/schema.prisma:255:enum MarketplaceRequestStatus {
+backend/prisma/schema.prisma:263:enum MarketplaceBidStatus {
+backend/prisma/schema.prisma:299:  marketplaceRequests MarketplaceRequest[] @relation("MarketplaceRequests")
+backend/prisma/schema.prisma:300:  marketplaceBids     MarketplaceBid[]     @relation("MarketplaceBids")
+backend/prisma/schema.prisma:417:  marketplaceBids MarketplaceBid[]
+backend/prisma/schema.prisma:444:  marketplaceRequest MarketplaceRequest?
+backend/prisma/schema.prisma:498:model MarketplaceRequest {
+backend/prisma/schema.prisma:501:  bookingId   String? @unique
+backend/prisma/schema.prisma:518:  status MarketplaceRequestStatus @default(OPEN)
+backend/prisma/schema.prisma:520:  agreedBidId String? @unique
+backend/prisma/schema.prisma:525:  customer User @relation("MarketplaceRequests", fields: [customerId], references: [id], onDelete: Cascade)
+backend/prisma/schema.prisma:526:  booking  Booking? @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:528:  bids MarketplaceBid[]
+backend/prisma/schema.prisma:535:model MarketplaceBid {
+backend/prisma/schema.prisma:544:  status MarketplaceBidStatus @default(PENDING)
+backend/prisma/schema.prisma:551:  request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+backend/prisma/schema.prisma:552:  transporter User               @relation("MarketplaceBids", fields: [transporterId], references: [id], onDelete: Cascade)
+backend/prisma/schema.prisma:563:  bookingId String
+backend/prisma/schema.prisma:578:  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+backend/prisma/schema.prisma:581:  @@index([bookingId, recordedAt])
+backend/prisma/schema.prisma:588:  bookingId            String
+backend/prisma/schema.prisma:602:  booking       Booking               @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:607:  @@index([bookingId])
+backend/prisma/schema.prisma:671:  bookingId String?
+backend/prisma/schema.prisma:728:  bookingId   String?
+backend/prisma/schema.prisma:736:  booking   Booking? @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:739:  @@index([bookingId])
+backend/prisma/schema.prisma:744:  bookingId  String
+backend/prisma/schema.prisma:751:  booking  Booking @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:755:  @@unique([bookingId, reviewerId])
+backend/prisma/schema.prisma:787:  bookingId       String?
+backend/prisma/schema.prisma:799:  booking       Booking? @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:804:  bookingId       String
+backend/prisma/schema.prisma:815:  booking       Booking @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:828:  bookingId   String?
+backend/prisma/schema.prisma:840:  @@index([bookingId])
+backend/prisma/schema.prisma:848:  affectedBookingId String?
+backend/prisma/schema.prisma:861:  bookingId   String
+backend/prisma/schema.prisma:868:  booking Booking @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:870:  @@index([bookingId])
+backend/prisma/schema.prisma:1068:  bookingId        String
+backend/prisma/schema.prisma:1087:  booking        Booking              @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:1093:  @@index([bookingId])
+
+============================================================
+### REALTIME / EVENTS
+============================================================
+backend/src/events/event.routes.ts:12:import { assertBookingAccess } from "../bookings/booking.service.js";
+backend/src/realtime/realtime.service.ts:16:  | "FLEET_MARKETPLACE"
+backend/src/realtime/socket-authorization.ts:23:  const booking = await prisma.booking.findUnique({
+backend/src/realtime/socket-authorization.ts:36:    booking.customerId === user.id ||
+backend/src/realtime/socket-authorization.ts:37:    booking.transporterId === user.id
+backend/src/realtime/socket-authorization.ts:49:  const booking = await prisma.booking.findUnique({
+backend/src/realtime/socket-authorization.ts:65:  if (booking.transporterId !== user.id) {
+backend/src/realtime/socket-authorization.ts:70:    booking.vehicle &&
+backend/src/realtime/socket-authorization.ts:71:    booking.vehicle.transporterId !== user.id
+backend/src/realtime/tracking.service.ts:14:    const booking = await tx.booking.findUnique({
+backend/src/realtime/tracking.service.ts:36:    if (booking.status !== "IN_TRANSIT") {
+backend/src/realtime/tracking.service.ts:40:    if (booking.transporterId !== input.transporterId) {
+backend/src/realtime/tracking.service.ts:44:    if (!booking.vehicleId || !booking.vehicle) {
+backend/src/realtime/tracking.service.ts:48:    if (booking.vehicle.transporterId !== input.transporterId) {
+backend/src/realtime/tracking.service.ts:56:        id: booking.vehicle.id,
+backend/src/realtime/tracking.service.ts:66:        bookingId: booking.id,
+backend/src/realtime/tracking.service.ts:67:        vehicleId: booking.vehicle.id,
+backend/src/realtime/tracking.service.ts:79:      bookingId: booking.id,
+backend/src/vehicles/vehicle.service.ts:15:    module: "FLEET_MARKETPLACE",
+backend/src/vehicles/vehicle.service.ts:69:    module: "FLEET_MARKETPLACE",
+backend/src/bookings/booking.service.ts:6:import { toBookingDto } from "./booking.dto.js";
+backend/src/bookings/booking.service.ts:46:  const booking = await prisma.booking.create({
+backend/src/bookings/booking.service.ts:66:  publishBookingEvent(booking.id, {
+backend/src/bookings/booking.service.ts:67:    eventType: "booking.created",
+backend/src/bookings/booking.service.ts:69:    actorId: booking.customerId,
+backend/src/bookings/booking.service.ts:71:    entityId: booking.id,
+backend/src/bookings/booking.service.ts:76:    bookingId: booking.id,
+backend/src/bookings/booking.service.ts:79:    description: `${booking.pickupLocation} → ${booking.destination}`,
+backend/src/bookings/booking.service.ts:86:    entityId: booking.id,
+backend/src/bookings/booking.service.ts:87:    bookingId: booking.id,
+backend/src/bookings/booking.service.ts:88:    actorId: booking.customerId,
+backend/src/bookings/booking.service.ts:90:      status: booking.status,
+backend/src/bookings/booking.service.ts:91:      pickupLocation: booking.pickupLocation,
+backend/src/bookings/booking.service.ts:92:      destination: booking.destination,
+backend/src/bookings/booking.service.ts:93:      fare: booking.fare,
+backend/src/bookings/booking.service.ts:106:  const booking = await prisma.booking.findUnique({
+backend/src/bookings/booking.service.ts:115:      ((role === "CUSTOMER" && booking.customerId === userId) ||
+backend/src/bookings/booking.service.ts:116:       (role === "TRANSPORTER" && booking.transporterId === userId))) return booking;
+backend/src/bookings/booking.service.ts:119:      role === "TRANSPORTER" && booking.transporterId === userId) return booking;
+backend/src/bookings/booking.service.ts:122:      role === "CUSTOMER" && booking.customerId === userId) return booking;
+backend/src/bookings/booking.service.ts:128:  const booking = await prisma.booking.findUnique({
+backend/src/bookings/booking.service.ts:143:    const booking = await tx.booking.findUnique({
+backend/src/bookings/booking.service.ts:198:    const updated = await tx.booking.update({
+backend/src/bookings/booking.service.ts:220:    eventType: "booking.assigned",
+backend/src/bookings/booking.service.ts:267:    const booking = await tx.booking.findUnique({
+backend/src/bookings/booking.service.ts:294:    const allowed = allowedTransitions[booking.status] ?? [];
+backend/src/bookings/booking.service.ts:298:        `Invalid booking status transition: ${booking.status} -> ${status}`,
+backend/src/bookings/booking.service.ts:335:    const updatedBooking = await tx.booking.update({
+backend/src/bookings/booking.service.ts:340:    if (status === "CANCELLED" && booking.vehicleId) {
+backend/src/bookings/booking.service.ts:342:        where: { id: booking.vehicleId },
+backend/src/bookings/booking.service.ts:351:      previousStatus: booking.status,
+backend/src/bookings/booking.service.ts:402:  if (status === "CANCELLED" && result.booking.vehicleId) {
+backend/src/bookings/booking.service.ts:405:      module: "FLEET_MARKETPLACE",
+backend/src/bookings/booking.service.ts:407:      entityId: result.booking.vehicleId,
+backend/src/bookings/booking.service.ts:408:      actorId: result.booking.transporterId ?? undefined,
+backend/src/bookings/booking.service.ts:410:        vehicleId: result.booking.vehicleId,
+backend/src/bookings/booking.service.ts:411:        transporterId: result.booking.transporterId,
+backend/src/bookings/booking.service.ts:413:        bookingId: result.booking.id,
+backend/src/bookings/booking.service.ts:425:  const bookings = await prisma.booking.findMany({
+backend/src/bookings/booking.service.ts:440:  const bookings = await prisma.booking.findMany({
+backend/src/bookings/booking.service.ts:458:    const booking = await tx.booking.findUnique({
+backend/src/bookings/booking.service.ts:467:    if (booking.status !== "ARRIVED") {
+backend/src/bookings/booking.service.ts:471:    const updatedBooking = await tx.booking.update({
+backend/src/bookings/booking.service.ts:490:    const booking = await tx.booking.findUnique({
+backend/src/bookings/booking.service.ts:500:    if (booking.status === "COMPLETED") {
+backend/src/bookings/booking.service.ts:504:    if (!booking.transporterId) {
+backend/src/bookings/booking.service.ts:508:    if (booking.status !== "ARRIVED") {
+backend/src/bookings/booking.service.ts:512:    if (booking.deliveryConfirmationCode !== code) {
+backend/src/bookings/booking.service.ts:516:    const claimed = await tx.booking.updateMany({
+backend/src/bookings/booking.service.ts:533:        bookingId: booking.id,
+backend/src/bookings/booking.service.ts:545:    if (booking.vehicleId) {
+backend/src/bookings/booking.service.ts:548:          id: booking.vehicleId,
+backend/src/bookings/booking.service.ts:556:    const completedBooking = await tx.booking.update({
+backend/src/bookings/booking.service.ts:567:      transporterId: booking.transporterId,
+backend/src/bookings/booking.service.ts:568:      vehicleId: booking.vehicleId,
+backend/src/bookings/booking.service.ts:576:    eventType: "booking.completed",
+backend/src/bookings/booking.routes.ts:9:} from "./booking.validators.js";
+backend/src/bookings/booking.routes.ts:20:} from "./booking.service.js";
+backend/src/bookings/booking.dto.ts:1:import type { BookingModel } from "../../generated/prisma/models/Booking.js";
+backend/src/bookings/booking.dto.ts:33:    id: booking.id,
+backend/src/bookings/booking.dto.ts:35:    customerId: booking.customerId,
+backend/src/bookings/booking.dto.ts:36:    transporterId: booking.transporterId,
+backend/src/bookings/booking.dto.ts:37:    vehicleId: booking.vehicleId,
+backend/src/bookings/booking.dto.ts:39:    cargoDescription: booking.cargoDescription,
+backend/src/bookings/booking.dto.ts:41:    truckCategory: booking.truckCategory,
+backend/src/bookings/booking.dto.ts:42:    transporterTier: booking.transporterTier,
+backend/src/bookings/booking.dto.ts:44:    estimatedFare: decimal(booking.estimatedFare),
+backend/src/bookings/booking.dto.ts:46:    pickupLocation: booking.pickupLocation,
+backend/src/bookings/booking.dto.ts:47:    destination: booking.destination,
+backend/src/bookings/booking.dto.ts:49:    pickupLatitude: decimal(booking.pickupLatitude),
+backend/src/bookings/booking.dto.ts:50:    pickupLongitude: decimal(booking.pickupLongitude),
+backend/src/bookings/booking.dto.ts:53:      booking.destinationLatitude,
+backend/src/bookings/booking.dto.ts:56:      booking.destinationLongitude,
+backend/src/bookings/booking.dto.ts:59:    scheduledDate: date(booking.scheduledDate),
+backend/src/bookings/booking.dto.ts:61:    cargoCategory: booking.cargoCategory,
+backend/src/bookings/booking.dto.ts:62:    cargoWeight: decimal(booking.cargoWeight),
+backend/src/bookings/booking.dto.ts:64:    status: booking.status,
+backend/src/bookings/booking.dto.ts:66:    fare: decimal(booking.fare),
+backend/src/bookings/booking.dto.ts:68:    paymentStatus: booking.paymentStatus,
+backend/src/bookings/booking.dto.ts:70:    acceptedAt: date(booking.acceptedAt),
+backend/src/bookings/booking.dto.ts:71:    arrivedAt: date(booking.arrivedAt),
+backend/src/bookings/booking.dto.ts:72:    pickedUpAt: date(booking.pickedUpAt),
+backend/src/bookings/booking.dto.ts:73:    inTransitAt: date(booking.inTransitAt),
+backend/src/bookings/booking.dto.ts:74:    deliveredAt: date(booking.deliveredAt),
+backend/src/bookings/booking.dto.ts:75:    completedAt: date(booking.completedAt),
+backend/src/bookings/booking.dto.ts:77:    proofOfDelivery: booking.proofOfDelivery,
+backend/src/bookings/booking.dto.ts:79:    createdAt: booking.createdAt.toISOString(),
+backend/src/bookings/booking.dto.ts:80:    updatedAt: booking.updatedAt.toISOString(),
+backend/src/payments/payment.service.ts:26:  const booking = await prisma.booking.findUnique({
+backend/src/payments/payment.service.ts:49:  if (booking.customerId !== customerId) {
+backend/src/payments/payment.service.ts:53:  if (booking.fare === null || booking.fare.lessThanOrEqualTo(0)) {
+backend/src/payments/payment.service.ts:57:  const amount = booking.fare;
+backend/src/payments/payment.service.ts:137:      email: booking.customer.email,
+backend/src/payments/payment.service.ts:138:      name: `${booking.customer.firstName} ${booking.customer.lastName}`.trim(),
+backend/src/payments/payment.service.ts:139:      phonenumber: booking.customer.phone,
+backend/src/payments/payment.service.ts:289:    await tx.booking.update({
+backend/src/payments/payment.service.ts:298:    if (updatedPayment.booking.transporterId) {
+backend/src/payments/payment.service.ts:301:          transporterId: updatedPayment.booking.transporterId,
+backend/src/payments/payment.service.ts:332:        recipientId: updatedPayment.booking.transporterId,
+backend/src/payments/payment.service.ts:375:      transporterId: result.payment.booking.transporterId,
+backend/src/payments/payment.routes.ts:12:import { assertBookingAccess } from "../bookings/booking.service.js";
+backend/src/messages/message.routes.ts:10:import { assertBookingAccess } from "../bookings/booking.service.js";
+backend/src/messages/message.routes.ts:43:        recipientId !== booking.customerId &&
+backend/src/messages/message.routes.ts:44:        recipientId !== booking.transporterId
+backend/src/support/support.routes.ts:12:import { assertBookingAccess } from "../bookings/booking.service.js";
+backend/src/support/support.dto.ts:43:                id: ticket.booking.id,
+backend/src/support/support.dto.ts:44:                status: ticket.booking.status,
+backend/src/admin/admin.service.ts:39:    prisma.booking.count(),
+backend/src/admin/admin.service.ts:49:    prisma.booking.count({
+backend/src/admin/admin.service.ts:62:    prisma.booking.count({
+backend/src/admin/admin.service.ts:68:    prisma.booking.count({
+backend/src/admin/admin.service.ts:107:    prisma.booking.findMany({
+backend/src/admin/fleet.routes.ts:49:router.use(requireAdminModule("FLEET_MARKETPLACE"));
+backend/src/admin/live-trips.service.ts:24:  return prisma.booking.findMany({
+backend/src/admin/live-trips.service.ts:82:  return prisma.booking.findFirst({
+backend/src/admin/live-trips.service.ts:127:      prisma.booking.count({
+backend/src/admin/live-trips.service.ts:163:  const booking = await prisma.booking.findFirst({
+backend/src/admin/live-trips.service.ts:210:    bookingId: booking.id,
+backend/src/admin/live-trips.service.ts:211:    vehicleId: booking.vehicleId,
+backend/src/admin/fleet.service.ts:91:    module: "FLEET_MARKETPLACE",
+backend/src/admin/partner.service.ts:74:      prisma.booking.count({
+backend/src/admin/partner.service.ts:77:      prisma.booking.count({
+backend/src/admin/platform-config.routes.ts:20:  marketplaceVisibilityConfigSchema,
+backend/src/admin/platform-config.routes.ts:21:} from "../marketplace/visibility.policy.js";
+backend/src/admin/platform-config.routes.ts:76:      } else if (key === "MARKETPLACE_VISIBILITY_CONFIG") {
+backend/src/admin/platform-config.routes.ts:77:        marketplaceVisibilityConfigSchema.parse(input.value);
+backend/src/admin/api-management.service.ts:7:    prisma.booking.count(),
+backend/src/admin/database-health.service.ts:18:    prisma.booking.count(),
+backend/src/admin/backup-recovery.service.ts:16:    prisma.booking.count(),
+backend/src/admin/risk-fraud.service.ts:21:    prisma.booking.count({ where: { status: "CANCELLED" } }),
+backend/src/admin/reports.service.ts:28:    prisma.booking.count(),
+backend/src/admin/reports.service.ts:29:    prisma.booking.count({ where: { status: "COMPLETED" } }),
+backend/src/admin/reports.service.ts:30:    prisma.booking.count({ where: { status: "CANCELLED" } }),
+backend/src/admin/ai-automation.service.ts:14:    prisma.booking.count({
+backend/src/realtime/realtime.service.ts:16:  | "FLEET_MARKETPLACE"
+backend/src/realtime/socket-authorization.ts:23:  const booking = await prisma.booking.findUnique({
+backend/src/realtime/socket-authorization.ts:36:    booking.customerId === user.id ||
+backend/src/realtime/socket-authorization.ts:37:    booking.transporterId === user.id
+backend/src/realtime/socket-authorization.ts:49:  const booking = await prisma.booking.findUnique({
+backend/src/realtime/socket-authorization.ts:65:  if (booking.transporterId !== user.id) {
+backend/src/realtime/socket-authorization.ts:70:    booking.vehicle &&
+backend/src/realtime/socket-authorization.ts:71:    booking.vehicle.transporterId !== user.id
+backend/src/realtime/tracking.service.ts:14:    const booking = await tx.booking.findUnique({
+backend/src/realtime/tracking.service.ts:36:    if (booking.status !== "IN_TRANSIT") {
+backend/src/realtime/tracking.service.ts:40:    if (booking.transporterId !== input.transporterId) {
+backend/src/realtime/tracking.service.ts:44:    if (!booking.vehicleId || !booking.vehicle) {
+backend/src/realtime/tracking.service.ts:48:    if (booking.vehicle.transporterId !== input.transporterId) {
+backend/src/realtime/tracking.service.ts:56:        id: booking.vehicle.id,
+backend/src/realtime/tracking.service.ts:66:        bookingId: booking.id,
+backend/src/realtime/tracking.service.ts:67:        vehicleId: booking.vehicle.id,
+backend/src/realtime/tracking.service.ts:79:      bookingId: booking.id,
+backend/src/server.ts:11:import bookingRoutes from "./bookings/booking.routes.js";
+backend/src/server.ts:12:import marketplaceRoutes from "./marketplace/marketplace.routes.js";
+backend/src/server.ts:139:app.use("/api/marketplace", marketplaceRoutes);
+backend/src/events/event.routes.ts:12:import { assertBookingAccess } from "../bookings/booking.service.js";
+backend/src/settlements/settlement.service.ts:50:    if (!payment.booking.transporterId) {
+backend/src/settlements/settlement.service.ts:58:        id: payment.booking.transporterId,
+backend/src/settlements/settlement.dto.ts:29:    id: booking.id,
+backend/src/settlements/settlement.dto.ts:30:    status: booking.status,
+backend/src/settlements/settlement.dto.ts:31:    paymentStatus: booking.paymentStatus,
+backend/src/settlements/settlement.dto.ts:32:    fare: decimal(booking.fare),
+backend/src/settlements/settlement.dto.ts:33:    pickupLocation: booking.pickupLocation,
+backend/src/settlements/settlement.dto.ts:34:    destination: booking.destination,
+backend/src/marketplace/marketplace.validators.ts:7:export const createMarketplaceRequestSchema = z.object({
+backend/src/marketplace/marketplace.validators.ts:46:export const createMarketplaceBidSchema = z.object({
+backend/src/marketplace/marketplace.validators.ts:53:export const withdrawMarketplaceBidSchema = z.object({}).strict();
+backend/src/marketplace/marketplace.validators.ts:55:export const selectMarketplaceBidSchema = z.object({}).strict();
+backend/src/marketplace/marketplace.validators.ts:57:export const marketplaceVisibilityQuerySchema = z.object({
+backend/src/marketplace/marketplace.service.ts:6:async function expireMarketplaceLifecycle() {
+backend/src/marketplace/marketplace.service.ts:10:    const expiredBids = await tx.marketplaceBid.findMany({
+backend/src/marketplace/marketplace.service.ts:26:      await tx.marketplaceBid.updateMany({
+backend/src/marketplace/marketplace.service.ts:29:            in: expiredBids.map((bid) => bid.id),
+backend/src/marketplace/marketplace.service.ts:44:     * MarketplaceRequest.scheduledDate represents the planned
+backend/src/marketplace/marketplace.service.ts:45:     * shipment/pickup date. It is NOT the marketplace request's
+backend/src/marketplace/marketplace.service.ts:52:     * Only MarketplaceBid.expiresAt controls bid expiration.
+backend/src/marketplace/marketplace.service.ts:56:      expiredBidIds: expiredBids.map((bid) => bid.id),
+backend/src/marketplace/marketplace.service.ts:62:function serializeMarketplaceBid(bid: {
+backend/src/marketplace/marketplace.service.ts:90:    id: bid.id,
+backend/src/marketplace/marketplace.service.ts:91:    requestId: bid.requestId,
+backend/src/marketplace/marketplace.service.ts:92:    transporterId: bid.transporterId,
+backend/src/marketplace/marketplace.service.ts:93:    vehicleId: bid.vehicleId,
+backend/src/marketplace/marketplace.service.ts:94:    amount: bid.amount,
+backend/src/marketplace/marketplace.service.ts:95:    message: bid.message,
+backend/src/marketplace/marketplace.service.ts:96:    status: bid.status,
+backend/src/marketplace/marketplace.service.ts:97:    expiresAt: bid.expiresAt,
+backend/src/marketplace/marketplace.service.ts:98:    selectedAt: bid.selectedAt ?? null,
+backend/src/marketplace/marketplace.service.ts:99:    createdAt: bid.createdAt,
+backend/src/marketplace/marketplace.service.ts:100:    vehicle: bid.vehicle
+backend/src/marketplace/marketplace.service.ts:102:          id: bid.vehicle.id,
+backend/src/marketplace/marketplace.service.ts:103:          vehicleType: bid.vehicle.vehicleType,
+backend/src/marketplace/marketplace.service.ts:104:          vehicleClass: bid.vehicle.vehicleClass,
+backend/src/marketplace/marketplace.service.ts:107:    transporter: bid.transporter
+backend/src/marketplace/marketplace.service.ts:109:          id: bid.transporter.id,
+backend/src/marketplace/marketplace.service.ts:110:          firstName: bid.transporter.firstName,
+backend/src/marketplace/marketplace.service.ts:111:          lastName: bid.transporter.lastName,
+backend/src/marketplace/marketplace.service.ts:112:          transporterTier: bid.transporter.transporterTier,
+backend/src/marketplace/marketplace.service.ts:113:          rating: bid.transporter.transporterProfile?.rating ?? null,
+backend/src/marketplace/marketplace.service.ts:115:            bid.transporter.transporterProfile?.totalTrips ?? 0,
+backend/src/marketplace/marketplace.service.ts:121:export async function createMarketplaceRequest(data: {
+backend/src/marketplace/marketplace.service.ts:161:  const request = await prisma.marketplaceRequest.create({
+backend/src/marketplace/marketplace.service.ts:180:  publishEvent("marketplace", {
+backend/src/marketplace/marketplace.service.ts:182:    module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:183:    entityType: "MARKETPLACE_REQUEST",
+backend/src/marketplace/marketplace.service.ts:200:export async function getMarketplaceRequest(
+backend/src/marketplace/marketplace.service.ts:204:  await expireMarketplaceLifecycle();
+backend/src/marketplace/marketplace.service.ts:206:  const request = await prisma.marketplaceRequest.findFirst({
+backend/src/marketplace/marketplace.service.ts:279:    bids: request.bids.map(serializeMarketplaceBid),
+backend/src/marketplace/marketplace.service.ts:283:export async function createMarketplaceBid(data: {
+backend/src/marketplace/marketplace.service.ts:291:  await expireMarketplaceLifecycle();
+backend/src/marketplace/marketplace.service.ts:293:  const request = await prisma.marketplaceRequest.findUnique({
+backend/src/marketplace/marketplace.service.ts:305:    throw new Error("Marketplace request not found");
+backend/src/marketplace/marketplace.service.ts:309:    throw new Error("Marketplace request is no longer accepting bids");
+backend/src/marketplace/marketplace.service.ts:313:    throw new Error("Customer cannot bid on their own marketplace request");
+backend/src/marketplace/marketplace.service.ts:386:    const bid = await prisma.marketplaceBid.create({
+backend/src/marketplace/marketplace.service.ts:401:    publishEvent("marketplace", {
+backend/src/marketplace/marketplace.service.ts:402:      eventType: "BID_SUBMITTED",
+backend/src/marketplace/marketplace.service.ts:403:      module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:404:      entityType: "MARKETPLACE_BID",
+backend/src/marketplace/marketplace.service.ts:405:      entityId: bid.id,
+backend/src/marketplace/marketplace.service.ts:408:        bidId: bid.id,
+backend/src/marketplace/marketplace.service.ts:412:        amount: bid.amount,
+backend/src/marketplace/marketplace.service.ts:413:        status: bid.status,
+backend/src/marketplace/marketplace.service.ts:430:export async function withdrawMarketplaceBid(
+backend/src/marketplace/marketplace.service.ts:434:  await expireMarketplaceLifecycle();
+backend/src/marketplace/marketplace.service.ts:435:  const bid = await prisma.marketplaceBid.findUnique({
+backend/src/marketplace/marketplace.service.ts:446:    throw new Error("Marketplace bid not found");
+backend/src/marketplace/marketplace.service.ts:449:  if (bid.transporterId !== transporterId) {
+backend/src/marketplace/marketplace.service.ts:453:  if (bid.status !== "PENDING") {
+backend/src/marketplace/marketplace.service.ts:457:  const updated = await prisma.marketplaceBid.update({
+backend/src/marketplace/marketplace.service.ts:464:  publishEvent("marketplace", {
+backend/src/marketplace/marketplace.service.ts:465:    eventType: "BID_WITHDRAWN",
+backend/src/marketplace/marketplace.service.ts:466:    module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:467:    entityType: "MARKETPLACE_BID",
+backend/src/marketplace/marketplace.service.ts:480:export async function selectMarketplaceBid(
+backend/src/marketplace/marketplace.service.ts:485:  await expireMarketplaceLifecycle();
+backend/src/marketplace/marketplace.service.ts:488:     * Read the marketplace request and verify ownership.
+backend/src/marketplace/marketplace.service.ts:491:    const request = await tx.marketplaceRequest.findUnique({
+backend/src/marketplace/marketplace.service.ts:517:      throw new Error("Marketplace request not found");
+backend/src/marketplace/marketplace.service.ts:525:      throw new Error("Marketplace request is no longer accepting bid selection");
+backend/src/marketplace/marketplace.service.ts:531:    const bid = await tx.marketplaceBid.findFirst({
+backend/src/marketplace/marketplace.service.ts:549:      throw new Error("Marketplace bid not found");
+backend/src/marketplace/marketplace.service.ts:552:    if (bid.status !== "PENDING") {
+backend/src/marketplace/marketplace.service.ts:556:    if (bid.expiresAt && bid.expiresAt <= new Date()) {
+backend/src/marketplace/marketplace.service.ts:557:      throw new Error("Marketplace bid has expired");
+backend/src/marketplace/marketplace.service.ts:567:        id: bid.transporterId,
+backend/src/marketplace/marketplace.service.ts:604:        id: bid.vehicleId,
+backend/src/marketplace/marketplace.service.ts:620:    if (vehicle.transporterId !== bid.transporterId) {
+backend/src/marketplace/marketplace.service.ts:641:     * Claim the marketplace request first.
+backend/src/marketplace/marketplace.service.ts:646:    const claimedRequest = await tx.marketplaceRequest.updateMany({
+backend/src/marketplace/marketplace.service.ts:658:      throw new Error("Marketplace request has already been processed");
+backend/src/marketplace/marketplace.service.ts:667:        transporterId: bid.transporterId,
+backend/src/marketplace/marketplace.service.ts:681:     * Select exactly this bid.
+backend/src/marketplace/marketplace.service.ts:685:    const selectedBid = await tx.marketplaceBid.updateMany({
+backend/src/marketplace/marketplace.service.ts:687:        id: bid.id,
+backend/src/marketplace/marketplace.service.ts:697:    if (selectedBid.count !== 1) {
+backend/src/marketplace/marketplace.service.ts:704:    await tx.marketplaceBid.updateMany({
+backend/src/marketplace/marketplace.service.ts:708:          not: bid.id,
+backend/src/marketplace/marketplace.service.ts:718:     * Marketplace acceptance creates the operational Booking.
+backend/src/marketplace/marketplace.service.ts:720:     * The accepted bid amount is authoritative for this booking.
+backend/src/marketplace/marketplace.service.ts:725:    const booking = await tx.booking.create({
+backend/src/marketplace/marketplace.service.ts:728:        transporterId: bid.transporterId,
+backend/src/marketplace/marketplace.service.ts:729:        vehicleId: bid.vehicleId,
+backend/src/marketplace/marketplace.service.ts:736:        fare: bid.amount,
+backend/src/marketplace/marketplace.service.ts:757:     * Complete the marketplace <-> booking relationship.
+backend/src/marketplace/marketplace.service.ts:759:    const linkedRequest = await tx.marketplaceRequest.update({
+backend/src/marketplace/marketplace.service.ts:764:        agreedBidId: bid.id,
+backend/src/marketplace/marketplace.service.ts:765:        bookingId: booking.id,
+backend/src/marketplace/marketplace.service.ts:782:      transporterId: bid.transporterId,
+backend/src/marketplace/marketplace.service.ts:787:   * Publish marketplace events after the transaction commits.
+backend/src/marketplace/marketplace.service.ts:791:  publishEvent("marketplace", {
+backend/src/marketplace/marketplace.service.ts:792:    eventType: "BID_SELECTED",
+backend/src/marketplace/marketplace.service.ts:793:    module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:794:    entityType: "MARKETPLACE_BID",
+backend/src/marketplace/marketplace.service.ts:795:    entityId: result.bid.id,
+backend/src/marketplace/marketplace.service.ts:798:      bidId: result.bid.id,
+backend/src/marketplace/marketplace.service.ts:802:      amount: result.bid.amount,
+backend/src/marketplace/marketplace.service.ts:804:      bookingId: result.booking.id,
+backend/src/marketplace/marketplace.service.ts:808:  publishEvent("marketplace", {
+backend/src/marketplace/marketplace.service.ts:809:    eventType: "MARKETPLACE_REQUEST_AGREED",
+backend/src/marketplace/marketplace.service.ts:810:    module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:811:    entityType: "MARKETPLACE_REQUEST",
+backend/src/marketplace/marketplace.service.ts:816:      bidId: result.bid.id,
+backend/src/marketplace/marketplace.service.ts:817:      bookingId: result.booking.id,
+backend/src/marketplace/marketplace.service.ts:826:    entityId: result.booking.id,
+backend/src/marketplace/marketplace.service.ts:827:    bookingId: result.booking.id,
+backend/src/marketplace/marketplace.service.ts:830:      bookingId: result.booking.id,
+backend/src/marketplace/marketplace.service.ts:834:      status: result.booking.status,
+backend/src/marketplace/marketplace.service.ts:835:      fare: result.booking.fare,
+backend/src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+backend/src/marketplace/marketplace.service.ts:837:      marketplaceBidId: result.bid.id,
+backend/src/marketplace/marketplace.service.ts:843:    module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:851:      bookingId: result.booking.id,
+backend/src/marketplace/marketplace.routes.ts:9:  createMarketplaceRequestSchema,
+backend/src/marketplace/marketplace.routes.ts:10:  createMarketplaceBidSchema,
+backend/src/marketplace/marketplace.routes.ts:11:  withdrawMarketplaceBidSchema,
+backend/src/marketplace/marketplace.routes.ts:12:  selectMarketplaceBidSchema,
+backend/src/marketplace/marketplace.routes.ts:13:  marketplaceVisibilityQuerySchema,
+backend/src/marketplace/marketplace.routes.ts:14:} from "./marketplace.validators.js";
+backend/src/marketplace/marketplace.routes.ts:16:  createMarketplaceRequest,
+backend/src/marketplace/marketplace.routes.ts:17:  getMarketplaceRequest,
+backend/src/marketplace/marketplace.routes.ts:18:  createMarketplaceBid,
+backend/src/marketplace/marketplace.routes.ts:19:  withdrawMarketplaceBid,
+backend/src/marketplace/marketplace.routes.ts:20:  selectMarketplaceBid,
+backend/src/marketplace/marketplace.routes.ts:21:} from "./marketplace.service.js";
+backend/src/marketplace/marketplace.routes.ts:22:import { getVisibleMarketplaceLoads } from "./visibility.service.js";
+backend/src/marketplace/marketplace.routes.ts:34:      const query = marketplaceVisibilityQuerySchema.parse(
+backend/src/marketplace/marketplace.routes.ts:38:      const loads = await getVisibleMarketplaceLoads(
+backend/src/marketplace/marketplace.routes.ts:51:          error: "Invalid marketplace visibility query",
+backend/src/marketplace/marketplace.routes.ts:61:        message === "Only transporters can access marketplace visibility"
+backend/src/marketplace/marketplace.routes.ts:80:        message === "Invalid marketplace visibility radius" ||
+backend/src/marketplace/marketplace.routes.ts:82:          "Marketplace visibility radius cannot exceed",
+backend/src/marketplace/marketplace.routes.ts:104:      const input = createMarketplaceRequestSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:106:      const request = await createMarketplaceRequest({
+backend/src/marketplace/marketplace.routes.ts:137:      const request = await getMarketplaceRequest(
+backend/src/marketplace/marketplace.routes.ts:145:          error: "Marketplace request not found",
+backend/src/marketplace/marketplace.routes.ts:167:      const input = createMarketplaceBidSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:169:      const bid = await createMarketplaceBid({
+backend/src/marketplace/marketplace.routes.ts:192:        "Marketplace request is no longer accepting bids",
+backend/src/marketplace/marketplace.routes.ts:214:      selectMarketplaceBidSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:216:      const result = await selectMarketplaceBid(
+backend/src/marketplace/marketplace.routes.ts:239:        "Marketplace request is no longer accepting bid selection",
+backend/src/marketplace/marketplace.routes.ts:240:        "Marketplace request has already been processed",
+backend/src/marketplace/marketplace.routes.ts:242:        "Marketplace bid has expired",
+backend/src/marketplace/marketplace.routes.ts:267:      withdrawMarketplaceBidSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:269:      const bid = await withdrawMarketplaceBid(
+backend/src/marketplace/visibility.service.ts:3:  getMarketplaceVisibilityConfig,
+backend/src/marketplace/visibility.service.ts:41:    ReturnType<typeof getMarketplaceVisibilityConfig>
+backend/src/marketplace/visibility.service.ts:56:    ReturnType<typeof getMarketplaceVisibilityConfig>
+backend/src/marketplace/visibility.service.ts:92:export async function getVisibleMarketplaceLoads(
+backend/src/marketplace/visibility.service.ts:97:    await getMarketplaceVisibilityConfig();
+backend/src/marketplace/visibility.service.ts:107:      "Invalid marketplace visibility radius",
+backend/src/marketplace/visibility.service.ts:116:      `Marketplace visibility radius cannot exceed ${visibilityPolicy.maxRadiusKm} km`,
+backend/src/marketplace/visibility.service.ts:188:      "Only transporters can access marketplace visibility",
+backend/src/marketplace/visibility.service.ts:226:    await prisma.marketplaceRequest.findMany({
+backend/src/marketplace/visibility.policy.ts:6:export const marketplaceVisibilityConfigSchema = z
+backend/src/marketplace/visibility.policy.ts:49:export type MarketplaceVisibilityConfig = z.infer<
+backend/src/marketplace/visibility.policy.ts:50:  typeof marketplaceVisibilityConfigSchema
+backend/src/marketplace/visibility.policy.ts:53:const DEFAULT_MARKETPLACE_VISIBILITY_CONFIG: MarketplaceVisibilityConfig =
+backend/src/marketplace/visibility.policy.ts:85:export async function getMarketplaceVisibilityConfig(): Promise<MarketplaceVisibilityConfig> {
+backend/src/marketplace/visibility.policy.ts:89:    WHERE key = 'MARKETPLACE_VISIBILITY_CONFIG'
+backend/src/marketplace/visibility.policy.ts:96:    return DEFAULT_MARKETPLACE_VISIBILITY_CONFIG;
+backend/src/marketplace/visibility.policy.ts:100:    marketplaceVisibilityConfigSchema.safeParse(value);
+backend/src/marketplace/visibility.policy.ts:103:    return DEFAULT_MARKETPLACE_VISIBILITY_CONFIG;
+
+============================================================
+### MARKETPLACE TESTS
+============================================================
+
+----- FILE: backend/tests/marketplace.routes.test.ts -----
+import test, { mock } from "node:test";
+import assert from "node:assert/strict";
+
+const routerUseMock = mock.fn();
+const routerGetMock = mock.fn();
+const routerPostMock = mock.fn();
+
+const RouterMock = () => ({
+  use: routerUseMock,
+  get: routerGetMock,
+  post: routerPostMock,
+});
+
+mock.module("express", {
+  exports: {
+    Router: RouterMock,
+  },
+});
+
+const authenticateMock = mock.fn();
+
+const authorizeMiddlewares = new Map<
+  string,
+  ReturnType<typeof mock.fn>
+>();
+
+const authorizeMock = mock.fn((role: string) => {
+  const existing = authorizeMiddlewares.get(role);
+
+  if (existing) {
+    return existing;
+  }
+
+  const middleware = mock.fn();
+  authorizeMiddlewares.set(role, middleware);
+  return middleware;
+});
+
+const createMarketplaceRequestMock = mock.fn();
+const getMarketplaceRequestMock = mock.fn();
+const createMarketplaceBidMock = mock.fn();
+const withdrawMarketplaceBidMock = mock.fn();
+const selectMarketplaceBidMock = mock.fn();
+const getVisibleMarketplaceLoadsMock = mock.fn();
+
+mock.module("../src/middleware/auth.middleware.js", {
+  exports: {
+    authenticate: authenticateMock,
+    authorize: authorizeMock,
+  },
+});
+
+mock.module("../src/marketplace/marketplace.service.js", {
+  exports: {
+    createMarketplaceRequest: createMarketplaceRequestMock,
+    getMarketplaceRequest: getMarketplaceRequestMock,
+    createMarketplaceBid: createMarketplaceBidMock,
+    withdrawMarketplaceBid: withdrawMarketplaceBidMock,
+    selectMarketplaceBid: selectMarketplaceBidMock,
+  },
+});
+
+mock.module("../src/marketplace/visibility.service.js", {
+  exports: {
+    getVisibleMarketplaceLoads: getVisibleMarketplaceLoadsMock,
+  },
+});
+
+await import("../src/marketplace/marketplace.routes.js");
+
+function makeResponse() {
+  const res: any = {};
+
+  res.status = mock.fn(() => res);
+  res.json = mock.fn(() => res);
+
+  return res;
+}
+
+function getRoute(
+  method: "get" | "post",
+  path: string,
+) {
+  const calls =
+    method === "get"
+      ? routerGetMock.mock.calls
+      : routerPostMock.mock.calls;
+
+  const route = calls.find(
+    (call) => call.arguments[0] === path,
+  );
+
+  assert.ok(route);
+
+  return route;
+}
+
+test.beforeEach(() => {
+  createMarketplaceRequestMock.mock.resetCalls();
+  getMarketplaceRequestMock.mock.resetCalls();
+  createMarketplaceBidMock.mock.resetCalls();
+  withdrawMarketplaceBidMock.mock.resetCalls();
+  selectMarketplaceBidMock.mock.resetCalls();
+  getVisibleMarketplaceLoadsMock.mock.resetCalls();
+});
+
+test("marketplace router requires authentication", () => {
+  assert.equal(routerUseMock.mock.calls.length, 1);
+  assert.equal(
+    routerUseMock.mock.calls[0]?.arguments[0],
+    authenticateMock,
+  );
+});
+
+test("marketplace router registers all required endpoints", () => {
+  assert.deepEqual(
+    routerGetMock.mock.calls.map(
+      (call) => call.arguments[0],
+    ),
+    ["/loads", "/requests/:id"],
+  );
+
+  assert.deepEqual(
+    routerPostMock.mock.calls.map(
+      (call) => call.arguments[0],
+    ),
+    [
+      "/requests",
+      "/requests/:id/bids",
+      "/requests/:id/bids/:bidId/select",
+      "/bids/:id/withdraw",
+    ],
+  );
+});
+
+test("marketplace routes apply correct role authorization", () => {
+  const loadRoute = getRoute("get", "/loads");
+  const requestRoute = getRoute("post", "/requests");
+  const bidRoute = getRoute(
+    "post",
+    "/requests/:id/bids",
+  );
+  const selectRoute = getRoute(
+    "post",
+    "/requests/:id/bids/:bidId/select",
+  );
+  const withdrawRoute = getRoute(
+    "post",
+    "/bids/:id/withdraw",
+  );
+
+  assert.equal(
+    loadRoute.arguments[1],
+    authorizeMiddlewares.get("TRANSPORTER"),
+  );
+
+  assert.equal(
+    requestRoute.arguments[1],
+    authorizeMiddlewares.get("CUSTOMER"),
+  );
+
+  assert.equal(
+    bidRoute.arguments[1],
+    authorizeMiddlewares.get("TRANSPORTER"),
+  );
+
+  assert.equal(
+    selectRoute.arguments[1],
+    authorizeMiddlewares.get("CUSTOMER"),
+  );
+
+  assert.equal(
+    withdrawRoute.arguments[1],
+    authorizeMiddlewares.get("TRANSPORTER"),
+  );
+});
+
+test("POST /requests creates a marketplace request", async () => {
+  const route = getRoute("post", "/requests");
+
+  const handler = route.arguments.at(-1);
+
+  const request = {
+    pickupLocation: "Lagos",
+    destination: "Abuja",
+    pickupLatitude: 6.5244,
+    pickupLongitude: 3.3792,
+    destinationLatitude: 9.0765,
+    destinationLongitude: 7.3986,
+    cargoDescription: "General cargo",
+    truckCategory: "MEDIUM_TRUCK",
+    cargoCategory: "GENERAL",
+    cargoWeight: 2000,
+  };
+
+  const created = {
+    id: "request-1",
+    ...request,
+    customerId: "customer-1",
+    status: "OPEN",
+  };
+
+  createMarketplaceRequestMock.mock.mockImplementation(
+    async () => created,
+  );
+
+  const req: any = {
+    body: request,
+    user: {
+      id: "customer-1",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(
+    createMarketplaceRequestMock.mock.calls.length,
+    1,
+  );
+
+  assert.deepEqual(
+    createMarketplaceRequestMock.mock.calls[0]?.arguments[0],
+    {
+      ...request,
+      customerId: "customer-1",
+    },
+  );
+
+  assert.equal(res.status.mock.calls[0]?.arguments[0], 201);
+
+  assert.deepEqual(
+    res.json.mock.calls[0]?.arguments[0],
+    {
+      success: true,
+      data: created,
+    },
+  );
+});
+
+test("POST /requests rejects invalid request data", async () => {
+  const route = getRoute("post", "/requests");
+  const handler = route.arguments.at(-1);
+
+  const req: any = {
+    body: {
+      pickupLocation: "",
+      destination: "Abuja",
+    },
+    user: {
+      id: "customer-1",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(res.status.mock.calls[0]?.arguments[0], 400);
+
+  assert.equal(
+    res.json.mock.calls[0]?.arguments[0].success,
+    false,
+  );
+
+  assert.equal(
+    res.json.mock.calls[0]?.arguments[0].error,
+    "Invalid request data",
+  );
+
+  assert.equal(
+    createMarketplaceRequestMock.mock.calls.length,
+    0,
+  );
+});
+
+test("POST /requests/:id/bids creates a marketplace bid", async () => {
+  const route = getRoute(
+    "post",
+    "/requests/:id/bids",
+  );
+
+  const handler = route.arguments.at(-1);
+
+  const input = {
+    vehicleId: "550e8400-e29b-41d4-a716-446655440000",
+    amount: 140000,
+    message: "Available for pickup",
+  };
+
+  const created = {
+    id: "bid-1",
+    requestId: "request-1",
+    transporterId: "transporter-1",
+    ...input,
+    status: "PENDING",
+  };
+
+  createMarketplaceBidMock.mock.mockImplementation(
+    async () => created,
+  );
+
+  const req: any = {
+    params: {
+      id: "request-1",
+    },
+    body: input,
+    user: {
+      id: "transporter-1",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(
+    createMarketplaceBidMock.mock.calls.length,
+    1,
+  );
+
+  assert.deepEqual(
+    createMarketplaceBidMock.mock.calls[0]?.arguments[0],
+    {
+      ...input,
+      requestId: "request-1",
+      transporterId: "transporter-1",
+    },
+  );
+
+  assert.equal(res.status.mock.calls[0]?.arguments[0], 201);
+
+  assert.deepEqual(
+    res.json.mock.calls[0]?.arguments[0],
+    {
+      success: true,
+      data: created,
+    },
+  );
+});
+
+test("POST /requests/:id/bids maps duplicate bids to 409", async () => {
+  const route = getRoute(
+    "post",
+    "/requests/:id/bids",
+  );
+
+  const handler = route.arguments.at(-1);
+
+  createMarketplaceBidMock.mock.mockImplementation(
+    async () => {
+      throw new Error(
+        "Transporter has already submitted a bid for this request",
+      );
+    },
+  );
+
+  const req: any = {
+    params: {
+      id: "request-1",
+    },
+    body: {
+      vehicleId: "550e8400-e29b-41d4-a716-446655440000",
+      amount: 140000,
+    },
+    user: {
+      id: "transporter-1",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(res.status.mock.calls[0]?.arguments[0], 409);
+
+  assert.deepEqual(
+    res.json.mock.calls[0]?.arguments[0],
+    {
+      success: false,
+      error:
+        "Transporter has already submitted a bid for this request",
+    },
+  );
+});
+
+test("POST /requests/:id/bids/:bidId/select selects a bid", async () => {
+  const route = getRoute(
+    "post",
+    "/requests/:id/bids/:bidId/select",
+  );
+
+  const handler = route.arguments.at(-1);
+
+  const result = {
+    request: {
+      id: "request-1",
+      status: "MATCHED",
+    },
+    bid: {
+      id: "bid-1",
+      status: "SELECTED",
+    },
+    booking: {
+      id: "booking-1",
+    },
+  };
+
+  selectMarketplaceBidMock.mock.mockImplementation(
+    async () => result,
+  );
+
+  const req: any = {
+    params: {
+      id: "request-1",
+      bidId: "bid-1",
+    },
+    body: {},
+    user: {
+      id: "customer-1",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(
+    selectMarketplaceBidMock.mock.calls.length,
+    1,
+  );
+
+  assert.deepEqual(
+    selectMarketplaceBidMock.mock.calls[0]?.arguments,
+    [
+      "request-1",
+      "bid-1",
+      "customer-1",
+    ],
+  );
+
+  assert.equal(res.status.mock.calls[0]?.arguments[0], 200);
+
+  assert.deepEqual(
+    res.json.mock.calls[0]?.arguments[0],
+    {
+      success: true,
+      data: result,
+    },
+  );
+});
+
+test("POST /requests/:id/bids/:bidId/select maps ownership denial to 403", async () => {
+  const route = getRoute(
+    "post",
+    "/requests/:id/bids/:bidId/select",
+  );
+
+  const handler = route.arguments.at(-1);
+
+  selectMarketplaceBidMock.mock.mockImplementation(
+    async () => {
+      throw new Error("Access denied");
+    },
+  );
+
+  const req: any = {
+    params: {
+      id: "request-1",
+      bidId: "bid-1",
+    },
+    body: {},
+    user: {
+      id: "other-customer",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(res.status.mock.calls[0]?.arguments[0], 403);
+
+  assert.deepEqual(
+    res.json.mock.calls[0]?.arguments[0],
+    {
+      success: false,
+      error: "Access denied",
+    },
+  );
+});
+
+test("POST /bids/:id/withdraw withdraws a bid", async () => {
+  const route = getRoute(
+    "post",
+    "/bids/:id/withdraw",
+  );
+
+  const handler = route.arguments.at(-1);
+
+  const withdrawn = {
+    id: "bid-1",
+    status: "WITHDRAWN",
+  };
+
+  withdrawMarketplaceBidMock.mock.mockImplementation(
+    async () => withdrawn,
+  );
+
+  const req: any = {
+    params: {
+      id: "bid-1",
+    },
+    body: {},
+    user: {
+      id: "transporter-1",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(
+    withdrawMarketplaceBidMock.mock.calls.length,
+    1,
+  );
+
+  assert.deepEqual(
+    withdrawMarketplaceBidMock.mock.calls[0]?.arguments,
+    [
+      "bid-1",
+      "transporter-1",
+    ],
+  );
+
+  assert.deepEqual(
+    res.json.mock.calls[0]?.arguments[0],
+    {
+      success: true,
+      data: withdrawn,
+    },
+  );
+});
+
+test("GET /loads rejects invalid visibility query", async () => {
+  const route = getRoute("get", "/loads");
+  const handler = route.arguments.at(-1);
+
+  const req: any = {
+    query: {
+      radiusKm: "not-a-number",
+    },
+    user: {
+      id: "transporter-1",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(res.status.mock.calls[0]?.arguments[0], 400);
+
+  assert.equal(
+    res.json.mock.calls[0]?.arguments[0].success,
+    false,
+  );
+
+  assert.equal(
+    res.json.mock.calls[0]?.arguments[0].error,
+    "Invalid marketplace visibility query",
+  );
+
+  assert.equal(
+    getVisibleMarketplaceLoadsMock.mock.calls.length,
+    0,
+  );
+});
+
+----- FILE: backend/tests/marketplace.routes.test.ts.bak -----
+import test, { mock } from "node:test";
+import assert from "node:assert/strict";
+
+const routerUseMock = mock.fn();
+const routerGetMock = mock.fn();
+const routerPostMock = mock.fn();
+
+const RouterMock = () => ({
+  use: routerUseMock,
+  get: routerGetMock,
+  post: routerPostMock,
+});
+
+mock.module("express", {
+  exports: {
+    Router: RouterMock,
+  },
+});
+
+const authenticateMock = mock.fn();
+
+const authorizeMiddlewares = new Map<
+  string,
+  ReturnType<typeof mock.fn>
+>();
+
+const authorizeMock = mock.fn((role: string) => {
+  const existing = authorizeMiddlewares.get(role);
+
+  if (existing) {
+    return existing;
+  }
+
+  const middleware = mock.fn();
+  authorizeMiddlewares.set(role, middleware);
+  return middleware;
+});
+
+mock.module("../src/middleware/auth.middleware.js", {
+  exports: {
+    authenticate: authenticateMock,
+    authorize: authorizeMock,
+  },
+});
+
+mock.module("../src/marketplace/marketplace.service.js", {
+  exports: {
+    createMarketplaceRequest: mock.fn(),
+    getMarketplaceRequest: mock.fn(),
+    createMarketplaceBid: mock.fn(),
+    withdrawMarketplaceBid: mock.fn(),
+    selectMarketplaceBid: mock.fn(),
+  },
+});
+
+mock.module("../src/marketplace/visibility.service.js", {
+  exports: {
+    getVisibleMarketplaceLoads: mock.fn(),
+  },
+});
+
+await import("../src/marketplace/marketplace.routes.js");
+
+test("marketplace router requires authentication", () => {
+  assert.equal(routerUseMock.mock.calls.length, 1);
+  assert.equal(
+    routerUseMock.mock.calls[0]?.arguments[0],
+    authenticateMock,
+  );
+});
+
+test("marketplace router registers all required endpoints", () => {
+  assert.deepEqual(
+    routerGetMock.mock.calls.map(
+      (call) => call.arguments[0],
+    ),
+    ["/loads", "/requests/:id"],
+  );
+
+  assert.deepEqual(
+    routerPostMock.mock.calls.map(
+      (call) => call.arguments[0],
+    ),
+    [
+      "/requests",
+      "/requests/:id/bids",
+      "/requests/:id/bids/:bidId/select",
+      "/bids/:id/withdraw",
+    ],
+  );
+});
+
+test("marketplace routes apply correct role authorization", () => {
+  const loadRoute = routerGetMock.mock.calls.find(
+    (call) => call.arguments[0] === "/loads",
+  );
+
+  const requestRoute = routerPostMock.mock.calls.find(
+    (call) => call.arguments[0] === "/requests",
+  );
+
+  const bidRoute = routerPostMock.mock.calls.find(
+    (call) => call.arguments[0] === "/requests/:id/bids",
+  );
+
+  const selectRoute = routerPostMock.mock.calls.find(
+    (call) =>
+      call.arguments[0] ===
+      "/requests/:id/bids/:bidId/select",
+  );
+
+  const withdrawRoute = routerPostMock.mock.calls.find(
+    (call) =>
+      call.arguments[0] === "/bids/:id/withdraw",
+  );
+
+  assert.ok(loadRoute);
+  assert.ok(requestRoute);
+  assert.ok(bidRoute);
+  assert.ok(selectRoute);
+  assert.ok(withdrawRoute);
+
+  assert.equal(
+    loadRoute.arguments[1],
+    authorizeMiddlewares.get("TRANSPORTER"),
+  );
+
+  assert.equal(
+    requestRoute.arguments[1],
+    authorizeMiddlewares.get("CUSTOMER"),
+  );
+
+  assert.equal(
+    bidRoute.arguments[1],
+    authorizeMiddlewares.get("TRANSPORTER"),
+  );
+
+  assert.equal(
+    selectRoute.arguments[1],
+    authorizeMiddlewares.get("CUSTOMER"),
+  );
+
+  assert.equal(
+    withdrawRoute.arguments[1],
+    authorizeMiddlewares.get("TRANSPORTER"),
+  );
+});
+
+----- FILE: backend/tests/marketplace.service.test.ts -----
+import test, { mock } from "node:test";
+import assert from "node:assert/strict";
+
+const prismaMock = {
+  marketplaceRequest: {
+    create: mock.fn<(...args: any[]) => any>(),
+    findUnique: mock.fn<(...args: any[]) => any>(),
+    findFirst: mock.fn<(...args: any[]) => any>(),
+    findMany: mock.fn<(...args: any[]) => any>(),
+    update: mock.fn<(...args: any[]) => any>(),
+    updateMany: mock.fn<(...args: any[]) => any>(),
+  },
+
+  marketplaceBid: {
+    create: mock.fn<(...args: any[]) => any>(),
+    findUnique: mock.fn<(...args: any[]) => any>(),
+    findFirst: mock.fn<(...args: any[]) => any>(),
+    findMany: mock.fn<(...args: any[]) => any>(),
+    update: mock.fn<(...args: any[]) => any>(),
+    updateMany: mock.fn<(...args: any[]) => any>(),
+  },
+
+  user: {
+    findUnique: mock.fn<(...args: any[]) => any>(),
+  },
+
+  vehicle: {
+    findUnique: mock.fn<(...args: any[]) => any>(),
+    update: mock.fn<(...args: any[]) => any>(),
+    updateMany: mock.fn<(...args: any[]) => any>(),
+  },
+
+  booking: {
+    create: mock.fn<(...args: any[]) => any>(),
+  },
+
+  $transaction: mock.fn<(...args: any[]) => any>(),
+};
+
+const publishEventMock =
+  mock.fn<(...args: any[]) => any>();
+
+const estimateFareMock =
+  mock.fn<(...args: any[]) => any>();
+
+mock.module("../src/config/prisma.js", {
+  exports: {
+    default: prismaMock,
+    prisma: prismaMock,
+  },
+});
+
+mock.module("../src/realtime/event-bus.js", {
+  exports: {
+    publishEvent: publishEventMock,
+  },
+});
+
+mock.module("../src/pricing/pricing.service.js", {
+  exports: {
+    estimateFare: estimateFareMock,
+  },
+});
+
+const {
+  createMarketplaceRequest,
+  createMarketplaceBid,
+  withdrawMarketplaceBid,
+  selectMarketplaceBid,
+} = await import("../src/marketplace/marketplace.service.js");
+
+function resetMocks() {
+  for (const fn of [
+    prismaMock.marketplaceRequest.create,
+    prismaMock.marketplaceRequest.findUnique,
+    prismaMock.marketplaceRequest.findFirst,
+    prismaMock.marketplaceRequest.findMany,
+    prismaMock.marketplaceRequest.update,
+    prismaMock.marketplaceRequest.updateMany,
+
+    prismaMock.marketplaceBid.create,
+    prismaMock.marketplaceBid.findUnique,
+    prismaMock.marketplaceBid.findFirst,
+    prismaMock.marketplaceBid.findMany,
+    prismaMock.marketplaceBid.update,
+    prismaMock.marketplaceBid.updateMany,
+
+    prismaMock.user.findUnique,
+
+    prismaMock.vehicle.findUnique,
+    prismaMock.vehicle.update,
+    prismaMock.vehicle.updateMany,
+
+    prismaMock.booking.create,
+
+    prismaMock.$transaction,
+
+    publishEventMock,
+    estimateFareMock,
+  ]) {
+    fn.mock.resetCalls();
+  }
+}
+
+test.beforeEach(() => {
+  resetMocks();
+
+  prismaMock.$transaction.mock.mockImplementation(
+    async (callback: any) => callback(prismaMock),
+  );
+
+  estimateFareMock.mock.mockImplementation(
+    async () => ({
+      fare: 150000,
+    }),
+  );
+
+  prismaMock.marketplaceBid.findMany.mock.mockImplementation(
+    async () => [],
+  );
+
+  prismaMock.marketplaceRequest.findMany.mock.mockImplementation(
+    async () => [],
+  );
+});
+
+test("marketplace test harness loads successfully", () => {
+  assert.equal(typeof createMarketplaceRequest, "function");
+  assert.equal(typeof createMarketplaceBid, "function");
+  assert.equal(typeof withdrawMarketplaceBid, "function");
+  assert.equal(typeof selectMarketplaceBid, "function");
+});
+
+test("createMarketplaceRequest creates an OPEN marketplace load", async () => {
+  const request = {
+    id: "request-1",
+    customerId: "customer-1",
+    pickupLocation: "Lagos",
+    destination: "Abuja",
+    pickupLatitude: 6.5244,
+    pickupLongitude: 3.3792,
+    destinationLatitude: 9.0765,
+    destinationLongitude: 7.3986,
+    cargoDescription: "General cargo",
+    truckCategory: "MEDIUM_TRUCK",
+    cargoCategory: "GENERAL",
+    cargoWeight: 2000,
+    scheduledDate: null,
+    estimatedFare: 150000,
+    status: "OPEN",
+  };
+
+  prismaMock.marketplaceRequest.create.mock.mockImplementation(
+    async () => request,
+  );
+
+  const result = await createMarketplaceRequest({
+    customerId: "customer-1",
+    pickupLocation: "Lagos",
+    destination: "Abuja",
+    pickupLatitude: 6.5244,
+    pickupLongitude: 3.3792,
+    destinationLatitude: 9.0765,
+    destinationLongitude: 7.3986,
+    cargoDescription: "General cargo",
+    truckCategory: "MEDIUM_TRUCK",
+    cargoCategory: "GENERAL",
+    cargoWeight: 2000,
+  });
+
+  assert.equal(result.id, "request-1");
+  assert.equal(result.customerId, "customer-1");
+  assert.equal(result.status, "OPEN");
+
+  assert.equal(
+    estimateFareMock.mock.calls.length,
+    1,
+  );
+
+  assert.equal(
+    prismaMock.marketplaceRequest.create.mock.calls.length,
+    1,
+  );
+
+  assert.equal(
+    publishEventMock.mock.calls.length,
+    1,
+  );
+
+  assert.equal(
+    publishEventMock.mock.calls[0]?.arguments[1]?.eventType,
+    "LOAD_POSTED",
+  );
+});
+
+test("createMarketplaceBid rejects non-transporter users", async () => {
+  prismaMock.marketplaceRequest.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "request-1",
+      status: "OPEN",
+      truckCategory: "MEDIUM_TRUCK",
+      scheduledDate: null,
+      customerId: "customer-1",
+    }),
+  );
+
+  prismaMock.user.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "customer-2",
+      role: "CUSTOMER",
+      status: "ACTIVE",
+      transporterProfile: null,
+    }),
+  );
+
+  await assert.rejects(
+    createMarketplaceBid({
+      requestId: "request-1",
+      transporterId: "customer-2",
+      vehicleId: "vehicle-1",
+      amount: 140000,
+    }),
+    {
+      message: "Only transporters can submit bids",
+    },
+  );
+
+  assert.equal(
+    prismaMock.marketplaceBid.create.mock.calls.length,
+    0,
+  );
+});
+
+test("createMarketplaceBid creates a pending bid for an approved transporter vehicle", async () => {
+  prismaMock.marketplaceRequest.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "request-1",
+      status: "OPEN",
+      truckCategory: "MEDIUM_TRUCK",
+      scheduledDate: null,
+      customerId: "customer-1",
+    }),
+  );
+
+  prismaMock.user.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "transporter-1",
+      role: "TRANSPORTER",
+      status: "ACTIVE",
+      transporterProfile: {
+        verificationStatus: "APPROVED",
+      },
+    }),
+  );
+
+  prismaMock.vehicle.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "vehicle-1",
+      transporterId: "transporter-1",
+      vehicleType: "MEDIUM_TRUCK",
+      vehicleClass: "MEDIUM_TRUCK",
+      verificationStatus: "APPROVED",
+      availabilityStatus: "AVAILABLE",
+    }),
+  );
+
+  const bid = {
+    id: "bid-1",
+    requestId: "request-1",
+    transporterId: "transporter-1",
+    vehicleId: "vehicle-1",
+    amount: 140000,
+    message: "Ready for this shipment",
+    status: "PENDING",
+    expiresAt: null,
+    selectedAt: null,
+    createdAt: new Date(),
+    vehicle: {
+      id: "vehicle-1",
+      vehicleType: "MEDIUM_TRUCK",
+      vehicleClass: "MEDIUM_TRUCK",
+    },
+  };
+
+  prismaMock.marketplaceBid.create.mock.mockImplementation(
+    async () => bid,
+  );
+
+  const result = await createMarketplaceBid({
+    requestId: "request-1",
+    transporterId: "transporter-1",
+    vehicleId: "vehicle-1",
+    amount: 140000,
+    message: "Ready for this shipment",
+  });
+
+  assert.equal(result.id, "bid-1");
+  assert.equal(result.status, "PENDING");
+  assert.equal(result.transporterId, "transporter-1");
+  assert.equal(result.vehicleId, "vehicle-1");
+
+  assert.equal(
+    prismaMock.marketplaceBid.create.mock.calls.length,
+    1,
+  );
+
+  const createCall =
+    prismaMock.marketplaceBid.create.mock.calls[0]?.arguments[0];
+
+  assert.equal(createCall.data.requestId, "request-1");
+  assert.equal(createCall.data.transporterId, "transporter-1");
+  assert.equal(createCall.data.vehicleId, "vehicle-1");
+  assert.equal(createCall.data.amount, 140000);
+  assert.equal(createCall.data.status, "PENDING");
+
+  assert.equal(
+    publishEventMock.mock.calls.length,
+    1,
+  );
+
+  assert.equal(
+    publishEventMock.mock.calls[0]?.arguments[1]?.eventType,
+    "BID_SUBMITTED",
+  );
+});
+
+test("createMarketplaceBid rejects a duplicate transporter bid", async () => {
+  prismaMock.marketplaceRequest.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "request-1",
+      status: "OPEN",
+      truckCategory: "MEDIUM_TRUCK",
+      scheduledDate: null,
+      customerId: "customer-1",
+    }),
+  );
+
+  prismaMock.user.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "transporter-1",
+      role: "TRANSPORTER",
+      status: "ACTIVE",
+      transporterProfile: {
+        verificationStatus: "APPROVED",
+      },
+    }),
+  );
+
+  prismaMock.vehicle.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "vehicle-1",
+      transporterId: "transporter-1",
+      vehicleType: "MEDIUM_TRUCK",
+      vehicleClass: "MEDIUM_TRUCK",
+      verificationStatus: "APPROVED",
+      availabilityStatus: "AVAILABLE",
+    }),
+  );
+
+  prismaMock.marketplaceBid.create.mock.mockImplementation(
+    async () => {
+      throw new Error("Unique constraint failed on the fields: (`requestId`,`transporterId`)");
+    },
+  );
+
+  await assert.rejects(
+    createMarketplaceBid({
+      requestId: "request-1",
+      transporterId: "transporter-1",
+      vehicleId: "vehicle-1",
+      amount: 140000,
+    }),
+    {
+      message: "Transporter has already submitted a bid for this request",

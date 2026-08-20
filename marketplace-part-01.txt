@@ -1,0 +1,3626 @@
+            },
+          },
+          include: {
+            plan: {
+              select: {
+                name: true,
+              },
+            },
+          },
+          orderBy: {
+            currentPeriodEnd: "desc",
+          },
+          take: 1,
+        },
+      },
+    });
+
+  if (!transporter) {
+    throw new Error("Transporter not found");
+  }
+
+  if (transporter.role !== "TRANSPORTER") {
+    throw new Error(
+      "Only transporters can access marketplace visibility",
+    );
+  }
+
+  if (transporter.status !== "ACTIVE") {
+    throw new Error(
+      "Transporter account is not active",
+    );
+  }
+
+  if (
+    visibilityPolicy.requireApprovedTransporter &&
+    (
+      !transporter.transporterProfile ||
+      transporter.transporterProfile
+        .verificationStatus !== "APPROVED"
+    )
+  ) {
+    throw new Error(
+      "Transporter is not approved",
+    );
+  }
+
+  const subscriptionBoostValue =
+    subscriptionBoost(
+      transporter.subscriptions[0]?.plan.name,
+      visibilityPolicy,
+    );
+
+  const transporterTierScore =
+    tierScore(
+      transporter.transporterTier,
+      visibilityPolicy,
+    );
+
+  const now = new Date();
+
+  const loads =
+    await prisma.marketplaceRequest.findMany({
+      where: {
+        status: "OPEN",
+        OR: [
+          {
+            scheduledDate: null,
+          },
+          {
+            scheduledDate: {
+              gt: now,
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        customerId: true,
+        bookingId: true,
+        cargoDescription: true,
+        truckCategory: true,
+        cargoCategory: true,
+        cargoWeight: true,
+        pickupLocation: true,
+        destination: true,
+        pickupLatitude: true,
+        pickupLongitude: true,
+        destinationLatitude: true,
+        destinationLongitude: true,
+        scheduledDate: true,
+        estimatedFare: true,
+        status: true,
+        agreedBidId: true,
+        createdAt: true,
+        updatedAt: true,
+        closedAt: true,
+
+        customer: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+  const visible = loads
+    .map((load) => {
+      /*
+       * First establish whether the transporter has at least
+       * one approved/available vehicle capable of handling
+       * this load.
+       */
+      const matchingVehicles =
+        transporter.vehicles.filter(
+          (vehicle) =>
+            vehicle.vehicleType ===
+              load.truckCategory ||
+            vehicle.vehicleClass ===
+              load.truckCategory,
+        );
+
+      if (matchingVehicles.length === 0) {
+        return null;
+      }
+
+      /*
+       * Only vehicles with real, valid GPS coordinates can
+       * participate in geographic distance calculation.
+       */
+      const locatedVehicles =
+        matchingVehicles
+          .filter((vehicle) =>
+            hasValidCoordinates(
+              vehicle.currentLatitude,
+              vehicle.currentLongitude,
+            ),
+          )
+          .map((vehicle) => {
+            const distance =
+              distanceKm(
+                Number(load.pickupLatitude),
+                Number(load.pickupLongitude),
+                Number(vehicle.currentLatitude),
+                Number(vehicle.currentLongitude),
+              );
+
+            return {
+              vehicle,
+              distanceKm: distance,
+            };
+          })
+          .filter((item) =>
+            Number.isFinite(item.distanceKm),
+          )
+          .sort(
+            (a, b) =>
+              a.distanceKm -
+              b.distanceKm,
+          );
+
+      const nearestVehicle =
+        locatedVehicles[0];
+
+      /*
+       * When geographic location is required, a load is visible
+       * only when a real vehicle location exists and is inside
+       * the configured radius.
+       */
+      if (
+        visibilityPolicy.requireVehicleLocation &&
+        (
+          !nearestVehicle ||
+          nearestVehicle.distanceKm >
+            effectiveRadiusKm
+        )
+      ) {
+        return null;
+      }
+
+      return {
+        load,
+        nearestVehicle,
+        subscriptionBoost:
+          subscriptionBoostValue,
+        tierScore:
+          transporterTierScore,
+      };
+    })
+    .filter(
+      (
+        item,
+      ): item is NonNullable<typeof item> =>
+        item !== null,
+    )
+    .sort((a, b) => {
+      const boostDifference =
+        b.subscriptionBoost -
+        a.subscriptionBoost;
+
+      if (boostDifference !== 0) {
+        return boostDifference;
+      }
+
+      const tierDifference =
+        b.tierScore -
+        a.tierScore;
+
+      if (tierDifference !== 0) {
+        return tierDifference;
+      }
+
+      /*
+       * Real geographic distance is used when both loads have
+       * a calculated nearest vehicle. Missing location is sorted
+       * after geographically located loads rather than causing
+       * a runtime error.
+       */
+      const aDistance =
+        a.nearestVehicle?.distanceKm ??
+        Number.POSITIVE_INFINITY;
+
+      const bDistance =
+        b.nearestVehicle?.distanceKm ??
+        Number.POSITIVE_INFINITY;
+
+      const distanceDifference =
+        aDistance - bDistance;
+
+      if (distanceDifference !== 0) {
+        return distanceDifference;
+      }
+
+      /*
+       * Finally use estimated fare as a deterministic ranking
+       * fallback.
+       */
+      return (
+        Number(b.load.estimatedFare ?? 0) -
+        Number(a.load.estimatedFare ?? 0)
+      );
+    });
+
+  return visible.map((item) => ({
+    ...item.load,
+
+    visibility: {
+      /*
+       * This is the actual calculated distance from the
+       * nearest eligible vehicle's current GPS location to
+       * the load pickup location.
+       *
+       * null means no usable vehicle GPS position was available.
+       */
+      distanceKm: item.nearestVehicle
+        ? Number(
+            item.nearestVehicle.distanceKm.toFixed(
+              2,
+            ),
+          )
+        : null,
+
+      subscriptionBoost:
+        item.subscriptionBoost,
+
+      transporterTier:
+        transporter.transporterTier,
+    },
+  }));
+}
+
+----- FILE: backend/src/realtime/realtime.service.ts -----
+export type AdminRealtimeModule =
+  | "PLATFORM_OVERVIEW"
+  | "VERIFICATION_CENTER"
+  | "CONTENT_MANAGEMENT"
+  | "SUBSCRIPTION_BILLING"
+  | "MARKETING_CENTER"
+  | "AI_AUTOMATION"
+  | "FEATURE_MANAGEMENT"
+  | "DEVELOPER_CONSOLE"
+  | "BACKUP_RECOVERY"
+  | "ROLE_PERMISSION"
+  | "PLATFORM_CONFIG"
+  | "SUPPORT_CARE"
+  | "NOTIFICATION_CENTER"
+  | "FINANCIAL_OPERATIONS"
+  | "FLEET_MARKETPLACE"
+  | "PARTNER_MANAGEMENT"
+  | "RISK_FRAUD"
+  | "REPORTS_CENTER"
+  | "ACTIVITY_TIMELINE"
+  | "LIVE_TRIPS"
+  | "ERROR_CENTER"
+  | "API_MANAGEMENT"
+  | "SECURITY_CENTER"
+  | "DATABASE_HEALTH";
+
+export type AdminRealtimeEvent = {
+  eventId: string;
+  eventType: string;
+  module: AdminRealtimeModule;
+  actorId?: string;
+  entityType?: string;
+  entityId?: string;
+  bookingId?: string;
+  timestamp: string;
+  data?: unknown;
+};
+
+export function initializeRealtime(_server?: unknown): void {
+  // Socket.IO delivery is initialized by socket-events.ts.
+}
+
+export async function publishAdminEvent(
+  event: Omit<AdminRealtimeEvent, "eventId" | "timestamp">,
+) {
+  const { publishEvent } = await import("./event-bus.js");
+
+  publishEvent("admin", event);
+}
+
+export async function publishBookingEvent(
+  bookingId: string,
+  event: Omit<
+    AdminRealtimeEvent,
+    "eventId" | "timestamp" | "bookingId"
+  >,
+) {
+  const { publishEvent } = await import("./event-bus.js");
+
+  publishEvent("booking", {
+    ...event,
+    bookingId,
+  });
+}
+
+----- FILE: backend/src/server.ts -----
+import express from "express";
+import { createServer } from "node:http";
+import { Server } from "socket.io";
+import jwt from "jsonwebtoken";
+import { prisma } from "./config/prisma.js";
+import { AdminModule } from "../generated/prisma/enums.js";
+import documentRoutes from "./documents/document.routes.js";
+import vehicleRoutes from "./vehicles/vehicle.routes.js";
+import transporterRoutes from "./transporters/transporter.routes.js";
+import walletRoutes from "./wallet/wallet.routes.js";
+import bookingRoutes from "./bookings/booking.routes.js";
+import marketplaceRoutes from "./marketplace/marketplace.routes.js";
+import messageRoutes from "./messages/message.routes.js";
+import notificationRoutes from "./notifications/notification.routes.js";
+import supportRoutes from "./support/support.routes.js";
+import disputeRoutes from "./disputes/dispute.routes.js";
+import eventRoutes from "./events/event.routes.js";
+import verificationRoutes from "./verification/verification.routes.js";
+import youverifyWebhookRoutes from "./verification/youverify/youverify.webhook.routes.js";
+import paymentRoutes from "./payments/payment.routes.js";
+import subscriptionRoutes from "./subscriptions/subscription.routes.js";
+import adminRoutes from "./admin/admin.routes.js";
+import adminPlatformConfigRoutes from "./admin/platform-config.routes.js";
+import adminRolePermissionRoutes from "./admin/role-permission.routes.js";
+import adminSecurityRoutes from "./admin/security.routes.js";
+import adminSupportRoutes from "./admin/support.routes.js";
+import adminNotificationRoutes from "./admin/notification.routes.js";
+import adminFinancialRoutes from "./admin/financial.routes.js";
+import adminMarketingRoutes from "./admin/marketing.routes.js";
+import adminLiveTripsRoutes from "./admin/live-trips.routes.js";
+import adminVerificationRoutes from "./admin/verification.routes.js";
+import adminFleetRoutes from "./admin/fleet.routes.js";
+import adminPartnerRoutes from "./admin/partner.routes.js";
+import adminErrorRoutes from "./admin/error.routes.js";
+import adminApiManagementRoutes from "./admin/api-management.routes.js";
+import adminDatabaseHealthRoutes from "./admin/database-health.routes.js";
+import adminBackupRecoveryRoutes from "./admin/backup-recovery.routes.js";
+import adminRiskFraudRoutes from "./admin/risk-fraud.routes.js";
+import adminReportsRoutes from "./admin/reports.routes.js";
+import adminAIAutomationRoutes from "./admin/ai-automation.routes.js";
+import adminSubscriptionRoutes from "./admin/subscription.routes.js";
+import contentRoutes from "./content/content.routes.js";
+import marketingRoutes from "./marketing/marketing.routes.js";
+import { initializeRealtime } from "./realtime/realtime.service.js";
+import { initializeSocketEvents } from "./realtime/socket-events.js";
+import { recordVehicleLocation } from "./realtime/tracking.service.js";
+import {
+  canAccessBooking,
+  canUpdateVehicleLocation,
+  isValidCoordinates,
+} from "./realtime/socket-authorization.js";
+import {
+  applySecurityFoundation,
+  applySecurityErrorHandler,
+} from "./middleware/security-foundation.middleware.js";
+
+import { env } from "./config/env.js";
+import { applicationErrorMiddleware } from "./middleware/error.middleware.js";
+import authRoutes from "./routes/auth.routes.js";
+import userRoutes from "./routes/user.routes.js";
+const app = express();
+const httpServer = createServer(app);
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: env.CLIENT_URL || "*",
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  },
+});
+
+io.use(async (socket, next) => {
+  try {
+    const authToken = socket.handshake.auth?.token as string | undefined;
+    const header = socket.handshake.headers.authorization;
+    const token =
+      authToken ||
+      (typeof header === "string" && header.startsWith("Bearer ")
+        ? header.slice(7)
+        : undefined);
+
+    if (!token) {
+      return next(new Error("Authentication required"));
+    }
+
+    const payload = jwt.verify(token, env.JWT_ACCESS_SECRET);
+
+    if (
+      typeof payload !== "object" ||
+      payload === null ||
+      typeof payload.sub !== "string" ||
+      payload.sub.length === 0 ||
+      typeof payload.role !== "string" ||
+      payload.role.length === 0 ||
+      payload.type !== "access"
+    ) {
+      return next(new Error("Invalid access token"));
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: {
+        id: true,
+        role: true,
+        status: true,
+        adminProfile: {
+          select: {
+            status: true,
+            isSuperAdministrator: true,
+            administratorType: true,
+            assignedModules: true,
+          },
+        },
+      },
+    });
+
+    if (!user || user.status !== "ACTIVE") {
+      return next(new Error("Account is not active"));
+    }
+
+    socket.data.user = user;
+
+    if (user.role === "ADMIN") {
+      if (!user.adminProfile || user.adminProfile.status !== "ACTIVE") {
+        return next(new Error("Administrator account is not active"));
+      }
+    }
+
+    next();
+  } catch {
+    next(new Error("Invalid authentication"));
+  }
+});
+
+initializeRealtime(io);
+initializeSocketEvents(io);
+
+applySecurityFoundation(app);
+app.use("/api/bookings", bookingRoutes);
+app.use("/api/marketplace", marketplaceRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/documents", documentRoutes);
+app.use("/api/verification/youverify", youverifyWebhookRoutes);
+app.use(
+  "/api/verification",
+  verificationRoutes,
+);
+app.use(
+  "/api/payments",
+  paymentRoutes,
+);
+app.use("/api/vehicles", vehicleRoutes);
+app.use("/api/transporters", transporterRoutes);
+app.use("/api/wallet", walletRoutes);
+app.use("/api/subscriptions", subscriptionRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/admin/platform-config", adminPlatformConfigRoutes);
+app.use("/api/admin/roles", adminRolePermissionRoutes);
+app.use("/api/admin/security", adminSecurityRoutes);
+app.use("/api/admin/support", adminSupportRoutes);
+app.use("/api/admin/notifications", adminNotificationRoutes);
+app.use("/api/admin/financial", adminFinancialRoutes);
+app.use("/api/admin/subscriptions", adminSubscriptionRoutes);
+app.use("/api/admin/marketing", adminMarketingRoutes);
+app.use("/api/admin/live-trips", adminLiveTripsRoutes);
+app.use("/api/admin/verification", adminVerificationRoutes);
+app.use("/api/admin/fleet", adminFleetRoutes);
+app.use("/api/admin/partners", adminPartnerRoutes);
+app.use("/api/admin/errors", adminErrorRoutes);
+app.use("/api/admin/api-management", adminApiManagementRoutes);
+app.use("/api/admin/database-health", adminDatabaseHealthRoutes);
+app.use("/api/admin/backup-recovery", adminBackupRecoveryRoutes);
+app.use("/api/admin/risk-fraud", adminRiskFraudRoutes);
+app.use("/api/admin/reports", adminReportsRoutes);
+app.use("/api/admin/ai-automation", adminAIAutomationRoutes);
+app.use("/api/admin/content", contentRoutes);
+app.use("/api/marketing", marketingRoutes);
+app.use("/api/messages", messageRoutes);
+app.use(
+  "/api/notifications",
+  notificationRoutes,
+);
+app.use(
+  "/api/support",
+  supportRoutes,
+);
+app.use(
+  "/api/disputes",
+  disputeRoutes,
+);
+app.use(
+  "/api/events",
+  eventRoutes,
+);
+app.use(applicationErrorMiddleware);
+
+applySecurityErrorHandler(app);
+
+app.get("/health", (_req, res) => {
+  res.json({
+    success: true,
+    service: "TransConet-Apex1-backend",
+    status: "healthy",
+  });
+});
+
+io.on("connection", (socket) => {
+  console.log(`Realtime client connected: ${socket.id}`);
+  socket.on("join-booking", async (bookingId: string) => {
+    const user = socket.data.user;
+
+    if (!user) {
+      socket.emit("booking:access-denied", {
+        error: "Authentication required",
+      });
+      return;
+    }
+
+    const allowed = await canAccessBooking(
+      user,
+      bookingId,
+    );
+
+    if (!allowed) {
+      socket.emit("booking:access-denied", {
+        error: "Access denied for this booking",
+      });
+      return;
+    }
+
+    socket.join(bookingId);
+
+    console.log(
+      `${socket.id} joined booking ${bookingId}`,
+    );
+  });
+
+  socket.on("join-administration", () => {
+    const user = socket.data.user;
+
+    if (user?.role !== "ADMIN" || !user.adminProfile) {
+      socket.emit("admin:access-denied", {
+        error: "Administrator access required",
+      });
+      return;
+    }
+
+    socket.join("administration");
+
+    console.log(
+      `${socket.id} joined administration`,
+    );
+  });
+
+  socket.on(
+    "join-admin-module",
+    (module: string) => {
+      const user = socket.data.user;
+      const admin = user?.adminProfile;
+
+      if (user?.role !== "ADMIN" || !admin || admin.status !== "ACTIVE") {
+        socket.emit("admin:access-denied", {
+          error: "Administrator access required",
+        });
+        return;
+      }
+
+      if (!Object.values(AdminModule).includes(module as AdminModule)) {
+        socket.emit("admin:access-denied", {
+          error: "Invalid administration module",
+        });
+        return;
+      }
+
+      const allowed =
+        admin.isSuperAdministrator ||
+        admin.administratorType === "SUPER_ADMIN" ||
+        admin.assignedModules.includes(module as AdminModule);
+
+      if (!allowed) {
+        socket.emit("admin:access-denied", {
+          error: `Access denied for ${module}`,
+        });
+        return;
+      }
+
+      socket.join(`admin:${module}`);
+
+      console.log(
+        `${socket.id} joined admin module ${module}`,
+      );
+    },
+  );
+
+  socket.on(
+    "leave-admin-module",
+    (module: string) => {
+      socket.leave(`admin:${module}`);
+
+      console.log(
+        `${socket.id} left admin module ${module}`,
+      );
+    },
+  );
+
+  socket.on("leave-booking", (bookingId: string) => {
+    socket.leave(bookingId);
+
+    console.log(
+      `${socket.id} left booking ${bookingId}`,
+    );
+  });
+  socket.on(
+    "vehicle-location-update",
+    async (data: {
+      bookingId: string;
+      latitude: number;
+      longitude: number;
+      speed?: number;
+      heading?: number;
+      accuracy?: number;
+    }) => {
+      try {
+        const user = socket.data.user;
+
+        if (!user) {
+          socket.emit("vehicle:access-denied", {
+            error: "Authentication required",
+          });
+          return;
+        }
+
+        if (
+          !data ||
+          typeof data.bookingId !== "string" ||
+          !isValidCoordinates(
+            data.latitude,
+            data.longitude,
+          )
+        ) {
+          socket.emit("vehicle:update-rejected", {
+            error: "Invalid vehicle location",
+          });
+          return;
+        }
+
+        const allowed =
+          await canUpdateVehicleLocation(
+            user,
+            data.bookingId,
+          );
+
+        if (!allowed) {
+          socket.emit("vehicle:access-denied", {
+            error:
+              "Only the assigned transporter can update this vehicle location",
+          });
+          return;
+        }
+
+        const location =
+          await recordVehicleLocation({
+            transporterId: user.id,
+            bookingId: data.bookingId,
+            latitude: data.latitude,
+            longitude: data.longitude,
+            speed: data.speed,
+            heading: data.heading,
+            accuracy: data.accuracy,
+          });
+
+        io.to(data.bookingId).emit(
+          "vehicle-location",
+          location,
+        );
+
+        socket.emit("vehicle:location-updated", location);
+      } catch (error) {
+        socket.emit("vehicle:update-rejected", {
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to update vehicle location",
+        });
+      }
+    },
+  );
+});
+httpServer.listen(env.PORT, "0.0.0.0", () => {
+  console.log(
+    `TransConet API running on port ${env.PORT}`,
+  );
+});
+
+----- FILE: backend/src/vehicles/vehicle.service.ts -----
+import { prisma } from "../config/prisma.js";
+import type { VehicleClass } from "../../generated/prisma/enums.js";
+import { publishAdminEvent } from "../realtime/realtime.service.js";
+
+export async function createVehicle(data: {
+  transporterId: string;
+  registrationNumber: string;
+  vehicleType: string;
+  vehicleClass: VehicleClass;
+}) {
+  const vehicle = await prisma.vehicle.create({ data });
+
+  publishAdminEvent({
+    eventType: "vehicle.created",
+    module: "FLEET_MARKETPLACE",
+    actorId: data.transporterId,
+    entityType: "VEHICLE",
+    entityId: vehicle.id,
+    data: vehicle,
+  });
+
+  return vehicle;
+}
+
+export async function assertVehicleAccess(
+  vehicleId: string,
+  userId: string,
+  role: string,
+) {
+  const vehicle = await prisma.vehicle.findUnique({
+    where: { id: vehicleId },
+    select: { id: true, transporterId: true },
+  });
+
+  if (!vehicle) throw new Error("Vehicle not found");
+
+  if (role === "ADMIN" || vehicle.transporterId === userId) {
+    return vehicle;
+  }
+
+  throw new Error("Access denied");
+}
+
+export async function getVehicleById(id: string) {
+  return prisma.vehicle.findUnique({
+    where: {
+      id,
+    },
+  });
+}
+
+export async function updateVehicle(
+  id: string,
+  data: {
+    make?: string;
+    model?: string;
+    year?: number;
+    color?: string;
+    capacity?: number;
+  },
+) {
+  const vehicle = await prisma.vehicle.update({
+    where: { id },
+    data,
+  });
+
+  publishAdminEvent({
+    eventType: "vehicle.updated",
+    module: "FLEET_MARKETPLACE",
+    actorId: vehicle.transporterId,
+    entityType: "VEHICLE",
+    entityId: id,
+    data: vehicle,
+  });
+
+  return vehicle;
+}
+
+============================================================
+### ADMIN / AUTHORIZATION MIDDLEWARE
+============================================================
+
+----- FILE: backend/src/admin/role-permission.routes.ts -----
+import { Router } from "express";
+import { z } from "zod";
+import { adminPermissionsSchema } from "./admin.validators.js";
+import { authenticate, type AuthenticatedRequest } from "../middleware/auth.middleware.js";
+import { requireAdmin } from "../middleware/admin.middleware.js";
+import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import {
+  getAdminRoles,
+  getAdminRole,
+  updateAdminPermissions,
+} from "./role-permission.service.js";
+
+const router = Router();
+
+const administratorIdParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
+router.use(authenticate);
+router.use(requireAdmin);
+router.use(requireAdminModule("ROLE_PERMISSION"));
+
+router.get("/", async (_req, res) => {
+  try {
+    const data = await getAdminRoles();
+    return res.json({ success: true, data });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Server error",
+    });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  try {
+    const data = await getAdminRole(String(req.params.id));
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        error: "Administrator not found",
+      });
+    }
+
+    return res.json({ success: true, data });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Server error",
+    });
+  }
+});
+
+router.patch("/:id/permissions", async (req: AuthenticatedRequest, res) => {
+  try {
+    const params = administratorIdParamsSchema.parse(req.params);
+    const input = adminPermissionsSchema.parse(req.body);
+
+    const data = await updateAdminPermissions(
+      params.id,
+      req.user!.id,
+      input.assignedModules,
+    );
+
+    return res.json({ success: true, data });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Server error",
+    });
+  }
+});
+
+export default router;
+
+----- FILE: backend/src/admin/role-permission.service.ts -----
+import { prisma } from "../config/prisma.js";
+import { publishEvent } from "../realtime/event-bus.js";
+import type { AdminModule } from "../../generated/prisma/enums.js";
+
+export async function getAdminRoles() {
+  return prisma.adminProfile.findMany({
+    select: {
+      userId: true,
+      administratorType: true,
+      status: true,
+      isSuperAdministrator: true,
+      assignedModules: true,
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          status: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function getAdminRole(userId: string) {
+  return prisma.adminProfile.findUnique({
+    where: { userId },
+    select: {
+      userId: true,
+      administratorType: true,
+      status: true,
+      isSuperAdministrator: true,
+      assignedModules: true,
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          status: true,
+        },
+      },
+    },
+  });
+}
+
+export async function updateAdminPermissions(
+  userId: string,
+  administratorId: string,
+  assignedModules: AdminModule[],
+) {
+  const existing = await prisma.adminProfile.findUnique({
+    where: { userId },
+  });
+
+  if (!existing) {
+    throw new Error("Administrator profile not found");
+  }
+
+  if (existing.isSuperAdministrator) {
+    throw new Error(
+      "Super Administrator permissions cannot be restricted",
+    );
+  }
+
+  const updated = await prisma.adminProfile.update({
+    where: { userId },
+    data: {
+      assignedModules,
+    },
+  });
+
+  publishEvent("admin", {
+    eventType: "ADMIN_PERMISSIONS_UPDATED",
+    module: "ROLE_PERMISSION",
+    entityType: "ADMINISTRATOR",
+    entityId: userId,
+    actorId: administratorId,
+    data: updated,
+  });
+
+  return updated;
+}
+
+----- FILE: backend/src/middleware/admin-module.middleware.ts -----
+import { NextFunction, Response } from "express";
+import { prisma } from "../config/prisma.js";
+import { AuthenticatedRequest } from "./auth.middleware.js";
+import { AdminModule } from "../../generated/prisma/enums.js";
+
+export function requireAdminModule(module: AdminModule) {
+  return async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          error: "Authentication required",
+        });
+      }
+
+      if (req.user.role !== "ADMIN") {
+        return res.status(403).json({
+          success: false,
+          error: "Administrator access required",
+        });
+      }
+
+      const administrator = await prisma.adminProfile.findUnique({
+        where: {
+          userId: req.user.id,
+        },
+        select: {
+          status: true,
+          isSuperAdministrator: true,
+          administratorType: true,
+          assignedModules: true,
+        },
+      });
+
+      if (!administrator) {
+        return res.status(403).json({
+          success: false,
+          error: "Administrator profile not found",
+        });
+      }
+
+      if (administrator.status !== "ACTIVE") {
+        return res.status(403).json({
+          success: false,
+          error: "Administrator account is not active",
+        });
+      }
+
+      if (
+        administrator.isSuperAdministrator ||
+        administrator.administratorType === "SUPER_ADMIN"
+      ) {
+        return next();
+      }
+
+      if (!administrator.assignedModules.includes(module)) {
+        return res.status(403).json({
+          success: false,
+          error: `Access denied for ${module}`,
+        });
+      }
+
+      next();
+    } catch {
+      return res.status(500).json({
+        success: false,
+        error: "Failed to verify administrator module access",
+      });
+    }
+  };
+}
+
+----- FILE: backend/src/middleware/admin.middleware.ts -----
+import { NextFunction, Response } from "express";
+
+import {
+  AuthenticatedRequest,
+} from "./auth.middleware.js";
+
+export function requireAdmin(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      error: "Authentication required",
+    });
+  }
+
+  if (req.user.role !== "ADMIN") {
+    return res.status(403).json({
+      success: false,
+      error: "Administrator access required",
+    });
+  }
+
+  next();
+}
+
+----- FILE: backend/src/middleware/auth.middleware.ts -----
+import jwt from "jsonwebtoken";
+import type {
+  NextFunction,
+  Request,
+  Response,
+} from "express";
+
+import { env } from "../config/env.js";
+import { prisma } from "../config/prisma.js";
+
+type AccessTokenPayload = {
+  sub: string;
+  role: string;
+  type: "access";
+};
+
+export interface AuthenticatedRequest extends Request {
+  user?: {
+    id: string;
+    role: string;
+    status: string;
+  };
+}
+
+function extractBearerToken(
+  authorization: string | undefined,
+): string | null {
+  if (!authorization) {
+    return null;
+  }
+
+  const match =
+    /^Bearer\s+([A-Za-z0-9\-._~+/]+=*)$/i.exec(
+      authorization.trim(),
+    );
+
+  return match?.[1] ?? null;
+}
+
+function verifyAccessToken(
+  token: string,
+): AccessTokenPayload {
+  const payload = jwt.verify(
+    token,
+    env.JWT_ACCESS_SECRET,
+  );
+
+  if (
+    typeof payload !== "object" ||
+    payload === null
+  ) {
+    throw new Error("Invalid access token");
+  }
+
+  if (
+    typeof payload.sub !== "string" ||
+    payload.sub.length === 0
+  ) {
+    throw new Error("Invalid access token");
+  }
+
+  if (
+    typeof payload.role !== "string" ||
+    payload.role.length === 0
+  ) {
+    throw new Error("Invalid access token");
+  }
+
+  if (payload.type !== "access") {
+    throw new Error("Invalid access token");
+  }
+
+  return {
+    sub: payload.sub,
+    role: payload.role,
+    type: "access",
+  };
+}
+
+export async function authenticate(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const token = extractBearerToken(
+      req.headers.authorization,
+    );
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: "Authentication required",
+      });
+    }
+
+    const payload =
+      verifyAccessToken(token);
+
+    const user =
+      await prisma.user.findUnique({
+        where: {
+          id: payload.sub,
+        },
+        select: {
+          id: true,
+          role: true,
+          status: true,
+          adminProfile: {
+            select: {
+              status: true,
+            },
+          },
+        },
+      });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid authentication",
+      });
+    }
+
+    if (user.status !== "ACTIVE") {
+      return res.status(403).json({
+        success: false,
+        error:
+          user.status === "SUSPENDED"
+            ? "Account suspended"
+            : user.status === "BLOCKED"
+              ? "Account blocked"
+              : "Account is not active",
+      });
+    }
+
+    /*
+     * Administrator status is authoritative in AdminProfile.
+     * This prevents an already-issued access token from
+     * remaining usable after an administrator is suspended
+     * or disabled.
+     */
+    if (
+      user.role === "ADMIN" &&
+      (!user.adminProfile || user.adminProfile.status !== "ACTIVE")
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "Administrator account is not active",
+      });
+    }
+
+    /*
+     * Never trust the role supplied by the JWT.
+     *
+     * The database remains the authoritative source
+     * for the user's current role.
+     */
+    req.user = {
+      id: user.id,
+      role: user.role,
+      status: user.status,
+    };
+
+    return next();
+  } catch {
+    return res.status(401).json({
+      success: false,
+      error: "Invalid token",
+    });
+  }
+}
+
+export function authorize(...roles: string[]) {
+  return (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: "Authentication required",
+      });
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        error: "Access denied",
+      });
+    }
+
+    return next();
+  };
+}
+
+----- FILE: backend/src/middleware/super-admin.middleware.ts -----
+import { NextFunction, Response } from "express";
+
+import {
+  AuthenticatedRequest,
+} from "./auth.middleware.js";
+
+import { prisma } from "../config/prisma.js";
+
+export async function requireSuperAdmin(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: "Authentication required",
+      });
+    }
+
+    if (req.user.role !== "ADMIN") {
+      return res.status(403).json({
+        success: false,
+        error: "Administrator access required",
+      });
+    }
+
+    const administrator =
+      await prisma.adminProfile.findUnique({
+        where: {
+          userId: req.user.id,
+        },
+        select: {
+          isSuperAdministrator: true,
+          administratorType: true,
+          status: true,
+        },
+      });
+
+    if (!administrator) {
+      return res.status(403).json({
+        success: false,
+        error: "Administrator profile not found",
+      });
+    }
+
+    if (
+      !administrator.isSuperAdministrator ||
+      administrator.administratorType !== "SUPER_ADMIN"
+    ) {
+      return res.status(403).json({
+        success: false,
+        error: "Super Administrator access required",
+      });
+    }
+
+    if (administrator.status !== "ACTIVE") {
+      return res.status(403).json({
+        success: false,
+        error: "Administrator account is not active",
+      });
+    }
+
+    next();
+  } catch {
+    return res.status(500).json({
+      success: false,
+      error: "Failed to verify administrator privileges",
+    });
+  }
+}
+
+============================================================
+### PRISMA MARKETPLACE MODELS
+============================================================
+33-}
+34-
+35-enum AdminStatus {
+36-  ACTIVE
+37-  SUSPENDED
+38-  DISABLED
+39-}
+40-
+41-enum AdminModule {
+42-  PLATFORM_OVERVIEW
+43-  VERIFICATION_CENTER
+44-  CONTENT_MANAGEMENT
+45-  SUPPORT_CARE
+46-  NOTIFICATION_CENTER
+47-  SUBSCRIPTION_BILLING
+48:  FLEET_MARKETPLACE
+49-  PARTNER_MANAGEMENT
+50-  MARKETING_CENTER
+51-  FINANCIAL_OPERATIONS
+52-  RISK_FRAUD
+53-  REPORTS_CENTER
+54-  AI_AUTOMATION
+55-  FEATURE_MANAGEMENT
+56-  DEVELOPER_CONSOLE
+57-  BACKUP_RECOVERY
+58-  ACTIVITY_TIMELINE
+59-  ROLE_PERMISSION
+60-  PLATFORM_CONFIG
+61-  LIVE_TRIPS
+62-  ERROR_CENTER
+63-  API_MANAGEMENT
+64-  SECURITY_CENTER
+65-  DATABASE_HEALTH
+66-}
+67-
+68-enum UserStatus {
+69-  PENDING
+70-  ACTIVE
+71-  SUSPENDED
+72-  BLOCKED
+73-}
+74-
+75-enum VerificationStatus {
+76-  PENDING
+77-  APPROVED
+78-  REJECTED
+79-}
+80-
+81-enum VehicleVerificationStatus {
+82-  PENDING
+83-  APPROVED
+84-  REJECTED
+85-  SUSPENDED
+86-}
+87-
+88-enum VehicleAvailabilityStatus {
+89-  AVAILABLE
+90-  UNAVAILABLE
+91-  ON_TRIP
+92-}
+93-
+94-enum BookingStatus {
+95-  REQUESTED
+96-  SEARCHING
+97-  ASSIGNED
+98-  ACCEPTED
+99-  DRIVER_ARRIVING
+100-  ARRIVED
+101-  IN_TRANSIT
+102-  COMPLETED
+103-  CANCELLED
+104-  DISPUTED
+105-}
+106-
+107-enum PaymentStatus {
+108-  PENDING
+109-  PROCESSING
+110-  SUCCESS
+111-  FAILED
+112-  REFUNDED
+113-}
+114-
+115-enum SubscriptionStatus {
+116-  PENDING
+117-  ACTIVE
+118-  PAST_DUE
+119-  CANCELLED
+120-  EXPIRED
+121-}
+122-
+123-enum SubscriptionInterval {
+124-  MONTHLY
+125-  YEARLY
+126-}
+127-
+128-enum CommissionType {
+129-  PERCENTAGE
+130-  FIXED
+131-}
+132-
+133-enum CommissionStatus {
+134-  ACTIVE
+135-  INACTIVE
+136-}
+137-
+138-enum SettlementStatus {
+139-  PENDING
+140-  AWAITING_APPROVAL
+141-  APPROVED
+142-  REJECTED
+143-  RELEASED
+144-  FAILED
+145-}
+146-
+147-enum SettlementApprovalStatus {
+148-  PENDING
+--
+240-  LIGHT_TRUCK
+241-  MEDIUM_TRUCK
+242-  HEAVY_TRUCK
+243-  CONTAINER
+244-  FLATBED
+245-  REFRIGERATED_TRUCK
+246-  TANKER
+247-  LOWBED
+248-}
+249-
+250-enum TransporterTier {
+251-  TIER_1
+252-  TIER_2
+253-}
+254-
+255:enum MarketplaceRequestStatus {
+256-  OPEN
+257:  BIDDING_CLOSED
+258-  AGREED
+259-  CANCELLED
+260-  EXPIRED
+261-}
+262-
+263:enum MarketplaceBidStatus {
+264-  PENDING
+265-  SELECTED
+266-  REJECTED
+267-  WITHDRAWN
+268-  EXPIRED
+269-}
+270-
+271-model User {
+272-  id                     String           @id @default(uuid())
+273-  firstName              String
+274-  lastName               String
+275-  email                  String?          @unique
+276-  phone                  String?          @unique
+277-  passwordHash           String
+278-  role                   UserRole
+279-  status                 UserStatus       @default(PENDING)
+280-  transporterTier        TransporterTier?
+281-  profilePhoto           String?
+282-  createdAt              DateTime         @default(now())
+283-  updatedAt              DateTime         @updatedAt
+284-  lastLoginAt            DateTime?
+285-  refreshTokenHash       String?
+286-  refreshTokenExpiresAt  DateTime?
+287-  resetPasswordToken     String?
+288-  resetPasswordExpiresAt DateTime?
+289-
+290-  customerProfile    CustomerProfile?
+291-  transporterProfile TransporterProfile?
+292-  adminProfile       AdminProfile?
+293-
+294-  customerBookings    Booking[] @relation("CustomerBookings")
+295-  transporterBookings Booking[] @relation("TransporterBookings")
+296-  vehicles            Vehicle[] @relation("TransporterVehicles")
+297-  payments            Payment[] @relation("CustomerPayments")
+298-  wallet              Wallet?
+299:  marketplaceRequests MarketplaceRequest[] @relation("MarketplaceRequests")
+300:  marketplaceBids     MarketplaceBid[]     @relation("MarketplaceBids")
+301-  subscriptions        TransporterSubscription[]
+302-  subscriptionInvoices SubscriptionInvoice[]
+303-
+304-  commissionRulesCreated CommissionRule[] @relation("CommissionRuleCreator")
+305-  commissionRulesUpdated CommissionRule[] @relation("CommissionRuleUpdater")
+306-
+307-  transporterSettlements Settlement[]         @relation("TransporterSettlements")
+308-  settlementApprovals    SettlementApproval[] @relation("SettlementApprovals")
+309-  sentMessages           Message[]            @relation("SentMessages")
+310-  receivedMessages       Message[]            @relation("ReceivedMessages")
+311-
+312-  notifications   Notification[]
+313-  reviewsGiven    Review[]       @relation("ReviewsGiven")
+314-  reviewsReceived Review[]       @relation("ReviewsReceived")
+315-
+316-  documents       Document[]
+317-  supportTickets  SupportTicket[] @relation("TicketRequester")
+318-  assignedTickets SupportTicket[] @relation("TicketAssignee")
+319-
+320-  auditLogs         AuditLog[]      @relation("AuditAdministrator")
+321-  adminActivities   AdminActivity[]
+322-  affectedAuditLogs AuditLog[]      @relation("AuditAffectedUser")
+323-
+324-  disputesAsCustomer    Dispute[] @relation("DisputeCustomer")
+325-  disputesAsTransporter Dispute[] @relation("DisputeTransporter")
+326-  assignedDisputes      Dispute[] @relation("DisputeAdministrator")
+327-
+328-  createdContent  ContentItem[]    @relation("ContentCreator")
+329-  updatedContent  ContentItem[]    @relation("ContentUpdater")
+330-  refreshSessions RefreshSession[]
+331-}
+332-
+333-model CustomerProfile {
+334-  userId             String             @id
+335-  address            String?
+336-  city               String?
+337-  state              String?
+338-  country            String?
+339-  verificationStatus VerificationStatus @default(PENDING)
+340-  rating             Float              @default(0)
+341-  totalBookings      Int                @default(0)
+342-
+343-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+344-}
+345-
+346-model TransporterProfile {
+347-  userId                     String             @id
+348-  companyName                String?
+349-  businessRegistrationNumber String?
+350-  address                    String?
+351-  city                       String?
+352-  state                      String?
+353-  country                    String?
+354-  verificationStatus         VerificationStatus @default(PENDING)
+355-
+356-  tier2Approved Boolean @default(false)
+357-
+358-  rating        Float   @default(0)
+359-  totalTrips    Int     @default(0)
+360-  totalEarnings Decimal @default(0) @db.Decimal(14, 2)
+361-
+362-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+363-}
+364-
+365-model AdminProfile {
+366-  userId String @id
+367-
+368-  isSuperAdministrator Boolean @default(false)
+369-
+370-  administratorType AdminType @default(SUPPORT_ADMIN)
+371-
+372-  assignedModules AdminModule[]
+373-
+374-  permissions Json?
+375-
+376-  status AdminStatus @default(ACTIVE)
+377-
+378-  createdBy String?
+379-
+380-  failedLoginAttempts Int @default(0)
+381-
+382-  lockedUntil DateTime?
+383-
+384-  twoFactorEnabled Boolean @default(false)
+385-
+386-  lastLoginAt DateTime?
+387-
+388-  lastActionAt DateTime?
+389-
+390-  createdAt DateTime @default(now())
+391-
+392-  updatedAt DateTime @updatedAt
+393-
+394-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+395-}
+396-
+397-model Vehicle {
+398-  id                 String @id @default(uuid())
+399-  transporterId      String
+400-  registrationNumber String @unique
+--
+402-  vehicleType  String
+403-  vehicleClass VehicleClass
+404-
+405-  make               String?
+406-  model              String?
+407-  year               Int?
+408-  color              String?
+409-  capacity           Int?
+410-  documents          Json?
+411-  verificationStatus VehicleVerificationStatus @default(PENDING)
+412-  availabilityStatus VehicleAvailabilityStatus @default(UNAVAILABLE)
+413-  currentLatitude    Decimal?                  @db.Decimal(10, 7)
+414-  currentLongitude   Decimal?                  @db.Decimal(10, 7)
+415-  createdAt          DateTime                  @default(now())
+416-  updatedAt          DateTime                  @updatedAt
+417:  marketplaceBids MarketplaceBid[]
+418-  transporter    User            @relation("TransporterVehicles", fields: [transporterId], references: [id], onDelete: Cascade)
+419-  bookings       Booking[]
+420-  trackingPoints TrackingPoint[]
+421-}
+422-
+423-enum TruckCategory {
+424-  MINI_TRUCK
+425-  LIGHT_TRUCK
+426-  MEDIUM_TRUCK
+427-  HEAVY_TRUCK
+428-  CONTAINER_TRUCK
+429-  REFRIGERATED_TRUCK
+430-  TANKER
+431-  SPECIALIZED
+432-}
+433-
+434-model Booking {
+435-  id            String  @id @default(uuid())
+436-  customerId    String
+437-  transporterId String?
+438-  vehicleId     String?
+439-
+440-  cargoDescription String?
+441-
+442-  truckCategory   TruckCategory?
+443-  transporterTier TransporterTier?
+444:  marketplaceRequest MarketplaceRequest?
+445-
+446-  settlements Settlement[]
+447-
+448-  estimatedFare Decimal? @db.Decimal(14, 2)
+449-
+450-  pickupLocation       String
+451-  destination          String
+452-  pickupLatitude       Decimal @db.Decimal(10, 7)
+453-  pickupLongitude      Decimal @db.Decimal(10, 7)
+454-  destinationLatitude  Decimal @db.Decimal(10, 7)
+455-  destinationLongitude Decimal @db.Decimal(10, 7)
+456-
+457-  scheduledDate DateTime?
+458-
+459-  cargoCategory CargoCategory?
+460-  cargoWeight   Decimal?       @db.Decimal(14, 2)
+461-
+462-  status BookingStatus @default(REQUESTED)
+463-  fare   Decimal       @db.Decimal(14, 2)
+464-
+465-  paymentStatus PaymentStatus @default(PENDING)
+466-
+467-  acceptedAt  DateTime?
+468-  arrivedAt   DateTime?
+469-  pickedUpAt  DateTime?
+470-  inTransitAt DateTime?
+471-  deliveredAt DateTime?
+472-  completedAt DateTime?
+473-
+474-  proofOfDelivery          String?
+475-  deliveryConfirmationCode String?
+476-  createdAt                DateTime @default(now())
+477-  updatedAt                DateTime @updatedAt
+478-
+479-  customer    User     @relation("CustomerBookings", fields: [customerId], references: [id])
+480-  transporter User?    @relation("TransporterBookings", fields: [transporterId], references: [id])
+481-  vehicle     Vehicle? @relation(fields: [vehicleId], references: [id])
+482-
+483-  payments       Payment[]
+484-  messages       Message[]
+485-  reviews        Review[]
+486-  disputes       Dispute[]
+487-  supportTickets SupportTicket[]
+488-  events         ShipmentEvent[]
+489-  trackingPoints TrackingPoint[]
+490-
+491-  @@index([customerId])
+492-  @@index([transporterId])
+493-  @@index([vehicleId])
+494-  @@index([status])
+495-  @@index([scheduledDate])
+496-}
+497-
+498:model MarketplaceRequest {
+499-  id          String @id @default(uuid())
+500-  customerId  String
+501-  bookingId   String? @unique
+502-
+503-  cargoDescription String?
+504-  truckCategory    TruckCategory?
+505-  cargoCategory    CargoCategory?
+506-  cargoWeight      Decimal? @db.Decimal(14, 2)
+507-
+508-  pickupLocation       String
+509-  destination          String
+510-  pickupLatitude       Decimal @db.Decimal(10, 7)
+511-  pickupLongitude      Decimal @db.Decimal(10, 7)
+512-  destinationLatitude  Decimal @db.Decimal(10, 7)
+513-  destinationLongitude Decimal @db.Decimal(10, 7)
+514-
+515-  scheduledDate DateTime?
+516-  estimatedFare Decimal? @db.Decimal(14, 2)
+517-
+518:  status MarketplaceRequestStatus @default(OPEN)
+519-
+520:  agreedBidId String? @unique
+521-  createdAt   DateTime @default(now())
+522-  updatedAt   DateTime @updatedAt
+523-  closedAt    DateTime?
+524-
+525:  customer User @relation("MarketplaceRequests", fields: [customerId], references: [id], onDelete: Cascade)
+526-  booking  Booking? @relation(fields: [bookingId], references: [id])
+527-
+528:  bids MarketplaceBid[]
+529-
+530-  @@index([customerId])
+531-  @@index([status])
+532-  @@index([scheduledDate])
+533-}
+534-
+535:model MarketplaceBid {
+536-  id            String @id @default(uuid())
+537-  requestId     String
+538-  transporterId String
+539-  vehicleId     String
+540-
+541-  amount  Decimal @db.Decimal(14, 2)
+542-  message String?
+543-
+544:  status MarketplaceBidStatus @default(PENDING)
+545-
+546-  expiresAt  DateTime?
+547-  selectedAt DateTime?
+548-  createdAt  DateTime @default(now())
+549-  updatedAt  DateTime @updatedAt
+550-
+551:  request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+552:  transporter User               @relation("MarketplaceBids", fields: [transporterId], references: [id], onDelete: Cascade)
+553-  vehicle     Vehicle            @relation(fields: [vehicleId], references: [id])
+554-
+555-  @@unique([requestId, transporterId])
+556-  @@index([requestId, status])
+557-  @@index([transporterId, status])
+558-  @@index([vehicleId])
+559-}
+560-
+561-model TrackingPoint {
+562-  id        String @id @default(uuid())
+563-  bookingId String
+564-  vehicleId String
+565-
+566-  latitude  Decimal @db.Decimal(10, 7)
+567-  longitude Decimal @db.Decimal(10, 7)
+568-
+569-  speed    Decimal? @db.Decimal(8, 2)
+570-  heading  Decimal? @db.Decimal(8, 2)
+571-  accuracy Decimal? @db.Decimal(8, 2)
+572-
+573-  source String @default("ANDROID_GPS")
+574-
+575-  recordedAt DateTime @default(now())
+576-  createdAt  DateTime @default(now())
+577-
+578-  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+579-  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+580-
+581-  @@index([bookingId, recordedAt])
+582-  @@index([vehicleId, recordedAt])
+583-  @@index([recordedAt])
+584-}
+585-
+586-model Payment {
+587-  id                   String        @id @default(uuid())
+588-  bookingId            String
+589-  customerId           String
+590-  amount               Decimal       @db.Decimal(14, 2)
+591-  currency             String        @default("NGN")
+592-  provider             String
+593-  transactionReference String        @unique
+594-  checkoutUrl          String?
+595-  idempotencyKey       String?
+596-  status               PaymentStatus @default(PENDING)
+597-  createdAt            DateTime      @default(now())
+598-  updatedAt            DateTime      @updatedAt
+599-
+600-  settlement Settlement?
+601-
+602-  booking       Booking               @relation(fields: [bookingId], references: [id])
+603-  customer      User                  @relation("CustomerPayments", fields: [customerId], references: [id])
+604-  webhookEvents PaymentWebhookEvent[]
+605-
+606-  @@unique([customerId, idempotencyKey])
+607-  @@index([bookingId])
+608-  @@index([customerId])
+609-}
+610-
+611-model PaymentWebhookEvent {
+612-  id                   String    @id @default(uuid())
+613-  provider             String
+614-  providerEventId      String
+615-  eventType            String
+616-  paymentId            String?
+617-  subscriptionInvoiceId String?
+618-  payload              Json
+619-  processed            Boolean   @default(false)
+620-  processedAt          DateTime?
+621-  createdAt            DateTime  @default(now())
+622-
+623-  payment             Payment?             @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+624-  subscriptionInvoice  SubscriptionInvoice? @relation(fields: [subscriptionInvoiceId], references: [id], onDelete: SetNull)
+625-
+626-  @@unique([provider, providerEventId])
+627-  @@index([paymentId])
+628-  @@index([subscriptionInvoiceId])
+629-  @@index([provider, eventType])
+630-  @@index([createdAt])
+631-}
+632-
+633-model YouverifyWebhookEvent {
+634-  id              String    @id @default(uuid())
+635-  provider        String
+636-  providerEventId String
+637-  eventType       String
+638-  documentId      String?
+639-  payload         Json
+640-  processed       Boolean   @default(false)
+641-  processedAt     DateTime?
+642-  createdAt       DateTime  @default(now())
+643-
+644-  document Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+645-
+646-  @@unique([provider, providerEventId])
+647-  @@index([documentId])
+648-  @@index([provider, eventType])
+649-  @@index([createdAt])
+650-}
+651-
+652-model Wallet {
+
+============================================================
+### MARKETPLACE DATABASE REFERENCES
+============================================================
+backend/src/bookings/booking.service.ts:76:    bookingId: booking.id,
+backend/src/bookings/booking.service.ts:87:    bookingId: booking.id,
+backend/src/bookings/booking.service.ts:101:  bookingId: string,
+backend/src/bookings/booking.service.ts:107:    where: { id: bookingId },
+backend/src/bookings/booking.service.ts:138:  bookingId: string,
+backend/src/bookings/booking.service.ts:144:      where: { id: bookingId },
+backend/src/bookings/booking.service.ts:199:      where: { id: bookingId },
+backend/src/bookings/booking.service.ts:219:  publishBookingEvent(bookingId, {
+backend/src/bookings/booking.service.ts:224:    entityId: bookingId,
+backend/src/bookings/booking.service.ts:233:    bookingId,
+backend/src/bookings/booking.service.ts:245:    bookingId: result.id,
+backend/src/bookings/booking.service.ts:258:  bookingId: string,
+backend/src/bookings/booking.service.ts:268:      where: { id: bookingId },
+backend/src/bookings/booking.service.ts:336:      where: { id: bookingId },
+backend/src/bookings/booking.service.ts:379:      bookingId,
+backend/src/bookings/booking.service.ts:392:    bookingId: resultBookingDto.id,
+backend/src/bookings/booking.service.ts:413:        bookingId: result.booking.id,
+backend/src/bookings/booking.service.ts:453:  bookingId: string,
+backend/src/bookings/booking.service.ts:459:      where: { id: bookingId },
+backend/src/bookings/booking.service.ts:473:        id: bookingId,
+backend/src/bookings/booking.service.ts:486:  bookingId: string,
+backend/src/bookings/booking.service.ts:492:        id: bookingId,
+backend/src/bookings/booking.service.ts:518:        id: bookingId,
+backend/src/bookings/booking.service.ts:533:        bookingId: booking.id,
+backend/src/bookings/booking.service.ts:558:        id: bookingId,
+backend/src/bookings/booking.service.ts:575:  publishBookingEvent(bookingId, {
+backend/src/bookings/booking.service.ts:579:    entityId: bookingId,
+backend/src/bookings/booking.service.ts:584:    bookingId,
+backend/src/bookings/booking.service.ts:589:    bookingId,
+backend/src/payments/payment.service.ts:16:  bookingId: string,
+backend/src/payments/payment.service.ts:28:      id: bookingId,
+backend/src/payments/payment.service.ts:68:      existingPayment.bookingId !== bookingId ||
+backend/src/payments/payment.service.ts:84:        bookingId,
+backend/src/payments/payment.service.ts:118:        concurrentPayment.bookingId !== bookingId ||
+backend/src/payments/payment.service.ts:160:      bookingId,
+backend/src/payments/payment.service.ts:184:  bookingId: string,
+backend/src/payments/payment.service.ts:188:      bookingId,
+backend/src/payments/payment.service.ts:291:        id: updatedPayment.bookingId,
+backend/src/payments/payment.service.ts:323:          bookingId: updatedPayment.bookingId,
+backend/src/payments/payment.service.ts:358:      result.payment.bookingId,
+backend/src/payments/payment.service.ts:369:    bookingId: result.payment.bookingId,
+backend/src/payments/payment.routes.ts:175:      const { bookingId } = paymentInput.data;
+backend/src/payments/payment.routes.ts:191:        bookingId,
+backend/src/payments/payment.routes.ts:213:        bookingId,
+backend/src/payments/payment.routes.ts:276:          payment.bookingId,
+backend/src/payments/payment.routes.ts:307:  "/booking/:bookingId",
+backend/src/payments/payment.routes.ts:311:      const bookingId = String(req.params.bookingId);
+backend/src/payments/payment.routes.ts:314:        bookingId,
+backend/src/payments/payment.routes.ts:320:      const payments = await getBookingPayments(bookingId);
+backend/src/payments/payment.validators.ts:4:  bookingId: z.string().uuid("Invalid booking ID"),
+backend/src/payments/dto/payment.dto.ts:5:  bookingId: string;
+backend/src/payments/dto/payment.dto.ts:18:  bookingId: string;
+backend/src/payments/dto/payment.dto.ts:31:    bookingId: payment.bookingId,
+backend/src/messages/message.service.ts:7:  bookingId: string;
+backend/src/messages/message.service.ts:15:  if (!message.bookingId) {
+backend/src/messages/message.service.ts:19:  publishBookingEvent(message.bookingId, {
+backend/src/messages/message.service.ts:29:      bookingId: message.bookingId,
+backend/src/messages/message.service.ts:40:  bookingId: string,
+backend/src/messages/message.service.ts:44:      bookingId,
+backend/src/messages/message.routes.ts:28:        bookingId,
+backend/src/messages/message.routes.ts:35:        bookingId,
+backend/src/messages/message.routes.ts:65:        bookingId,
+backend/src/messages/message.routes.ts:96:  "/booking/:bookingId",
+backend/src/messages/message.routes.ts:100:      const bookingId = String(req.params.bookingId);
+backend/src/messages/message.routes.ts:103:        bookingId,
+backend/src/messages/message.routes.ts:110:        bookingId,
+backend/src/messages/message.validators.ts:4:  bookingId: z.string().uuid("Invalid booking ID"),
+backend/src/messages/message.validators.ts:15:  bookingId: z.string().uuid("Invalid booking ID"),
+backend/src/messages/message.dto.ts:10:    bookingId: message.bookingId,
+backend/src/support/support.service.ts:72:  bookingId?: string;
+backend/src/support/support.service.ts:83:  if (ticket.bookingId) {
+backend/src/support/support.service.ts:85:      bookingId: ticket.bookingId,
+backend/src/support/support.routes.ts:30:      if (req.body.bookingId) {
+backend/src/support/support.routes.ts:32:          req.body.bookingId,
+backend/src/support/support.validators.ts:4:  bookingId: z.string().uuid("Invalid booking ID").optional(),
+backend/src/support/support.dto.ts:21:    bookingId: ticket.bookingId,
+backend/src/disputes/dispute.service.ts:5:  bookingId: string;
+backend/src/disputes/dispute.service.ts:15:    bookingId: dispute.bookingId,
+backend/src/disputes/dispute.dto.ts:8:    bookingId: dispute.bookingId,
+backend/src/admin/admin.service.ts:134:        bookingId: true,
+backend/src/admin/financial.service.ts:190:          bookingId: true,
+backend/src/admin/financial.service.ts:240:      affectedBookingId: webhookPayment?.bookingId,
+backend/src/admin/live-trips.service.ts:80:  bookingId: string,
+backend/src/admin/live-trips.service.ts:84:      id: bookingId,
+backend/src/admin/live-trips.service.ts:152:  bookingId: string,
+backend/src/admin/live-trips.service.ts:165:      id: bookingId,
+backend/src/admin/live-trips.service.ts:182:      bookingId,
+backend/src/admin/live-trips.service.ts:193:      bookingId: true,
+backend/src/admin/live-trips.service.ts:210:    bookingId: booking.id,
+backend/src/admin/admin.validators.ts:83:  bookingId: z.string().uuid(),
+backend/src/realtime/realtime.service.ts:34:  bookingId?: string;
+backend/src/realtime/realtime.service.ts:52:  bookingId: string,
+backend/src/realtime/realtime.service.ts:55:    "eventId" | "timestamp" | "bookingId"
+backend/src/realtime/realtime.service.ts:62:    bookingId,
+backend/src/realtime/socket-events.ts:17:    if (event.bookingId) {
+backend/src/realtime/socket-events.ts:18:      io.to(event.bookingId).emit(
+backend/src/realtime/activity.service.ts:15:      bookingId: event.bookingId,
+backend/src/realtime/socket-authorization.ts:17:  bookingId: string,
+backend/src/realtime/socket-authorization.ts:24:    where: { id: bookingId },
+backend/src/realtime/socket-authorization.ts:43:  bookingId: string,
+backend/src/realtime/socket-authorization.ts:50:    where: { id: bookingId },
+backend/src/realtime/tracking.service.ts:6:  bookingId: string;
+backend/src/realtime/tracking.service.ts:16:        id: input.bookingId,
+backend/src/realtime/tracking.service.ts:66:        bookingId: booking.id,
+backend/src/realtime/tracking.service.ts:79:      bookingId: booking.id,
+backend/src/realtime/tracking.service.ts:98:    bookingId: result.bookingId,
+backend/src/server.ts:209:  socket.on("join-booking", async (bookingId: string) => {
+backend/src/server.ts:221:      bookingId,
+backend/src/server.ts:231:    socket.join(bookingId);
+backend/src/server.ts:234:      `${socket.id} joined booking ${bookingId}`,
+backend/src/server.ts:306:  socket.on("leave-booking", (bookingId: string) => {
+backend/src/server.ts:307:    socket.leave(bookingId);
+backend/src/server.ts:310:      `${socket.id} left booking ${bookingId}`,
+backend/src/server.ts:316:      bookingId: string;
+backend/src/server.ts:335:          typeof data.bookingId !== "string" ||
+backend/src/server.ts:350:            data.bookingId,
+backend/src/server.ts:364:            bookingId: data.bookingId,
+backend/src/server.ts:372:        io.to(data.bookingId).emit(
+backend/src/events/event.service.ts:4:  bookingId: string;
+backend/src/events/event.service.ts:28:  bookingId: string,
+backend/src/events/event.service.ts:32:      bookingId,
+backend/src/events/event.routes.ts:17:  bookingId: z.string().uuid(),
+backend/src/events/event.routes.ts:71:  "/booking/:bookingId",
+backend/src/events/event.routes.ts:75:        String(req.params.bookingId),
+backend/src/events/event.routes.ts:82:        String(req.params.bookingId),
+backend/src/wallet/wallet.dto.ts:28:  bookingId: string | null;
+backend/src/wallet/wallet.dto.ts:37:    bookingId: transaction.bookingId,
+backend/src/wallet/wallet.dto.ts:77:    bookingId: string | null;
+backend/src/settlements/settlement.service.ts:6:  bookingId: string,
+backend/src/settlements/settlement.service.ts:38:    if (payment.bookingId !== bookingId) {
+backend/src/settlements/settlement.service.ts:77:        bookingId,
+backend/src/settlements/settlement.service.ts:101:      bookingId: result.bookingId,
+backend/src/settlements/settlement.service.ts:322:      affectedBookingId: result.settlement.bookingId,
+backend/src/settlements/settlement.service.ts:420:      affectedBookingId: result.settlement.bookingId,
+backend/src/settlements/settlement.service.ts:500:      bookingId: result.bookingId,
+backend/src/settlements/settlement.service.ts:595:        bookingId: settlement.bookingId,
+backend/src/settlements/settlement.service.ts:613:      affectedBookingId: result.bookingId,
+backend/src/settlements/settlement.service.ts:634:      bookingId: result.bookingId,
+backend/src/settlements/settlement.dto.ts:83:    bookingId: settlement.bookingId,
+backend/src/marketplace/marketplace.validators.ts:7:export const createMarketplaceRequestSchema = z.object({
+backend/src/marketplace/marketplace.validators.ts:46:export const createMarketplaceBidSchema = z.object({
+backend/src/marketplace/marketplace.validators.ts:53:export const withdrawMarketplaceBidSchema = z.object({}).strict();
+backend/src/marketplace/marketplace.validators.ts:55:export const selectMarketplaceBidSchema = z.object({}).strict();
+backend/src/marketplace/marketplace.service.ts:10:    const expiredBids = await tx.marketplaceBid.findMany({
+backend/src/marketplace/marketplace.service.ts:26:      await tx.marketplaceBid.updateMany({
+backend/src/marketplace/marketplace.service.ts:44:     * MarketplaceRequest.scheduledDate represents the planned
+backend/src/marketplace/marketplace.service.ts:52:     * Only MarketplaceBid.expiresAt controls bid expiration.
+backend/src/marketplace/marketplace.service.ts:62:function serializeMarketplaceBid(bid: {
+backend/src/marketplace/marketplace.service.ts:121:export async function createMarketplaceRequest(data: {
+backend/src/marketplace/marketplace.service.ts:161:  const request = await prisma.marketplaceRequest.create({
+backend/src/marketplace/marketplace.service.ts:200:export async function getMarketplaceRequest(
+backend/src/marketplace/marketplace.service.ts:206:  const request = await prisma.marketplaceRequest.findFirst({
+backend/src/marketplace/marketplace.service.ts:214:      bookingId: true,
+backend/src/marketplace/marketplace.service.ts:228:      agreedBidId: true,
+backend/src/marketplace/marketplace.service.ts:279:    bids: request.bids.map(serializeMarketplaceBid),
+backend/src/marketplace/marketplace.service.ts:283:export async function createMarketplaceBid(data: {
+backend/src/marketplace/marketplace.service.ts:293:  const request = await prisma.marketplaceRequest.findUnique({
+backend/src/marketplace/marketplace.service.ts:386:    const bid = await prisma.marketplaceBid.create({
+backend/src/marketplace/marketplace.service.ts:430:export async function withdrawMarketplaceBid(
+backend/src/marketplace/marketplace.service.ts:435:  const bid = await prisma.marketplaceBid.findUnique({
+backend/src/marketplace/marketplace.service.ts:457:  const updated = await prisma.marketplaceBid.update({
+backend/src/marketplace/marketplace.service.ts:480:export async function selectMarketplaceBid(
+backend/src/marketplace/marketplace.service.ts:491:    const request = await tx.marketplaceRequest.findUnique({
+backend/src/marketplace/marketplace.service.ts:511:        bookingId: true,
+backend/src/marketplace/marketplace.service.ts:512:        agreedBidId: true,
+backend/src/marketplace/marketplace.service.ts:531:    const bid = await tx.marketplaceBid.findFirst({
+backend/src/marketplace/marketplace.service.ts:646:    const claimedRequest = await tx.marketplaceRequest.updateMany({
+backend/src/marketplace/marketplace.service.ts:685:    const selectedBid = await tx.marketplaceBid.updateMany({
+backend/src/marketplace/marketplace.service.ts:704:    await tx.marketplaceBid.updateMany({
+backend/src/marketplace/marketplace.service.ts:759:    const linkedRequest = await tx.marketplaceRequest.update({
+backend/src/marketplace/marketplace.service.ts:764:        agreedBidId: bid.id,
+backend/src/marketplace/marketplace.service.ts:765:        bookingId: booking.id,
+backend/src/marketplace/marketplace.service.ts:804:      bookingId: result.booking.id,
+backend/src/marketplace/marketplace.service.ts:817:      bookingId: result.booking.id,
+backend/src/marketplace/marketplace.service.ts:827:    bookingId: result.booking.id,
+backend/src/marketplace/marketplace.service.ts:830:      bookingId: result.booking.id,
+backend/src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+backend/src/marketplace/marketplace.service.ts:837:      marketplaceBidId: result.bid.id,
+backend/src/marketplace/marketplace.service.ts:851:      bookingId: result.booking.id,
+backend/src/marketplace/marketplace.routes.ts:9:  createMarketplaceRequestSchema,
+backend/src/marketplace/marketplace.routes.ts:10:  createMarketplaceBidSchema,
+backend/src/marketplace/marketplace.routes.ts:11:  withdrawMarketplaceBidSchema,
+backend/src/marketplace/marketplace.routes.ts:12:  selectMarketplaceBidSchema,
+backend/src/marketplace/marketplace.routes.ts:16:  createMarketplaceRequest,
+backend/src/marketplace/marketplace.routes.ts:17:  getMarketplaceRequest,
+backend/src/marketplace/marketplace.routes.ts:18:  createMarketplaceBid,
+backend/src/marketplace/marketplace.routes.ts:19:  withdrawMarketplaceBid,
+backend/src/marketplace/marketplace.routes.ts:20:  selectMarketplaceBid,
+backend/src/marketplace/marketplace.routes.ts:104:      const input = createMarketplaceRequestSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:106:      const request = await createMarketplaceRequest({
+backend/src/marketplace/marketplace.routes.ts:137:      const request = await getMarketplaceRequest(
+backend/src/marketplace/marketplace.routes.ts:167:      const input = createMarketplaceBidSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:169:      const bid = await createMarketplaceBid({
+backend/src/marketplace/marketplace.routes.ts:214:      selectMarketplaceBidSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:216:      const result = await selectMarketplaceBid(
+backend/src/marketplace/marketplace.routes.ts:267:      withdrawMarketplaceBidSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:269:      const bid = await withdrawMarketplaceBid(
+backend/src/marketplace/visibility.service.ts:226:    await prisma.marketplaceRequest.findMany({
+backend/src/marketplace/visibility.service.ts:243:        bookingId: true,
+backend/src/marketplace/visibility.service.ts:257:        agreedBidId: true,
+backend/prisma/schema.prisma:255:enum MarketplaceRequestStatus {
+backend/prisma/schema.prisma:263:enum MarketplaceBidStatus {
+backend/prisma/schema.prisma:299:  marketplaceRequests MarketplaceRequest[] @relation("MarketplaceRequests")
+backend/prisma/schema.prisma:300:  marketplaceBids     MarketplaceBid[]     @relation("MarketplaceBids")
+backend/prisma/schema.prisma:417:  marketplaceBids MarketplaceBid[]
+backend/prisma/schema.prisma:444:  marketplaceRequest MarketplaceRequest?
+backend/prisma/schema.prisma:498:model MarketplaceRequest {
+backend/prisma/schema.prisma:501:  bookingId   String? @unique
+backend/prisma/schema.prisma:518:  status MarketplaceRequestStatus @default(OPEN)
+backend/prisma/schema.prisma:520:  agreedBidId String? @unique
+backend/prisma/schema.prisma:525:  customer User @relation("MarketplaceRequests", fields: [customerId], references: [id], onDelete: Cascade)
+backend/prisma/schema.prisma:526:  booking  Booking? @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:528:  bids MarketplaceBid[]
+backend/prisma/schema.prisma:535:model MarketplaceBid {
+backend/prisma/schema.prisma:544:  status MarketplaceBidStatus @default(PENDING)
+backend/prisma/schema.prisma:551:  request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+backend/prisma/schema.prisma:552:  transporter User               @relation("MarketplaceBids", fields: [transporterId], references: [id], onDelete: Cascade)
+backend/prisma/schema.prisma:563:  bookingId String
+backend/prisma/schema.prisma:578:  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+backend/prisma/schema.prisma:581:  @@index([bookingId, recordedAt])
+backend/prisma/schema.prisma:588:  bookingId            String
+backend/prisma/schema.prisma:602:  booking       Booking               @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:607:  @@index([bookingId])
+backend/prisma/schema.prisma:671:  bookingId String?
+backend/prisma/schema.prisma:728:  bookingId   String?
+backend/prisma/schema.prisma:736:  booking   Booking? @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:739:  @@index([bookingId])
+backend/prisma/schema.prisma:744:  bookingId  String
+backend/prisma/schema.prisma:751:  booking  Booking @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:755:  @@unique([bookingId, reviewerId])
+backend/prisma/schema.prisma:787:  bookingId       String?
+backend/prisma/schema.prisma:799:  booking       Booking? @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:804:  bookingId       String
+backend/prisma/schema.prisma:815:  booking       Booking @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:828:  bookingId   String?
+backend/prisma/schema.prisma:840:  @@index([bookingId])
+backend/prisma/schema.prisma:848:  affectedBookingId String?
+backend/prisma/schema.prisma:861:  bookingId   String
+backend/prisma/schema.prisma:868:  booking Booking @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:870:  @@index([bookingId])
+backend/prisma/schema.prisma:1068:  bookingId        String
+backend/prisma/schema.prisma:1087:  booking        Booking              @relation(fields: [bookingId], references: [id])
+backend/prisma/schema.prisma:1093:  @@index([bookingId])
+
+============================================================
+### REALTIME / EVENTS
+============================================================
+backend/src/events/event.routes.ts:12:import { assertBookingAccess } from "../bookings/booking.service.js";
+backend/src/realtime/realtime.service.ts:16:  | "FLEET_MARKETPLACE"
+backend/src/realtime/socket-authorization.ts:23:  const booking = await prisma.booking.findUnique({
+backend/src/realtime/socket-authorization.ts:36:    booking.customerId === user.id ||
+backend/src/realtime/socket-authorization.ts:37:    booking.transporterId === user.id
+backend/src/realtime/socket-authorization.ts:49:  const booking = await prisma.booking.findUnique({
+backend/src/realtime/socket-authorization.ts:65:  if (booking.transporterId !== user.id) {
+backend/src/realtime/socket-authorization.ts:70:    booking.vehicle &&
+backend/src/realtime/socket-authorization.ts:71:    booking.vehicle.transporterId !== user.id
+backend/src/realtime/tracking.service.ts:14:    const booking = await tx.booking.findUnique({
+backend/src/realtime/tracking.service.ts:36:    if (booking.status !== "IN_TRANSIT") {
+backend/src/realtime/tracking.service.ts:40:    if (booking.transporterId !== input.transporterId) {
+backend/src/realtime/tracking.service.ts:44:    if (!booking.vehicleId || !booking.vehicle) {
+backend/src/realtime/tracking.service.ts:48:    if (booking.vehicle.transporterId !== input.transporterId) {
+backend/src/realtime/tracking.service.ts:56:        id: booking.vehicle.id,
+backend/src/realtime/tracking.service.ts:66:        bookingId: booking.id,
+backend/src/realtime/tracking.service.ts:67:        vehicleId: booking.vehicle.id,
+backend/src/realtime/tracking.service.ts:79:      bookingId: booking.id,
+backend/src/vehicles/vehicle.service.ts:15:    module: "FLEET_MARKETPLACE",
+backend/src/vehicles/vehicle.service.ts:69:    module: "FLEET_MARKETPLACE",
+backend/src/bookings/booking.service.ts:6:import { toBookingDto } from "./booking.dto.js";
+backend/src/bookings/booking.service.ts:46:  const booking = await prisma.booking.create({
+backend/src/bookings/booking.service.ts:66:  publishBookingEvent(booking.id, {
+backend/src/bookings/booking.service.ts:67:    eventType: "booking.created",
+backend/src/bookings/booking.service.ts:69:    actorId: booking.customerId,
+backend/src/bookings/booking.service.ts:71:    entityId: booking.id,
+backend/src/bookings/booking.service.ts:76:    bookingId: booking.id,
+backend/src/bookings/booking.service.ts:79:    description: `${booking.pickupLocation} → ${booking.destination}`,
+backend/src/bookings/booking.service.ts:86:    entityId: booking.id,
+backend/src/bookings/booking.service.ts:87:    bookingId: booking.id,
+backend/src/bookings/booking.service.ts:88:    actorId: booking.customerId,
+backend/src/bookings/booking.service.ts:90:      status: booking.status,
+backend/src/bookings/booking.service.ts:91:      pickupLocation: booking.pickupLocation,
+backend/src/bookings/booking.service.ts:92:      destination: booking.destination,
+backend/src/bookings/booking.service.ts:93:      fare: booking.fare,
+backend/src/bookings/booking.service.ts:106:  const booking = await prisma.booking.findUnique({
+backend/src/bookings/booking.service.ts:115:      ((role === "CUSTOMER" && booking.customerId === userId) ||
+backend/src/bookings/booking.service.ts:116:       (role === "TRANSPORTER" && booking.transporterId === userId))) return booking;
+backend/src/bookings/booking.service.ts:119:      role === "TRANSPORTER" && booking.transporterId === userId) return booking;
+backend/src/bookings/booking.service.ts:122:      role === "CUSTOMER" && booking.customerId === userId) return booking;
+backend/src/bookings/booking.service.ts:128:  const booking = await prisma.booking.findUnique({
+backend/src/bookings/booking.service.ts:143:    const booking = await tx.booking.findUnique({
+backend/src/bookings/booking.service.ts:198:    const updated = await tx.booking.update({
+backend/src/bookings/booking.service.ts:220:    eventType: "booking.assigned",
+backend/src/bookings/booking.service.ts:267:    const booking = await tx.booking.findUnique({
+backend/src/bookings/booking.service.ts:294:    const allowed = allowedTransitions[booking.status] ?? [];
+backend/src/bookings/booking.service.ts:298:        `Invalid booking status transition: ${booking.status} -> ${status}`,
+backend/src/bookings/booking.service.ts:335:    const updatedBooking = await tx.booking.update({
+backend/src/bookings/booking.service.ts:340:    if (status === "CANCELLED" && booking.vehicleId) {
+backend/src/bookings/booking.service.ts:342:        where: { id: booking.vehicleId },
+backend/src/bookings/booking.service.ts:351:      previousStatus: booking.status,
+backend/src/bookings/booking.service.ts:402:  if (status === "CANCELLED" && result.booking.vehicleId) {
+backend/src/bookings/booking.service.ts:405:      module: "FLEET_MARKETPLACE",
+backend/src/bookings/booking.service.ts:407:      entityId: result.booking.vehicleId,
+backend/src/bookings/booking.service.ts:408:      actorId: result.booking.transporterId ?? undefined,
+backend/src/bookings/booking.service.ts:410:        vehicleId: result.booking.vehicleId,
+backend/src/bookings/booking.service.ts:411:        transporterId: result.booking.transporterId,
+backend/src/bookings/booking.service.ts:413:        bookingId: result.booking.id,
+backend/src/bookings/booking.service.ts:425:  const bookings = await prisma.booking.findMany({
+backend/src/bookings/booking.service.ts:440:  const bookings = await prisma.booking.findMany({
+backend/src/bookings/booking.service.ts:458:    const booking = await tx.booking.findUnique({
+backend/src/bookings/booking.service.ts:467:    if (booking.status !== "ARRIVED") {
+backend/src/bookings/booking.service.ts:471:    const updatedBooking = await tx.booking.update({
+backend/src/bookings/booking.service.ts:490:    const booking = await tx.booking.findUnique({
+backend/src/bookings/booking.service.ts:500:    if (booking.status === "COMPLETED") {
+backend/src/bookings/booking.service.ts:504:    if (!booking.transporterId) {
+backend/src/bookings/booking.service.ts:508:    if (booking.status !== "ARRIVED") {
+backend/src/bookings/booking.service.ts:512:    if (booking.deliveryConfirmationCode !== code) {
+backend/src/bookings/booking.service.ts:516:    const claimed = await tx.booking.updateMany({
+backend/src/bookings/booking.service.ts:533:        bookingId: booking.id,
+backend/src/bookings/booking.service.ts:545:    if (booking.vehicleId) {
+backend/src/bookings/booking.service.ts:548:          id: booking.vehicleId,
+backend/src/bookings/booking.service.ts:556:    const completedBooking = await tx.booking.update({
+backend/src/bookings/booking.service.ts:567:      transporterId: booking.transporterId,
+backend/src/bookings/booking.service.ts:568:      vehicleId: booking.vehicleId,
+backend/src/bookings/booking.service.ts:576:    eventType: "booking.completed",
+backend/src/bookings/booking.routes.ts:9:} from "./booking.validators.js";
+backend/src/bookings/booking.routes.ts:20:} from "./booking.service.js";
+backend/src/bookings/booking.dto.ts:1:import type { BookingModel } from "../../generated/prisma/models/Booking.js";
+backend/src/bookings/booking.dto.ts:33:    id: booking.id,
+backend/src/bookings/booking.dto.ts:35:    customerId: booking.customerId,
+backend/src/bookings/booking.dto.ts:36:    transporterId: booking.transporterId,
+backend/src/bookings/booking.dto.ts:37:    vehicleId: booking.vehicleId,
+backend/src/bookings/booking.dto.ts:39:    cargoDescription: booking.cargoDescription,
+backend/src/bookings/booking.dto.ts:41:    truckCategory: booking.truckCategory,
+backend/src/bookings/booking.dto.ts:42:    transporterTier: booking.transporterTier,
+backend/src/bookings/booking.dto.ts:44:    estimatedFare: decimal(booking.estimatedFare),
+backend/src/bookings/booking.dto.ts:46:    pickupLocation: booking.pickupLocation,
+backend/src/bookings/booking.dto.ts:47:    destination: booking.destination,
+backend/src/bookings/booking.dto.ts:49:    pickupLatitude: decimal(booking.pickupLatitude),
+backend/src/bookings/booking.dto.ts:50:    pickupLongitude: decimal(booking.pickupLongitude),
+backend/src/bookings/booking.dto.ts:53:      booking.destinationLatitude,
+backend/src/bookings/booking.dto.ts:56:      booking.destinationLongitude,
+backend/src/bookings/booking.dto.ts:59:    scheduledDate: date(booking.scheduledDate),
+backend/src/bookings/booking.dto.ts:61:    cargoCategory: booking.cargoCategory,
+backend/src/bookings/booking.dto.ts:62:    cargoWeight: decimal(booking.cargoWeight),
+backend/src/bookings/booking.dto.ts:64:    status: booking.status,
+backend/src/bookings/booking.dto.ts:66:    fare: decimal(booking.fare),
+backend/src/bookings/booking.dto.ts:68:    paymentStatus: booking.paymentStatus,
+backend/src/bookings/booking.dto.ts:70:    acceptedAt: date(booking.acceptedAt),
+backend/src/bookings/booking.dto.ts:71:    arrivedAt: date(booking.arrivedAt),
+backend/src/bookings/booking.dto.ts:72:    pickedUpAt: date(booking.pickedUpAt),
+backend/src/bookings/booking.dto.ts:73:    inTransitAt: date(booking.inTransitAt),
+backend/src/bookings/booking.dto.ts:74:    deliveredAt: date(booking.deliveredAt),
+backend/src/bookings/booking.dto.ts:75:    completedAt: date(booking.completedAt),
+backend/src/bookings/booking.dto.ts:77:    proofOfDelivery: booking.proofOfDelivery,
+backend/src/bookings/booking.dto.ts:79:    createdAt: booking.createdAt.toISOString(),
+backend/src/bookings/booking.dto.ts:80:    updatedAt: booking.updatedAt.toISOString(),
+backend/src/payments/payment.service.ts:26:  const booking = await prisma.booking.findUnique({
+backend/src/payments/payment.service.ts:49:  if (booking.customerId !== customerId) {
+backend/src/payments/payment.service.ts:53:  if (booking.fare === null || booking.fare.lessThanOrEqualTo(0)) {
+backend/src/payments/payment.service.ts:57:  const amount = booking.fare;
+backend/src/payments/payment.service.ts:137:      email: booking.customer.email,
+backend/src/payments/payment.service.ts:138:      name: `${booking.customer.firstName} ${booking.customer.lastName}`.trim(),
+backend/src/payments/payment.service.ts:139:      phonenumber: booking.customer.phone,
+backend/src/payments/payment.service.ts:289:    await tx.booking.update({
+backend/src/payments/payment.service.ts:298:    if (updatedPayment.booking.transporterId) {
+backend/src/payments/payment.service.ts:301:          transporterId: updatedPayment.booking.transporterId,
+backend/src/payments/payment.service.ts:332:        recipientId: updatedPayment.booking.transporterId,
+backend/src/payments/payment.service.ts:375:      transporterId: result.payment.booking.transporterId,
+backend/src/payments/payment.routes.ts:12:import { assertBookingAccess } from "../bookings/booking.service.js";
+backend/src/messages/message.routes.ts:10:import { assertBookingAccess } from "../bookings/booking.service.js";
+backend/src/messages/message.routes.ts:43:        recipientId !== booking.customerId &&
+backend/src/messages/message.routes.ts:44:        recipientId !== booking.transporterId
+backend/src/support/support.routes.ts:12:import { assertBookingAccess } from "../bookings/booking.service.js";
+backend/src/support/support.dto.ts:43:                id: ticket.booking.id,
+backend/src/support/support.dto.ts:44:                status: ticket.booking.status,
+backend/src/admin/admin.service.ts:39:    prisma.booking.count(),
+backend/src/admin/admin.service.ts:49:    prisma.booking.count({
+backend/src/admin/admin.service.ts:62:    prisma.booking.count({
+backend/src/admin/admin.service.ts:68:    prisma.booking.count({
+backend/src/admin/admin.service.ts:107:    prisma.booking.findMany({
+backend/src/admin/fleet.routes.ts:49:router.use(requireAdminModule("FLEET_MARKETPLACE"));
+backend/src/admin/live-trips.service.ts:24:  return prisma.booking.findMany({
+backend/src/admin/live-trips.service.ts:82:  return prisma.booking.findFirst({
+backend/src/admin/live-trips.service.ts:127:      prisma.booking.count({
+backend/src/admin/live-trips.service.ts:163:  const booking = await prisma.booking.findFirst({
+backend/src/admin/live-trips.service.ts:210:    bookingId: booking.id,
+backend/src/admin/live-trips.service.ts:211:    vehicleId: booking.vehicleId,
+backend/src/admin/fleet.service.ts:91:    module: "FLEET_MARKETPLACE",
+backend/src/admin/partner.service.ts:74:      prisma.booking.count({
+backend/src/admin/partner.service.ts:77:      prisma.booking.count({
+backend/src/admin/platform-config.routes.ts:20:  marketplaceVisibilityConfigSchema,
+backend/src/admin/platform-config.routes.ts:21:} from "../marketplace/visibility.policy.js";
+backend/src/admin/platform-config.routes.ts:76:      } else if (key === "MARKETPLACE_VISIBILITY_CONFIG") {
+backend/src/admin/platform-config.routes.ts:77:        marketplaceVisibilityConfigSchema.parse(input.value);
+backend/src/admin/api-management.service.ts:7:    prisma.booking.count(),
+backend/src/admin/database-health.service.ts:18:    prisma.booking.count(),
+backend/src/admin/backup-recovery.service.ts:16:    prisma.booking.count(),
+backend/src/admin/risk-fraud.service.ts:21:    prisma.booking.count({ where: { status: "CANCELLED" } }),
+backend/src/admin/reports.service.ts:28:    prisma.booking.count(),
+backend/src/admin/reports.service.ts:29:    prisma.booking.count({ where: { status: "COMPLETED" } }),
+backend/src/admin/reports.service.ts:30:    prisma.booking.count({ where: { status: "CANCELLED" } }),
+backend/src/admin/ai-automation.service.ts:14:    prisma.booking.count({
+backend/src/realtime/realtime.service.ts:16:  | "FLEET_MARKETPLACE"
+backend/src/realtime/socket-authorization.ts:23:  const booking = await prisma.booking.findUnique({
+backend/src/realtime/socket-authorization.ts:36:    booking.customerId === user.id ||
+backend/src/realtime/socket-authorization.ts:37:    booking.transporterId === user.id
+backend/src/realtime/socket-authorization.ts:49:  const booking = await prisma.booking.findUnique({
+backend/src/realtime/socket-authorization.ts:65:  if (booking.transporterId !== user.id) {
+backend/src/realtime/socket-authorization.ts:70:    booking.vehicle &&
+backend/src/realtime/socket-authorization.ts:71:    booking.vehicle.transporterId !== user.id
+backend/src/realtime/tracking.service.ts:14:    const booking = await tx.booking.findUnique({
+backend/src/realtime/tracking.service.ts:36:    if (booking.status !== "IN_TRANSIT") {
+backend/src/realtime/tracking.service.ts:40:    if (booking.transporterId !== input.transporterId) {
+backend/src/realtime/tracking.service.ts:44:    if (!booking.vehicleId || !booking.vehicle) {
+backend/src/realtime/tracking.service.ts:48:    if (booking.vehicle.transporterId !== input.transporterId) {
+backend/src/realtime/tracking.service.ts:56:        id: booking.vehicle.id,
+backend/src/realtime/tracking.service.ts:66:        bookingId: booking.id,
+backend/src/realtime/tracking.service.ts:67:        vehicleId: booking.vehicle.id,
+backend/src/realtime/tracking.service.ts:79:      bookingId: booking.id,
+backend/src/server.ts:11:import bookingRoutes from "./bookings/booking.routes.js";
+backend/src/server.ts:12:import marketplaceRoutes from "./marketplace/marketplace.routes.js";
+backend/src/server.ts:139:app.use("/api/marketplace", marketplaceRoutes);
+backend/src/events/event.routes.ts:12:import { assertBookingAccess } from "../bookings/booking.service.js";
+backend/src/settlements/settlement.service.ts:50:    if (!payment.booking.transporterId) {
+backend/src/settlements/settlement.service.ts:58:        id: payment.booking.transporterId,
+backend/src/settlements/settlement.dto.ts:29:    id: booking.id,
+backend/src/settlements/settlement.dto.ts:30:    status: booking.status,
+backend/src/settlements/settlement.dto.ts:31:    paymentStatus: booking.paymentStatus,
+backend/src/settlements/settlement.dto.ts:32:    fare: decimal(booking.fare),
+backend/src/settlements/settlement.dto.ts:33:    pickupLocation: booking.pickupLocation,
+backend/src/settlements/settlement.dto.ts:34:    destination: booking.destination,
+backend/src/marketplace/marketplace.validators.ts:7:export const createMarketplaceRequestSchema = z.object({
+backend/src/marketplace/marketplace.validators.ts:46:export const createMarketplaceBidSchema = z.object({
+backend/src/marketplace/marketplace.validators.ts:53:export const withdrawMarketplaceBidSchema = z.object({}).strict();
+backend/src/marketplace/marketplace.validators.ts:55:export const selectMarketplaceBidSchema = z.object({}).strict();
+backend/src/marketplace/marketplace.validators.ts:57:export const marketplaceVisibilityQuerySchema = z.object({
+backend/src/marketplace/marketplace.service.ts:6:async function expireMarketplaceLifecycle() {
+backend/src/marketplace/marketplace.service.ts:10:    const expiredBids = await tx.marketplaceBid.findMany({
+backend/src/marketplace/marketplace.service.ts:26:      await tx.marketplaceBid.updateMany({
+backend/src/marketplace/marketplace.service.ts:29:            in: expiredBids.map((bid) => bid.id),
+backend/src/marketplace/marketplace.service.ts:44:     * MarketplaceRequest.scheduledDate represents the planned
+backend/src/marketplace/marketplace.service.ts:45:     * shipment/pickup date. It is NOT the marketplace request's
+backend/src/marketplace/marketplace.service.ts:52:     * Only MarketplaceBid.expiresAt controls bid expiration.
+backend/src/marketplace/marketplace.service.ts:56:      expiredBidIds: expiredBids.map((bid) => bid.id),
+backend/src/marketplace/marketplace.service.ts:62:function serializeMarketplaceBid(bid: {
+backend/src/marketplace/marketplace.service.ts:90:    id: bid.id,
+backend/src/marketplace/marketplace.service.ts:91:    requestId: bid.requestId,
+backend/src/marketplace/marketplace.service.ts:92:    transporterId: bid.transporterId,
+backend/src/marketplace/marketplace.service.ts:93:    vehicleId: bid.vehicleId,
+backend/src/marketplace/marketplace.service.ts:94:    amount: bid.amount,
+backend/src/marketplace/marketplace.service.ts:95:    message: bid.message,
+backend/src/marketplace/marketplace.service.ts:96:    status: bid.status,
+backend/src/marketplace/marketplace.service.ts:97:    expiresAt: bid.expiresAt,
+backend/src/marketplace/marketplace.service.ts:98:    selectedAt: bid.selectedAt ?? null,
+backend/src/marketplace/marketplace.service.ts:99:    createdAt: bid.createdAt,
+backend/src/marketplace/marketplace.service.ts:100:    vehicle: bid.vehicle
+backend/src/marketplace/marketplace.service.ts:102:          id: bid.vehicle.id,
+backend/src/marketplace/marketplace.service.ts:103:          vehicleType: bid.vehicle.vehicleType,
+backend/src/marketplace/marketplace.service.ts:104:          vehicleClass: bid.vehicle.vehicleClass,
+backend/src/marketplace/marketplace.service.ts:107:    transporter: bid.transporter
+backend/src/marketplace/marketplace.service.ts:109:          id: bid.transporter.id,
+backend/src/marketplace/marketplace.service.ts:110:          firstName: bid.transporter.firstName,
+backend/src/marketplace/marketplace.service.ts:111:          lastName: bid.transporter.lastName,
+backend/src/marketplace/marketplace.service.ts:112:          transporterTier: bid.transporter.transporterTier,
+backend/src/marketplace/marketplace.service.ts:113:          rating: bid.transporter.transporterProfile?.rating ?? null,
+backend/src/marketplace/marketplace.service.ts:115:            bid.transporter.transporterProfile?.totalTrips ?? 0,
+backend/src/marketplace/marketplace.service.ts:121:export async function createMarketplaceRequest(data: {
+backend/src/marketplace/marketplace.service.ts:161:  const request = await prisma.marketplaceRequest.create({
+backend/src/marketplace/marketplace.service.ts:180:  publishEvent("marketplace", {
+backend/src/marketplace/marketplace.service.ts:182:    module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:183:    entityType: "MARKETPLACE_REQUEST",
+backend/src/marketplace/marketplace.service.ts:200:export async function getMarketplaceRequest(
+backend/src/marketplace/marketplace.service.ts:204:  await expireMarketplaceLifecycle();
+backend/src/marketplace/marketplace.service.ts:206:  const request = await prisma.marketplaceRequest.findFirst({
+backend/src/marketplace/marketplace.service.ts:279:    bids: request.bids.map(serializeMarketplaceBid),
+backend/src/marketplace/marketplace.service.ts:283:export async function createMarketplaceBid(data: {
+backend/src/marketplace/marketplace.service.ts:291:  await expireMarketplaceLifecycle();
+backend/src/marketplace/marketplace.service.ts:293:  const request = await prisma.marketplaceRequest.findUnique({
+backend/src/marketplace/marketplace.service.ts:305:    throw new Error("Marketplace request not found");
+backend/src/marketplace/marketplace.service.ts:309:    throw new Error("Marketplace request is no longer accepting bids");
+backend/src/marketplace/marketplace.service.ts:313:    throw new Error("Customer cannot bid on their own marketplace request");
+backend/src/marketplace/marketplace.service.ts:386:    const bid = await prisma.marketplaceBid.create({
+backend/src/marketplace/marketplace.service.ts:401:    publishEvent("marketplace", {
+backend/src/marketplace/marketplace.service.ts:402:      eventType: "BID_SUBMITTED",
+backend/src/marketplace/marketplace.service.ts:403:      module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:404:      entityType: "MARKETPLACE_BID",
+backend/src/marketplace/marketplace.service.ts:405:      entityId: bid.id,
+backend/src/marketplace/marketplace.service.ts:408:        bidId: bid.id,
+backend/src/marketplace/marketplace.service.ts:412:        amount: bid.amount,
+backend/src/marketplace/marketplace.service.ts:413:        status: bid.status,
+backend/src/marketplace/marketplace.service.ts:430:export async function withdrawMarketplaceBid(
+backend/src/marketplace/marketplace.service.ts:434:  await expireMarketplaceLifecycle();
+backend/src/marketplace/marketplace.service.ts:435:  const bid = await prisma.marketplaceBid.findUnique({
+backend/src/marketplace/marketplace.service.ts:446:    throw new Error("Marketplace bid not found");
+backend/src/marketplace/marketplace.service.ts:449:  if (bid.transporterId !== transporterId) {
+backend/src/marketplace/marketplace.service.ts:453:  if (bid.status !== "PENDING") {
+backend/src/marketplace/marketplace.service.ts:457:  const updated = await prisma.marketplaceBid.update({
+backend/src/marketplace/marketplace.service.ts:464:  publishEvent("marketplace", {
+backend/src/marketplace/marketplace.service.ts:465:    eventType: "BID_WITHDRAWN",
+backend/src/marketplace/marketplace.service.ts:466:    module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:467:    entityType: "MARKETPLACE_BID",
+backend/src/marketplace/marketplace.service.ts:480:export async function selectMarketplaceBid(
+backend/src/marketplace/marketplace.service.ts:485:  await expireMarketplaceLifecycle();
+backend/src/marketplace/marketplace.service.ts:488:     * Read the marketplace request and verify ownership.
+backend/src/marketplace/marketplace.service.ts:491:    const request = await tx.marketplaceRequest.findUnique({
+backend/src/marketplace/marketplace.service.ts:517:      throw new Error("Marketplace request not found");
+backend/src/marketplace/marketplace.service.ts:525:      throw new Error("Marketplace request is no longer accepting bid selection");
+backend/src/marketplace/marketplace.service.ts:531:    const bid = await tx.marketplaceBid.findFirst({
+backend/src/marketplace/marketplace.service.ts:549:      throw new Error("Marketplace bid not found");
+backend/src/marketplace/marketplace.service.ts:552:    if (bid.status !== "PENDING") {
+backend/src/marketplace/marketplace.service.ts:556:    if (bid.expiresAt && bid.expiresAt <= new Date()) {
+backend/src/marketplace/marketplace.service.ts:557:      throw new Error("Marketplace bid has expired");
+backend/src/marketplace/marketplace.service.ts:567:        id: bid.transporterId,
+backend/src/marketplace/marketplace.service.ts:604:        id: bid.vehicleId,
+backend/src/marketplace/marketplace.service.ts:620:    if (vehicle.transporterId !== bid.transporterId) {
+backend/src/marketplace/marketplace.service.ts:641:     * Claim the marketplace request first.
+backend/src/marketplace/marketplace.service.ts:646:    const claimedRequest = await tx.marketplaceRequest.updateMany({
+backend/src/marketplace/marketplace.service.ts:658:      throw new Error("Marketplace request has already been processed");
+backend/src/marketplace/marketplace.service.ts:667:        transporterId: bid.transporterId,
+backend/src/marketplace/marketplace.service.ts:681:     * Select exactly this bid.
+backend/src/marketplace/marketplace.service.ts:685:    const selectedBid = await tx.marketplaceBid.updateMany({
+backend/src/marketplace/marketplace.service.ts:687:        id: bid.id,
+backend/src/marketplace/marketplace.service.ts:697:    if (selectedBid.count !== 1) {
+backend/src/marketplace/marketplace.service.ts:704:    await tx.marketplaceBid.updateMany({
+backend/src/marketplace/marketplace.service.ts:708:          not: bid.id,
+backend/src/marketplace/marketplace.service.ts:718:     * Marketplace acceptance creates the operational Booking.
+backend/src/marketplace/marketplace.service.ts:720:     * The accepted bid amount is authoritative for this booking.
+backend/src/marketplace/marketplace.service.ts:725:    const booking = await tx.booking.create({
+backend/src/marketplace/marketplace.service.ts:728:        transporterId: bid.transporterId,
+backend/src/marketplace/marketplace.service.ts:729:        vehicleId: bid.vehicleId,
+backend/src/marketplace/marketplace.service.ts:736:        fare: bid.amount,
+backend/src/marketplace/marketplace.service.ts:757:     * Complete the marketplace <-> booking relationship.
+backend/src/marketplace/marketplace.service.ts:759:    const linkedRequest = await tx.marketplaceRequest.update({
+backend/src/marketplace/marketplace.service.ts:764:        agreedBidId: bid.id,
+backend/src/marketplace/marketplace.service.ts:765:        bookingId: booking.id,
+backend/src/marketplace/marketplace.service.ts:782:      transporterId: bid.transporterId,
+backend/src/marketplace/marketplace.service.ts:787:   * Publish marketplace events after the transaction commits.
+backend/src/marketplace/marketplace.service.ts:791:  publishEvent("marketplace", {
+backend/src/marketplace/marketplace.service.ts:792:    eventType: "BID_SELECTED",
+backend/src/marketplace/marketplace.service.ts:793:    module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:794:    entityType: "MARKETPLACE_BID",
+backend/src/marketplace/marketplace.service.ts:795:    entityId: result.bid.id,
+backend/src/marketplace/marketplace.service.ts:798:      bidId: result.bid.id,
+backend/src/marketplace/marketplace.service.ts:802:      amount: result.bid.amount,
+backend/src/marketplace/marketplace.service.ts:804:      bookingId: result.booking.id,
+backend/src/marketplace/marketplace.service.ts:808:  publishEvent("marketplace", {
+backend/src/marketplace/marketplace.service.ts:809:    eventType: "MARKETPLACE_REQUEST_AGREED",
+backend/src/marketplace/marketplace.service.ts:810:    module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:811:    entityType: "MARKETPLACE_REQUEST",
+backend/src/marketplace/marketplace.service.ts:816:      bidId: result.bid.id,
+backend/src/marketplace/marketplace.service.ts:817:      bookingId: result.booking.id,
+backend/src/marketplace/marketplace.service.ts:826:    entityId: result.booking.id,
+backend/src/marketplace/marketplace.service.ts:827:    bookingId: result.booking.id,
+backend/src/marketplace/marketplace.service.ts:830:      bookingId: result.booking.id,
+backend/src/marketplace/marketplace.service.ts:834:      status: result.booking.status,
+backend/src/marketplace/marketplace.service.ts:835:      fare: result.booking.fare,
+backend/src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+backend/src/marketplace/marketplace.service.ts:837:      marketplaceBidId: result.bid.id,
+backend/src/marketplace/marketplace.service.ts:843:    module: "FLEET_MARKETPLACE",
+backend/src/marketplace/marketplace.service.ts:851:      bookingId: result.booking.id,
+backend/src/marketplace/marketplace.routes.ts:9:  createMarketplaceRequestSchema,
+backend/src/marketplace/marketplace.routes.ts:10:  createMarketplaceBidSchema,
+backend/src/marketplace/marketplace.routes.ts:11:  withdrawMarketplaceBidSchema,
+backend/src/marketplace/marketplace.routes.ts:12:  selectMarketplaceBidSchema,
+backend/src/marketplace/marketplace.routes.ts:13:  marketplaceVisibilityQuerySchema,
+backend/src/marketplace/marketplace.routes.ts:14:} from "./marketplace.validators.js";
+backend/src/marketplace/marketplace.routes.ts:16:  createMarketplaceRequest,
+backend/src/marketplace/marketplace.routes.ts:17:  getMarketplaceRequest,
+backend/src/marketplace/marketplace.routes.ts:18:  createMarketplaceBid,
+backend/src/marketplace/marketplace.routes.ts:19:  withdrawMarketplaceBid,
+backend/src/marketplace/marketplace.routes.ts:20:  selectMarketplaceBid,
+backend/src/marketplace/marketplace.routes.ts:21:} from "./marketplace.service.js";
+backend/src/marketplace/marketplace.routes.ts:22:import { getVisibleMarketplaceLoads } from "./visibility.service.js";
+backend/src/marketplace/marketplace.routes.ts:34:      const query = marketplaceVisibilityQuerySchema.parse(
+backend/src/marketplace/marketplace.routes.ts:38:      const loads = await getVisibleMarketplaceLoads(
+backend/src/marketplace/marketplace.routes.ts:51:          error: "Invalid marketplace visibility query",
+backend/src/marketplace/marketplace.routes.ts:61:        message === "Only transporters can access marketplace visibility"
+backend/src/marketplace/marketplace.routes.ts:80:        message === "Invalid marketplace visibility radius" ||
+backend/src/marketplace/marketplace.routes.ts:82:          "Marketplace visibility radius cannot exceed",
+backend/src/marketplace/marketplace.routes.ts:104:      const input = createMarketplaceRequestSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:106:      const request = await createMarketplaceRequest({
+backend/src/marketplace/marketplace.routes.ts:137:      const request = await getMarketplaceRequest(
+backend/src/marketplace/marketplace.routes.ts:145:          error: "Marketplace request not found",
+backend/src/marketplace/marketplace.routes.ts:167:      const input = createMarketplaceBidSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:169:      const bid = await createMarketplaceBid({
+backend/src/marketplace/marketplace.routes.ts:192:        "Marketplace request is no longer accepting bids",
+backend/src/marketplace/marketplace.routes.ts:214:      selectMarketplaceBidSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:216:      const result = await selectMarketplaceBid(
+backend/src/marketplace/marketplace.routes.ts:239:        "Marketplace request is no longer accepting bid selection",
+backend/src/marketplace/marketplace.routes.ts:240:        "Marketplace request has already been processed",
+backend/src/marketplace/marketplace.routes.ts:242:        "Marketplace bid has expired",
+backend/src/marketplace/marketplace.routes.ts:267:      withdrawMarketplaceBidSchema.parse(req.body);
+backend/src/marketplace/marketplace.routes.ts:269:      const bid = await withdrawMarketplaceBid(
+backend/src/marketplace/visibility.service.ts:3:  getMarketplaceVisibilityConfig,
+backend/src/marketplace/visibility.service.ts:41:    ReturnType<typeof getMarketplaceVisibilityConfig>
+backend/src/marketplace/visibility.service.ts:56:    ReturnType<typeof getMarketplaceVisibilityConfig>
+backend/src/marketplace/visibility.service.ts:92:export async function getVisibleMarketplaceLoads(
+backend/src/marketplace/visibility.service.ts:97:    await getMarketplaceVisibilityConfig();
+backend/src/marketplace/visibility.service.ts:107:      "Invalid marketplace visibility radius",
+backend/src/marketplace/visibility.service.ts:116:      `Marketplace visibility radius cannot exceed ${visibilityPolicy.maxRadiusKm} km`,
+backend/src/marketplace/visibility.service.ts:188:      "Only transporters can access marketplace visibility",
+backend/src/marketplace/visibility.service.ts:226:    await prisma.marketplaceRequest.findMany({
+backend/src/marketplace/visibility.policy.ts:6:export const marketplaceVisibilityConfigSchema = z
+backend/src/marketplace/visibility.policy.ts:49:export type MarketplaceVisibilityConfig = z.infer<
+backend/src/marketplace/visibility.policy.ts:50:  typeof marketplaceVisibilityConfigSchema
+backend/src/marketplace/visibility.policy.ts:53:const DEFAULT_MARKETPLACE_VISIBILITY_CONFIG: MarketplaceVisibilityConfig =
+backend/src/marketplace/visibility.policy.ts:85:export async function getMarketplaceVisibilityConfig(): Promise<MarketplaceVisibilityConfig> {
+backend/src/marketplace/visibility.policy.ts:89:    WHERE key = 'MARKETPLACE_VISIBILITY_CONFIG'
+backend/src/marketplace/visibility.policy.ts:96:    return DEFAULT_MARKETPLACE_VISIBILITY_CONFIG;
+backend/src/marketplace/visibility.policy.ts:100:    marketplaceVisibilityConfigSchema.safeParse(value);
+backend/src/marketplace/visibility.policy.ts:103:    return DEFAULT_MARKETPLACE_VISIBILITY_CONFIG;
+
+============================================================
+### MARKETPLACE TESTS
+============================================================
+
+----- FILE: backend/tests/marketplace.routes.test.ts -----
+import test, { mock } from "node:test";
+import assert from "node:assert/strict";
+
+const routerUseMock = mock.fn();
+const routerGetMock = mock.fn();
+const routerPostMock = mock.fn();
+
+const RouterMock = () => ({
+  use: routerUseMock,
+  get: routerGetMock,
+  post: routerPostMock,
+});
+
+mock.module("express", {
+  exports: {
+    Router: RouterMock,
+  },
+});
+
+const authenticateMock = mock.fn();
+
+const authorizeMiddlewares = new Map<
+  string,
+  ReturnType<typeof mock.fn>
+>();
+
+const authorizeMock = mock.fn((role: string) => {
+  const existing = authorizeMiddlewares.get(role);
+
+  if (existing) {
+    return existing;
+  }
+
+  const middleware = mock.fn();
+  authorizeMiddlewares.set(role, middleware);
+  return middleware;
+});
+
+const createMarketplaceRequestMock = mock.fn();
+const getMarketplaceRequestMock = mock.fn();
+const createMarketplaceBidMock = mock.fn();
+const withdrawMarketplaceBidMock = mock.fn();
+const selectMarketplaceBidMock = mock.fn();
+const getVisibleMarketplaceLoadsMock = mock.fn();
+
+mock.module("../src/middleware/auth.middleware.js", {
+  exports: {
+    authenticate: authenticateMock,
+    authorize: authorizeMock,
+  },
+});
+
+mock.module("../src/marketplace/marketplace.service.js", {
+  exports: {
+    createMarketplaceRequest: createMarketplaceRequestMock,
+    getMarketplaceRequest: getMarketplaceRequestMock,
+    createMarketplaceBid: createMarketplaceBidMock,
+    withdrawMarketplaceBid: withdrawMarketplaceBidMock,
+    selectMarketplaceBid: selectMarketplaceBidMock,
+  },
+});
+
+mock.module("../src/marketplace/visibility.service.js", {
+  exports: {
+    getVisibleMarketplaceLoads: getVisibleMarketplaceLoadsMock,
+  },
+});
+
+await import("../src/marketplace/marketplace.routes.js");
+
+function makeResponse() {
+  const res: any = {};
+
+  res.status = mock.fn(() => res);
+  res.json = mock.fn(() => res);
+
+  return res;
+}
+
+function getRoute(
+  method: "get" | "post",
+  path: string,
+) {
+  const calls =
+    method === "get"
+      ? routerGetMock.mock.calls
+      : routerPostMock.mock.calls;
+
+  const route = calls.find(
+    (call) => call.arguments[0] === path,
+  );
+
+  assert.ok(route);
+
+  return route;
+}
+
+test.beforeEach(() => {
+  createMarketplaceRequestMock.mock.resetCalls();
+  getMarketplaceRequestMock.mock.resetCalls();
+  createMarketplaceBidMock.mock.resetCalls();
+  withdrawMarketplaceBidMock.mock.resetCalls();
+  selectMarketplaceBidMock.mock.resetCalls();
+  getVisibleMarketplaceLoadsMock.mock.resetCalls();
+});
+
+test("marketplace router requires authentication", () => {
+  assert.equal(routerUseMock.mock.calls.length, 1);
+  assert.equal(
+    routerUseMock.mock.calls[0]?.arguments[0],
+    authenticateMock,
+  );
+});
+
+test("marketplace router registers all required endpoints", () => {
+  assert.deepEqual(
+    routerGetMock.mock.calls.map(
+      (call) => call.arguments[0],
+    ),
+    ["/loads", "/requests/:id"],
+  );
+
+  assert.deepEqual(
+    routerPostMock.mock.calls.map(
+      (call) => call.arguments[0],
+    ),
+    [
+      "/requests",
+      "/requests/:id/bids",
+      "/requests/:id/bids/:bidId/select",
+      "/bids/:id/withdraw",
+    ],
+  );
+});
+
+test("marketplace routes apply correct role authorization", () => {
+  const loadRoute = getRoute("get", "/loads");
+  const requestRoute = getRoute("post", "/requests");
+  const bidRoute = getRoute(
+    "post",
+    "/requests/:id/bids",
+  );
+  const selectRoute = getRoute(
+    "post",
+    "/requests/:id/bids/:bidId/select",
+  );
+  const withdrawRoute = getRoute(
+    "post",
+    "/bids/:id/withdraw",
+  );
+
+  assert.equal(
+    loadRoute.arguments[1],
+    authorizeMiddlewares.get("TRANSPORTER"),
+  );
+
+  assert.equal(
+    requestRoute.arguments[1],
+    authorizeMiddlewares.get("CUSTOMER"),
+  );
+
+  assert.equal(
+    bidRoute.arguments[1],
+    authorizeMiddlewares.get("TRANSPORTER"),
+  );
+
+  assert.equal(
+    selectRoute.arguments[1],
+    authorizeMiddlewares.get("CUSTOMER"),
+  );
+
+  assert.equal(
+    withdrawRoute.arguments[1],
+    authorizeMiddlewares.get("TRANSPORTER"),
+  );
+});
+
+test("POST /requests creates a marketplace request", async () => {
+  const route = getRoute("post", "/requests");
+
+  const handler = route.arguments.at(-1);
+
+  const request = {
+    pickupLocation: "Lagos",
+    destination: "Abuja",
+    pickupLatitude: 6.5244,
+    pickupLongitude: 3.3792,
+    destinationLatitude: 9.0765,
+    destinationLongitude: 7.3986,
+    cargoDescription: "General cargo",
+    truckCategory: "MEDIUM_TRUCK",
+    cargoCategory: "GENERAL",
+    cargoWeight: 2000,
+  };
+
+  const created = {
+    id: "request-1",
+    ...request,
+    customerId: "customer-1",
+    status: "OPEN",
+  };
+
+  createMarketplaceRequestMock.mock.mockImplementation(
+    async () => created,
+  );
+
+  const req: any = {
+    body: request,
+    user: {
+      id: "customer-1",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(
+    createMarketplaceRequestMock.mock.calls.length,
+    1,
+  );
+
+  assert.deepEqual(
+    createMarketplaceRequestMock.mock.calls[0]?.arguments[0],
+    {
+      ...request,
+      customerId: "customer-1",
+    },
+  );
+
+  assert.equal(res.status.mock.calls[0]?.arguments[0], 201);
+
+  assert.deepEqual(
+    res.json.mock.calls[0]?.arguments[0],
+    {
+      success: true,
+      data: created,
+    },
+  );
+});
+
+test("POST /requests rejects invalid request data", async () => {
+  const route = getRoute("post", "/requests");
+  const handler = route.arguments.at(-1);
+
+  const req: any = {
+    body: {
+      pickupLocation: "",
+      destination: "Abuja",
+    },
+    user: {
+      id: "customer-1",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(res.status.mock.calls[0]?.arguments[0], 400);
+
+  assert.equal(
+    res.json.mock.calls[0]?.arguments[0].success,
+    false,
+  );
+
+  assert.equal(
+    res.json.mock.calls[0]?.arguments[0].error,
+    "Invalid request data",
+  );
+
+  assert.equal(
+    createMarketplaceRequestMock.mock.calls.length,
+    0,
+  );
+});
+
+test("POST /requests/:id/bids creates a marketplace bid", async () => {
+  const route = getRoute(
+    "post",
+    "/requests/:id/bids",
+  );
+
+  const handler = route.arguments.at(-1);
+
+  const input = {
+    vehicleId: "550e8400-e29b-41d4-a716-446655440000",
+    amount: 140000,
+    message: "Available for pickup",
+  };
+
+  const created = {
+    id: "bid-1",
+    requestId: "request-1",
+    transporterId: "transporter-1",
+    ...input,
+    status: "PENDING",
+  };
+
+  createMarketplaceBidMock.mock.mockImplementation(
+    async () => created,
+  );
+
+  const req: any = {
+    params: {
+      id: "request-1",
+    },
+    body: input,
+    user: {
+      id: "transporter-1",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(
+    createMarketplaceBidMock.mock.calls.length,
+    1,
+  );
+
+  assert.deepEqual(
+    createMarketplaceBidMock.mock.calls[0]?.arguments[0],
+    {
+      ...input,
+      requestId: "request-1",
+      transporterId: "transporter-1",
+    },
+  );
+
+  assert.equal(res.status.mock.calls[0]?.arguments[0], 201);
+
+  assert.deepEqual(
+    res.json.mock.calls[0]?.arguments[0],
+    {
+      success: true,
+      data: created,
+    },
+  );
+});
+
+test("POST /requests/:id/bids maps duplicate bids to 409", async () => {
+  const route = getRoute(
+    "post",
+    "/requests/:id/bids",
+  );
+
+  const handler = route.arguments.at(-1);
+
+  createMarketplaceBidMock.mock.mockImplementation(
+    async () => {
+      throw new Error(
+        "Transporter has already submitted a bid for this request",
+      );
+    },
+  );
+
+  const req: any = {
+    params: {
+      id: "request-1",
+    },
+    body: {
+      vehicleId: "550e8400-e29b-41d4-a716-446655440000",
+      amount: 140000,
+    },
+    user: {
+      id: "transporter-1",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(res.status.mock.calls[0]?.arguments[0], 409);
+
+  assert.deepEqual(
+    res.json.mock.calls[0]?.arguments[0],
+    {
+      success: false,
+      error:
+        "Transporter has already submitted a bid for this request",
+    },
+  );
+});
+
+test("POST /requests/:id/bids/:bidId/select selects a bid", async () => {
+  const route = getRoute(
+    "post",
+    "/requests/:id/bids/:bidId/select",
+  );
+
+  const handler = route.arguments.at(-1);
+
+  const result = {
+    request: {
+      id: "request-1",
+      status: "MATCHED",
+    },
+    bid: {
+      id: "bid-1",
+      status: "SELECTED",
+    },
+    booking: {
+      id: "booking-1",
+    },
+  };
+
+  selectMarketplaceBidMock.mock.mockImplementation(
+    async () => result,
+  );
+
+  const req: any = {
+    params: {
+      id: "request-1",
+      bidId: "bid-1",
+    },
+    body: {},
+    user: {
+      id: "customer-1",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(
+    selectMarketplaceBidMock.mock.calls.length,
+    1,
+  );
+
+  assert.deepEqual(
+    selectMarketplaceBidMock.mock.calls[0]?.arguments,
+    [
+      "request-1",
+      "bid-1",
+      "customer-1",
+    ],
+  );
+
+  assert.equal(res.status.mock.calls[0]?.arguments[0], 200);
+
+  assert.deepEqual(
+    res.json.mock.calls[0]?.arguments[0],
+    {
+      success: true,
+      data: result,
+    },
+  );
+});
+
+test("POST /requests/:id/bids/:bidId/select maps ownership denial to 403", async () => {
+  const route = getRoute(
+    "post",
+    "/requests/:id/bids/:bidId/select",
+  );
+
+  const handler = route.arguments.at(-1);
+
+  selectMarketplaceBidMock.mock.mockImplementation(
+    async () => {
+      throw new Error("Access denied");
+    },
+  );
+
+  const req: any = {
+    params: {
+      id: "request-1",
+      bidId: "bid-1",
+    },
+    body: {},
+    user: {
+      id: "other-customer",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(res.status.mock.calls[0]?.arguments[0], 403);
+
+  assert.deepEqual(
+    res.json.mock.calls[0]?.arguments[0],
+    {
+      success: false,
+      error: "Access denied",
+    },
+  );
+});
+
+test("POST /bids/:id/withdraw withdraws a bid", async () => {
+  const route = getRoute(
+    "post",
+    "/bids/:id/withdraw",
+  );
+
+  const handler = route.arguments.at(-1);
+
+  const withdrawn = {
+    id: "bid-1",
+    status: "WITHDRAWN",
+  };
+
+  withdrawMarketplaceBidMock.mock.mockImplementation(
+    async () => withdrawn,
+  );
+
+  const req: any = {
+    params: {
+      id: "bid-1",
+    },
+    body: {},
+    user: {
+      id: "transporter-1",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(
+    withdrawMarketplaceBidMock.mock.calls.length,
+    1,
+  );
+
+  assert.deepEqual(
+    withdrawMarketplaceBidMock.mock.calls[0]?.arguments,
+    [
+      "bid-1",
+      "transporter-1",
+    ],
+  );
+
+  assert.deepEqual(
+    res.json.mock.calls[0]?.arguments[0],
+    {
+      success: true,
+      data: withdrawn,
+    },
+  );
+});
+
+test("GET /loads rejects invalid visibility query", async () => {
+  const route = getRoute("get", "/loads");
+  const handler = route.arguments.at(-1);
+
+  const req: any = {
+    query: {
+      radiusKm: "not-a-number",
+    },
+    user: {
+      id: "transporter-1",
+    },
+  };
+
+  const res = makeResponse();
+
+  await handler(req, res);
+
+  assert.equal(res.status.mock.calls[0]?.arguments[0], 400);
+
+  assert.equal(
+    res.json.mock.calls[0]?.arguments[0].success,
+    false,
+  );
+
+  assert.equal(
+    res.json.mock.calls[0]?.arguments[0].error,
+    "Invalid marketplace visibility query",
+  );
+
+  assert.equal(
+    getVisibleMarketplaceLoadsMock.mock.calls.length,
+    0,
+  );
+});
+
+----- FILE: backend/tests/marketplace.routes.test.ts.bak -----
+import test, { mock } from "node:test";
+import assert from "node:assert/strict";
+
+const routerUseMock = mock.fn();
+const routerGetMock = mock.fn();
+const routerPostMock = mock.fn();
+
+const RouterMock = () => ({
+  use: routerUseMock,
+  get: routerGetMock,
+  post: routerPostMock,
+});
+
+mock.module("express", {
+  exports: {
+    Router: RouterMock,
+  },
+});
+
+const authenticateMock = mock.fn();
+
+const authorizeMiddlewares = new Map<
+  string,
+  ReturnType<typeof mock.fn>
+>();
+
+const authorizeMock = mock.fn((role: string) => {
+  const existing = authorizeMiddlewares.get(role);
+
+  if (existing) {
+    return existing;
+  }
+
+  const middleware = mock.fn();
+  authorizeMiddlewares.set(role, middleware);
+  return middleware;
+});
+
+mock.module("../src/middleware/auth.middleware.js", {
+  exports: {
+    authenticate: authenticateMock,
+    authorize: authorizeMock,
+  },
+});
+
+mock.module("../src/marketplace/marketplace.service.js", {
+  exports: {
+    createMarketplaceRequest: mock.fn(),
+    getMarketplaceRequest: mock.fn(),
+    createMarketplaceBid: mock.fn(),
+    withdrawMarketplaceBid: mock.fn(),
+    selectMarketplaceBid: mock.fn(),
+  },
+});
+
+mock.module("../src/marketplace/visibility.service.js", {
+  exports: {
+    getVisibleMarketplaceLoads: mock.fn(),
+  },
+});
+
+await import("../src/marketplace/marketplace.routes.js");
+
+test("marketplace router requires authentication", () => {
+  assert.equal(routerUseMock.mock.calls.length, 1);
+  assert.equal(
+    routerUseMock.mock.calls[0]?.arguments[0],
+    authenticateMock,
+  );
+});
+
+test("marketplace router registers all required endpoints", () => {
+  assert.deepEqual(
+    routerGetMock.mock.calls.map(
+      (call) => call.arguments[0],
+    ),
+    ["/loads", "/requests/:id"],
+  );
+
+  assert.deepEqual(
+    routerPostMock.mock.calls.map(
+      (call) => call.arguments[0],
+    ),
+    [
+      "/requests",
+      "/requests/:id/bids",
+      "/requests/:id/bids/:bidId/select",
+      "/bids/:id/withdraw",
+    ],
+  );
+});
+
+test("marketplace routes apply correct role authorization", () => {
+  const loadRoute = routerGetMock.mock.calls.find(
+    (call) => call.arguments[0] === "/loads",
+  );
+
+  const requestRoute = routerPostMock.mock.calls.find(
+    (call) => call.arguments[0] === "/requests",
+  );
+
+  const bidRoute = routerPostMock.mock.calls.find(
+    (call) => call.arguments[0] === "/requests/:id/bids",
+  );
+
+  const selectRoute = routerPostMock.mock.calls.find(
+    (call) =>
+      call.arguments[0] ===
+      "/requests/:id/bids/:bidId/select",
+  );
+
+  const withdrawRoute = routerPostMock.mock.calls.find(
+    (call) =>
+      call.arguments[0] === "/bids/:id/withdraw",
+  );
+
+  assert.ok(loadRoute);
+  assert.ok(requestRoute);
+  assert.ok(bidRoute);
+  assert.ok(selectRoute);
+  assert.ok(withdrawRoute);
+
+  assert.equal(
+    loadRoute.arguments[1],
+    authorizeMiddlewares.get("TRANSPORTER"),
+  );
+
+  assert.equal(
+    requestRoute.arguments[1],
+    authorizeMiddlewares.get("CUSTOMER"),
+  );
+
+  assert.equal(
+    bidRoute.arguments[1],
+    authorizeMiddlewares.get("TRANSPORTER"),
+  );
+
+  assert.equal(
+    selectRoute.arguments[1],
+    authorizeMiddlewares.get("CUSTOMER"),
+  );
+
+  assert.equal(
+    withdrawRoute.arguments[1],
+    authorizeMiddlewares.get("TRANSPORTER"),
+  );
+});
+
+----- FILE: backend/tests/marketplace.service.test.ts -----
+import test, { mock } from "node:test";
+import assert from "node:assert/strict";
+
+const prismaMock = {
+  marketplaceRequest: {
+    create: mock.fn<(...args: any[]) => any>(),
+    findUnique: mock.fn<(...args: any[]) => any>(),
+    findFirst: mock.fn<(...args: any[]) => any>(),
+    findMany: mock.fn<(...args: any[]) => any>(),
+    update: mock.fn<(...args: any[]) => any>(),
+    updateMany: mock.fn<(...args: any[]) => any>(),
+  },
+
+  marketplaceBid: {
+    create: mock.fn<(...args: any[]) => any>(),
+    findUnique: mock.fn<(...args: any[]) => any>(),
+    findFirst: mock.fn<(...args: any[]) => any>(),
+    findMany: mock.fn<(...args: any[]) => any>(),
+    update: mock.fn<(...args: any[]) => any>(),
+    updateMany: mock.fn<(...args: any[]) => any>(),
+  },
+
+  user: {
+    findUnique: mock.fn<(...args: any[]) => any>(),
+  },
+
+  vehicle: {
+    findUnique: mock.fn<(...args: any[]) => any>(),
+    update: mock.fn<(...args: any[]) => any>(),
+    updateMany: mock.fn<(...args: any[]) => any>(),
+  },
+
+  booking: {
+    create: mock.fn<(...args: any[]) => any>(),
+  },
+
+  $transaction: mock.fn<(...args: any[]) => any>(),
+};
+
+const publishEventMock =
+  mock.fn<(...args: any[]) => any>();
+
+const estimateFareMock =
+  mock.fn<(...args: any[]) => any>();
+
+mock.module("../src/config/prisma.js", {
+  exports: {
+    default: prismaMock,
+    prisma: prismaMock,
+  },
+});
+
+mock.module("../src/realtime/event-bus.js", {
+  exports: {
+    publishEvent: publishEventMock,
+  },
+});
+
+mock.module("../src/pricing/pricing.service.js", {
+  exports: {
+    estimateFare: estimateFareMock,
+  },
+});
+
+const {
+  createMarketplaceRequest,
+  createMarketplaceBid,
+  withdrawMarketplaceBid,
+  selectMarketplaceBid,
+} = await import("../src/marketplace/marketplace.service.js");
+
+function resetMocks() {
+  for (const fn of [
+    prismaMock.marketplaceRequest.create,
+    prismaMock.marketplaceRequest.findUnique,
+    prismaMock.marketplaceRequest.findFirst,
+    prismaMock.marketplaceRequest.findMany,
+    prismaMock.marketplaceRequest.update,
+    prismaMock.marketplaceRequest.updateMany,
+
+    prismaMock.marketplaceBid.create,
+    prismaMock.marketplaceBid.findUnique,
+    prismaMock.marketplaceBid.findFirst,
+    prismaMock.marketplaceBid.findMany,
+    prismaMock.marketplaceBid.update,
+    prismaMock.marketplaceBid.updateMany,
+
+    prismaMock.user.findUnique,
+
+    prismaMock.vehicle.findUnique,
+    prismaMock.vehicle.update,
+    prismaMock.vehicle.updateMany,
+
+    prismaMock.booking.create,
+
+    prismaMock.$transaction,
+
+    publishEventMock,
+    estimateFareMock,
+  ]) {
+    fn.mock.resetCalls();
+  }
+}
+
+test.beforeEach(() => {
+  resetMocks();
+
+  prismaMock.$transaction.mock.mockImplementation(
+    async (callback: any) => callback(prismaMock),
+  );
+
+  estimateFareMock.mock.mockImplementation(
+    async () => ({
+      fare: 150000,
+    }),
+  );
+
+  prismaMock.marketplaceBid.findMany.mock.mockImplementation(
+    async () => [],
+  );
+
+  prismaMock.marketplaceRequest.findMany.mock.mockImplementation(
+    async () => [],
+  );
+});
+
+test("marketplace test harness loads successfully", () => {
+  assert.equal(typeof createMarketplaceRequest, "function");
+  assert.equal(typeof createMarketplaceBid, "function");
+  assert.equal(typeof withdrawMarketplaceBid, "function");
+  assert.equal(typeof selectMarketplaceBid, "function");
+});
+
+test("createMarketplaceRequest creates an OPEN marketplace load", async () => {
+  const request = {
+    id: "request-1",
+    customerId: "customer-1",
+    pickupLocation: "Lagos",
+    destination: "Abuja",
+    pickupLatitude: 6.5244,
+    pickupLongitude: 3.3792,
+    destinationLatitude: 9.0765,
+    destinationLongitude: 7.3986,
+    cargoDescription: "General cargo",
+    truckCategory: "MEDIUM_TRUCK",
+    cargoCategory: "GENERAL",
+    cargoWeight: 2000,
+    scheduledDate: null,
+    estimatedFare: 150000,
+    status: "OPEN",
+  };
+
+  prismaMock.marketplaceRequest.create.mock.mockImplementation(
+    async () => request,
+  );
+
+  const result = await createMarketplaceRequest({
+    customerId: "customer-1",
+    pickupLocation: "Lagos",
+    destination: "Abuja",
+    pickupLatitude: 6.5244,
+    pickupLongitude: 3.3792,
+    destinationLatitude: 9.0765,
+    destinationLongitude: 7.3986,
+    cargoDescription: "General cargo",
+    truckCategory: "MEDIUM_TRUCK",
+    cargoCategory: "GENERAL",
+    cargoWeight: 2000,
+  });
+
+  assert.equal(result.id, "request-1");
+  assert.equal(result.customerId, "customer-1");
+  assert.equal(result.status, "OPEN");
+
+  assert.equal(
+    estimateFareMock.mock.calls.length,
+    1,
+  );
+
+  assert.equal(
+    prismaMock.marketplaceRequest.create.mock.calls.length,
+    1,
+  );
+
+  assert.equal(
+    publishEventMock.mock.calls.length,
+    1,
+  );
+
+  assert.equal(
+    publishEventMock.mock.calls[0]?.arguments[1]?.eventType,
+    "LOAD_POSTED",
+  );
+});
+
+test("createMarketplaceBid rejects non-transporter users", async () => {
+  prismaMock.marketplaceRequest.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "request-1",
+      status: "OPEN",
+      truckCategory: "MEDIUM_TRUCK",
+      scheduledDate: null,
+      customerId: "customer-1",
+    }),
+  );
+
+  prismaMock.user.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "customer-2",
+      role: "CUSTOMER",
+      status: "ACTIVE",
+      transporterProfile: null,
+    }),
+  );
+
+  await assert.rejects(
+    createMarketplaceBid({
+      requestId: "request-1",
+      transporterId: "customer-2",
+      vehicleId: "vehicle-1",
+      amount: 140000,
+    }),
+    {
+      message: "Only transporters can submit bids",
+    },
+  );
+
+  assert.equal(
+    prismaMock.marketplaceBid.create.mock.calls.length,
+    0,
+  );
+});
+
+test("createMarketplaceBid creates a pending bid for an approved transporter vehicle", async () => {
+  prismaMock.marketplaceRequest.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "request-1",
+      status: "OPEN",
+      truckCategory: "MEDIUM_TRUCK",
+      scheduledDate: null,
+      customerId: "customer-1",
+    }),
+  );
+
+  prismaMock.user.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "transporter-1",
+      role: "TRANSPORTER",
+      status: "ACTIVE",
+      transporterProfile: {
+        verificationStatus: "APPROVED",
+      },
+    }),
+  );
+
+  prismaMock.vehicle.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "vehicle-1",
+      transporterId: "transporter-1",
+      vehicleType: "MEDIUM_TRUCK",
+      vehicleClass: "MEDIUM_TRUCK",
+      verificationStatus: "APPROVED",
+      availabilityStatus: "AVAILABLE",
+    }),
+  );
+
+  const bid = {
+    id: "bid-1",
+    requestId: "request-1",
+    transporterId: "transporter-1",
+    vehicleId: "vehicle-1",
+    amount: 140000,
+    message: "Ready for this shipment",
+    status: "PENDING",
+    expiresAt: null,
+    selectedAt: null,
+    createdAt: new Date(),
+    vehicle: {
+      id: "vehicle-1",
+      vehicleType: "MEDIUM_TRUCK",
+      vehicleClass: "MEDIUM_TRUCK",
+    },
+  };
+
+  prismaMock.marketplaceBid.create.mock.mockImplementation(
+    async () => bid,
+  );
+
+  const result = await createMarketplaceBid({
+    requestId: "request-1",
+    transporterId: "transporter-1",
+    vehicleId: "vehicle-1",
+    amount: 140000,
+    message: "Ready for this shipment",
+  });
+
+  assert.equal(result.id, "bid-1");
+  assert.equal(result.status, "PENDING");
+  assert.equal(result.transporterId, "transporter-1");
+  assert.equal(result.vehicleId, "vehicle-1");
+
+  assert.equal(
+    prismaMock.marketplaceBid.create.mock.calls.length,
+    1,
+  );
+
+  const createCall =
+    prismaMock.marketplaceBid.create.mock.calls[0]?.arguments[0];
+
+  assert.equal(createCall.data.requestId, "request-1");
+  assert.equal(createCall.data.transporterId, "transporter-1");
+  assert.equal(createCall.data.vehicleId, "vehicle-1");
+  assert.equal(createCall.data.amount, 140000);
+  assert.equal(createCall.data.status, "PENDING");
+
+  assert.equal(
+    publishEventMock.mock.calls.length,
+    1,
+  );
+
+  assert.equal(
+    publishEventMock.mock.calls[0]?.arguments[1]?.eventType,
+    "BID_SUBMITTED",
+  );
+});
+
+test("createMarketplaceBid rejects a duplicate transporter bid", async () => {
+  prismaMock.marketplaceRequest.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "request-1",
+      status: "OPEN",
+      truckCategory: "MEDIUM_TRUCK",
+      scheduledDate: null,
+      customerId: "customer-1",
+    }),
+  );
+
+  prismaMock.user.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "transporter-1",
+      role: "TRANSPORTER",
+      status: "ACTIVE",
+      transporterProfile: {
+        verificationStatus: "APPROVED",
+      },
+    }),
+  );
+
+  prismaMock.vehicle.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "vehicle-1",
+      transporterId: "transporter-1",
+      vehicleType: "MEDIUM_TRUCK",
+      vehicleClass: "MEDIUM_TRUCK",
+      verificationStatus: "APPROVED",
+      availabilityStatus: "AVAILABLE",
+    }),
+  );
+
+  prismaMock.marketplaceBid.create.mock.mockImplementation(
+    async () => {
+      throw new Error("Unique constraint failed on the fields: (`requestId`,`transporterId`)");
+    },
+  );
+
+  await assert.rejects(
+    createMarketplaceBid({
+      requestId: "request-1",
+      transporterId: "transporter-1",
+      vehicleId: "vehicle-1",
+      amount: 140000,
+    }),
+    {
+      message: "Transporter has already submitted a bid for this request",

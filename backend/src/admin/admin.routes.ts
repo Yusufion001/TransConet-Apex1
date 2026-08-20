@@ -6,12 +6,14 @@ import { requireAdmin } from "../middleware/admin.middleware.js";
 import { getPlatformOverview } from "./admin.service.js";
 import administratorRoutes from "./administrator.routes.js";
 import activityRoutes from "./activity.routes.js";
+import customerManagementRoutes from "./customer-management.routes.js";
 
 const router = Router();
 
 router.use(authenticate);
 router.use(requireAdmin);
 router.use("/administrators", administratorRoutes);
+router.use("/customers", customerManagementRoutes);
 router.use("/activity", activityRoutes);
 
 router.get(

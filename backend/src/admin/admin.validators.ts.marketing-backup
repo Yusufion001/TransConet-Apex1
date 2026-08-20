@@ -106,8 +106,6 @@ export const documentRejectionSchema = z.object({
   rejectionReason: z.string().trim().min(1).max(1000),
 });
 
-
-
 const marketingChannelSchema = z.enum([
   "MOBILE_HOME",
   "MOBILE_BANNER",
@@ -117,69 +115,73 @@ const marketingChannelSchema = z.enum([
 ]);
 
 const marketingAudienceSchema = z.enum([
+  "ALL",
   "CUSTOMERS",
   "TRANSPORTERS",
-  "ALL",
 ]);
 
-const marketingStatusSchema = z.enum([
+const marketingCampaignStatusValues = [
   "DRAFT",
   "SCHEDULED",
   "ACTIVE",
   "PAUSED",
   "COMPLETED",
   "CANCELLED",
-]);
+] as const;
 
-const marketingCampaignFields = {
-  name: z.string().trim().min(1).max(200),
-  description: z.string().trim().max(2000).optional(),
-  channel: marketingChannelSchema,
-  audience: marketingAudienceSchema,
-  status: marketingStatusSchema.optional(),
-  budget: z.number().finite().nonnegative().max(1_000_000_000).optional(),
-  startsAt: z.string().datetime().optional(),
-  endsAt: z.string().datetime().optional(),
-  content: z.unknown().optional(),
-};
+const marketingCampaignStatusSchemaValue = z.enum(
+  marketingCampaignStatusValues,
+);
 
-export const marketingCampaignCreateSchema = z.object(
-  marketingCampaignFields,
-).superRefine((value, ctx) => {
-  if (value.startsAt && value.endsAt) {
-    if (new Date(value.endsAt) < new Date(value.startsAt)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["endsAt"],
-        message: "End date must be after start date",
-      });
-    }
-  }
-});
+const marketingCampaignDatesSchema = z
+  .object({
+    startsAt: z.string().datetime().optional(),
+    endsAt: z.string().datetime().optional(),
+  })
+  .refine(
+    (value) =>
+      !value.startsAt ||
+      !value.endsAt ||
+      new Date(value.endsAt).getTime() >= new Date(value.startsAt).getTime(),
+    {
+      message: "endsAt must be greater than or equal to startsAt",
+      path: ["endsAt"],
+    },
+  );
 
-export const marketingCampaignUpdateSchema = z.object({
-  ...marketingCampaignFields,
-}).partial().superRefine((value, ctx) => {
-  if (Object.keys(value).length === 0) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "At least one campaign field must be provided",
-    });
-  }
+export const marketingCampaignCreateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200),
+    description: z.string().trim().max(2000).optional(),
+    channel: marketingChannelSchema,
+    audience: marketingAudienceSchema.default("ALL"),
+    status: marketingCampaignStatusSchemaValue.default("DRAFT"),
+    budget: z.number().finite().nonnegative().optional(),
+    content: z.unknown().optional(),
+  })
+  .merge(marketingCampaignDatesSchema);
 
-  if (value.startsAt && value.endsAt) {
-    if (new Date(value.endsAt) < new Date(value.startsAt)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["endsAt"],
-        message: "End date must be after start date",
-      });
-    }
-  }
-});
+export const marketingCampaignUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200).optional(),
+    description: z.string().trim().max(2000).optional(),
+    channel: marketingChannelSchema.optional(),
+    audience: marketingAudienceSchema.optional(),
+    status: marketingCampaignStatusSchemaValue.optional(),
+    budget: z.number().finite().nonnegative().optional(),
+    content: z.unknown().optional(),
+  })
+  .merge(
+    marketingCampaignDatesSchema
+      .partial()
+      .extend({
+        startsAt: z.string().datetime().optional(),
+        endsAt: z.string().datetime().optional(),
+      }),
+  );
 
 export const marketingCampaignStatusSchema = z.object({
-  status: marketingStatusSchema,
+  status: marketingCampaignStatusSchemaValue,
 });
 
 export const notificationCreateSchema = z.object({
