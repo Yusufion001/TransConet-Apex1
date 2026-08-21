@@ -27,6 +27,9 @@ import adminSecurityRoutes from "./admin/security.routes.js";
 import adminSupportRoutes from "./admin/support.routes.js";
 import adminNotificationRoutes from "./admin/notification.routes.js";
 import adminFinancialRoutes from "./admin/financial.routes.js";
+import adminFeatureManagementRoutes from "./admin/feature-management.routes.js";
+import featureRoutes from "./features/feature.routes.js";
+
 import adminMarketingRoutes from "./admin/marketing.routes.js";
 import adminLiveTripsRoutes from "./admin/live-trips.routes.js";
 import adminVerificationRoutes from "./admin/verification.routes.js";
@@ -163,6 +166,8 @@ app.use("/api/admin/security", adminSecurityRoutes);
 app.use("/api/admin/support", adminSupportRoutes);
 app.use("/api/admin/notifications", adminNotificationRoutes);
 app.use("/api/admin/financial", adminFinancialRoutes);
+app.use("/api/admin/features", adminFeatureManagementRoutes);
+app.use("/api/features", featureRoutes);
 app.use("/api/admin/subscriptions", adminSubscriptionRoutes);
 app.use("/api/admin/marketing", adminMarketingRoutes);
 app.use("/api/admin/live-trips", adminLiveTripsRoutes);

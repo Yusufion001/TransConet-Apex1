@@ -6,11 +6,19 @@ import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
 import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import { validate } from "../middleware/validate.middleware.js";
 import {
   withdrawalStatusSchema,
   settlementApprovalSchema,
   settlementRejectionSchema,
   emptyBodySchema,
+  adminPaymentQuerySchema,
+  adminWebhookQuerySchema,
+  adminSettlementQuerySchema,
+  adminSettlementIdParamsSchema,
+  adminWithdrawalQuerySchema,
+  adminWithdrawalIdParamsSchema,
+  adminWebhookIdParamsSchema,
 } from "./admin.validators.js";
 
 import {
@@ -57,7 +65,10 @@ router.get("/overview", async (_req, res) => {
   }
 });
 
-router.get("/payments", async (req, res) => {
+router.get(
+  "/payments",
+  validate(adminPaymentQuerySchema, "query"),
+  async (req, res) => {
   try {
     const payments = await getAdminPayments({
       status:
@@ -90,24 +101,12 @@ router.get("/payments", async (req, res) => {
   }
 });
 
-router.get("/webhooks", async (req, res) => {
+router.get(
+  "/webhooks",
+  validate(adminWebhookQuerySchema, "query"),
+  async (req, res) => {
   try {
-    const processed =
-      typeof req.query.processed === "string"
-        ? req.query.processed === "true"
-          ? true
-          : req.query.processed === "false"
-            ? false
-            : undefined
-        : undefined;
-
-    const events = await getPaymentWebhookEvents({
-      processed,
-      provider:
-        typeof req.query.provider === "string"
-          ? req.query.provider
-          : undefined,
-    });
+    const events = await getPaymentWebhookEvents(req.query);
 
     res.json({
       success: true,
@@ -124,32 +123,12 @@ router.get("/webhooks", async (req, res) => {
   }
 });
 
-router.get("/settlements", async (req, res) => {
+router.get(
+  "/settlements",
+  validate(adminSettlementQuerySchema, "query"),
+  async (req, res) => {
   try {
-    const allowedStatuses = [
-      "PENDING",
-      "AWAITING_APPROVAL",
-      "APPROVED",
-      "REJECTED",
-      "RELEASED",
-      "FAILED",
-    ] as const;
-
-    const status =
-      typeof req.query.status === "string" &&
-      allowedStatuses.includes(
-        req.query.status as typeof allowedStatuses[number],
-      )
-        ? req.query.status as typeof allowedStatuses[number]
-        : undefined;
-
-    const settlements = await listSettlements({
-      status,
-      transporterId:
-        typeof req.query.transporterId === "string"
-          ? req.query.transporterId
-          : undefined,
-    });
+    const settlements = await listSettlements(req.query);
 
     res.json({
       success: true,
@@ -166,7 +145,10 @@ router.get("/settlements", async (req, res) => {
   }
 });
 
-router.get("/settlements/:id", async (req, res) => {
+router.get(
+  "/settlements/:id",
+  validate(adminSettlementIdParamsSchema, "params"),
+  async (req, res) => {
   try {
     const settlement = await getSettlementById(
       String(req.params.id),
@@ -340,15 +322,12 @@ router.post(
   },
 );
 
-router.get("/withdrawals", async (req, res) => {
+router.get(
+  "/withdrawals",
+  validate(adminWithdrawalQuerySchema, "query"),
+  async (req, res) => {
   try {
-    const withdrawals =
-      await getAdminWithdrawals({
-        status:
-          typeof req.query.status === "string"
-            ? req.query.status
-            : undefined,
-      });
+    const withdrawals = await getAdminWithdrawals(req.query);
 
     res.json({
       success: true,
@@ -367,6 +346,7 @@ router.get("/withdrawals", async (req, res) => {
 
 router.post(
   "/webhooks/:id/retry",
+  validate(adminWebhookIdParamsSchema, "params"),
   async (req: AuthenticatedRequest, res) => {
     try {
       emptyBodySchema.parse(req.body);
@@ -403,6 +383,7 @@ router.post(
 
 router.patch(
   "/withdrawals/:id/status",
+  validate(adminWithdrawalIdParamsSchema, "params"),
   async (
     req: AuthenticatedRequest,
     res,

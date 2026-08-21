@@ -1,0 +1,283 @@
+===== src/admin/activity.routes.ts =====
+17:        typeof req.query.module === "string"
+18:          ? req.query.module
+21:        typeof req.query.eventType === "string"
+22:          ? req.query.eventType
+25:        typeof req.query.page === "string"
+26:          ? Number(req.query.page)
+29:        typeof req.query.limit === "string"
+30:          ? Number(req.query.limit)
+===== src/admin/administrator.routes.ts =====
+81:          req.body,
+143:          String(req.params.userId),
+165:          req.body,
+171:          String(req.params.userId),
+199:      const params = administratorIdParamsSchema.parse(req.params);
+232:      const params = administratorIdParamsSchema.parse(req.params);
+265:      const params = administratorIdParamsSchema.parse(req.params);
+===== src/admin/ai-automation.routes.ts =====
+44:    emptyBodySchema.parse(req.body);
+===== src/admin/backup-recovery.routes.ts =====
+40:    emptyBodySchema.parse(req.body);
+===== src/admin/customer-management.routes.ts =====
+32:    const query = listCustomersSchema.parse(req.query);
+57:    const { id } = customerIdSchema.parse(req.params);
+90:    const { id } = customerIdSchema.parse(req.params);
+122:    const { id } = customerIdSchema.parse(req.params);
+154:    const { id } = customerIdSchema.parse(req.params);
+186:    const { id } = customerIdSchema.parse(req.params);
+===== src/admin/error.routes.ts =====
+19:      typeof req.query.limit === "string"
+20:        ? Number(req.query.limit)
+37:        typeof req.query.eventType === "string"
+38:          ? req.query.eventType
+41:        typeof req.query.limit === "string"
+42:          ? Number(req.query.limit)
+===== src/admin/feature-management.routes.ts =====
+45:      key: String(req.params.key),
+78:    const input = featureFlagCreateSchema.parse(req.body);
+117:      key: String(req.params.key),
+120:    const input = featureFlagUpdateSchema.parse(req.body);
+160:      key: String(req.params.key),
+165:    }).strict().parse(req.body);
+===== src/admin/financial.routes.ts =====
+64:        typeof req.query.status === "string"
+65:          ? req.query.status as
+73:        typeof req.query.provider === "string"
+74:          ? req.query.provider
+96:      typeof req.query.processed === "string"
+97:        ? req.query.processed === "true"
+99:          : req.query.processed === "false"
+107:        typeof req.query.provider === "string"
+108:          ? req.query.provider
+139:      typeof req.query.status === "string" &&
+141:        req.query.status as typeof allowedStatuses[number],
+143:        ? req.query.status as typeof allowedStatuses[number]
+149:        typeof req.query.transporterId === "string"
+150:          ? req.query.transporterId
+172:      String(req.params.id),
+203:          String(req.params.id),
+227:        String(req.params.id),
+229:        settlementApprovalSchema.parse(req.body).decisionNote,
+259:      const input = settlementRejectionSchema.parse(req.body);
+262:        String(req.params.id),
+294:      emptyBodySchema.parse(req.body);
+297:        String(req.params.id),
+320:      emptyBodySchema.parse(req.body);
+323:        String(req.params.id),
+348:          typeof req.query.status === "string"
+349:            ? req.query.status
+372:      emptyBodySchema.parse(req.body);
+375:        String(req.params.id),
+411:      const input = withdrawalStatusSchema.parse(req.body);
+415:          String(req.params.id),
+===== src/admin/fleet.routes.ts =====
+69:    const vehicle = await getAdminVehicle(String(req.params.id));
+92:    const input = fleetVehicleUpdateSchema.parse(req.body);
+95:      String(req.params.id),
+===== src/admin/live-trips.routes.ts =====
+44:        typeof req.query.status === "string"
+45:          ? req.query.status
+48:        typeof req.query.transporterId === "string"
+49:          ? req.query.transporterId
+52:        typeof req.query.vehicleId === "string"
+53:          ? req.query.vehicleId
+75:      typeof req.query.limit === "string"
+76:        ? Number(req.query.limit)
+80:      typeof req.query.before === "string"
+81:        ? new Date(req.query.before)
+99:      String(req.params.id),
+131:      String(req.params.id),
+===== src/admin/marketing.routes.ts =====
+30:        typeof req.query.status === "string"
+31:          ? req.query.status
+34:        typeof req.query.channel === "string"
+35:          ? req.query.channel
+64:      String(req.params.id),
+98:    const input = marketingCampaignCreateSchema.parse(req.body);
+129:    const input = marketingCampaignUpdateSchema.parse(req.body);
+132:      String(req.params.id),
+163:      const input = marketingCampaignStatusSchema.parse(req.body);
+166:        String(req.params.id),
+===== src/admin/marketplace.routes.ts =====
+45:    const query = querySchema.parse(req.query);
+71:      String(req.params.id),
+95:    const query = querySchema.parse(req.query);
+121:      String(req.params.id),
+===== src/admin/notification.routes.ts =====
+24:        typeof req.query.read === "string"
+25:          ? req.query.read === "true"
+28:        typeof req.query.type === "string"
+29:          ? req.query.type
+63:    const params = notificationIdParamsSchema.parse(req.params);
+===== src/admin/partner.routes.ts =====
+50:    const partner = await getAdminPartner(String(req.params.id));
+73:    const input = updateAdminPartnerSchema.parse(req.body);
+76:      String(req.params.id),
+===== src/admin/platform-config.routes.ts =====
+50:    const config = await getPlatformConfigValue(String(req.params.key));
+70:    const input = platformConfigUpdateSchema.parse(req.body);
+72:    const key = String(req.params.key);
+108:      String(req.params.key),
+===== src/admin/reports.routes.ts =====
+44:    emptyBodySchema.parse(req.body);
+===== src/admin/risk-fraud.routes.ts =====
+47:      const input = riskAlertSchema.parse(req.body);
+===== src/admin/role-permission.routes.ts =====
+44:    const data = await getAdminRole(String(req.params.id));
+64:    const params = administratorIdParamsSchema.parse(req.params);
+65:    const input = adminPermissionsSchema.parse(req.body);
+===== src/admin/security.routes.ts =====
+49:        typeof req.query.administratorId === "string"
+50:          ? req.query.administratorId
+53:        typeof req.query.affectedUserId === "string"
+54:          ? req.query.affectedUserId
+57:        typeof req.query.action === "string"
+58:          ? req.query.action
+61:        typeof req.query.limit === "string"
+62:          ? Number(req.query.limit)
+81:      await getAdministratorSecurity(String(req.params.id));
+107:      const params = administratorIdParamsSchema.parse(req.params);
+140:      const params = administratorIdParamsSchema.parse(req.params);
+141:      const input = administratorTwoFactorSchema.parse(req.body);
+===== src/admin/support.routes.ts =====
+32:      const tickets = await getAdminTickets(req.query);
+52:        String(req.params.id),
+53:        req.body.administratorId,
+74:        String(req.params.id),
+75:        req.body.status,
+===== src/admin/verification.routes.ts =====
+64:    const params = documentIdParamsSchema.parse(req.params);
+81:    const params = documentIdParamsSchema.parse(req.params);
+82:    const input = documentRejectionSchema.parse(req.body);
+===== src/bookings/booking.routes.ts =====
+106:    const input = createBookingSchema.parse(req.body);
+126:         req.user!.id !== String(req.params.customerId))) {
+129:    const bookings = await getCustomerBookings(String(req.params.customerId));
+147:          req.user!.id !== String(req.params.transporterId))
+157:          String(req.params.transporterId),
+173:      String(req.params.id),
+179:    const booking = await getBookingById(String(req.params.id));
+207:      String(req.params.id),
+213:    const input = assignBookingSchema.parse(req.body);
+216:      String(req.params.id),
+233:      String(req.params.id),
+239:    const input = updateBookingStatusSchema.parse(req.body);
+242:      String(req.params.id),
+259:        String(req.params.id),
+265:      const input = proofOfDeliverySchema.parse(req.body);
+269:          String(req.params.id),
+288:        String(req.params.id),
+294:      const input = confirmDeliverySchema.parse(req.body);
+298:          String(req.params.id),
+===== src/content/content.routes.ts =====
+28:    const input = contentCreateSchema.parse(req.body);
+49:      type: typeof req.query.type === "string" ? req.query.type : undefined,
+50:      status: typeof req.query.status === "string" ? req.query.status : undefined,
+67:    const content = await getContentById(String(req.params.id));
+90:    const input = contentUpdateSchema.parse(req.body);
+92:      String(req.params.id),
+113:    const params = contentIdParamsSchema.parse(req.params);
+===== src/disputes/dispute.routes.ts =====
+34:    const input = disputeCreateSchema.parse(req.body);
+85:      const params = customerIdParamsSchema.parse(req.params);
+130:      const params = disputeIdParamsSchema.parse(req.params);
+131:      const input = disputeStatusSchema.parse(req.body);
+===== src/documents/document.routes.ts =====
+42:      const input = documentCreateSchema.parse(req.body);
+68:    const requestedUserId = String(req.params.userId);
+128:      const params = documentIdParamsSchema.parse(req.params);
+157:      const params = documentIdParamsSchema.parse(req.params);
+158:      const input = documentRejectionSchema.parse(req.body);
+===== src/events/event.routes.ts =====
+44:      const data = shipmentEventSchema.parse(req.body);
+75:        String(req.params.bookingId),
+82:        String(req.params.bookingId),
+===== src/features/feature.routes.ts =====
+47:      key: String(req.params.key),
+===== src/marketing/marketing.routes.ts =====
+19:    const query = advertisementQuerySchema.parse(req.query);
+===== src/marketplace/marketplace.routes.ts =====
+35:        req.query,
+104:      const input = createMarketplaceRequestSchema.parse(req.body);
+138:        String(req.params.id),
+167:      const input = createMarketplaceBidSchema.parse(req.body);
+171:        requestId: String(req.params.id),
+214:      selectMarketplaceBidSchema.parse(req.body);
+217:        String(req.params.id),
+218:        String(req.params.bidId),
+267:      withdrawMarketplaceBidSchema.parse(req.body);
+270:        String(req.params.id),
+===== src/messages/message.routes.ts =====
+32:      } = req.body;
+100:      const bookingId = String(req.params.bookingId);
+===== src/notifications/notification.routes.ts =====
+29:      const input = notificationCreateSchema.parse(req.body);
+53:      const userId = String(req.params.userId);
+78:      const params = notificationIdParamsSchema.parse(req.params);
+===== src/payments/payment.routes.ts =====
+64:        req.body?.providerEventId ||
+65:        req.body?.id ||
+66:        req.body?.webhook_id;
+70:        req.body?.eventType ||
+71:        req.body?.type ||
+72:        req.body?.event;
+75:        req.body?.paymentId ||
+76:        req.body?.data?.paymentId ||
+80:        req.body?.transactionId ||
+81:        req.body?.transaction_id ||
+82:        req.body?.data?.id ||
+86:        req.body?.transactionReference ||
+87:        req.body?.transaction_reference ||
+88:        req.body?.reference ||
+89:        req.body?.data?.tx_ref ||
+90:        req.body?.data?.transaction_reference ||
+94:        req.body?.amount ??
+95:        req.body?.data?.amount;
+98:        req.body?.currency ??
+99:        req.body?.data?.currency;
+129:  payload: req.body,
+165:      const paymentInput = initializePaymentSchema.safeParse(req.body);
+264:        String(req.params.id),
+311:      const bookingId = String(req.params.bookingId);
+===== src/routes/auth.routes.ts =====
+61:    const input = registerSchema.parse(req.body);
+96:    const input = loginSchema.parse(req.body);
+124:    const input = refreshSchema.parse(req.body);
+143:    const input = forgotPasswordSchema.parse(req.body);
+166:    const input = resetPasswordSchema.parse(req.body);
+===== src/routes/user.routes.ts =====
+14:    const { id } = userIdSchema.parse(req.params);
+53:    const { id } = userIdSchema.parse(req.params);
+62:    const data = updateUserSchema.parse(req.body);
+===== src/subscriptions/subscription.routes.ts =====
+65:    const { planId } = subscriptionCreateSchema.parse(req.body);
+90:    subscriptionCancelSchema.parse(req.body);
+===== src/support/support.routes.ts =====
+30:      if (req.body.bookingId) {
+32:          req.body.bookingId,
+40:        ...req.body,
+68:      const userId = String(req.params.userId);
+98:        String(req.params.id),
+99:        req.body.status,
+===== src/transporters/transporter.routes.ts =====
+25:    const input = createTransporterProfileSchema.safeParse(req.body);
+54:        req.user!.id !== String(req.params.id))
+59:    const transporter = await getTransporterProfile(String(req.params.id));
+82:        req.user!.id !== String(req.params.id))
+87:    const vehicles = await getTransporterVehicles(String(req.params.id));
+103:      const input = updateTransporterVerificationSchema.safeParse(req.body);
+114:        String(req.params.id),
+===== src/vehicles/vehicle.routes.ts =====
+27:    const parsed = createVehicleSchema.safeParse(req.body);
+54:      String(req.params.id),
+59:    const vehicle = await getVehicleById(String(req.params.id));
+83:      String(req.params.id),
+88:    const parsed = updateVehicleSchema.safeParse(req.body);
+99:      String(req.params.id),
+===== src/verification/verification.routes.ts =====
+18:      const parsed = startVerificationSchema.safeParse(req.body);
+===== src/wallet/wallet.routes.ts =====
+18:    const input = createWalletSchema.parse(req.body);
+54:      const transporterId = String(req.params.transporterId);
+90:      const input = withdrawalSchema.parse(req.body);

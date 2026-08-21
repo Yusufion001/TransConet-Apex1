@@ -329,6 +329,9 @@ model User {
   createdContent  ContentItem[]    @relation("ContentCreator")
   updatedContent  ContentItem[]    @relation("ContentUpdater")
   refreshSessions RefreshSession[]
+
+  featureFlagsCreated FeatureFlag[] @relation("FeatureFlagCreator")
+  featureFlagsUpdated FeatureFlag[] @relation("FeatureFlagUpdater")
 }
 
 model CustomerProfile {
@@ -1120,4 +1123,33 @@ model SettlementApproval {
   @@index([settlementId])
   @@index([administratorId])
   @@index([status])
+}
+
+enum FeatureVisibility {
+  INTERNAL
+  PUBLIC
+}
+
+model FeatureFlag {
+  id                 String            @id @default(uuid())
+  key                String            @unique
+  name               String
+  description        String?
+  enabled            Boolean           @default(false)
+  visibility         FeatureVisibility @default(INTERNAL)
+  rolloutPercentage  Int               @default(100)
+  customerEnabled    Boolean           @default(true)
+  transporterEnabled Boolean           @default(true)
+  metadata           Json?
+  createdBy          String
+  updatedBy          String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  creator User  @relation("FeatureFlagCreator", fields: [createdBy], references: [id])
+  updater User? @relation("FeatureFlagUpdater", fields: [updatedBy], references: [id])
+
+  @@index([enabled])
+  @@index([visibility])
+  @@index([createdAt])
 }

@@ -1,0 +1,23 @@
+===== src/admin/support.routes.ts =====
+32:      const tickets = await getAdminTickets(req.query);
+45:router.patch(
+52:        String(req.params.id),
+53:        req.body.administratorId,
+67:router.patch(
+74:        String(req.params.id),
+75:        req.body.status,
+===== src/messages/message.routes.ts =====
+22:router.post(
+32:      } = req.body;
+100:      const bookingId = String(req.params.bookingId);
+===== src/support/support.routes.ts =====
+25:router.post(
+30:      if (req.body.bookingId) {
+32:          req.body.bookingId,
+40:        ...req.body,
+68:      const userId = String(req.params.userId);
+90:router.patch(
+98:        String(req.params.id),
+99:        req.body.status,
+===== src/verification/youverify/youverify.webhook.routes.ts =====
+8:router.post(

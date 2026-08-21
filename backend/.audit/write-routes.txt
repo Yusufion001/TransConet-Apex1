@@ -1,0 +1,79 @@
+src/transporters/transporter.routes.ts:23:router.post("/", authorize("TRANSPORTER"), async (req: AuthenticatedRequest, res) => {
+src/transporters/transporter.routes.ts:98:router.patch(
+src/vehicles/vehicle.routes.ts:22:router.post(
+src/vehicles/vehicle.routes.ts:80:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:101:router.post(
+src/bookings/booking.routes.ts:197:router.patch("/:id/assign", async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:230:router.patch("/:id/status", async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:254:router.patch(
+src/bookings/booking.routes.ts:283:router.patch(
+src/payments/payment.routes.ts:22:router.post(
+src/payments/payment.routes.ts:160:router.post(
+src/messages/message.routes.ts:22:router.post(
+src/notifications/notification.routes.ts:24:router.post(
+src/notifications/notification.routes.ts:74:router.patch(
+src/documents/document.routes.ts:37:router.post(
+src/documents/document.routes.ts:123:router.patch(
+src/documents/document.routes.ts:152:router.patch(
+src/support/support.routes.ts:25:router.post(
+src/support/support.routes.ts:90:router.patch(
+src/disputes/dispute.routes.ts:32:router.post("/", async (req: AuthenticatedRequest, res) => {
+src/disputes/dispute.routes.ts:125:router.patch(
+src/admin/administrator.routes.ts:72:router.post(
+src/admin/administrator.routes.ts:156:router.patch(
+src/admin/administrator.routes.ts:192:router.post(
+src/admin/administrator.routes.ts:225:router.post(
+src/admin/administrator.routes.ts:258:router.post(
+src/admin/support.routes.ts:45:router.patch(
+src/admin/support.routes.ts:67:router.patch(
+src/admin/notification.routes.ts:61:router.patch("/:id/read", async (req: AuthenticatedRequest, res) => {
+src/admin/financial.routes.ts:197:router.post(
+src/admin/financial.routes.ts:222:router.post(
+src/admin/financial.routes.ts:255:router.post(
+src/admin/financial.routes.ts:290:router.post(
+src/admin/financial.routes.ts:316:router.post(
+src/admin/financial.routes.ts:368:router.post(
+src/admin/financial.routes.ts:404:router.patch(
+src/admin/verification.routes.ts:62:router.patch("/:id/approve", async (req: AuthenticatedRequest, res) => {
+src/admin/verification.routes.ts:79:router.patch("/:id/reject", async (req: AuthenticatedRequest, res) => {
+src/admin/fleet.routes.ts:90:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+src/admin/partner.routes.ts:71:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+src/admin/marketing.routes.ts:96:router.post("/", async (req: AuthenticatedRequest, res) => {
+src/admin/marketing.routes.ts:127:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+src/admin/marketing.routes.ts:159:router.patch(
+src/admin/role-permission.routes.ts:62:router.patch("/:id/permissions", async (req: AuthenticatedRequest, res) => {
+src/admin/platform-config.routes.ts:68:router.put("/:key", async (req: AuthenticatedRequest, res) => {
+src/admin/platform-config.routes.ts:105:router.delete("/:key", async (req: AuthenticatedRequest, res) => {
+src/admin/security.routes.ts:102:router.patch(
+src/admin/security.routes.ts:135:router.patch(
+src/admin/backup-recovery.routes.ts:38:router.post("/snapshot", async (req: AuthenticatedRequest, res) => {
+src/admin/risk-fraud.routes.ts:43:router.post(
+src/admin/reports.routes.ts:42:router.post("/generate", async (req: AuthenticatedRequest, res) => {
+src/admin/ai-automation.routes.ts:42:router.post("/run", async (req: AuthenticatedRequest, res) => {
+src/admin/customer-management.routes.ts:88:router.post("/:id/activate", async (req: AuthenticatedRequest, res) => {
+src/admin/customer-management.routes.ts:120:router.post("/:id/suspend", async (req: AuthenticatedRequest, res) => {
+src/admin/customer-management.routes.ts:152:router.post("/:id/block", async (req: AuthenticatedRequest, res) => {
+src/admin/feature-management.routes.ts:76:router.post("/", async (req: AuthenticatedRequest, res) => {
+src/admin/feature-management.routes.ts:114:router.patch("/:key", async (req: AuthenticatedRequest, res) => {
+src/admin/feature-management.routes.ts:157:router.patch("/:key/enabled", async (req: AuthenticatedRequest, res) => {
+src/routes/auth.routes.ts:59:router.post("/register", async (req, res) => {
+src/routes/auth.routes.ts:94:router.post("/login", async (req, res) => {
+src/routes/auth.routes.ts:122:router.post("/refresh", async (req, res) => {
+src/routes/auth.routes.ts:132:router.post("/logout", authenticate, async (req: AuthenticatedRequest, res) => {
+src/routes/auth.routes.ts:141:router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
+src/routes/auth.routes.ts:164:router.post("/reset-password", async (req, res) => {
+src/routes/user.routes.ts:51:router.patch("/:id", authenticate, async (req: AuthenticatedRequest, res) => {
+src/events/event.routes.ts:39:router.post(
+src/wallet/wallet.routes.ts:16:router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
+src/wallet/wallet.routes.ts:85:router.post(
+src/verification/verification.routes.ts:12:router.post(
+src/verification/youverify/youverify.webhook.routes.ts:8:router.post(
+src/content/content.routes.ts:26:router.post("/", async (req: AuthenticatedRequest, res) => {
+src/content/content.routes.ts:88:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+src/content/content.routes.ts:111:router.patch("/:id/publish", async (req: AuthenticatedRequest, res) => {
+src/subscriptions/subscription.routes.ts:63:router.post("/", async (req: AuthenticatedRequest, res) => {
+src/subscriptions/subscription.routes.ts:88:router.post("/cancel", async (req: AuthenticatedRequest, res) => {
+src/marketplace/marketplace.routes.ts:99:router.post(
+src/marketplace/marketplace.routes.ts:162:router.post(
+src/marketplace/marketplace.routes.ts:209:router.post(
+src/marketplace/marketplace.routes.ts:262:router.post(

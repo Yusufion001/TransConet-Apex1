@@ -4,6 +4,12 @@ import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
 import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import { validate } from "../middleware/validate.middleware.js";
+import {
+  adminLiveTripsQuerySchema,
+  adminLiveTripIdParamsSchema,
+  adminLiveTripTrackingQuerySchema,
+} from "./admin.validators.js";
 
 import {
   getLiveTrips,
@@ -37,22 +43,12 @@ router.get("/summary", async (_req, res) => {
   }
 });
 
-router.get("/", async (req: AuthenticatedRequest, res) => {
+router.get(
+  "/",
+  validate(adminLiveTripsQuerySchema, "query"),
+  async (req: AuthenticatedRequest, res) => {
   try {
-    const trips = await getLiveTrips({
-      status:
-        typeof req.query.status === "string"
-          ? req.query.status
-          : undefined,
-      transporterId:
-        typeof req.query.transporterId === "string"
-          ? req.query.transporterId
-          : undefined,
-      vehicleId:
-        typeof req.query.vehicleId === "string"
-          ? req.query.vehicleId
-          : undefined,
-    });
+    const trips = await getLiveTrips(req.query);
 
     return res.json({
       success: true,
@@ -69,38 +65,15 @@ router.get("/", async (req: AuthenticatedRequest, res) => {
   }
 });
 
-router.get("/:id/tracking", async (req, res) => {
+router.get(
+  "/:id/tracking",
+  validate(adminLiveTripIdParamsSchema, "params"),
+  validate(adminLiveTripTrackingQuerySchema, "query"),
+  async (req, res) => {
   try {
-    const limit =
-      typeof req.query.limit === "string"
-        ? Number(req.query.limit)
-        : undefined;
-
-    const before =
-      typeof req.query.before === "string"
-        ? new Date(req.query.before)
-        : undefined;
-
-    if (limit !== undefined && (!Number.isInteger(limit) || limit < 1)) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid tracking limit",
-      });
-    }
-
-    if (before !== undefined && Number.isNaN(before.getTime())) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid tracking cursor",
-      });
-    }
-
     const tracking = await getLiveTripTracking(
       String(req.params.id),
-      {
-        limit,
-        before,
-      },
+      req.query,
     );
 
     if (!tracking) {
@@ -125,7 +98,10 @@ router.get("/:id/tracking", async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get(
+  "/:id",
+  validate(adminLiveTripIdParamsSchema, "params"),
+  async (req, res) => {
   try {
     const trip = await getLiveTripById(
       String(req.params.id),

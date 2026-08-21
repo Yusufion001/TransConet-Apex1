@@ -1,0 +1,160 @@
+src/transporters/transporter.routes.ts:23:router.post("/", authorize("TRANSPORTER"), async (req: AuthenticatedRequest, res) => {
+src/transporters/transporter.routes.ts:49:router.get("/:id", async (req: AuthenticatedRequest, res) => {
+src/transporters/transporter.routes.ts:77:router.get("/:id/vehicles", async (req: AuthenticatedRequest, res) => {
+src/transporters/transporter.routes.ts:98:router.patch(
+src/vehicles/vehicle.routes.ts:22:router.post(
+src/vehicles/vehicle.routes.ts:51:router.get("/:id", async (req: AuthenticatedRequest, res) => {
+src/vehicles/vehicle.routes.ts:80:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:101:router.post(
+src/bookings/booking.routes.ts:122:router.get("/customer/:customerId", async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:140:router.get(
+src/bookings/booking.routes.ts:170:router.get("/:id", async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:197:router.patch("/:id/assign", async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:230:router.patch("/:id/status", async (req: AuthenticatedRequest, res) => {
+src/bookings/booking.routes.ts:254:router.patch(
+src/bookings/booking.routes.ts:283:router.patch(
+src/payments/payment.routes.ts:22:router.post(
+src/payments/payment.routes.ts:160:router.post(
+src/payments/payment.routes.ts:258:router.get(
+src/payments/payment.routes.ts:306:router.get(
+src/messages/message.routes.ts:22:router.post(
+src/messages/message.routes.ts:95:router.get(
+src/notifications/notification.routes.ts:24:router.post(
+src/notifications/notification.routes.ts:49:router.get(
+src/notifications/notification.routes.ts:74:router.patch(
+src/documents/document.routes.ts:37:router.post(
+src/documents/document.routes.ts:66:router.get("/user/:userId", async (req: AuthenticatedRequest, res) => {
+src/documents/document.routes.ts:91:router.get(
+src/documents/document.routes.ts:107:router.get(
+src/documents/document.routes.ts:123:router.patch(
+src/documents/document.routes.ts:152:router.patch(
+src/support/support.routes.ts:25:router.post(
+src/support/support.routes.ts:64:router.get(
+src/support/support.routes.ts:90:router.patch(
+src/disputes/dispute.routes.ts:32:router.post("/", async (req: AuthenticatedRequest, res) => {
+src/disputes/dispute.routes.ts:81:router.get(
+src/disputes/dispute.routes.ts:125:router.patch(
+src/admin/admin.routes.ts:19:router.get(
+src/admin/administrator.routes.ts:72:router.post(
+src/admin/administrator.routes.ts:111:router.get(
+src/admin/administrator.routes.ts:133:router.get(
+src/admin/administrator.routes.ts:156:router.patch(
+src/admin/administrator.routes.ts:192:router.post(
+src/admin/administrator.routes.ts:225:router.post(
+src/admin/administrator.routes.ts:258:router.post(
+src/admin/activity.routes.ts:13:router.get("/", async (req, res) => {
+src/admin/support.routes.ts:27:router.get(
+src/admin/support.routes.ts:45:router.patch(
+src/admin/support.routes.ts:67:router.patch(
+src/admin/notification.routes.ts:20:router.get("/", async (req, res) => {
+src/admin/notification.routes.ts:45:router.get("/summary", async (_req, res) => {
+src/admin/notification.routes.ts:61:router.patch("/:id/read", async (req: AuthenticatedRequest, res) => {
+src/admin/financial.routes.ts:41:router.get("/overview", async (_req, res) => {
+src/admin/financial.routes.ts:60:router.get("/payments", async (req, res) => {
+src/admin/financial.routes.ts:93:router.get("/webhooks", async (req, res) => {
+src/admin/financial.routes.ts:127:router.get("/settlements", async (req, res) => {
+src/admin/financial.routes.ts:169:router.get("/settlements/:id", async (req, res) => {
+src/admin/financial.routes.ts:197:router.post(
+src/admin/financial.routes.ts:222:router.post(
+src/admin/financial.routes.ts:255:router.post(
+src/admin/financial.routes.ts:290:router.post(
+src/admin/financial.routes.ts:316:router.post(
+src/admin/financial.routes.ts:343:router.get("/withdrawals", async (req, res) => {
+src/admin/financial.routes.ts:368:router.post(
+src/admin/financial.routes.ts:404:router.patch(
+src/admin/verification.routes.ts:24:router.get("/pending", async (_req, res) => {
+src/admin/verification.routes.ts:43:router.get("/verified", async (_req, res) => {
+src/admin/verification.routes.ts:62:router.patch("/:id/approve", async (req: AuthenticatedRequest, res) => {
+src/admin/verification.routes.ts:79:router.patch("/:id/reject", async (req: AuthenticatedRequest, res) => {
+src/admin/fleet.routes.ts:51:router.get("/", async (_req, res) => {
+src/admin/fleet.routes.ts:67:router.get("/:id", async (req, res) => {
+src/admin/fleet.routes.ts:90:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+src/admin/live-trips.routes.ts:21:router.get("/summary", async (_req, res) => {
+src/admin/live-trips.routes.ts:40:router.get("/", async (req: AuthenticatedRequest, res) => {
+src/admin/live-trips.routes.ts:72:router.get("/:id/tracking", async (req, res) => {
+src/admin/live-trips.routes.ts:128:router.get("/:id", async (req, res) => {
+src/admin/partner.routes.ts:32:router.get("/", async (_req, res) => {
+src/admin/partner.routes.ts:48:router.get("/:id", async (req, res) => {
+src/admin/partner.routes.ts:71:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+src/admin/marketing.routes.ts:26:router.get("/", async (req, res) => {
+src/admin/marketing.routes.ts:61:router.get("/:id", async (req, res) => {
+src/admin/marketing.routes.ts:96:router.post("/", async (req: AuthenticatedRequest, res) => {
+src/admin/marketing.routes.ts:127:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+src/admin/marketing.routes.ts:159:router.patch(
+src/admin/role-permission.routes.ts:23:router.get("/", async (_req, res) => {
+src/admin/role-permission.routes.ts:42:router.get("/:id", async (req, res) => {
+src/admin/role-permission.routes.ts:62:router.patch("/:id/permissions", async (req: AuthenticatedRequest, res) => {
+src/admin/platform-config.routes.ts:34:router.get("/", async (_req, res) => {
+src/admin/platform-config.routes.ts:48:router.get("/:key", async (req, res) => {
+src/admin/platform-config.routes.ts:68:router.put("/:key", async (req: AuthenticatedRequest, res) => {
+src/admin/platform-config.routes.ts:105:router.delete("/:key", async (req: AuthenticatedRequest, res) => {
+src/admin/security.routes.ts:31:router.get("/overview", async (_req, res) => {
+src/admin/security.routes.ts:45:router.get("/audit-logs", async (req, res) => {
+src/admin/security.routes.ts:78:router.get("/administrators/:id", async (req, res) => {
+src/admin/security.routes.ts:102:router.patch(
+src/admin/security.routes.ts:135:router.patch(
+src/admin/error.routes.ts:16:router.get("/overview", async (req, res) => {
+src/admin/error.routes.ts:33:router.get("/", async (req, res) => {
+src/admin/api-management.routes.ts:16:router.get("/overview", async (_req, res) => {
+src/admin/api-management.routes.ts:28:router.get("/health", async (_req, res) => {
+src/admin/database-health.routes.ts:13:router.get("/", async (_req, res) => {
+src/admin/backup-recovery.routes.ts:19:router.get("/", async (_req, res) => {
+src/admin/backup-recovery.routes.ts:38:router.post("/snapshot", async (req: AuthenticatedRequest, res) => {
+src/admin/risk-fraud.routes.ts:24:router.get("/", async (_req, res) => {
+src/admin/risk-fraud.routes.ts:43:router.post(
+src/admin/reports.routes.ts:19:router.get("/", async (_req, res) => {
+src/admin/reports.routes.ts:42:router.post("/generate", async (req: AuthenticatedRequest, res) => {
+src/admin/ai-automation.routes.ts:19:router.get("/", async (_req, res) => {
+src/admin/ai-automation.routes.ts:42:router.post("/run", async (req: AuthenticatedRequest, res) => {
+src/admin/subscription.routes.ts:13:router.get("/", async (_req, res) => {
+src/admin/customer-management.routes.ts:30:router.get("/", async (req, res) => {
+src/admin/customer-management.routes.ts:55:router.get("/:id", async (req: AuthenticatedRequest, res) => {
+src/admin/customer-management.routes.ts:88:router.post("/:id/activate", async (req: AuthenticatedRequest, res) => {
+src/admin/customer-management.routes.ts:120:router.post("/:id/suspend", async (req: AuthenticatedRequest, res) => {
+src/admin/customer-management.routes.ts:152:router.post("/:id/block", async (req: AuthenticatedRequest, res) => {
+src/admin/customer-management.routes.ts:184:router.get("/:id/bookings", async (req, res) => {
+src/admin/marketplace.routes.ts:27:router.get("/summary", async (_req, res) => {
+src/admin/marketplace.routes.ts:43:router.get("/requests", async (req, res) => {
+src/admin/marketplace.routes.ts:68:router.get("/requests/:id", async (req, res) => {
+src/admin/marketplace.routes.ts:93:router.get("/bids", async (req, res) => {
+src/admin/marketplace.routes.ts:118:router.get("/bids/:id", async (req, res) => {
+src/admin/feature-management.routes.ts:28:router.get("/", async (_req, res) => {
+src/admin/feature-management.routes.ts:42:router.get("/:key", async (req, res) => {
+src/admin/feature-management.routes.ts:76:router.post("/", async (req: AuthenticatedRequest, res) => {
+src/admin/feature-management.routes.ts:114:router.patch("/:key", async (req: AuthenticatedRequest, res) => {
+src/admin/feature-management.routes.ts:157:router.patch("/:key/enabled", async (req: AuthenticatedRequest, res) => {
+src/server.ts:208:app.get("/health", (_req, res) => {
+src/routes/auth.routes.ts:59:router.post("/register", async (req, res) => {
+src/routes/auth.routes.ts:94:router.post("/login", async (req, res) => {
+src/routes/auth.routes.ts:122:router.post("/refresh", async (req, res) => {
+src/routes/auth.routes.ts:132:router.post("/logout", authenticate, async (req: AuthenticatedRequest, res) => {
+src/routes/auth.routes.ts:141:router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
+src/routes/auth.routes.ts:164:router.post("/reset-password", async (req, res) => {
+src/routes/user.routes.ts:12:router.get("/:id", authenticate, async (req: AuthenticatedRequest, res) => {
+src/routes/user.routes.ts:51:router.patch("/:id", authenticate, async (req: AuthenticatedRequest, res) => {
+src/events/event.routes.ts:39:router.post(
+src/events/event.routes.ts:70:router.get(
+src/wallet/wallet.routes.ts:16:router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
+src/wallet/wallet.routes.ts:49:router.get(
+src/wallet/wallet.routes.ts:85:router.post(
+src/verification/verification.routes.ts:12:router.post(
+src/verification/youverify/youverify.webhook.routes.ts:8:router.post(
+src/content/content.routes.ts:26:router.post("/", async (req: AuthenticatedRequest, res) => {
+src/content/content.routes.ts:46:router.get("/", async (req: AuthenticatedRequest, res) => {
+src/content/content.routes.ts:65:router.get("/:id", async (req: AuthenticatedRequest, res) => {
+src/content/content.routes.ts:88:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+src/content/content.routes.ts:111:router.patch("/:id/publish", async (req: AuthenticatedRequest, res) => {
+src/subscriptions/subscription.routes.ts:27:router.get("/plans", async (_req, res) => {
+src/subscriptions/subscription.routes.ts:39:router.get("/me", async (req: AuthenticatedRequest, res) => {
+src/subscriptions/subscription.routes.ts:51:router.get("/invoices", async (req: AuthenticatedRequest, res) => {
+src/subscriptions/subscription.routes.ts:63:router.post("/", async (req: AuthenticatedRequest, res) => {
+src/subscriptions/subscription.routes.ts:88:router.post("/cancel", async (req: AuthenticatedRequest, res) => {
+src/marketplace/marketplace.routes.ts:29:router.get(
+src/marketplace/marketplace.routes.ts:99:router.post(
+src/marketplace/marketplace.routes.ts:132:router.get(
+src/marketplace/marketplace.routes.ts:162:router.post(
+src/marketplace/marketplace.routes.ts:209:router.post(
+src/marketplace/marketplace.routes.ts:262:router.post(
+src/marketing/marketing.routes.ts:17:router.get("/", async (req: AuthenticatedRequest, res) => {
+src/features/feature.routes.ts:44:router.get("/:key", async (req: AuthenticatedRequest, res) => {
+src/features/feature.routes.ts:78:router.get("/", async (req: AuthenticatedRequest, res) => {

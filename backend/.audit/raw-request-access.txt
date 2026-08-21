@@ -1,0 +1,162 @@
+src/transporters/transporter.routes.ts:54:        req.user!.id !== String(req.params.id))
+src/transporters/transporter.routes.ts:59:    const transporter = await getTransporterProfile(String(req.params.id));
+src/transporters/transporter.routes.ts:82:        req.user!.id !== String(req.params.id))
+src/transporters/transporter.routes.ts:87:    const vehicles = await getTransporterVehicles(String(req.params.id));
+src/transporters/transporter.routes.ts:114:        String(req.params.id),
+src/vehicles/vehicle.routes.ts:54:      String(req.params.id),
+src/vehicles/vehicle.routes.ts:59:    const vehicle = await getVehicleById(String(req.params.id));
+src/vehicles/vehicle.routes.ts:83:      String(req.params.id),
+src/vehicles/vehicle.routes.ts:99:      String(req.params.id),
+src/bookings/booking.routes.ts:126:         req.user!.id !== String(req.params.customerId))) {
+src/bookings/booking.routes.ts:129:    const bookings = await getCustomerBookings(String(req.params.customerId));
+src/bookings/booking.routes.ts:147:          req.user!.id !== String(req.params.transporterId))
+src/bookings/booking.routes.ts:157:          String(req.params.transporterId),
+src/bookings/booking.routes.ts:173:      String(req.params.id),
+src/bookings/booking.routes.ts:179:    const booking = await getBookingById(String(req.params.id));
+src/bookings/booking.routes.ts:207:      String(req.params.id),
+src/bookings/booking.routes.ts:216:      String(req.params.id),
+src/bookings/booking.routes.ts:233:      String(req.params.id),
+src/bookings/booking.routes.ts:242:      String(req.params.id),
+src/bookings/booking.routes.ts:259:        String(req.params.id),
+src/bookings/booking.routes.ts:269:          String(req.params.id),
+src/bookings/booking.routes.ts:288:        String(req.params.id),
+src/bookings/booking.routes.ts:298:          String(req.params.id),
+src/payments/payment.routes.ts:64:        req.body?.providerEventId ||
+src/payments/payment.routes.ts:65:        req.body?.id ||
+src/payments/payment.routes.ts:66:        req.body?.webhook_id;
+src/payments/payment.routes.ts:70:        req.body?.eventType ||
+src/payments/payment.routes.ts:71:        req.body?.type ||
+src/payments/payment.routes.ts:72:        req.body?.event;
+src/payments/payment.routes.ts:75:        req.body?.paymentId ||
+src/payments/payment.routes.ts:76:        req.body?.data?.paymentId ||
+src/payments/payment.routes.ts:80:        req.body?.transactionId ||
+src/payments/payment.routes.ts:81:        req.body?.transaction_id ||
+src/payments/payment.routes.ts:82:        req.body?.data?.id ||
+src/payments/payment.routes.ts:86:        req.body?.transactionReference ||
+src/payments/payment.routes.ts:87:        req.body?.transaction_reference ||
+src/payments/payment.routes.ts:88:        req.body?.reference ||
+src/payments/payment.routes.ts:89:        req.body?.data?.tx_ref ||
+src/payments/payment.routes.ts:90:        req.body?.data?.transaction_reference ||
+src/payments/payment.routes.ts:94:        req.body?.amount ??
+src/payments/payment.routes.ts:95:        req.body?.data?.amount;
+src/payments/payment.routes.ts:98:        req.body?.currency ??
+src/payments/payment.routes.ts:99:        req.body?.data?.currency;
+src/payments/payment.routes.ts:129:  payload: req.body,
+src/payments/payment.routes.ts:264:        String(req.params.id),
+src/payments/payment.routes.ts:311:      const bookingId = String(req.params.bookingId);
+src/messages/message.routes.ts:32:      } = req.body;
+src/messages/message.routes.ts:100:      const bookingId = String(req.params.bookingId);
+src/notifications/notification.routes.ts:53:      const userId = String(req.params.userId);
+src/documents/document.routes.ts:68:    const requestedUserId = String(req.params.userId);
+src/support/support.routes.ts:30:      if (req.body.bookingId) {
+src/support/support.routes.ts:32:          req.body.bookingId,
+src/support/support.routes.ts:40:        ...req.body,
+src/support/support.routes.ts:68:      const userId = String(req.params.userId);
+src/support/support.routes.ts:98:        String(req.params.id),
+src/support/support.routes.ts:99:        req.body.status,
+src/admin/administrator.routes.ts:81:          req.body,
+src/admin/administrator.routes.ts:143:          String(req.params.userId),
+src/admin/administrator.routes.ts:165:          req.body,
+src/admin/administrator.routes.ts:171:          String(req.params.userId),
+src/admin/activity.routes.ts:17:        typeof req.query.module === "string"
+src/admin/activity.routes.ts:18:          ? req.query.module
+src/admin/activity.routes.ts:21:        typeof req.query.eventType === "string"
+src/admin/activity.routes.ts:22:          ? req.query.eventType
+src/admin/activity.routes.ts:25:        typeof req.query.page === "string"
+src/admin/activity.routes.ts:26:          ? Number(req.query.page)
+src/admin/activity.routes.ts:29:        typeof req.query.limit === "string"
+src/admin/activity.routes.ts:30:          ? Number(req.query.limit)
+src/admin/support.routes.ts:32:      const tickets = await getAdminTickets(req.query);
+src/admin/support.routes.ts:52:        String(req.params.id),
+src/admin/support.routes.ts:53:        req.body.administratorId,
+src/admin/support.routes.ts:74:        String(req.params.id),
+src/admin/support.routes.ts:75:        req.body.status,
+src/admin/notification.routes.ts:24:        typeof req.query.read === "string"
+src/admin/notification.routes.ts:25:          ? req.query.read === "true"
+src/admin/notification.routes.ts:28:        typeof req.query.type === "string"
+src/admin/notification.routes.ts:29:          ? req.query.type
+src/admin/financial.routes.ts:64:        typeof req.query.status === "string"
+src/admin/financial.routes.ts:65:          ? req.query.status as
+src/admin/financial.routes.ts:73:        typeof req.query.provider === "string"
+src/admin/financial.routes.ts:74:          ? req.query.provider
+src/admin/financial.routes.ts:96:      typeof req.query.processed === "string"
+src/admin/financial.routes.ts:97:        ? req.query.processed === "true"
+src/admin/financial.routes.ts:99:          : req.query.processed === "false"
+src/admin/financial.routes.ts:107:        typeof req.query.provider === "string"
+src/admin/financial.routes.ts:108:          ? req.query.provider
+src/admin/financial.routes.ts:139:      typeof req.query.status === "string" &&
+src/admin/financial.routes.ts:141:        req.query.status as typeof allowedStatuses[number],
+src/admin/financial.routes.ts:143:        ? req.query.status as typeof allowedStatuses[number]
+src/admin/financial.routes.ts:149:        typeof req.query.transporterId === "string"
+src/admin/financial.routes.ts:150:          ? req.query.transporterId
+src/admin/financial.routes.ts:172:      String(req.params.id),
+src/admin/financial.routes.ts:203:          String(req.params.id),
+src/admin/financial.routes.ts:227:        String(req.params.id),
+src/admin/financial.routes.ts:262:        String(req.params.id),
+src/admin/financial.routes.ts:297:        String(req.params.id),
+src/admin/financial.routes.ts:323:        String(req.params.id),
+src/admin/financial.routes.ts:348:          typeof req.query.status === "string"
+src/admin/financial.routes.ts:349:            ? req.query.status
+src/admin/financial.routes.ts:375:        String(req.params.id),
+src/admin/financial.routes.ts:415:          String(req.params.id),
+src/admin/fleet.routes.ts:69:    const vehicle = await getAdminVehicle(String(req.params.id));
+src/admin/fleet.routes.ts:95:      String(req.params.id),
+src/admin/live-trips.routes.ts:44:        typeof req.query.status === "string"
+src/admin/live-trips.routes.ts:45:          ? req.query.status
+src/admin/live-trips.routes.ts:48:        typeof req.query.transporterId === "string"
+src/admin/live-trips.routes.ts:49:          ? req.query.transporterId
+src/admin/live-trips.routes.ts:52:        typeof req.query.vehicleId === "string"
+src/admin/live-trips.routes.ts:53:          ? req.query.vehicleId
+src/admin/live-trips.routes.ts:75:      typeof req.query.limit === "string"
+src/admin/live-trips.routes.ts:76:        ? Number(req.query.limit)
+src/admin/live-trips.routes.ts:80:      typeof req.query.before === "string"
+src/admin/live-trips.routes.ts:81:        ? new Date(req.query.before)
+src/admin/live-trips.routes.ts:99:      String(req.params.id),
+src/admin/live-trips.routes.ts:131:      String(req.params.id),
+src/admin/partner.routes.ts:50:    const partner = await getAdminPartner(String(req.params.id));
+src/admin/partner.routes.ts:76:      String(req.params.id),
+src/admin/marketing.routes.ts:30:        typeof req.query.status === "string"
+src/admin/marketing.routes.ts:31:          ? req.query.status
+src/admin/marketing.routes.ts:34:        typeof req.query.channel === "string"
+src/admin/marketing.routes.ts:35:          ? req.query.channel
+src/admin/marketing.routes.ts:64:      String(req.params.id),
+src/admin/marketing.routes.ts:132:      String(req.params.id),
+src/admin/marketing.routes.ts:166:        String(req.params.id),
+src/admin/role-permission.routes.ts:44:    const data = await getAdminRole(String(req.params.id));
+src/admin/platform-config.routes.ts:50:    const config = await getPlatformConfigValue(String(req.params.key));
+src/admin/platform-config.routes.ts:72:    const key = String(req.params.key);
+src/admin/platform-config.routes.ts:108:      String(req.params.key),
+src/admin/security.routes.ts:49:        typeof req.query.administratorId === "string"
+src/admin/security.routes.ts:50:          ? req.query.administratorId
+src/admin/security.routes.ts:53:        typeof req.query.affectedUserId === "string"
+src/admin/security.routes.ts:54:          ? req.query.affectedUserId
+src/admin/security.routes.ts:57:        typeof req.query.action === "string"
+src/admin/security.routes.ts:58:          ? req.query.action
+src/admin/security.routes.ts:61:        typeof req.query.limit === "string"
+src/admin/security.routes.ts:62:          ? Number(req.query.limit)
+src/admin/security.routes.ts:81:      await getAdministratorSecurity(String(req.params.id));
+src/admin/error.routes.ts:19:      typeof req.query.limit === "string"
+src/admin/error.routes.ts:20:        ? Number(req.query.limit)
+src/admin/error.routes.ts:37:        typeof req.query.eventType === "string"
+src/admin/error.routes.ts:38:          ? req.query.eventType
+src/admin/error.routes.ts:41:        typeof req.query.limit === "string"
+src/admin/error.routes.ts:42:          ? Number(req.query.limit)
+src/admin/marketplace.routes.ts:71:      String(req.params.id),
+src/admin/marketplace.routes.ts:121:      String(req.params.id),
+src/admin/feature-management.routes.ts:45:      key: String(req.params.key),
+src/admin/feature-management.routes.ts:117:      key: String(req.params.key),
+src/admin/feature-management.routes.ts:160:      key: String(req.params.key),
+src/events/event.routes.ts:75:        String(req.params.bookingId),
+src/events/event.routes.ts:82:        String(req.params.bookingId),
+src/wallet/wallet.routes.ts:54:      const transporterId = String(req.params.transporterId);
+src/content/content.routes.ts:49:      type: typeof req.query.type === "string" ? req.query.type : undefined,
+src/content/content.routes.ts:50:      status: typeof req.query.status === "string" ? req.query.status : undefined,
+src/content/content.routes.ts:67:    const content = await getContentById(String(req.params.id));
+src/content/content.routes.ts:92:      String(req.params.id),
+src/marketplace/marketplace.routes.ts:35:        req.query,
+src/marketplace/marketplace.routes.ts:138:        String(req.params.id),
+src/marketplace/marketplace.routes.ts:171:        requestId: String(req.params.id),
+src/marketplace/marketplace.routes.ts:217:        String(req.params.id),
+src/marketplace/marketplace.routes.ts:218:        String(req.params.bidId),
+src/marketplace/marketplace.routes.ts:270:        String(req.params.id),
+src/features/feature.routes.ts:47:      key: String(req.params.key),

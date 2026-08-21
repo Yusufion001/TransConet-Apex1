@@ -3,8 +3,11 @@ import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
 import { requireAdminModule } from "../middleware/admin-module.middleware.js";
-import { z } from "zod";
-import { notificationIdParamsSchema } from "./admin.validators.js";
+import { validate } from "../middleware/validate.middleware.js";
+import {
+  notificationIdParamsSchema,
+  adminNotificationQuerySchema,
+} from "./admin.validators.js";
 import {
   getAdminNotifications,
   getAdminNotificationSummary,
@@ -17,18 +20,12 @@ router.use(authenticate);
 router.use(requireAdmin);
 router.use(requireAdminModule("NOTIFICATION_CENTER"));
 
-router.get("/", async (req, res) => {
+router.get(
+  "/",
+  validate(adminNotificationQuerySchema, "query"),
+  async (req, res) => {
   try {
-    const notifications = await getAdminNotifications({
-      read:
-        typeof req.query.read === "string"
-          ? req.query.read === "true"
-          : undefined,
-      type:
-        typeof req.query.type === "string"
-          ? req.query.type
-          : undefined,
-    });
+    const notifications = await getAdminNotifications(req.query);
 
     res.json({
       success: true,
@@ -58,7 +55,10 @@ router.get("/summary", async (_req, res) => {
   }
 });
 
-router.patch("/:id/read", async (req: AuthenticatedRequest, res) => {
+router.patch(
+  "/:id/read",
+  validate(notificationIdParamsSchema, "params"),
+  async (req: AuthenticatedRequest, res) => {
   try {
     const params = notificationIdParamsSchema.parse(req.params);
 
@@ -73,13 +73,6 @@ router.patch("/:id/read", async (req: AuthenticatedRequest, res) => {
       data: notification,
     });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        success: false,
-        error: error.issues,
-      });
-    }
-
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Server error",

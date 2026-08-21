@@ -1,0 +1,165 @@
+===== src/transporters/transporter.routes.ts =====
+23:router.post("/", authorize("TRANSPORTER"), async (req: AuthenticatedRequest, res) => {
+25:    const input = createTransporterProfileSchema.safeParse(req.body);
+49:router.get("/:id", async (req: AuthenticatedRequest, res) => {
+54:        req.user!.id !== String(req.params.id))
+59:    const transporter = await getTransporterProfile(String(req.params.id));
+77:router.get("/:id/vehicles", async (req: AuthenticatedRequest, res) => {
+82:        req.user!.id !== String(req.params.id))
+87:    const vehicles = await getTransporterVehicles(String(req.params.id));
+98:router.patch(
+103:      const input = updateTransporterVerificationSchema.safeParse(req.body);
+114:        String(req.params.id),
+===== src/vehicles/vehicle.routes.ts =====
+22:router.post(
+27:    const parsed = createVehicleSchema.safeParse(req.body);
+51:router.get("/:id", async (req: AuthenticatedRequest, res) => {
+54:      String(req.params.id),
+59:    const vehicle = await getVehicleById(String(req.params.id));
+80:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+83:      String(req.params.id),
+88:    const parsed = updateVehicleSchema.safeParse(req.body);
+99:      String(req.params.id),
+===== src/bookings/booking.routes.ts =====
+101:router.post(
+106:    const input = createBookingSchema.parse(req.body);
+122:router.get("/customer/:customerId", async (req: AuthenticatedRequest, res) => {
+126:         req.user!.id !== String(req.params.customerId))) {
+129:    const bookings = await getCustomerBookings(String(req.params.customerId));
+140:router.get(
+147:          req.user!.id !== String(req.params.transporterId))
+157:          String(req.params.transporterId),
+170:router.get("/:id", async (req: AuthenticatedRequest, res) => {
+173:      String(req.params.id),
+179:    const booking = await getBookingById(String(req.params.id));
+197:router.patch("/:id/assign", async (req: AuthenticatedRequest, res) => {
+207:      String(req.params.id),
+213:    const input = assignBookingSchema.parse(req.body);
+216:      String(req.params.id),
+230:router.patch("/:id/status", async (req: AuthenticatedRequest, res) => {
+233:      String(req.params.id),
+239:    const input = updateBookingStatusSchema.parse(req.body);
+242:      String(req.params.id),
+254:router.patch(
+259:        String(req.params.id),
+265:      const input = proofOfDeliverySchema.parse(req.body);
+269:          String(req.params.id),
+283:router.patch(
+288:        String(req.params.id),
+294:      const input = confirmDeliverySchema.parse(req.body);
+298:          String(req.params.id),
+===== src/payments/payment.routes.ts =====
+22:router.post(
+64:        req.body?.providerEventId ||
+65:        req.body?.id ||
+66:        req.body?.webhook_id;
+70:        req.body?.eventType ||
+71:        req.body?.type ||
+72:        req.body?.event;
+75:        req.body?.paymentId ||
+76:        req.body?.data?.paymentId ||
+80:        req.body?.transactionId ||
+81:        req.body?.transaction_id ||
+82:        req.body?.data?.id ||
+86:        req.body?.transactionReference ||
+87:        req.body?.transaction_reference ||
+88:        req.body?.reference ||
+89:        req.body?.data?.tx_ref ||
+90:        req.body?.data?.transaction_reference ||
+94:        req.body?.amount ??
+95:        req.body?.data?.amount;
+98:        req.body?.currency ??
+99:        req.body?.data?.currency;
+101:      const webhookData = paymentWebhookSchema.safeParse({
+129:  payload: req.body,
+160:router.post(
+165:      const paymentInput = initializePaymentSchema.safeParse(req.body);
+258:router.get(
+264:        String(req.params.id),
+306:router.get(
+311:      const bookingId = String(req.params.bookingId);
+===== src/notifications/notification.routes.ts =====
+24:router.post(
+29:      const input = notificationCreateSchema.parse(req.body);
+49:router.get(
+53:      const userId = String(req.params.userId);
+74:router.patch(
+78:      const params = notificationIdParamsSchema.parse(req.params);
+===== src/documents/document.routes.ts =====
+37:router.post(
+42:      const input = documentCreateSchema.parse(req.body);
+66:router.get("/user/:userId", async (req: AuthenticatedRequest, res) => {
+68:    const requestedUserId = String(req.params.userId);
+91:router.get(
+107:router.get(
+123:router.patch(
+128:      const params = documentIdParamsSchema.parse(req.params);
+152:router.patch(
+157:      const params = documentIdParamsSchema.parse(req.params);
+158:      const input = documentRejectionSchema.parse(req.body);
+===== src/disputes/dispute.routes.ts =====
+32:router.post("/", async (req: AuthenticatedRequest, res) => {
+34:    const input = disputeCreateSchema.parse(req.body);
+81:router.get(
+85:      const params = customerIdParamsSchema.parse(req.params);
+125:router.patch(
+130:      const params = disputeIdParamsSchema.parse(req.params);
+131:      const input = disputeStatusSchema.parse(req.body);
+===== src/wallet/wallet.routes.ts =====
+16:router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
+18:    const input = createWalletSchema.parse(req.body);
+49:router.get(
+54:      const transporterId = String(req.params.transporterId);
+85:router.post(
+90:      const input = withdrawalSchema.parse(req.body);
+===== src/verification/verification.routes.ts =====
+12:router.post(
+18:      const parsed = startVerificationSchema.safeParse(req.body);
+===== src/content/content.routes.ts =====
+26:router.post("/", async (req: AuthenticatedRequest, res) => {
+28:    const input = contentCreateSchema.parse(req.body);
+46:router.get("/", async (req: AuthenticatedRequest, res) => {
+49:      type: typeof req.query.type === "string" ? req.query.type : undefined,
+50:      status: typeof req.query.status === "string" ? req.query.status : undefined,
+65:router.get("/:id", async (req: AuthenticatedRequest, res) => {
+67:    const content = await getContentById(String(req.params.id));
+88:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+90:    const input = contentUpdateSchema.parse(req.body);
+92:      String(req.params.id),
+111:router.patch("/:id/publish", async (req: AuthenticatedRequest, res) => {
+113:    const params = contentIdParamsSchema.parse(req.params);
+===== src/subscriptions/subscription.routes.ts =====
+27:router.get("/plans", async (_req, res) => {
+39:router.get("/me", async (req: AuthenticatedRequest, res) => {
+51:router.get("/invoices", async (req: AuthenticatedRequest, res) => {
+63:router.post("/", async (req: AuthenticatedRequest, res) => {
+65:    const { planId } = subscriptionCreateSchema.parse(req.body);
+88:router.post("/cancel", async (req: AuthenticatedRequest, res) => {
+90:    subscriptionCancelSchema.parse(req.body);
+===== src/marketplace/marketplace.routes.ts =====
+29:router.get(
+34:      const query = marketplaceVisibilityQuerySchema.parse(
+35:        req.query,
+99:router.post(
+104:      const input = createMarketplaceRequestSchema.parse(req.body);
+132:router.get(
+138:        String(req.params.id),
+162:router.post(
+167:      const input = createMarketplaceBidSchema.parse(req.body);
+171:        requestId: String(req.params.id),
+209:router.post(
+214:      selectMarketplaceBidSchema.parse(req.body);
+217:        String(req.params.id),
+218:        String(req.params.bidId),
+262:router.post(
+267:      withdrawMarketplaceBidSchema.parse(req.body);
+270:        String(req.params.id),
+===== src/marketing/marketing.routes.ts =====
+17:router.get("/", async (req: AuthenticatedRequest, res) => {
+19:    const query = advertisementQuerySchema.parse(req.query);
+38:        advertisementResponseSchema.parse(advertisement),
+===== src/features/feature.routes.ts =====
+44:router.get("/:key", async (req: AuthenticatedRequest, res) => {
+46:    const { key } = featureKeySchema.parse({
+47:      key: String(req.params.key),
+78:router.get("/", async (req: AuthenticatedRequest, res) => {
