@@ -18,6 +18,8 @@ import FeatureManagement from "./modules/FeatureManagement";
 import RiskFraud from "./modules/RiskFraud";
 import ContentManagement from "./modules/ContentManagement";
 import ApiManagement from "./modules/ApiManagement";
+import AIAutomation from "./modules/AIAutomation";
+import ActivityTimeline from "./modules/ActivityTimeline";
 import BackupRecovery from "./modules/BackupRecovery";
 import DatabaseHealth from "./modules/DatabaseHealth";
 import VerificationCenter from "./modules/VerificationCenter";
@@ -109,6 +111,11 @@ const primaryNav: NavItem[] = [
     description: "Risk signals and suspicious activity",
   },
   {
+    label: "AI Automation",
+    section: "INTELLIGENCE",
+    description: "Rule-based operational intelligence and automation",
+  },
+  {
     label: "Error Center",
     section: "INTELLIGENCE",
     description: "Application errors, operational failures, and system events",
@@ -146,6 +153,11 @@ const primaryNav: NavItem[] = [
   {
     label: "Audit Logs",
     description: "Administrative activity history",
+  },
+  {
+    label: "Activity Timeline",
+    section: "OPERATIONS",
+    description: "Platform-wide operational and administrative event stream",
   },
   {
     label: "API Management",
@@ -415,6 +427,10 @@ function App() {
           <NotificationCenter />
         ) : active === "Content Management" ? (
           <ContentManagement />
+        ) : active === "Activity Timeline" ? (
+          <ActivityTimeline />
+        ) : active === "AI Automation" ? (
+          <AIAutomation />
         ) : active === "API Management" ? (
           <ApiManagement />
         ) : active === "Backup & Recovery" ? (
