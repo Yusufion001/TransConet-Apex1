@@ -10,6 +10,13 @@ import Subscriptions from "./modules/Subscriptions";
 import SupportCare from "./modules/SupportCare";
 import Fleet from "./modules/Fleet";
 import SecurityCenter from "./modules/SecurityCenter";
+import NotificationCenter from "./modules/NotificationCenter";
+import PartnerManagement from "./modules/PartnerManagement";
+import ReportCenter from "./modules/ReportCenter";
+import ErrorCenter from "./modules/ErrorCenter";
+import FeatureManagement from "./modules/FeatureManagement";
+import RiskFraud from "./modules/RiskFraud";
+import ContentManagement from "./modules/ContentManagement";
 import VerificationCenter from "./modules/VerificationCenter";
 import { useAuthStore } from "./auth/auth.store";
 import { getPlatformOverview, type PlatformOverview } from "./api/admin";
@@ -83,6 +90,10 @@ const primaryNav: NavItem[] = [
     description: "Verification and compliance",
   },
   {
+    label: "Content Management",
+    description: "Govern platform content and controlled publishing",
+  },
+  {
     label: "Support",
     description: "Customer and transporter support",
   },
@@ -93,6 +104,11 @@ const primaryNav: NavItem[] = [
   {
     label: "Risk & Fraud",
     description: "Risk signals and suspicious activity",
+  },
+  {
+    label: "Error Center",
+    section: "INTELLIGENCE",
+    description: "Application errors, operational failures, and system events",
   },
   {
     label: "Reports",
@@ -111,6 +127,10 @@ const primaryNav: NavItem[] = [
     label: "Security",
     section: "SYSTEM",
     description: "Security events and controls",
+  },
+  {
+    label: "Feature Management",
+    description: "Control controlled feature availability and rollout",
   },
   {
     label: "Administrators",
@@ -353,6 +373,8 @@ function App() {
           <Marketplace />
         ) : active === "Bidding" ? (
           <Marketplace />
+        ) : active === "Feature Management" ? (
+          <FeatureManagement />
         ) : active === "Security" ? (
           <SecurityCenter />
         ) : active === "Administrators" ? (
@@ -365,6 +387,18 @@ function App() {
           <Subscriptions />
         ) : active === "Verification" ? (
           <VerificationCenter />
+        ) : active === "Risk & Fraud" ? (
+          <RiskFraud />
+        ) : active === "Error Center" ? (
+          <ErrorCenter />
+        ) : active === "Reports" ? (
+          <ReportCenter />
+        ) : active === "Partner Management" ? (
+          <PartnerManagement />
+        ) : active === "Notifications" ? (
+          <NotificationCenter />
+        ) : active === "Content Management" ? (
+          <ContentManagement />
         ) : active === "Support" ? (
           <SupportCare />
         ) : (
