@@ -17,6 +17,9 @@ import ErrorCenter from "./modules/ErrorCenter";
 import FeatureManagement from "./modules/FeatureManagement";
 import RiskFraud from "./modules/RiskFraud";
 import ContentManagement from "./modules/ContentManagement";
+import ApiManagement from "./modules/ApiManagement";
+import BackupRecovery from "./modules/BackupRecovery";
+import DatabaseHealth from "./modules/DatabaseHealth";
 import VerificationCenter from "./modules/VerificationCenter";
 import { useAuthStore } from "./auth/auth.store";
 import { getPlatformOverview, type PlatformOverview } from "./api/admin";
@@ -143,6 +146,19 @@ const primaryNav: NavItem[] = [
   {
     label: "Audit Logs",
     description: "Administrative activity history",
+  },
+  {
+    label: "API Management",
+    section: "SYSTEM",
+    description: "Monitor API health, performance, and backend resource activity",
+  },
+  {
+    label: "Backup & Recovery",
+    description: "Monitor backup protection and recovery readiness",
+  },
+  {
+    label: "Database Health",
+    description: "Monitor PostgreSQL connectivity, response performance, and platform records",
   },
   {
     label: "Settings",
@@ -399,6 +415,12 @@ function App() {
           <NotificationCenter />
         ) : active === "Content Management" ? (
           <ContentManagement />
+        ) : active === "API Management" ? (
+          <ApiManagement />
+        ) : active === "Backup & Recovery" ? (
+          <BackupRecovery />
+        ) : active === "Database Health" ? (
+          <DatabaseHealth />
         ) : active === "Support" ? (
           <SupportCare />
         ) : (
