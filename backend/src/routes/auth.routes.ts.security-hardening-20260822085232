@@ -161,10 +161,7 @@ router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
   }
 });
 
-router.post(
-  "/reset-password",
-  passwordResetLimiter,
-  async (req, res) => {
+router.post("/reset-password", async (req, res) => {
   try {
     const input = resetPasswordSchema.parse(req.body);
 
@@ -178,9 +175,14 @@ router.post(
       data: result,
     });
   } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Password reset failed";
+
     return res.status(400).json({
       success: false,
-      error: "Password reset failed",
+      error: message,
     });
   }
 });

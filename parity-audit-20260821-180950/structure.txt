@@ -1,0 +1,10 @@
+Likely application directories:
+/admin-app/src
+/admin-app/src/api
+/admin-app/src/pages
+/backend
+/backend/src
+/docs/api
+/mobile-app/app
+/mobile-app/src
+/mobile-app/src/api

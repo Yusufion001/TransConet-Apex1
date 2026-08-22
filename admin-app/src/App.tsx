@@ -22,6 +22,7 @@ import AIAutomation from "./modules/AIAutomation";
 import ActivityTimeline from "./modules/ActivityTimeline";
 import BackupRecovery from "./modules/BackupRecovery";
 import DatabaseHealth from "./modules/DatabaseHealth";
+import Settings from "./modules/Settings";
 import VerificationCenter from "./modules/VerificationCenter";
 import { useAuthStore } from "./auth/auth.store";
 import { getPlatformOverview, type PlatformOverview } from "./api/admin";
@@ -437,6 +438,8 @@ function App() {
           <BackupRecovery />
         ) : active === "Database Health" ? (
           <DatabaseHealth />
+        ) : active === "Settings" ? (
+          <Settings />
         ) : active === "Support" ? (
           <SupportCare />
         ) : (

@@ -335,7 +335,7 @@ export async function forgotPassword(
   if (!user) {
     return {
       message:
-        "If an account exists, a password reset email has been sent.",
+        "If an account exists, a reset token has been generated.",
     };
   }
 
@@ -396,18 +396,19 @@ export async function resetPassword(
       },
     });
 
-  /*
-   * Do not reveal whether a reset token is invalid or expired.
-   * The external API should expose one generic failure state.
-   */
+  if (!user) {
+    throw new Error(
+      "Invalid reset token",
+    );
+  }
+
   if (
-    !user ||
     !user.resetPasswordExpiresAt ||
     user.resetPasswordExpiresAt <=
       new Date()
   ) {
     throw new Error(
-      "Invalid or expired reset token",
+      "Reset token expired",
     );
   }
 
@@ -419,34 +420,16 @@ export async function resetPassword(
 
   await prisma.$transaction(
     async (tx) => {
-      /*
-       * Consume the reset token atomically.
-       *
-       * The token hash and expiration are part of the
-       * update predicate. Only one concurrent request can
-       * successfully consume a given reset token.
-       */
-      const consumed =
-        await tx.user.updateMany({
-          where: {
-            id: user.id,
-            resetPasswordToken: tokenHash,
-            resetPasswordExpiresAt: {
-              gt: new Date(),
-            },
-          },
-          data: {
-            passwordHash,
-            resetPasswordToken: null,
-            resetPasswordExpiresAt: null,
-          },
-        });
-
-      if (consumed.count !== 1) {
-        throw new Error(
-          "Invalid or expired reset token",
-        );
-      }
+      await tx.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          passwordHash,
+          resetPasswordToken: null,
+          resetPasswordExpiresAt: null,
+        },
+      });
 
       /*
        * Password reset invalidates every active

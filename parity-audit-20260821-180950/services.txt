@@ -1,0 +1,241 @@
+transconet-parity-audit.sh:78:scan '([/\\](services|service|controllers|controller|use-cases|usecases|repositories|repository|handlers|handler)[/\\]|(Service|Controller|Repository|UseCase|Handler)[[:space:]]*[({=]|from .*services|from .*controllers)' services.txt
+transconet-parity-audit.sh:229:  echo '4. The route reaches the intended controller/handler/service.'
+marketplace-report-chunks/context-03.txt:622:  const handler = route.arguments.at(-1);
+marketplace-report-chunks/context-03.txt:657:  await handler(req, res);
+marketplace-report-chunks/context-03.txt:685:  const handler = route.arguments.at(-1);
+marketplace-report-chunks/context-03.txt:699:  await handler(req, res);
+marketplace-report-chunks/context-03.txt:725:  const handler = route.arguments.at(-1);
+marketplace-report-chunks/context-03.txt:757:  await handler(req, res);
+marketplace-report-chunks/context-03.txt:790:  const handler = route.arguments.at(-1);
+marketplace-report-chunks/context-03.txt:815:  await handler(req, res);
+marketplace-report-chunks/context-03.txt:835:  const handler = route.arguments.at(-1);
+marketplace-report-chunks/context-03.txt:868:  await handler(req, res);
+marketplace-report-chunks/context-03.txt:901:  const handler = route.arguments.at(-1);
+marketplace-report-chunks/context-03.txt:922:  await handler(req, res);
+marketplace-report-chunks/context-03.txt:941:  const handler = route.arguments.at(-1);
+marketplace-report-chunks/context-03.txt:964:  await handler(req, res);
+marketplace-report-chunks/context-03.txt:990:  const handler = route.arguments.at(-1);
+marketplace-report-chunks/context-03.txt:1003:  await handler(req, res);
+marketplace-part-01.txt:540:applySecurityErrorHandler(app);
+marketplace-part-01.txt:2702:  const handler = route.arguments.at(-1);
+marketplace-part-01.txt:2737:  await handler(req, res);
+marketplace-part-01.txt:2765:  const handler = route.arguments.at(-1);
+marketplace-part-01.txt:2779:  await handler(req, res);
+marketplace-part-01.txt:2805:  const handler = route.arguments.at(-1);
+marketplace-part-01.txt:2837:  await handler(req, res);
+marketplace-part-01.txt:2870:  const handler = route.arguments.at(-1);
+marketplace-part-01.txt:2895:  await handler(req, res);
+marketplace-part-01.txt:2915:  const handler = route.arguments.at(-1);
+marketplace-part-01.txt:2948:  await handler(req, res);
+marketplace-part-01.txt:2981:  const handler = route.arguments.at(-1);
+marketplace-part-01.txt:3002:  await handler(req, res);
+marketplace-part-01.txt:3021:  const handler = route.arguments.at(-1);
+marketplace-part-01.txt:3044:  await handler(req, res);
+marketplace-part-01.txt:3070:  const handler = route.arguments.at(-1);
+marketplace-part-01.txt:3083:  await handler(req, res);
+marketplace-report-chunks/context-02.txt:540:applySecurityErrorHandler(app);
+marketplace-part-00.txt:136:backend/src/services/auth.service.ts
+marketplace-part-00.txt:137:backend/src/services/auth.service.ts.auth.bak
+marketplace-part-00.txt:138:backend/src/services/auth.service.ts.before-refresh-rotation
+marketplace-part-00.txt:139:backend/src/services/auth.service.ts.refresh-session-backup
+marketplace-part-00.txt:140:backend/src/services/auth.service.ts.security-backup
+marketplace-part-00.txt:141:backend/src/services/email.service.ts
+marketplace-report-chunks/context-00.txt:136:backend/src/services/auth.service.ts
+marketplace-report-chunks/context-00.txt:137:backend/src/services/auth.service.ts.auth.bak
+marketplace-report-chunks/context-00.txt:138:backend/src/services/auth.service.ts.before-refresh-rotation
+marketplace-report-chunks/context-00.txt:139:backend/src/services/auth.service.ts.refresh-session-backup
+marketplace-report-chunks/context-00.txt:140:backend/src/services/auth.service.ts.security-backup
+marketplace-report-chunks/context-00.txt:141:backend/src/services/email.service.ts
+marketplace-integration-context.txt:136:backend/src/services/auth.service.ts
+marketplace-integration-context.txt:137:backend/src/services/auth.service.ts.auth.bak
+marketplace-integration-context.txt:138:backend/src/services/auth.service.ts.before-refresh-rotation
+marketplace-integration-context.txt:139:backend/src/services/auth.service.ts.refresh-session-backup
+marketplace-integration-context.txt:140:backend/src/services/auth.service.ts.security-backup
+marketplace-integration-context.txt:141:backend/src/services/email.service.ts
+marketplace-integration-context.txt:5205:applySecurityErrorHandler(app);
+marketplace-integration-context.txt:7367:  const handler = route.arguments.at(-1);
+marketplace-integration-context.txt:7402:  await handler(req, res);
+marketplace-integration-context.txt:7430:  const handler = route.arguments.at(-1);
+marketplace-integration-context.txt:7444:  await handler(req, res);
+marketplace-integration-context.txt:7470:  const handler = route.arguments.at(-1);
+marketplace-integration-context.txt:7502:  await handler(req, res);
+marketplace-integration-context.txt:7535:  const handler = route.arguments.at(-1);
+marketplace-integration-context.txt:7560:  await handler(req, res);
+marketplace-integration-context.txt:7580:  const handler = route.arguments.at(-1);
+marketplace-integration-context.txt:7613:  await handler(req, res);
+marketplace-integration-context.txt:7646:  const handler = route.arguments.at(-1);
+marketplace-integration-context.txt:7667:  await handler(req, res);
+marketplace-integration-context.txt:7686:  const handler = route.arguments.at(-1);
+marketplace-integration-context.txt:7709:  await handler(req, res);
+marketplace-integration-context.txt:7735:  const handler = route.arguments.at(-1);
+marketplace-integration-context.txt:7748:  await handler(req, res);
+backend/audits/backend-audit-20260818-070448.txt:225:src/services/auth.service.ts:2:import jwt from "jsonwebtoken";
+backend/audits/backend-audit-20260818-070448.txt:226:src/services/auth.service.ts:11:type RefreshTokenPayload = {
+backend/audits/backend-audit-20260818-070448.txt:227:src/services/auth.service.ts:13:  type: "refresh";
+backend/audits/backend-audit-20260818-070448.txt:228:src/services/auth.service.ts:22:function createAccessToken(userId: string, role: UserRole) {
+backend/audits/backend-audit-20260818-070448.txt:229:src/services/auth.service.ts:23:  return jwt.sign(
+backend/audits/backend-audit-20260818-070448.txt:230:src/services/auth.service.ts:29:    env.JWT_ACCESS_SECRET,
+backend/audits/backend-audit-20260818-070448.txt:231:src/services/auth.service.ts:36:function createRefreshToken(
+backend/audits/backend-audit-20260818-070448.txt:232:src/services/auth.service.ts:41:  return jwt.sign(
+backend/audits/backend-audit-20260818-070448.txt:233:src/services/auth.service.ts:44:      type: "refresh",
+backend/audits/backend-audit-20260818-070448.txt:234:src/services/auth.service.ts:48:    env.JWT_REFRESH_SECRET,
+backend/audits/backend-audit-20260818-070448.txt:235:src/services/auth.service.ts:55:function verifyRefreshToken(
+backend/audits/backend-audit-20260818-070448.txt:236:src/services/auth.service.ts:57:): RefreshTokenPayload {
+backend/audits/backend-audit-20260818-070448.txt:237:src/services/auth.service.ts:58:  const payload = jwt.verify(
+backend/audits/backend-audit-20260818-070448.txt:238:src/services/auth.service.ts:60:    env.JWT_REFRESH_SECRET,
+backend/audits/backend-audit-20260818-070448.txt:239:src/services/auth.service.ts:69:    payload.type !== "refresh"
+backend/audits/backend-audit-20260818-070448.txt:240:src/services/auth.service.ts:71:    throw new Error("Invalid refresh token");
+backend/audits/backend-audit-20260818-070448.txt:241:src/services/auth.service.ts:78:    type: "refresh",
+backend/audits/backend-audit-20260818-070448.txt:242:src/services/auth.service.ts:82:async function createRefreshSession(
+backend/audits/backend-audit-20260818-070448.txt:243:src/services/auth.service.ts:88:  const refreshToken = createRefreshToken(
+backend/audits/backend-audit-20260818-070448.txt:244:src/services/auth.service.ts:99:  await prisma.refreshSession.create({
+backend/audits/backend-audit-20260818-070448.txt:245:src/services/auth.service.ts:104:      tokenHash: hashToken(refreshToken),
+backend/audits/backend-audit-20260818-070448.txt:246:src/services/auth.service.ts:110:    refreshToken,
+backend/audits/backend-audit-20260818-070448.txt:247:src/services/auth.service.ts:121:  const accessToken = createAccessToken(
+backend/audits/backend-audit-20260818-070448.txt:248:src/services/auth.service.ts:127:    await createRefreshSession(userId);
+backend/audits/backend-audit-20260818-070448.txt:249:src/services/auth.service.ts:130:    accessToken,
+backend/audits/backend-audit-20260818-070448.txt:250:src/services/auth.service.ts:131:    refreshToken: session.refreshToken,
+backend/audits/backend-audit-20260818-070448.txt:251:src/services/auth.service.ts:322:export async function forgotPassword(
+backend/audits/backend-audit-20260818-070448.txt:252:src/services/auth.service.ts:359:      resetPasswordToken:
+backend/audits/backend-audit-20260818-070448.txt:253:src/services/auth.service.ts:361:      resetPasswordExpiresAt:
+backend/audits/backend-audit-20260818-070448.txt:254:src/services/auth.service.ts:384:export async function resetPassword(
+backend/audits/backend-audit-20260818-070448.txt:255:src/services/auth.service.ts:394:        resetPasswordToken:
+backend/audits/backend-audit-20260818-070448.txt:256:src/services/auth.service.ts:406:    !user.resetPasswordExpiresAt ||
+backend/audits/backend-audit-20260818-070448.txt:257:src/services/auth.service.ts:407:    user.resetPasswordExpiresAt <=
+backend/audits/backend-audit-20260818-070448.txt:258:src/services/auth.service.ts:429:          resetPasswordToken: null,
+backend/audits/backend-audit-20260818-070448.txt:259:src/services/auth.service.ts:430:          resetPasswordExpiresAt: null,
+backend/audits/backend-audit-20260818-070448.txt:260:src/services/auth.service.ts:436:       * refresh-token family for this user.
+backend/audits/backend-audit-20260818-070448.txt:261:src/services/auth.service.ts:438:      await tx.refreshSession.updateMany({
+backend/audits/backend-audit-20260818-070448.txt:262:src/services/auth.service.ts:456:async function revokeRefreshFamily(
+backend/audits/backend-audit-20260818-070448.txt:263:src/services/auth.service.ts:460:  await prisma.refreshSession.updateMany({
+backend/audits/backend-audit-20260818-070448.txt:264:src/services/auth.service.ts:477:export async function refreshAccessToken(
+backend/audits/backend-audit-20260818-070448.txt:265:src/services/auth.service.ts:478:  refreshToken: string,
+backend/audits/backend-audit-20260818-070448.txt:266:src/services/auth.service.ts:480:  let payload: RefreshTokenPayload;
+backend/audits/backend-audit-20260818-070448.txt:267:src/services/auth.service.ts:484:      verifyRefreshToken(
+backend/audits/backend-audit-20260818-070448.txt:268:src/services/auth.service.ts:485:        refreshToken,
+backend/audits/backend-audit-20260818-070448.txt:269:src/services/auth.service.ts:489:      "Invalid refresh token",
+backend/audits/backend-audit-20260818-070448.txt:270:src/services/auth.service.ts:494:    await prisma.refreshSession.findUnique({
+backend/audits/backend-audit-20260818-070448.txt:271:src/services/auth.service.ts:502:      "Invalid refresh token",
+backend/audits/backend-audit-20260818-070448.txt:272:src/services/auth.service.ts:508:   * using it again is a refresh-token reuse event.
+backend/audits/backend-audit-20260818-070448.txt:273:src/services/auth.service.ts:516:    await revokeRefreshFamily(
+backend/audits/backend-audit-20260818-070448.txt:274:src/services/auth.service.ts:522:      "Refresh token reuse detected",
+backend/audits/backend-audit-20260818-070448.txt:275:src/services/auth.service.ts:533:      "Invalid refresh token",
+backend/audits/backend-audit-20260818-070448.txt:276:src/services/auth.service.ts:541:    await revokeRefreshFamily(
+backend/audits/backend-audit-20260818-070448.txt:277:src/services/auth.service.ts:546:      "Refresh token expired",
+backend/audits/backend-audit-20260818-070448.txt:278:src/services/auth.service.ts:551:    hashToken(refreshToken) !==
+backend/audits/backend-audit-20260818-070448.txt:279:src/services/auth.service.ts:554:    await revokeRefreshFamily(
+backend/audits/backend-audit-20260818-070448.txt:280:src/services/auth.service.ts:560:      "Refresh token reuse detected",
+backend/audits/backend-audit-20260818-070448.txt:281:src/services/auth.service.ts:582:    await revokeRefreshFamily(
+backend/audits/backend-audit-20260818-070448.txt:282:src/services/auth.service.ts:587:      "Invalid refresh token",
+backend/audits/backend-audit-20260818-070448.txt:283:src/services/auth.service.ts:595:    await revokeRefreshFamily(
+backend/audits/backend-audit-20260818-070448.txt:284:src/services/auth.service.ts:607:   * to obtain a new access token from an existing refresh token.
+backend/audits/backend-audit-20260818-070448.txt:285:src/services/auth.service.ts:613:    await revokeRefreshFamily(
+backend/audits/backend-audit-20260818-070448.txt:286:src/services/auth.service.ts:630:  const newRefreshToken =
+backend/audits/backend-audit-20260818-070448.txt:287:src/services/auth.service.ts:631:    createRefreshToken(
+backend/audits/backend-audit-20260818-070448.txt:288:src/services/auth.service.ts:643:  const accessToken =
+backend/audits/backend-audit-20260818-070448.txt:289:src/services/auth.service.ts:644:    createAccessToken(
+backend/audits/backend-audit-20260818-070448.txt:290:src/services/auth.service.ts:653:          await tx.refreshSession.updateMany({
+backend/audits/backend-audit-20260818-070448.txt:291:src/services/auth.service.ts:671:            "Refresh token reuse detected",
+backend/audits/backend-audit-20260818-070448.txt:292:src/services/auth.service.ts:675:        await tx.refreshSession.create({
+backend/audits/backend-audit-20260818-070448.txt:293:src/services/auth.service.ts:684:                newRefreshToken,
+backend/audits/backend-audit-20260818-070448.txt:294:src/services/auth.service.ts:698:        "Refresh token reuse detected"
+backend/audits/backend-audit-20260818-070448.txt:295:src/services/auth.service.ts:700:      await revokeRefreshFamily(
+backend/audits/backend-audit-20260818-070448.txt:296:src/services/auth.service.ts:710:    accessToken,
+backend/audits/backend-audit-20260818-070448.txt:297:src/services/auth.service.ts:711:    refreshToken:
+backend/audits/backend-audit-20260818-070448.txt:298:src/services/auth.service.ts:712:      newRefreshToken,
+backend/audits/backend-audit-20260818-070448.txt:299:src/services/auth.service.ts:721:      await tx.refreshSession.updateMany({
+backend/audits/backend-audit-20260818-070448.txt:710:src/services/auth.service.ts:7:import { sendPasswordResetEmail } from "./email.service.js";
+backend/audits/backend-audit-20260818-070448.txt:711:src/services/auth.service.ts:11:type RefreshTokenPayload = {
+backend/audits/backend-audit-20260818-070448.txt:712:src/services/auth.service.ts:36:function createRefreshToken(
+backend/audits/backend-audit-20260818-070448.txt:713:src/services/auth.service.ts:55:function verifyRefreshToken(
+backend/audits/backend-audit-20260818-070448.txt:714:src/services/auth.service.ts:57:): RefreshTokenPayload {
+backend/audits/backend-audit-20260818-070448.txt:715:src/services/auth.service.ts:88:  const refreshToken = createRefreshToken(
+backend/audits/backend-audit-20260818-070448.txt:716:src/services/auth.service.ts:104:      tokenHash: hashToken(refreshToken),
+backend/audits/backend-audit-20260818-070448.txt:717:src/services/auth.service.ts:110:    refreshToken,
+backend/audits/backend-audit-20260818-070448.txt:718:src/services/auth.service.ts:131:    refreshToken: session.refreshToken,
+backend/audits/backend-audit-20260818-070448.txt:719:src/services/auth.service.ts:140:  password: string;
+backend/audits/backend-audit-20260818-070448.txt:720:src/services/auth.service.ts:143:  const passwordHash =
+backend/audits/backend-audit-20260818-070448.txt:721:src/services/auth.service.ts:144:    await bcrypt.hash(input.password, 12);
+backend/audits/backend-audit-20260818-070448.txt:722:src/services/auth.service.ts:173:        passwordHash,
+backend/audits/backend-audit-20260818-070448.txt:723:src/services/auth.service.ts:207:  password: string,
+backend/audits/backend-audit-20260818-070448.txt:724:src/services/auth.service.ts:257:  const validPassword = await bcrypt.compare(
+backend/audits/backend-audit-20260818-070448.txt:725:src/services/auth.service.ts:258:    password,
+backend/audits/backend-audit-20260818-070448.txt:726:src/services/auth.service.ts:259:    user.passwordHash,
+backend/audits/backend-audit-20260818-070448.txt:727:src/services/auth.service.ts:262:  if (!validPassword) {
+backend/audits/backend-audit-20260818-070448.txt:728:src/services/auth.service.ts:322:export async function forgotPassword(
+backend/audits/backend-audit-20260818-070448.txt:729:src/services/auth.service.ts:359:      resetPasswordToken:
+backend/audits/backend-audit-20260818-070448.txt:730:src/services/auth.service.ts:361:      resetPasswordExpiresAt:
+backend/audits/backend-audit-20260818-070448.txt:731:src/services/auth.service.ts:368:      await sendPasswordResetEmail(
+backend/audits/backend-audit-20260818-070448.txt:732:src/services/auth.service.ts:380:      "If an account exists, a password reset email has been sent.",
+backend/audits/backend-audit-20260818-070448.txt:733:src/services/auth.service.ts:384:export async function resetPassword(
+backend/audits/backend-audit-20260818-070448.txt:734:src/services/auth.service.ts:386:  password: string,
+backend/audits/backend-audit-20260818-070448.txt:735:src/services/auth.service.ts:394:        resetPasswordToken:
+backend/audits/backend-audit-20260818-070448.txt:736:src/services/auth.service.ts:406:    !user.resetPasswordExpiresAt ||
+backend/audits/backend-audit-20260818-070448.txt:737:src/services/auth.service.ts:407:    user.resetPasswordExpiresAt <=
+backend/audits/backend-audit-20260818-070448.txt:738:src/services/auth.service.ts:415:  const passwordHash =
+backend/audits/backend-audit-20260818-070448.txt:739:src/services/auth.service.ts:417:      password,
+backend/audits/backend-audit-20260818-070448.txt:740:src/services/auth.service.ts:428:          passwordHash,
+backend/audits/backend-audit-20260818-070448.txt:741:src/services/auth.service.ts:429:          resetPasswordToken: null,
+backend/audits/backend-audit-20260818-070448.txt:742:src/services/auth.service.ts:430:          resetPasswordExpiresAt: null,
+backend/audits/backend-audit-20260818-070448.txt:743:src/services/auth.service.ts:435:       * Password reset invalidates every active
+backend/audits/backend-audit-20260818-070448.txt:744:src/services/auth.service.ts:452:      "Password updated successfully",
+backend/audits/backend-audit-20260818-070448.txt:745:src/services/auth.service.ts:478:  refreshToken: string,
+backend/audits/backend-audit-20260818-070448.txt:746:src/services/auth.service.ts:480:  let payload: RefreshTokenPayload;
+backend/audits/backend-audit-20260818-070448.txt:747:src/services/auth.service.ts:484:      verifyRefreshToken(
+backend/audits/backend-audit-20260818-070448.txt:748:src/services/auth.service.ts:485:        refreshToken,
+backend/audits/backend-audit-20260818-070448.txt:749:src/services/auth.service.ts:551:    hashToken(refreshToken) !==
+backend/audits/backend-audit-20260818-070448.txt:750:src/services/auth.service.ts:630:  const newRefreshToken =
+backend/audits/backend-audit-20260818-070448.txt:751:src/services/auth.service.ts:631:    createRefreshToken(
+backend/audits/backend-audit-20260818-070448.txt:752:src/services/auth.service.ts:684:                newRefreshToken,
+backend/audits/backend-audit-20260818-070448.txt:753:src/services/auth.service.ts:711:    refreshToken:
+backend/audits/backend-audit-20260818-070448.txt:754:src/services/auth.service.ts:712:      newRefreshToken,
+backend/audits/backend-audit-20260818-070448.txt:755:src/services/email.service.ts:6:export async function sendPasswordResetEmail(
+backend/audits/backend-audit-20260818-070448.txt:756:src/services/email.service.ts:11:    `${env.PASSWORD_RESET_URL}?token=${encodeURIComponent(resetToken)}`;
+backend/audits/backend-audit-20260818-070448.txt:757:src/services/email.service.ts:16:    subject: "Reset your TransConet password",
+backend/audits/backend-audit-20260818-070448.txt:758:src/services/email.service.ts:19:        <h2>Reset your TransConet password</h2>
+backend/audits/backend-audit-20260818-070448.txt:759:src/services/email.service.ts:20:        <p>We received a request to reset your TransConet password.</p>
+backend/audits/backend-audit-20260818-070448.txt:760:src/services/email.service.ts:24:            Reset Password
+backend/audits/backend-audit-20260818-070448.txt:761:src/services/email.service.ts:34:    throw new Error("Failed to send password reset email");
+backend/audits/backend-audit-20260818-070448.txt:955:src/services/auth.service.ts:421:  await prisma.$transaction(
+backend/audits/backend-audit-20260818-070448.txt:956:src/services/auth.service.ts:624:   * The database transaction ensures the old token
+backend/audits/backend-audit-20260818-070448.txt:957:src/services/auth.service.ts:650:    await prisma.$transaction(
+backend/audits/backend-audit-20260818-070448.txt:958:src/services/auth.service.ts:719:  await prisma.$transaction(
+backend/tests/marketplace.routes.test.ts:181:  const handler = route.arguments.at(-1);
+backend/tests/marketplace.routes.test.ts:216:  await handler(req, res);
+backend/tests/marketplace.routes.test.ts:244:  const handler = route.arguments.at(-1);
+backend/tests/marketplace.routes.test.ts:258:  await handler(req, res);
+backend/tests/marketplace.routes.test.ts:284:  const handler = route.arguments.at(-1);
+backend/tests/marketplace.routes.test.ts:316:  await handler(req, res);
+backend/tests/marketplace.routes.test.ts:349:  const handler = route.arguments.at(-1);
+backend/tests/marketplace.routes.test.ts:374:  await handler(req, res);
+backend/tests/marketplace.routes.test.ts:394:  const handler = route.arguments.at(-1);
+backend/tests/marketplace.routes.test.ts:427:  await handler(req, res);
+backend/tests/marketplace.routes.test.ts:460:  const handler = route.arguments.at(-1);
+backend/tests/marketplace.routes.test.ts:481:  await handler(req, res);
+backend/tests/marketplace.routes.test.ts:500:  const handler = route.arguments.at(-1);
+backend/tests/marketplace.routes.test.ts:523:  await handler(req, res);
+backend/tests/marketplace.routes.test.ts:549:  const handler = route.arguments.at(-1);
+backend/tests/marketplace.routes.test.ts:562:  await handler(req, res);
+backend/tests/auth.service.test.ts:34:mock.module("../src/services/email.service.js", {
+backend/tests/auth.service.test.ts:47:} = await import("../src/services/auth.service.js");
+backend/src/server.ts.security-foundation-backup:166:applySecurityErrorHandler(app);
+parity-audit-report.txt:800:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts
+parity-audit-report.txt:801:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/email.service.ts
+parity-audit-report.txt:1031:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:99:  await prisma.refreshSession.create({
+parity-audit-report.txt:1032:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:147:    await prisma.user.findFirst({
+parity-audit-report.txt:1033:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:167:    await prisma.user.create({
+parity-audit-report.txt:1034:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:209:  const user = await prisma.user.findFirst({
+parity-audit-report.txt:1035:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:274:      await prisma.adminProfile.update({
+parity-audit-report.txt:1036:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:290:  await prisma.user.update({
+parity-audit-report.txt:1037:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:300:    await prisma.adminProfile.update({
+parity-audit-report.txt:1038:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:326:    await prisma.user.findFirst({
+parity-audit-report.txt:1039:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:354:  await prisma.user.update({
+parity-audit-report.txt:1040:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:392:    await prisma.user.findFirst({
+parity-audit-report.txt:1041:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:460:  await prisma.refreshSession.updateMany({
+parity-audit-report.txt:1042:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:494:    await prisma.refreshSession.findUnique({
+parity-audit-report.txt:1043:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:565:    await prisma.user.findUnique({
+backend/src/middleware/security-foundation.middleware.ts:108:  handler(_req, res) {
+backend/src/middleware/security-foundation.middleware.ts:257:export function applySecurityErrorHandler(app: Express) {
+backend/src/routes/auth.routes.ts:12:} from "../services/auth.service.js";
+backend/src/routes/auth.routes.ts:24:  handler(_req, res) {
+backend/src/server.ts:208:applySecurityErrorHandler(app);

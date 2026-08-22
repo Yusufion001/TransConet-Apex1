@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { Prisma } from "../../generated/prisma/client.js";
 import {
   authenticate,
   type AuthenticatedRequest,
@@ -8,17 +9,15 @@ import { requireAdmin } from "../middleware/admin.middleware.js";
 import { requireAdminModule } from "../middleware/admin-module.middleware.js";
 import {
   getPlatformConfig,
+  getPlatformConfigDefinitionsForAdmin,
   getPlatformConfigValue,
   upsertPlatformConfig,
   deletePlatformConfig,
 } from "./platform-config.service.js";
 import {
-  platformConfigSchema,
-  pricingConfigSchema,
-} from "./admin.validators.js";
-import {
-  marketplaceVisibilityConfigSchema,
-} from "../marketplace/visibility.policy.js";
+  validatePlatformConfigValue,
+  isPlatformConfigKey,
+} from "./platform-config.registry.js";
 
 const platformConfigUpdateSchema = z.object({
   value: z.unknown(),
@@ -33,21 +32,38 @@ router.use(requireAdminModule("PLATFORM_CONFIG"));
 
 router.get("/", async (_req, res) => {
   try {
+    const [configs, definitions] = await Promise.all([
+      getPlatformConfig(),
+      getPlatformConfigDefinitionsForAdmin(),
+    ]);
+
     return res.json({
       success: true,
-      data: await getPlatformConfig(),
+      data: {
+        configs,
+        definitions,
+      },
     });
-  } catch (error) {
+  } catch {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Failed to load platform configuration",
     });
   }
 });
 
 router.get("/:key", async (req, res) => {
+  const key = String(req.params.key);
+
+  if (!isPlatformConfigKey(key)) {
+    return res.status(404).json({
+      success: false,
+      error: "Unsupported platform configuration key",
+    });
+  }
+
   try {
-    const config = await getPlatformConfigValue(String(req.params.key));
+    const config = await getPlatformConfigValue(key);
 
     if (!config) {
       return res.status(404).json({
@@ -56,37 +72,61 @@ router.get("/:key", async (req, res) => {
       });
     }
 
-    return res.json({ success: true, data: config });
-  } catch (error) {
+    return res.json({
+      success: true,
+      data: config,
+    });
+  } catch {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Failed to load platform configuration",
     });
   }
 });
 
 router.put("/:key", async (req: AuthenticatedRequest, res) => {
+  const key = String(req.params.key);
+
+  if (!isPlatformConfigKey(key)) {
+    return res.status(404).json({
+      success: false,
+      error: "Unsupported platform configuration key",
+    });
+  }
+
   try {
     const input = platformConfigUpdateSchema.parse(req.body);
 
-    const key = String(req.params.key);
+    const validation = validatePlatformConfigValue(
+      key,
+      input.value,
+    );
 
-      if (key === "PRICING_CONFIG") {
-        pricingConfigSchema.parse(input.value);
-      } else if (key === "MARKETPLACE_VISIBILITY_CONFIG") {
-        marketplaceVisibilityConfigSchema.parse(input.value);
-      } else {
-        platformConfigSchema.parse(input);
+    if (!validation.success) {
+      if (validation.error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: validation.error.issues,
+        });
       }
+
+      return res.status(400).json({
+        success: false,
+        error: validation.error,
+      });
+    }
 
     const config = await upsertPlatformConfig(
       key,
-      input.value,
+      validation.data as Prisma.InputJsonValue,
       input.description ?? null,
       req.user!.id,
     );
 
-    return res.json({ success: true, data: config });
+    return res.json({
+      success: true,
+      data: config,
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({
@@ -95,25 +135,62 @@ router.put("/:key", async (req: AuthenticatedRequest, res) => {
       });
     }
 
+    if (
+      error instanceof Error &&
+      (
+        error.message.includes("Unsupported") ||
+        error.message.includes("not editable")
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        error: error.message,
+      });
+    }
+
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Failed to update platform configuration",
     });
   }
 });
 
 router.delete("/:key", async (req: AuthenticatedRequest, res) => {
+  const key = String(req.params.key);
+
+  if (!isPlatformConfigKey(key)) {
+    return res.status(404).json({
+      success: false,
+      error: "Unsupported platform configuration key",
+    });
+  }
+
   try {
     const config = await deletePlatformConfig(
-      String(req.params.key),
+      key,
       req.user!.id,
     );
 
-    return res.json({ success: true, data: config });
+    return res.json({
+      success: true,
+      data: config,
+    });
   } catch (error) {
+    if (error instanceof Error) {
+      if (
+        error.message.includes("cannot be deleted") ||
+        error.message.includes("not found")
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: error.message,
+        });
+      }
+    }
+
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Failed to delete platform configuration",
     });
   }
 });

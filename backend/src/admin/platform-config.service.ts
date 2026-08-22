@@ -1,72 +1,68 @@
 import { prisma } from "../config/prisma.js";
 import { Prisma } from "../../generated/prisma/client.js";
 import { publishEvent } from "../realtime/event-bus.js";
-
-type ConfigRow = {
-  id: string;
-  key: string;
-  value: unknown;
-  description: string | null;
-  updatedBy: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
+import {
+  getPlatformConfigDefinition,
+  getPlatformConfigDefinitions,
+} from "./platform-config.registry.js";
 
 export async function getPlatformConfig() {
-  return prisma.$queryRaw<ConfigRow[]>`
-    SELECT id, key, value, description, "updatedBy", "createdAt", "updatedAt"
-    FROM "PlatformConfig"
-    ORDER BY key ASC
-  `;
+  return prisma.platformConfig.findMany({
+    orderBy: { key: "asc" },
+  });
+}
+
+export async function getPlatformConfigDefinitionsForAdmin() {
+  return getPlatformConfigDefinitions();
 }
 
 export async function getPlatformConfigValue(key: string) {
-  const rows = await prisma.$queryRaw<ConfigRow[]>`
-    SELECT id, key, value, description, "updatedBy", "createdAt", "updatedAt"
-    FROM "PlatformConfig"
-    WHERE key = ${key}
-    LIMIT 1
-  `;
+  const config = getPlatformConfigDefinition(key);
 
-  return rows[0] ?? null;
+  if (!config) {
+    return null;
+  }
+
+  return prisma.platformConfig.findUnique({
+    where: { key },
+  });
 }
 
 export async function upsertPlatformConfig(
   key: string,
-  value: unknown,
+  value: Prisma.InputJsonValue,
   description: string | null,
   administratorId: string,
 ) {
+  const definition = getPlatformConfigDefinition(key);
+
+  if (!definition) {
+    throw new Error("Unsupported platform configuration key");
+  }
+
+  if (!definition.editable) {
+    throw new Error("Platform configuration is not editable");
+  }
+
   const config = await prisma.$transaction(async (tx) => {
-    const previousRows = await tx.$queryRaw<ConfigRow[]>`
-      SELECT id, key, value, description, "updatedBy", "createdAt", "updatedAt"
-      FROM "PlatformConfig"
-      WHERE key = ${key}
-      LIMIT 1
-    `;
+    const previous = await tx.platformConfig.findUnique({
+      where: { key },
+    });
 
-    const previous = previousRows[0] ?? null;
-
-    const rows = await tx.$queryRaw<ConfigRow[]>`
-      INSERT INTO "PlatformConfig"
-        (id, key, value, description, "updatedBy", "createdAt", "updatedAt")
-      VALUES
-        (gen_random_uuid()::text, ${key}, ${JSON.stringify(value)}::jsonb,
-         ${description}, ${administratorId}, NOW(), NOW())
-      ON CONFLICT (key)
-      DO UPDATE SET
-        value = EXCLUDED.value,
-        description = EXCLUDED.description,
-        "updatedBy" = EXCLUDED."updatedBy",
-        "updatedAt" = NOW()
-      RETURNING id, key, value, description, "updatedBy", "createdAt", "updatedAt"
-    `;
-
-    const updated = rows[0];
-
-    if (!updated) {
-      throw new Error("Failed to update platform configuration");
-    }
+    const updated = await tx.platformConfig.upsert({
+      where: { key },
+      create: {
+        key,
+        value,
+        description,
+        updatedBy: administratorId,
+      },
+      update: {
+        value,
+        description,
+        updatedBy: administratorId,
+      },
+    });
 
     await tx.auditLog.create({
       data: {
@@ -106,14 +102,22 @@ export async function deletePlatformConfig(
   key: string,
   administratorId: string,
 ) {
-  const config = await prisma.$transaction(async (tx) => {
-    const rows = await tx.$queryRaw<ConfigRow[]>`
-      DELETE FROM "PlatformConfig"
-      WHERE key = ${key}
-      RETURNING id, key, value, description, "updatedBy", "createdAt", "updatedAt"
-    `;
+  const definition = getPlatformConfigDefinition(key);
 
-    const deleted = rows[0];
+  if (!definition) {
+    throw new Error("Unsupported platform configuration key");
+  }
+
+  if (!definition.deletable) {
+    throw new Error(
+      "This platform configuration cannot be deleted; use an explicit reset operation instead",
+    );
+  }
+
+  const config = await prisma.$transaction(async (tx) => {
+    const deleted = await tx.platformConfig.delete({
+      where: { key },
+    }).catch(() => null);
 
     if (!deleted) {
       throw new Error("Platform configuration not found");

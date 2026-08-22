@@ -875,6 +875,18 @@ model BackupSnapshot {
   @@index([requestedAt])
 }
 
+model PlatformConfig {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       Json
+  description String?
+  updatedBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([updatedBy])
+}
+
 model AuditLog {
   id                String   @id @default(uuid())
   administratorId   String

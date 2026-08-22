@@ -1,0 +1,1638 @@
+======================================================================
+TRANSCONET-APEX1 ADMINISTRATION MANAGEMENT PLATFORM
+FULL PARITY AUDIT
+======================================================================
+Generated: 2026-08-21T17:55:54+01:00
+Repository: /data/data/com.termux/files/home/TransConet-Apex1
+
+AUDIT CHAIN
+
+Navigation module
+ -> frontend module/component
+ -> every frontend API call
+ -> HTTP method + endpoint
+ -> backend route mount
+ -> backend route handler
+ -> service
+ -> authentication
+ -> authorization / module permission / ownership
+ -> validation
+ -> audit logging / AdminActivity
+ -> Prisma/database operation
+ -> runtime/test evidence
+
+This is a READ-ONLY static/repository audit.
+Static evidence does not prove runtime database behavior.
+Those gaps are explicitly reported.
+======================================================================
+
+======================================================================
+1. NAVIGATION MODULES
+======================================================================
+Navigation labels:
+001. Command Center
+002. Live Operations
+003. Bookings & Shipments
+004. Customers
+005. Transporters
+006. Fleet
+007. Marketplace
+008. Bidding
+009. Payments
+010. Wallets
+011. Subscriptions
+012. Verification
+013. Content Management
+014. Support
+015. Disputes
+016. Risk & Fraud
+017. AI Automation
+018. Error Center
+019. Reports
+020. Notifications
+021. Messages
+022. Security
+023. Feature Management
+024. Administrators
+025. Roles & Permissions
+026. Audit Logs
+027. Activity Timeline
+028. API Management
+029. Backup & Recovery
+030. Database Health
+031. Settings
+Total navigation labels: 31
+
+Render branches:
+Command Center -> CommandCenter
+Live Operations -> LiveOperations
+Marketing -> MarketingCenter
+Customers -> Customers
+Fleet -> Fleet
+Marketplace -> Marketplace
+Bidding -> Marketplace
+Feature Management -> FeatureManagement
+Security -> SecurityCenter
+Administrators -> Administrators
+Roles & Permissions -> RolePermissions
+Wallets -> FinancialOperations
+Subscriptions -> Subscriptions
+Verification -> VerificationCenter
+Risk & Fraud -> RiskFraud
+Error Center -> ErrorCenter
+Reports -> ReportCenter
+Partner Management -> PartnerManagement
+Notifications -> NotificationCenter
+Content Management -> ContentManagement
+Activity Timeline -> ActivityTimeline
+AI Automation -> AIAutomation
+API Management -> ApiManagement
+Backup & Recovery -> BackupRecovery
+Database Health -> DatabaseHealth
+Support -> SupportCare
+
+======================================================================
+2. FRONTEND MODULE FILES
+======================================================================
+AIAutomation.tsx
+ActivityTimeline.tsx
+Administrators.tsx
+ApiManagement.tsx
+BackupRecovery.tsx
+ContentManagement.tsx
+CustomerDirectory.tsx
+Customers.tsx
+DatabaseHealth.tsx
+ErrorCenter.tsx
+FeatureManagement.tsx
+FinancialOperations.tsx
+Fleet.tsx
+MarketingCenter.tsx
+Marketplace.tsx
+NotificationCenter.tsx
+PartnerManagement.tsx
+ReportCenter.tsx
+RiskFraud.tsx
+RolePermissions.tsx
+SecurityCenter.tsx
+Subscriptions.tsx
+SupportCare.tsx
+VerificationCenter.tsx
+
+======================================================================
+3. EVERY FRONTEND API CALL
+======================================================================
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/admin.ts:27 | GET    | /admin/platform-overview
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/api-management.ts:23 | GET    | /admin/api-management/overview
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/api-management.ts:28 | GET    | /admin/api-management/health
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/backup-recovery.ts:34 | GET    | /admin/backup-recovery
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/backup-recovery.ts:39 | POST   | /admin/backup-recovery/snapshot
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/client.ts:51 | POST   | ${apiUrl}/auth/refresh
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/database-health.ts:20 | GET    | /admin/database-health
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts:74 | GET    | /admin/live-trips/summary
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts:85 | GET    | /admin/live-trips
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts:98 | GET    | /admin/live-trips/${tripId}
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts:110 | GET    | /admin/live-trips/${tripId}/tracking
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/notifications.ts:46 | GET    | /admin/notifications${query ?
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/notifications.ts:57 | GET    | /admin/notifications/summary
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/notifications.ts:68 | PATCH  | /admin/notifications/${id}/read
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/auth/auth.store.ts:43 | POST   | /auth/login
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/auth/auth.store.ts:86 | POST   | /auth/logout
+
+Total frontend HTTP calls found: 16
+
+======================================================================
+4. BACKEND ADMIN ROUTE MOUNTS
+======================================================================
+162:app.use("/api/admin", adminRoutes);
+163:app.use("/api/admin/customers", adminCustomerManagementRoutes);
+164:app.use("/api/admin/platform-config", adminPlatformConfigRoutes);
+165:app.use("/api/admin/roles", adminRolePermissionRoutes);
+166:app.use("/api/admin/security", adminSecurityRoutes);
+167:app.use("/api/admin/support", adminSupportRoutes);
+168:app.use("/api/admin/notifications", adminNotificationRoutes);
+169:app.use("/api/admin/financial", adminFinancialRoutes);
+170:app.use("/api/admin/features", adminFeatureManagementRoutes);
+172:app.use("/api/admin/subscriptions", adminSubscriptionRoutes);
+173:app.use("/api/admin/marketing", adminMarketingRoutes);
+174:app.use("/api/admin/live-trips", adminLiveTripsRoutes);
+175:app.use("/api/admin/verification", adminVerificationRoutes);
+176:app.use("/api/admin/fleet", adminFleetRoutes);
+177:app.use("/api/admin/marketplace", adminMarketplaceRoutes);
+178:app.use("/api/admin/partners", adminPartnerRoutes);
+179:app.use("/api/admin/errors", adminErrorRoutes);
+180:app.use("/api/admin/api-management", adminApiManagementRoutes);
+181:app.use("/api/admin/database-health", adminDatabaseHealthRoutes);
+182:app.use("/api/admin/backup-recovery", adminBackupRecoveryRoutes);
+183:app.use("/api/admin/risk-fraud", adminRiskFraudRoutes);
+184:app.use("/api/admin/reports", adminReportsRoutes);
+185:app.use("/api/admin/activity", adminActivityRoutes);
+186:app.use("/api/admin/ai-automation", adminAIAutomationRoutes);
+187:app.use("/api/admin/content", contentRoutes);
+
+======================================================================
+5. EVERY ADMIN BACKEND ROUTE
+======================================================================
+===== src/admin/activity.routes.ts =====
+11:router.use(authenticate);
+12:router.use(requireAdmin);
+13:router.use(requireAdminModule("ACTIVITY_TIMELINE"));
+15:router.get(
+===== src/admin/admin.routes.ts =====
+13:router.use(authenticate);
+14:router.use(requireAdmin);
+15:router.use("/administrators", administratorRoutes);
+16:router.use("/customers", customerManagementRoutes);
+17:router.use("/activity", activityRoutes);
+19:router.get(
+===== src/admin/administrator.routes.ts =====
+25:router.use(requireSuperAdmin);
+72:router.post(
+111:router.get(
+133:router.get(
+156:router.patch(
+192:router.post(
+225:router.post(
+258:router.post(
+===== src/admin/ai-automation.routes.ts =====
+15:router.use(authenticate);
+16:router.use(requireAdmin);
+17:router.use(requireAdminModule("AI_AUTOMATION"));
+19:router.get("/", async (_req, res) => {
+42:router.post("/run", async (req: AuthenticatedRequest, res) => {
+===== src/admin/api-management.routes.ts =====
+12:router.use(authenticate);
+13:router.use(requireAdmin);
+14:router.use(requireAdminModule("API_MANAGEMENT"));
+16:router.get("/overview", async (_req, res) => {
+28:router.get("/health", async (_req, res) => {
+===== src/admin/backup-recovery.routes.ts =====
+15:router.use(authenticate);
+16:router.use(requireAdmin);
+17:router.use(requireAdminModule("BACKUP_RECOVERY"));
+19:router.get("/", async (_req, res) => {
+38:router.post("/snapshot", async (req: AuthenticatedRequest, res) => {
+===== src/admin/customer-management.routes.ts =====
+27:router.use(requireAdmin);
+28:router.use(requireAdminModule(AdminModule.CUSTOMER_MANAGEMENT));
+30:router.get("/", async (req, res) => {
+55:router.get("/:id", async (req: AuthenticatedRequest, res) => {
+88:router.post("/:id/activate", async (req: AuthenticatedRequest, res) => {
+120:router.post("/:id/suspend", async (req: AuthenticatedRequest, res) => {
+152:router.post("/:id/block", async (req: AuthenticatedRequest, res) => {
+184:router.get("/:id/bookings", async (req, res) => {
+===== src/admin/database-health.routes.ts =====
+9:router.use(authenticate);
+10:router.use(requireAdmin);
+11:router.use(requireAdminModule("DATABASE_HEALTH"));
+13:router.get("/", async (_req, res) => {
+===== src/admin/error.routes.ts =====
+12:router.use(authenticate);
+13:router.use(requireAdmin);
+14:router.use(requireAdminModule("ERROR_CENTER"));
+16:router.get("/overview", async (req, res) => {
+33:router.get("/", async (req, res) => {
+===== src/admin/feature-management.routes.ts =====
+24:router.use(authenticate);
+25:router.use(requireAdmin);
+26:router.use(requireAdminModule("FEATURE_MANAGEMENT"));
+28:router.get("/", async (_req, res) => {
+42:router.get("/:key", async (req, res) => {
+76:router.post("/", async (req: AuthenticatedRequest, res) => {
+114:router.patch("/:key", async (req: AuthenticatedRequest, res) => {
+157:router.patch("/:key/enabled", async (req: AuthenticatedRequest, res) => {
+===== src/admin/financial.routes.ts =====
+45:router.use(authenticate);
+46:router.use(requireAdmin);
+47:router.use(requireAdminModule("FINANCIAL_OPERATIONS"));
+49:router.get("/overview", async (_req, res) => {
+68:router.get(
+104:router.get(
+126:router.get(
+148:router.get(
+179:router.post(
+204:router.post(
+237:router.post(
+272:router.post(
+298:router.post(
+325:router.get(
+347:router.post(
+384:router.patch(
+===== src/admin/fleet.routes.ts =====
+47:router.use(authenticate);
+48:router.use(requireAdmin);
+49:router.use(requireAdminModule("FLEET_MARKETPLACE"));
+51:router.get("/", async (_req, res) => {
+67:router.get("/:id", async (req, res) => {
+90:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+===== src/admin/live-trips.routes.ts =====
+23:router.use(authenticate);
+24:router.use(requireAdmin);
+25:router.use(requireAdminModule("LIVE_TRIPS"));
+27:router.get("/summary", async (_req, res) => {
+46:router.get(
+68:router.get(
+101:router.get(
+===== src/admin/marketing.routes.ts =====
+22:router.use(authenticate);
+23:router.use(requireAdmin);
+24:router.use(requireAdminModule("MARKETING_CENTER"));
+26:router.get("/", async (req, res) => {
+61:router.get("/:id", async (req, res) => {
+96:router.post("/", async (req: AuthenticatedRequest, res) => {
+127:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+159:router.patch(
+===== src/admin/marketplace.routes.ts =====
+23:router.use(authenticate);
+24:router.use(requireAdmin);
+25:router.use(requireAdminModule("FLEET_MARKETPLACE"));
+27:router.get("/summary", async (_req, res) => {
+43:router.get("/requests", async (req, res) => {
+68:router.get("/requests/:id", async (req, res) => {
+93:router.get("/bids", async (req, res) => {
+118:router.get("/bids/:id", async (req, res) => {
+===== src/admin/notification.routes.ts =====
+19:router.use(authenticate);
+20:router.use(requireAdmin);
+21:router.use(requireAdminModule("NOTIFICATION_CENTER"));
+23:router.get(
+42:router.get("/summary", async (_req, res) => {
+58:router.patch(
+===== src/admin/partner.routes.ts =====
+28:router.use(authenticate);
+29:router.use(requireAdmin);
+30:router.use(requireAdminModule("PARTNER_MANAGEMENT"));
+32:router.get("/", async (_req, res) => {
+48:router.get("/:id", async (req, res) => {
+71:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+===== src/admin/platform-config.routes.ts =====
+30:router.use(authenticate);
+31:router.use(requireAdmin);
+32:router.use(requireAdminModule("PLATFORM_CONFIG"));
+34:router.get("/", async (_req, res) => {
+48:router.get("/:key", async (req, res) => {
+68:router.put("/:key", async (req: AuthenticatedRequest, res) => {
+105:router.delete("/:key", async (req: AuthenticatedRequest, res) => {
+===== src/admin/reports.routes.ts =====
+15:router.use(authenticate);
+16:router.use(requireAdmin);
+17:router.use(requireAdminModule("REPORTS_CENTER"));
+19:router.get("/", async (_req, res) => {
+42:router.post("/generate", async (req: AuthenticatedRequest, res) => {
+===== src/admin/risk-fraud.routes.ts =====
+20:router.use(authenticate);
+21:router.use(requireAdmin);
+22:router.use(requireAdminModule("RISK_FRAUD"));
+24:router.get("/", async (_req, res) => {
+43:router.post(
+===== src/admin/role-permission.routes.ts =====
+19:router.use(authenticate);
+20:router.use(requireAdmin);
+21:router.use(requireAdminModule("ROLE_PERMISSION"));
+23:router.get("/", async (_req, res) => {
+42:router.get("/:id", async (req, res) => {
+62:router.patch("/:id/permissions", async (req: AuthenticatedRequest, res) => {
+===== src/admin/security.routes.ts =====
+27:router.use(authenticate);
+28:router.use(requireAdmin);
+29:router.use(requireAdminModule("SECURITY_CENTER"));
+31:router.get("/overview", async (_req, res) => {
+45:router.get("/audit-logs", async (req, res) => {
+78:router.get("/administrators/:id", async (req, res) => {
+102:router.patch(
+135:router.patch(
+===== src/admin/subscription.routes.ts =====
+9:router.use(authenticate);
+10:router.use(requireAdmin);
+11:router.use(requireAdminModule("SUBSCRIPTION_BILLING"));
+13:router.get("/", async (_req, res) => {
+===== src/admin/support.routes.ts =====
+23:router.use(authenticate);
+24:router.use(requireAdmin);
+25:router.use(requireAdminModule("SUPPORT_CARE"));
+27:router.get(
+45:router.patch(
+67:router.patch(
+===== src/admin/verification.routes.ts =====
+20:router.use(authenticate);
+21:router.use(requireAdmin);
+22:router.use(requireAdminModule("VERIFICATION_CENTER"));
+24:router.get("/pending", async (_req, res) => {
+43:router.get("/verified", async (_req, res) => {
+62:router.patch("/:id/approve", async (req: AuthenticatedRequest, res) => {
+79:router.patch("/:id/reject", async (req: AuthenticatedRequest, res) => {
+
+======================================================================
+6. AUTHENTICATION / AUTHORIZATION BOUNDARIES
+======================================================================
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.routes.ts:3:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.routes.ts:13:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.routes.ts:14:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:11:  AuthenticatedRequest,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:13:import { requireSuperAdmin } from "../middleware/super-admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:25:router.use(requireSuperAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:75:    req: AuthenticatedRequest,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:114:    req: AuthenticatedRequest,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:136:    req: AuthenticatedRequest,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:159:    req: AuthenticatedRequest,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:195:    req: AuthenticatedRequest,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:228:    req: AuthenticatedRequest,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:261:    req: AuthenticatedRequest,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.routes.ts:2:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.routes.ts:3:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.routes.ts:4:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.routes.ts:11:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.routes.ts:12:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.routes.ts:13:router.use(requireAdminModule("ACTIVITY_TIMELINE"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/support.routes.ts:3:  authenticate,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/support.routes.ts:4:  type AuthenticatedRequest,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/support.routes.ts:6:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/support.routes.ts:7:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/support.routes.ts:23:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/support.routes.ts:24:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/support.routes.ts:25:router.use(requireAdminModule("SUPPORT_CARE"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/support.routes.ts:49:  async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/support.routes.ts:71:  async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/notification.routes.ts:2:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/notification.routes.ts:3:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/notification.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/notification.routes.ts:5:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/notification.routes.ts:19:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/notification.routes.ts:20:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/notification.routes.ts:21:router.use(requireAdminModule("NOTIFICATION_CENTER"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/notification.routes.ts:61:  async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:278:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:488:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:5:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:6:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:7:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:8:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:45:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:46:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:47:router.use(requireAdminModule("FINANCIAL_OPERATIONS"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:206:  async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:239:  async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:300:  async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:350:  async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:388:    req: AuthenticatedRequest,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/verification.routes.ts:4:import { authenticate, type AuthenticatedRequest } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/verification.routes.ts:5:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/verification.routes.ts:6:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/verification.routes.ts:20:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/verification.routes.ts:21:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/verification.routes.ts:22:router.use(requireAdminModule("VERIFICATION_CENTER"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/verification.routes.ts:62:router.patch("/:id/approve", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/verification.routes.ts:79:router.patch("/:id/reject", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.routes.ts:3:import { authenticate, type AuthenticatedRequest } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.routes.ts:5:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.routes.ts:47:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.routes.ts:48:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.routes.ts:49:router.use(requireAdminModule("FLEET_MARKETPLACE"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.routes.ts:90:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.routes.ts:3:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.routes.ts:4:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.routes.ts:5:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.routes.ts:6:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.routes.ts:23:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.routes.ts:24:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.routes.ts:25:router.use(requireAdminModule("LIVE_TRIPS"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.routes.ts:49:  async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.service.ts:94:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.service.ts:136:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.routes.ts:3:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.routes.ts:4:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.routes.ts:5:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.routes.ts:6:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.routes.ts:28:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.routes.ts:29:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.routes.ts:30:router.use(requireAdminModule("PARTNER_MANAGEMENT"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.routes.ts:71:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.service.ts:82:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.service.ts:141:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.service.ts:205:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.routes.ts:8:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.routes.ts:9:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.routes.ts:10:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.routes.ts:11:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.routes.ts:22:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.routes.ts:23:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.routes.ts:24:router.use(requireAdminModule("MARKETING_CENTER"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.routes.ts:96:router.post("/", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.routes.ts:127:router.patch("/:id", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.routes.ts:161:  async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.service.ts:49:export async function updateAdminPermissions(
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.service.ts:64:      "Super Administrator permissions cannot be restricted",
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.service.ts:76:    eventType: "ADMIN_PERMISSIONS_UPDATED",
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.service.ts:77:    module: "ROLE_PERMISSION",
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.service.ts:80:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.routes.ts:3:import { adminPermissionsSchema } from "./admin.validators.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.routes.ts:4:import { authenticate, type AuthenticatedRequest } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.routes.ts:5:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.routes.ts:6:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.routes.ts:10:  updateAdminPermissions,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.routes.ts:11:} from "./role-permission.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.routes.ts:19:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.routes.ts:20:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.routes.ts:21:router.use(requireAdminModule("ROLE_PERMISSION"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.routes.ts:62:router.patch("/:id/permissions", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.routes.ts:65:    const input = adminPermissionsSchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.routes.ts:67:    const data = await updateAdminPermissions(
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.service.ts:98:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.service.ts:143:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.routes.ts:4:  authenticate,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.routes.ts:5:  type AuthenticatedRequest,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.routes.ts:7:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.routes.ts:8:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.routes.ts:30:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.routes.ts:31:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.routes.ts:32:router.use(requireAdminModule("PLATFORM_CONFIG"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.routes.ts:68:router.put("/:key", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.routes.ts:105:router.delete("/:key", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:119:      permissions: true,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:186:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:236:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:4:  authenticate,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:5:  type AuthenticatedRequest,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:7:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:8:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:9:import { requireSuperAdmin } from "../middleware/super-admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:27:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:28:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:29:router.use(requireAdminModule("SECURITY_CENTER"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:104:  requireSuperAdmin,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:105:  async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:137:  requireSuperAdmin,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:138:  async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts:52:  actorId?: string;
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts:63:      actorId: data.actorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts:75:    actorId: data.actorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.routes.ts:2:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.routes.ts:3:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.routes.ts:4:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.routes.ts:12:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.routes.ts:13:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.routes.ts:14:router.use(requireAdminModule("ERROR_CENTER"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/api-management.service.ts:47:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/api-management.routes.ts:2:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/api-management.routes.ts:3:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/api-management.routes.ts:4:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/api-management.routes.ts:12:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/api-management.routes.ts:13:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/api-management.routes.ts:14:router.use(requireAdminModule("API_MANAGEMENT"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.service.ts:51:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.routes.ts:2:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.routes.ts:3:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.routes.ts:4:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.routes.ts:9:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.routes.ts:10:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.routes.ts:11:router.use(requireAdminModule("DATABASE_HEALTH"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:114:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.routes.ts:2:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.routes.ts:3:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.routes.ts:5:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.routes.ts:15:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.routes.ts:16:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.routes.ts:17:router.use(requireAdminModule("BACKUP_RECOVERY"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.routes.ts:38:router.post("/snapshot", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.service.ts:90:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.routes.ts:3:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.routes.ts:4:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.routes.ts:5:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.routes.ts:6:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.routes.ts:20:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.routes.ts:21:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.routes.ts:22:router.use(requireAdminModule("RISK_FRAUD"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.routes.ts:45:  async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:86:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.routes.ts:2:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.routes.ts:3:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.routes.ts:5:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.routes.ts:15:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.routes.ts:16:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.routes.ts:17:router.use(requireAdminModule("REPORTS_CENTER"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.routes.ts:42:router.post("/generate", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.service.ts:114:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.routes.ts:2:import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.routes.ts:3:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.routes.ts:5:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.routes.ts:15:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.routes.ts:16:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.routes.ts:17:router.use(requireAdminModule("AI_AUTOMATION"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.routes.ts:42:router.post("/run", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:4:import { AuthenticatedRequest } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:5:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:6:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:27:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:28:router.use(requireAdminModule(AdminModule.CUSTOMER_MANAGEMENT));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:55:router.get("/:id", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:88:router.post("/:id/activate", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:120:router.post("/:id/suspend", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:152:router.post("/:id/block", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:4:  authenticate,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:5:  type AuthenticatedRequest,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:7:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:8:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:24:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:25:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:26:router.use(requireAdminModule("FEATURE_MANAGEMENT"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:76:router.post("/", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:114:router.patch("/:key", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:157:router.patch("/:key/enabled", async (req: AuthenticatedRequest, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.service.ts:82:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.service.ts:170:    actorId: administratorId,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.routes.ts:3:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.routes.ts:4:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.routes.ts:5:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.routes.ts:23:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.routes.ts:24:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.routes.ts:25:router.use(requireAdminModule("FLEET_MARKETPLACE"));
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/subscription.routes.ts:2:import { authenticate } from "../middleware/auth.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/subscription.routes.ts:3:import { requireAdmin } from "../middleware/admin.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/subscription.routes.ts:4:import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/subscription.routes.ts:9:router.use(authenticate);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/subscription.routes.ts:10:router.use(requireAdmin);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/subscription.routes.ts:11:router.use(requireAdminModule("SUBSCRIPTION_BILLING"));
+
+======================================================================
+7. VALIDATION
+======================================================================
+Zod / parse / validation references:
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:2:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:80:        createAdministratorSchema.parse(
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:164:        updateAdministratorSchema.parse(
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:199:      const params = administratorIdParamsSchema.parse(req.params);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:232:      const params = administratorIdParamsSchema.parse(req.params);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.routes.ts:265:      const params = administratorIdParamsSchema.parse(req.params);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.routes.ts:17:  validate(adminActivityQuerySchema, "query"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/support.routes.ts:29:  validate(adminSupportQuerySchema, "query"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/support.routes.ts:47:  validate(supportTicketIdSchema, "params"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/support.routes.ts:48:  validate(assignSupportTicketSchema),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/support.routes.ts:69:  validate(supportTicketIdSchema, "params"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/support.routes.ts:70:  validate(supportTicketStatusSchema),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/notification.routes.ts:25:  validate(adminNotificationQuerySchema, "query"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/notification.routes.ts:60:  validate(notificationIdParamsSchema, "params"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/notification.routes.ts:63:    const params = notificationIdParamsSchema.parse(req.params);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:4:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:70:  validate(adminPaymentQuerySchema, "query"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:106:  validate(adminWebhookQuerySchema, "query"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:128:  validate(adminSettlementQuerySchema, "query"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:150:  validate(adminSettlementIdParamsSchema, "params"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:211:        settlementApprovalSchema.parse(req.body).decisionNote,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:241:      const input = settlementRejectionSchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:276:      emptyBodySchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:302:      emptyBodySchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:327:  validate(adminWithdrawalQuerySchema, "query"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:349:  validate(adminWebhookIdParamsSchema, "params"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:352:      emptyBodySchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:386:  validate(adminWithdrawalIdParamsSchema, "params"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.routes.ts:392:      const input = withdrawalStatusSchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/verification.routes.ts:2:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/verification.routes.ts:64:    const params = documentIdParamsSchema.parse(req.params);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/verification.routes.ts:81:    const params = documentIdParamsSchema.parse(req.params);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/verification.routes.ts:82:    const input = documentRejectionSchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.routes.ts:2:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.routes.ts:92:    const input = fleetVehicleUpdateSchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.routes.ts:48:  validate(adminLiveTripsQuerySchema, "query"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.routes.ts:70:  validate(adminLiveTripIdParamsSchema, "params"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.routes.ts:71:  validate(adminLiveTripTrackingQuerySchema, "query"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.routes.ts:103:  validate(adminLiveTripIdParamsSchema, "params"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.routes.ts:2:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.routes.ts:73:    const input = updateAdminPartnerSchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.routes.ts:2:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.routes.ts:98:    const input = marketingCampaignCreateSchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.routes.ts:129:    const input = marketingCampaignUpdateSchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.routes.ts:163:      const input = marketingCampaignStatusSchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.routes.ts:2:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.routes.ts:64:    const params = administratorIdParamsSchema.parse(req.params);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.routes.ts:65:    const input = adminPermissionsSchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.routes.ts:2:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.routes.ts:70:    const input = platformConfigUpdateSchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.routes.ts:75:        pricingConfigSchema.parse(input.value);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.routes.ts:77:        marketplaceVisibilityConfigSchema.parse(input.value);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.routes.ts:79:        platformConfigSchema.parse(input);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:2:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:107:      const params = administratorIdParamsSchema.parse(req.params);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:140:      const params = administratorIdParamsSchema.parse(req.params);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:141:      const input = administratorTwoFactorSchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.routes.ts:6:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.routes.ts:40:    emptyBodySchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.routes.ts:2:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.routes.ts:47:      const input = riskAlertSchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.routes.ts:6:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.routes.ts:44:    emptyBodySchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.routes.ts:6:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.routes.ts:44:    emptyBodySchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:1:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:2:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:32:    const query = listCustomersSchema.parse(req.query);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:57:    const { id } = customerIdSchema.parse(req.params);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:90:    const { id } = customerIdSchema.parse(req.params);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:122:    const { id } = customerIdSchema.parse(req.params);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:154:    const { id } = customerIdSchema.parse(req.params);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.routes.ts:186:    const { id } = customerIdSchema.parse(req.params);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:2:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:44:    const { key } = featureFlagKeySchema.parse({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:78:    const input = featureFlagCreateSchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:116:    const { key } = featureFlagKeySchema.parse({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:120:    const input = featureFlagUpdateSchema.parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:159:    const { key } = featureFlagKeySchema.parse({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.routes.ts:165:    }).strict().parse(req.body);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.routes.ts:2:import { z } from "zod";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.routes.ts:45:    const query = querySchema.parse(req.query);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.routes.ts:95:    const query = querySchema.parse(req.query);
+
+Exported schemas:
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:105:export const documentRejectionSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:12:export const settlementRejectionSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:146:export const marketingCampaignCreateSchema = z.object(
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:160:export const marketingCampaignUpdateSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:16:export const adminPermissionsSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:181:export const marketingCampaignStatusSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:185:export const notificationCreateSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:194:export const notificationIdParamsSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:198:export const emptyBodySchema = z.object({}).strict();
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:200:export const featureFlagKeySchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:207:export const featureFlagCreateSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:222:export const featureFlagUpdateSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:236:export const adminActivityQuerySchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:243:export const adminNotificationQuerySchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:248:export const liveTripsQuerySchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:254:export const liveTripTrackingParamsSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:258:export const liveTripTrackingQuerySchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:263:export const adminPaymentQuerySchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:274:export const adminWebhookQuerySchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:281:export const adminSettlementQuerySchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:293:export const adminSettlementIdParamsSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:297:export const adminWithdrawalQuerySchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:306:export const adminWithdrawalIdParamsSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:310:export const adminWebhookIdParamsSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:314:export const adminLiveTripsQuerySchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:326:export const adminLiveTripIdParamsSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:330:export const adminLiveTripTrackingQuerySchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:40:export const pricingConfigSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:4:export const withdrawalStatusSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:50:export const platformConfigSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:55:export const platformConfigKeySchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:59:export const contentCreateSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:69:export const contentUpdateSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:82:export const disputeCreateSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:89:export const disputeStatusSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:8:export const settlementApprovalSchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:93:export const documentCreateSchema = z.object({
+
+======================================================================
+8. ROUTE -> SERVICE MAPPING
+======================================================================
+activity.routes.ts -> activity.service
+admin.routes.ts -> admin.service
+administrator.routes.ts -> administrator.service
+ai-automation.routes.ts -> ai-automation.service
+api-management.routes.ts -> api-management.service
+backup-recovery.routes.ts -> backup-recovery.service
+customer-management.routes.ts -> customer-management.service
+database-health.routes.ts -> database-health.service
+error.routes.ts -> error.service
+feature-management.routes.ts -> feature-management.service
+financial.routes.ts -> financial.service
+fleet.routes.ts -> fleet.service
+live-trips.routes.ts -> live-trips.service
+marketing.routes.ts -> marketing.service
+marketplace.routes.ts -> marketplace.service
+notification.routes.ts -> NO LOCAL SERVICE IMPORT DETECTED
+partner.routes.ts -> partner.service
+platform-config.routes.ts -> platform-config.service
+reports.routes.ts -> reports.service
+risk-fraud.routes.ts -> risk-fraud.service
+role-permission.routes.ts -> role-permission.service
+security.routes.ts -> security.service
+subscription.routes.ts -> NO LOCAL SERVICE IMPORT DETECTED
+support.routes.ts -> NO LOCAL SERVICE IMPORT DETECTED
+verification.routes.ts -> NO LOCAL SERVICE IMPORT DETECTED
+
+======================================================================
+9. SERVICE INVENTORY
+======================================================================
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/api-management.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/payment-webhook.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/bookings/booking.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/content/content.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/disputes/dispute.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/documents/document.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/events/event.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/features/feature.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketing/marketing.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/visibility.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/messages/message.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/notifications/notification.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/flutterwave.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment-webhook.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/pricing/pricing.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/activity.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/realtime.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/tracking.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/email.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/commission.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/subscriptions/subscription.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/support/support.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/transporters/transporter.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/users/user.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/vehicles/vehicle.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/verification.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/youverify/youverify.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/youverify/youverify.webhook.service.ts
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/wallet/wallet.service.ts
+
+======================================================================
+10. SERVICE -> REAL DATABASE BEHAVIOR
+======================================================================
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/middleware/auth.middleware.ts:101:      await prisma.user.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/middleware/super-admin.middleware.ts:30:      await prisma.adminProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/middleware/admin-module.middleware.ts:27:      const administrator = await prisma.adminProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/users/user.service.ts:43:  const user = await prisma.user.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/users/user.service.ts:60:  const user = await prisma.user.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/transporters/transporter.service.ts:6:  return prisma.vehicle.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/transporters/transporter.service.ts:15:  return prisma.transporterProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/transporters/transporter.service.ts:30:  return prisma.transporterProfile.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/transporters/transporter.service.ts:40:  return prisma.transporterProfile.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/vehicles/vehicle.service.ts:11:  const vehicle = await prisma.vehicle.create({ data });
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/vehicles/vehicle.service.ts:30:  const vehicle = await prisma.vehicle.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/vehicles/vehicle.service.ts:45:  return prisma.vehicle.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/vehicles/vehicle.service.ts:62:  const vehicle = await prisma.vehicle.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/bookings/booking.service.ts:46:  const booking = await prisma.booking.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/bookings/booking.service.ts:106:  const booking = await prisma.booking.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/bookings/booking.service.ts:128:  const booking = await prisma.booking.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/bookings/booking.service.ts:425:  const bookings = await prisma.booking.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/bookings/booking.service.ts:440:  const bookings = await prisma.booking.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment.service.ts:26:  const booking = await prisma.booking.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment.service.ts:59:  const existingPayment = await prisma.payment.findFirst({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment.service.ts:82:    payment = await prisma.payment.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment.service.ts:106:      const concurrentPayment = await prisma.payment.findFirst({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment.service.ts:143:  const paymentWithCheckout = await prisma.payment.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment.service.ts:174:  const payment = await prisma.payment.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment.service.ts:186:  const payments = await prisma.payment.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment-webhook.service.ts:169:    const payment = await prisma.payment.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment-webhook.service.ts:242:    const payment = await prisma.payment.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment-webhook.service.ts:309:  const existing = await prisma.paymentWebhookEvent.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment-webhook.service.ts:329:    webhookEvent = await prisma.paymentWebhookEvent.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment-webhook.service.ts:347:        await prisma.paymentWebhookEvent.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment-webhook.service.ts:395:      await prisma.paymentWebhookEvent.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/messages/message.service.ts:12:    prisma.booking.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/messages/message.service.ts:20:    prisma.user.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/messages/message.service.ts:74:  const message = await prisma.message.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/messages/message.service.ts:101:  return prisma.message.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/notifications/notification.service.ts:12:  const notification = await prisma.notification.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/notifications/notification.service.ts:31:  return prisma.notification.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/notifications/notification.service.ts:46:  const notification = await prisma.notification.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/notifications/notification.service.ts:62:  return prisma.notification.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/notifications/notification.service.ts:74:  return prisma.notification.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/notifications/notification.service.ts:98:    prisma.notification.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/notifications/notification.service.ts:99:    prisma.notification.count({ where: { read: false } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/notifications/notification.service.ts:100:    prisma.notification.count({ where: { read: true } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/documents/document.service.ts:15:  const document = await prisma.document.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/documents/document.service.ts:43:  return prisma.document.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/documents/document.service.ts:230:  return prisma.document.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/documents/document.service.ts:241:  return prisma.document.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/support/support.service.ts:21:    await prisma.adminProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/support/support.service.ts:59:    await prisma.supportTicket.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/support/support.service.ts:79:    await prisma.supportTicket.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/support/support.service.ts:108:  return prisma.supportTicket.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/support/support.service.ts:130:    await prisma.supportTicket.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/support/support.service.ts:151:  return prisma.supportTicket.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/support/support.service.ts:197:    await prisma.adminProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/support/support.service.ts:213:    await prisma.supportTicket.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/support/support.service.ts:244:    await prisma.supportTicket.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/disputes/dispute.service.ts:10:  const dispute = await prisma.dispute.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/disputes/dispute.service.ts:28:  return prisma.dispute.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/disputes/dispute.service.ts:45:  return prisma.dispute.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:25:    prisma.user.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:29:    prisma.user.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:33:    prisma.user.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:37:    prisma.vehicle.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:39:    prisma.booking.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:41:    prisma.payment.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:43:    prisma.notification.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:45:    prisma.supportTicket.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:47:    prisma.dispute.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:49:    prisma.booking.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:62:    prisma.booking.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:68:    prisma.booking.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:74:    prisma.payment.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:80:    prisma.document.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:86:    prisma.payment.aggregate({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:95:    prisma.wallet.aggregate({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:101:    prisma.wallet.aggregate({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:107:    prisma.booking.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.service.ts:127:    prisma.payment.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.service.ts:22:    await prisma.adminProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.service.ts:60:    await prisma.user.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.service.ts:77:    await prisma.adminProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.service.ts:94:      await prisma.adminProfile.findFirst({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.service.ts:161:  return prisma.adminProfile.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.service.ts:190:    await prisma.adminProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.service.ts:228:    await prisma.adminProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.service.ts:333:    await prisma.adminProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.service.ts:18:    prisma.adminActivity.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.service.ts:24:    prisma.adminActivity.count({ where }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:19:    prisma.payment.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:20:    prisma.payment.count({ where: { status: "SUCCESS" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:21:    prisma.payment.count({ where: { status: "PENDING" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:22:    prisma.payment.count({ where: { status: "FAILED" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:23:    prisma.payment.count({ where: { status: "REFUNDED" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:24:    prisma.withdrawal.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:25:    prisma.withdrawal.count({ where: { status: "PENDING" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:26:    prisma.withdrawal.count({ where: { status: "PROCESSING" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:27:    prisma.withdrawal.count({ where: { status: "COMPLETED" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:28:    prisma.withdrawal.count({ where: { status: "FAILED" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:31:  const paymentTotals = await prisma.payment.aggregate({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:38:    await prisma.payment.aggregate({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:46:    await prisma.withdrawal.aggregate({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:79:  return prisma.payment.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:109:  const withdrawals = await prisma.withdrawal.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:145:  const events = await prisma.paymentWebhookEvent.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:177:  const webhookEvent = await prisma.paymentWebhookEvent.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:196:    ? await prisma.payment.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:237:  const updated = await prisma.paymentWebhookEvent.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:247:  await prisma.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.service.ts:24:  return prisma.booking.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.service.ts:82:  return prisma.booking.findFirst({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.service.ts:127:      prisma.booking.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.service.ts:163:  const booking = await prisma.booking.findFirst({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/live-trips.service.ts:180:  const points = await prisma.trackingPoint.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.service.ts:5:  return prisma.vehicle.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.service.ts:22:  return prisma.vehicle.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.service.ts:54:  const existing = await prisma.vehicle.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.service.ts:6:  const partners = await prisma.transporterProfile.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.service.ts:50:  const partner = await prisma.transporterProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.service.ts:74:      prisma.booking.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.service.ts:77:      prisma.booking.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.service.ts:103:  const existing = await prisma.transporterProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.service.ts:6:  return prisma.adminProfile.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.service.ts:28:  return prisma.adminProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.service.ts:54:  const existing = await prisma.adminProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.service.ts:68:  const updated = await prisma.adminProfile.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:12:    prisma.adminProfile.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:15:    prisma.adminProfile.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:18:    prisma.adminProfile.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:25:    prisma.adminProfile.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:28:    prisma.auditLog.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:75:  return prisma.auditLog.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:113:  const administrator = await prisma.adminProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:149:  const existing = await prisma.adminProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:157:  const updated = await prisma.adminProfile.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:165:  await prisma.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:198:  const existing = await prisma.adminProfile.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:206:  const updated = await prisma.adminProfile.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:213:  await prisma.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts:7:  const errors = await prisma.adminActivity.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts:36:  return prisma.adminActivity.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts:57:  const activity = await prisma.adminActivity.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/api-management.service.ts:6:    prisma.user.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/api-management.service.ts:7:    prisma.booking.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/api-management.service.ts:8:    prisma.payment.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/api-management.service.ts:9:    prisma.notification.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.service.ts:17:    prisma.user.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.service.ts:18:    prisma.booking.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.service.ts:19:    prisma.payment.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.service.ts:20:    prisma.vehicle.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.service.ts:21:    prisma.document.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.service.ts:22:    prisma.notification.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:16:      prisma.user.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:17:      prisma.booking.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:18:      prisma.payment.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:19:      prisma.vehicle.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:20:      prisma.document.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:21:      prisma.auditLog.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.service.ts:15:    prisma.user.count({ where: { status: "BLOCKED" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.service.ts:16:    prisma.user.count({ where: { status: "SUSPENDED" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.service.ts:17:    prisma.payment.count({ where: { status: "FAILED" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.service.ts:18:    prisma.payment.count({ where: { status: "REFUNDED" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.service.ts:19:    prisma.dispute.count({ where: { status: "OPEN" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.service.ts:20:    prisma.dispute.count({ where: { status: "INVESTIGATING" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.service.ts:21:    prisma.booking.count({ where: { status: "CANCELLED" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.service.ts:22:    prisma.withdrawal.count({ where: { status: "FAILED" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:23:    prisma.user.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:24:    prisma.user.count({ where: { role: "CUSTOMER" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:25:    prisma.user.count({ where: { role: "TRANSPORTER" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:26:    prisma.user.count({ where: { role: "ADMIN" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:27:    prisma.vehicle.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:28:    prisma.booking.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:29:    prisma.booking.count({ where: { status: "COMPLETED" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:30:    prisma.booking.count({ where: { status: "CANCELLED" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:31:    prisma.payment.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:32:    prisma.payment.count({ where: { status: "SUCCESS" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:33:    prisma.payment.count({ where: { status: "FAILED" } }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:34:    prisma.withdrawal.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:35:    prisma.document.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:36:    prisma.supportTicket.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:37:    prisma.dispute.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:38:    prisma.message.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.service.ts:13:    prisma.user.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.service.ts:14:    prisma.booking.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.service.ts:21:    prisma.document.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.service.ts:26:    prisma.supportTicket.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.service.ts:33:    prisma.dispute.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.service.ts:40:    prisma.payment.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/payment-webhook.service.ts:7:  return prisma.paymentWebhookEvent.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/payment-webhook.service.ts:31:  return prisma.paymentWebhookEvent.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/payment-webhook.service.ts:43:  return prisma.paymentWebhookEvent.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.service.ts:29:    prisma.user.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.service.ts:67:    prisma.user.count({ where }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.service.ts:82:  return prisma.user.findFirst({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.service.ts:129:  return prisma.booking.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.service.ts:6:  return prisma.featureFlag.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.service.ts:12:  return prisma.featureFlag.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.service.ts:137:    prisma.marketplaceRequest.count({ where }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.service.ts:138:    prisma.marketplaceRequest.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.service.ts:205:  const request = await prisma.marketplaceRequest.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.service.ts:347:    prisma.marketplaceBid.count({ where }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.service.ts:348:    prisma.marketplaceBid.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.service.ts:413:  const bid = await prisma.marketplaceBid.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.service.ts:491:    prisma.marketplaceRequest.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.service.ts:494:    prisma.marketplaceRequest.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.service.ts:497:    prisma.marketplaceRequest.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.service.ts:500:    prisma.marketplaceRequest.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.service.ts:503:    prisma.marketplaceRequest.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.service.ts:506:    prisma.marketplaceBid.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.service.ts:509:    prisma.marketplaceBid.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketplace.service.ts:512:    prisma.vehicle.count({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/activity.service.ts:7:  return prisma.adminActivity.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/socket-authorization.ts:23:  const booking = await prisma.booking.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/socket-authorization.ts:49:  const booking = await prisma.booking.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:105:    const user = await prisma.user.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:99:  await prisma.refreshSession.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:147:    await prisma.user.findFirst({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:167:    await prisma.user.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:209:  const user = await prisma.user.findFirst({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:274:      await prisma.adminProfile.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:290:  await prisma.user.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:300:    await prisma.adminProfile.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:326:    await prisma.user.findFirst({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:354:  await prisma.user.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:392:    await prisma.user.findFirst({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:460:  await prisma.refreshSession.updateMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:494:    await prisma.refreshSession.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/services/auth.service.ts:565:    await prisma.user.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/events/event.service.ts:22:  return prisma.shipmentEvent.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/events/event.service.ts:30:  return prisma.shipmentEvent.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/wallet/wallet.service.ts:12:  const wallet = await prisma.wallet.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/wallet/wallet.service.ts:36:  const wallet = await prisma.wallet.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/verification.service.ts:56:    await prisma.document.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/verification.service.ts:120:    await prisma.document.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/youverify/youverify.webhook.service.ts:244:    await prisma.youverifyWebhookEvent.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/youverify/youverify.webhook.service.ts:278:    await prisma.document.findFirst({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/youverify/youverify.webhook.service.ts:289:      await prisma.youverifyWebhookEvent.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/youverify/youverify.webhook.service.ts:306:        await prisma.youverifyWebhookEvent.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/youverify/youverify.webhook.service.ts:352:        await prisma.document.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/youverify/youverify.webhook.service.ts:387:          await prisma.document.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/youverify/youverify.webhook.service.ts:401:          await prisma.document.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/youverify/youverify.webhook.service.ts:425:        await prisma.document.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/youverify/youverify.webhook.service.ts:437:      await prisma.youverifyWebhookEvent.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/content/content.service.ts:14:  const content = await prisma.contentItem.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/content/content.service.ts:40:  return prisma.contentItem.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/content/content.service.ts:49:  return prisma.contentItem.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/content/content.service.ts:73:  const content = await prisma.contentItem.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/content/content.service.ts:94:  const content = await prisma.contentItem.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/features/feature.service.ts:124:  const feature = await prisma.featureFlag.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/features/feature.service.ts:151:  const features = await prisma.featureFlag.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:161:  const request = await prisma.marketplaceRequest.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:206:  const request = await prisma.marketplaceRequest.findFirst({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:293:  const request = await prisma.marketplaceRequest.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:316:  const transporter = await prisma.user.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:345:  const vehicle = await prisma.vehicle.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:386:    const bid = await prisma.marketplaceBid.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:435:  const bid = await prisma.marketplaceBid.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:457:  const updated = await prisma.marketplaceBid.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/visibility.service.ts:131:    await prisma.user.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/visibility.service.ts:226:    await prisma.marketplaceRequest.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/commission.service.ts:13:  const rules = await prisma.commissionRule.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:118:  return prisma.settlement.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:165:  return prisma.settlement.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:319:  await prisma.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:417:  await prisma.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:610:  await prisma.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/subscriptions/subscription.service.ts:10:  return prisma.subscriptionPlan.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/subscriptions/subscription.service.ts:17:  return prisma.subscriptionPlan.findUnique({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/subscriptions/subscription.service.ts:25:  return prisma.transporterSubscription.findFirst({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/subscriptions/subscription.service.ts:162:    await prisma.transporterSubscription.findFirst({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/subscriptions/subscription.service.ts:174:    await prisma.transporterSubscription.update({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/subscriptions/subscription.service.ts:266:  return prisma.subscriptionInvoice.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/subscriptions/subscription.service.ts:281:  return prisma.transporterSubscription.findMany({
+
+======================================================================
+11. AUDIT LOGGING / ADMIN ACTIVITY
+======================================================================
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/middleware/error.middleware.ts:2:import { recordAdminError } from "../admin/error.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/middleware/error.middleware.ts:72:      await recordAdminError({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.service.ts:137:    await tx.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.service.ts:299:    await tx.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.service.ts:368:    await tx.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.service.ts:3:export async function getAdminActivity(options: {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.service.ts:18:    prisma.adminActivity.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.service.ts:24:    prisma.adminActivity.count({ where }),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.routes.ts:5:import { getAdminActivity } from "./activity.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.routes.ts:7:import { adminActivityQuerySchema } from "./admin.validators.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.routes.ts:17:  validate(adminActivityQuerySchema, "query"),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/activity.routes.ts:20:      const result = await getAdminActivity(req.query);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:247:  await prisma.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:437:    await tx.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.service.ts:68:    await tx.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.service.ts:71:    await tx.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.service.ts:122:    await tx.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:10:    recentAuditLogs,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:28:    prisma.auditLog.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:59:    recentAuditLogs,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:64:export async function getSecurityAuditLogs(options?: {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:75:  return prisma.auditLog.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:165:  await prisma.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:213:  await prisma.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:12:  getSecurityAuditLogs,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:45:router.get("/audit-logs", async (req, res) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:47:    const logs = await getSecurityAuditLogs({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts:7:  const errors = await prisma.adminActivity.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts:36:  return prisma.adminActivity.findMany({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts:48:export async function recordAdminError(data: {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts:57:  const activity = await prisma.adminActivity.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:14:      auditLogs,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:21:      prisma.auditLog.count(),
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:31:      applicationSnapshotMode: "ADMINISTRATIVE_AUDIT_RECORD",
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:39:        auditLogs,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:52:      applicationSnapshotMode: "ADMINISTRATIVE_AUDIT_RECORD",
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:80:    const auditLog = await tx.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:98:    return { snapshot, auditLog };
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:117:      auditLogId: result.auditLog.id,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:123:    auditLogId: result.auditLog.id,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/admin.validators.ts:236:export const adminActivityQuerySchema = z.object({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.service.ts:187:    await tx.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.service.ts:58:    await tx.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.service.ts:137:    await tx.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/event-bus.ts:3:import { persistAdminActivity } from "./activity.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/event-bus.ts:25:    void persistAdminActivity(payload).catch((error) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/activity.service.ts:4:export async function persistAdminActivity(
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/activity.service.ts:7:  return prisma.adminActivity.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:46:import adminActivityRoutes from "./admin/activity.routes.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:185:app.use("/api/admin/activity", adminActivityRoutes);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:319:  await prisma.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:417:  await prisma.auditLog.create({
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:610:  await prisma.auditLog.create({
+
+======================================================================
+12. REALTIME / EVENT BUS
+======================================================================
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/vehicles/vehicle.service.ts:3:import { publishAdminEvent } from "../realtime/realtime.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/bookings/booking.service.ts:3:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/bookings/booking.service.ts:4:import { publishAdminEvent, publishBookingEvent } from "../realtime/realtime.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/bookings/booking.service.ts:82:  publishEvent("booking", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/bookings/booking.service.ts:240:  publishEvent("booking", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/bookings/booking.service.ts:387:  publishEvent("booking", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/bookings/booking.service.ts:403:    publishEvent("vehicle", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment.service.ts:5:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment.service.ts:152:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/payments/payment.service.ts:363:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/messages/message.service.ts:2:import { publishBookingEvent } from "../realtime/realtime.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/notifications/notification.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/notifications/notification.service.ts:16:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/documents/document.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/documents/document.service.ts:28:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/documents/document.service.ts:124:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/documents/document.service.ts:217:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/support/support.service.ts:3:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/support/support.service.ts:93:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/support/support.service.ts:135:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/support/support.service.ts:220:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/support/support.service.ts:249:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:273:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:483:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.service.ts:89:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.service.ts:131:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.service.ts:77:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.service.ts:136:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.service.ts:200:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.service.ts:75:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.service.ts:3:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.service.ts:93:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.service.ts:138:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:181:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:229:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts:70:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/api-management.service.ts:2:import { publishAdminEvent } from "../realtime/realtime.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.service.ts:2:import { publishAdminEvent } from "../realtime/realtime.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:2:import { publishAdminEvent } from "../realtime/realtime.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.service.ts:2:import { publishAdminEvent } from "../realtime/realtime.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:2:import { publishAdminEvent } from "../realtime/realtime.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.service.ts:2:import { publishAdminEvent } from "../realtime/realtime.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.service.ts:77:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.service.ts:165:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/realtime.service.ts:1:export type AdminRealtimeModule =
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/realtime.service.ts:27:export type AdminRealtimeEvent = {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/realtime.service.ts:30:  module: AdminRealtimeModule;
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/realtime.service.ts:39:export function initializeRealtime(_server?: unknown): void {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/realtime.service.ts:40:  // Socket.IO delivery is initialized by socket-events.ts.
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/realtime.service.ts:44:  event: Omit<AdminRealtimeEvent, "eventId" | "timestamp">,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/realtime.service.ts:46:  const { publishEvent } = await import("./event-bus.js");
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/realtime.service.ts:48:  publishEvent("admin", event);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/realtime.service.ts:54:    AdminRealtimeEvent,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/realtime.service.ts:58:  const { publishEvent } = await import("./event-bus.js");
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/realtime.service.ts:60:  publishEvent("booking", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/event-bus.ts:2:import type { AdminRealtimeEvent } from "./realtime.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/event-bus.ts:3:import { persistAdminActivity } from "./activity.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/event-bus.ts:9:export type RealtimeEvent = AdminRealtimeEvent & {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/event-bus.ts:13:export function publishEvent(
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/event-bus.ts:15:  event: Omit<RealtimeEvent, "channel" | "eventId" | "timestamp">,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/event-bus.ts:25:    void persistAdminActivity(payload).catch((error) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/socket-events.ts:1:import type { Server } from "socket.io";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/socket-events.ts:2:import { eventBus } from "./event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/socket-events.ts:4:export function initializeSocketEvents(io: Server) {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/activity.service.ts:2:import type { RealtimeEvent } from "./event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/activity.service.ts:4:export async function persistAdminActivity(
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/activity.service.ts:5:  event: RealtimeEvent,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/socket-authorization.ts:3:export type SocketUser = {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/socket-authorization.ts:16:  user: SocketUser,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/socket-authorization.ts:42:  user: SocketUser,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/tracking.service.ts:2:import { publishEvent } from "./event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/realtime/tracking.service.ts:92:  publishEvent("vehicle", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:3:import { Server } from "socket.io";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:50:import { initializeRealtime } from "./realtime/realtime.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:51:import { initializeSocketEvents } from "./realtime/socket-events.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:52:import { recordVehicleLocation } from "./realtime/tracking.service.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:57:} from "./realtime/socket-authorization.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:77:io.use(async (socket, next) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:79:    const authToken = socket.handshake.auth?.token as string | undefined;
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:80:    const header = socket.handshake.headers.authorization;
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:126:    socket.data.user = user;
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:140:initializeRealtime(io);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:141:initializeSocketEvents(io);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:218:io.on("connection", (socket) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:219:  console.log(`Realtime client connected: ${socket.id}`);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:220:  socket.on("join-booking", async (bookingId: string) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:221:    const user = socket.data.user;
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:224:      socket.emit("booking:access-denied", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:236:      socket.emit("booking:access-denied", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:242:    socket.join(bookingId);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:245:      `${socket.id} joined booking ${bookingId}`,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:249:  socket.on("join-administration", () => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:250:    const user = socket.data.user;
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:253:      socket.emit("admin:access-denied", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:259:    socket.join("administration");
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:262:      `${socket.id} joined administration`,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:266:  socket.on(
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:269:      const user = socket.data.user;
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:273:        socket.emit("admin:access-denied", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:280:        socket.emit("admin:access-denied", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:292:        socket.emit("admin:access-denied", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:298:      socket.join(`admin:${module}`);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:301:        `${socket.id} joined admin module ${module}`,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:306:  socket.on(
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:309:      socket.leave(`admin:${module}`);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:312:        `${socket.id} left admin module ${module}`,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:317:  socket.on("leave-booking", (bookingId: string) => {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:318:    socket.leave(bookingId);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:321:      `${socket.id} left booking ${bookingId}`,
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:324:  socket.on(
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:335:        const user = socket.data.user;
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:338:          socket.emit("vehicle:access-denied", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:352:          socket.emit("vehicle:update-rejected", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:365:          socket.emit("vehicle:access-denied", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:388:        socket.emit("vehicle:location-updated", location);
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:390:        socket.emit("vehicle:update-rejected", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/wallet/wallet.service.ts:3:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/wallet/wallet.service.ts:42:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/wallet/wallet.service.ts:140:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/verification.service.ts:3:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/verification.service.ts:134:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/youverify/youverify.webhook.service.ts:4:import { publishEvent } from "../../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/youverify/youverify.webhook.service.ts:372:      publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/verification/youverify/youverify.webhook.service.ts:412:      publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/content/content.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/content/content.service.ts:27:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/content/content.service.ts:78:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/content/content.service.ts:103:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:2:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:180:  publishEvent("marketplace", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:401:    publishEvent("marketplace", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:464:  publishEvent("marketplace", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:771:     * Return all identifiers needed by realtime/admin consumers.
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:788:   * This prevents realtime consumers from receiving an event for
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:791:  publishEvent("marketplace", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:808:  publishEvent("marketplace", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:822:  publishEvent("booking", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/marketplace/marketplace.service.ts:841:  publishEvent("vehicle", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:3:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:94:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:242:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:333:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:431:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:493:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:626:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/subscriptions/subscription.service.ts:3:import { publishEvent } from "../realtime/event-bus.js";
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/subscriptions/subscription.service.ts:140:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/subscriptions/subscription.service.ts:187:  publishEvent("admin", {
+/data/data/com.termux/files/home/TransConet-Apex1/backend/src/subscriptions/subscription.service.ts:245:  publishEvent("admin", {
+
+======================================================================
+13. AUTOMATED TEST EVIDENCE
+======================================================================
+Backend tests:
+admin-module.middleware.test.ts
+administrator.service.test.ts
+auth.jwt.test.ts
+auth.middleware.test.ts
+auth.service.test.ts
+backup-recovery.service.test.ts
+booking.service.test.ts
+feature-management.service.test.ts
+feature.middleware.test.ts
+feature.service.test.ts
+live-trips.service.test.ts
+marketplace.routes.test.ts
+marketplace.service.test.ts
+payment.service.test.ts
+security.routes.test.ts
+security.service.test.ts
+settlement.service.test.ts
+super-admin.middleware.test.ts
+tracking.service.test.ts
+vehicle.service.test.ts
+wallet.service.test.ts
+Admin-app tests:
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/all-errors.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/anyunknown.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/array.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/async-parsing.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/async-refinements.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/base.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/bigint.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/branded.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/catch.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/coerce.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/complex.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/custom.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/date.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/deepmasking.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/default.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/description.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/discriminated-unions.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/enum.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/error.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/firstparty.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/firstpartyschematypes.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/function.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/generics.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/instanceof.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/intersection.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/language-server.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/literal.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/map.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/masking.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/mocker.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/nan.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/nativeEnum.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/nullable.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/number.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/object-augmentation.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/object-in-es5-env.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/object.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/optional.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/parseUtil.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/parser.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/partials.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/pickomit.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/pipeline.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/preprocess.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/primitive.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/promise.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/readonly.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/record.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/recursive.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/refine.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/safeparse.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/set.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/standard-schema.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/string.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/transformer.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/tuple.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/unions.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/validations.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v3/tests/void.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/anyunknown.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/apply.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/array.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/assignability.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/async-parsing.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/async-refinements.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/base.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/bigint.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/brand.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/catch.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/coalesce.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/codec-examples.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/codec.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/coerce.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/continuability.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/custom.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/date.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/datetime.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/default.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/describe-meta-checks.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/description.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/detached-methods.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/discriminated-unions.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/enum.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/error-utils.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/error.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/file.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/firstparty.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/fix-json-issue.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/from-json-schema.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/function.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/generics.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/global-config.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/hash.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/index.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/instanceof.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/intersection.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/jitless-allows-eval.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/json.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/lazy.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/literal.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/locales_ka.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/locales_ro.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/map.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/nan.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/nested-refine.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/nonoptional.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/nullable.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/number.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/object.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/optional.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/partial.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/pickomit.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/pipe.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/prefault.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/preprocess-types.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/preprocess.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/primitive.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/promise.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/prototypes.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/readonly.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/record.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/recursive-types.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/refine.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/registries.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/set.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/standard-schema.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/string-formats.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/string.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/stringbool.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/template-literal.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/to-json-schema-methods.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/to-json-schema.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/transform.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/tuple.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/union.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/url.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/validations.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/classic/tests/void.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/core/tests/extend.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/core/tests/index.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/core/tests/locales/be.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/core/tests/locales/el.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/core/tests/locales/en.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/core/tests/locales/es.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/core/tests/locales/fr.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/core/tests/locales/he.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/core/tests/locales/hr.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/core/tests/locales/nl.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/core/tests/locales/ru.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/core/tests/locales/tr.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/core/tests/locales/uz.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/core/tests/record-constructor.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/core/tests/recursive-tuples.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/mini/tests/apply.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/mini/tests/assignability.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/mini/tests/brand.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/mini/tests/checks.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/mini/tests/codec.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/mini/tests/computed.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/mini/tests/error.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/mini/tests/functions.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/mini/tests/index.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/mini/tests/number.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/mini/tests/object.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/mini/tests/prototypes.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/mini/tests/recursive-types.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/mini/tests/standard-schema.test.ts
+/data/data/com.termux/files/home/TransConet-Apex1/admin-app/node_modules/zod/src/v4/mini/tests/string.test.ts
+
+======================================================================
+14. BUILD EVIDENCE
+======================================================================
+===== BACKEND npm run build =====
+
+> backend@1.0.0 build
+> tsc
+
+===== ADMIN APP npm run build =====
+
+> admin-app@0.0.0 build
+> tsc -b && vite build
+
+vite v8.2.1 building client environment for production...
+transforming...
+✓ 126 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.45 kB │ gzip:   0.29 kB
+dist/assets/index-DgvjU7j1.css   44.24 kB │ gzip:   7.92 kB
+dist/assets/index-zh02VMrz.js   483.72 kB │ gzip: 119.08 kB
+
+✓ built in 456ms
+
+======================================================================
+15. STATIC FRONTEND ENDPOINT -> BACKEND MOUNT MATCH
+======================================================================
+Backend mounts:
+  /api/admin
+  /api/admin/customers
+  /api/admin/platform-config
+  /api/admin/roles
+  /api/admin/security
+  /api/admin/support
+  /api/admin/notifications
+  /api/admin/financial
+  /api/admin/features
+  /api/admin/subscriptions
+  /api/admin/marketing
+  /api/admin/live-trips
+  /api/admin/verification
+  /api/admin/fleet
+  /api/admin/marketplace
+  /api/admin/partners
+  /api/admin/errors
+  /api/admin/api-management
+  /api/admin/database-health
+  /api/admin/backup-recovery
+  /api/admin/risk-fraud
+  /api/admin/reports
+  /api/admin/activity
+  /api/admin/ai-automation
+  /api/admin/content
+
+Frontend calls:
+GET /admin/api-management/health
+  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/api-management.ts
+  mount: NO STATIC MATCH
+GET /admin/api-management/overview
+  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/api-management.ts
+  mount: NO STATIC MATCH
+GET /admin/backup-recovery
+  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/backup-recovery.ts
+  mount: NO STATIC MATCH
+GET /admin/database-health
+  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/database-health.ts
+  mount: NO STATIC MATCH
+GET /admin/live-trips
+  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts
+  mount: NO STATIC MATCH
+GET /admin/live-trips/${tripId}
+  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts
+  mount: NO STATIC MATCH
+GET /admin/live-trips/${tripId}/tracking
+  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts
+  mount: NO STATIC MATCH
+GET /admin/live-trips/summary
+  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts
+  mount: NO STATIC MATCH
+GET /admin/notifications${query ?
+  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/notifications.ts
+  mount: NO STATIC MATCH
+GET /admin/notifications/summary
+  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/notifications.ts
+  mount: NO STATIC MATCH
+GET /admin/platform-overview
+  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/admin.ts
+  mount: NO STATIC MATCH
+PATCH /admin/notifications/${id}/read
+  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/notifications.ts
+  mount: NO STATIC MATCH
+POST /admin/backup-recovery/snapshot
+  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/backup-recovery.ts
+  mount: NO STATIC MATCH
+POST /auth/login
+  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/auth/auth.store.ts
+  mount: NO STATIC MATCH
+POST /auth/logout
+  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/auth/auth.store.ts
+  mount: NO STATIC MATCH
+
+======================================================================
+16. POTENTIAL STATIC GAPS
+======================================================================
+
+======================================================================
+17. RUNTIME / DATABASE VERIFICATION STILL REQUIRED
+======================================================================
+Static source inspection cannot prove:
+
+- real database records returned by every GET endpoint
+- correct mutation persistence
+- transaction/concurrency invariants
+- role/permission rejection at runtime
+- ownership/tenant isolation
+- audit row creation on success and failure paths
+- realtime event consistency with committed DB state
+- frontend/runtime response-shape compatibility
+- behavior against empty, missing, invalid, or conflicting DB states
+
+NEXT VERIFICATION PHASE
+
+For every mapped administration capability:
+
+HTTP request
+ -> authentication
+ -> authorization
+ -> validation
+ -> service
+ -> database transaction
+ -> response
+ -> AdminActivity/audit record
+ -> realtime event where applicable
+
+must be exercised against the intended development/test database.
+
