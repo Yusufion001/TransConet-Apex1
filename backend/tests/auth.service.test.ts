@@ -9,6 +9,7 @@ const prismaMock = {
     findUnique: mock.fn<(...args: any[]) => any>(),
     create: mock.fn<(...args: any[]) => any>(),
     update: mock.fn<(...args: any[]) => any>(),
+    updateMany: mock.fn<(...args: any[]) => any>(),
   },
   adminProfile: {
     update: mock.fn<(...args: any[]) => any>(),
@@ -52,6 +53,7 @@ function resetMocks() {
     prismaMock.user.findUnique,
     prismaMock.user.create,
     prismaMock.user.update,
+    prismaMock.user.updateMany,
     prismaMock.adminProfile.update,
     prismaMock.refreshSession.create,
     prismaMock.refreshSession.findUnique,
@@ -72,6 +74,10 @@ test.beforeEach(() => {
 
   prismaMock.user.update.mock.mockImplementation(async () => ({
     id: "user-1",
+  }));
+
+  prismaMock.user.updateMany.mock.mockImplementation(async () => ({
+    count: 1,
   }));
 
   prismaMock.adminProfile.update.mock.mockImplementation(async () => ({
@@ -489,7 +495,7 @@ test("forgotPassword returns a generic response for an unknown account", async (
 
   assert.deepEqual(result, {
     message:
-      "If an account exists, a reset token has been generated.",
+      "If an account exists, a password reset email has been sent.",
   });
 
   assert.equal(prismaMock.user.update.mock.calls.length, 0);
@@ -560,7 +566,7 @@ test("resetPassword rejects an invalid reset token", async () => {
       "NewPassword123!",
     ),
     {
-      message: "Invalid reset token",
+      message: "Invalid or expired reset token",
     },
   );
 
@@ -582,7 +588,7 @@ test("resetPassword rejects an expired reset token", async () => {
       "NewPassword123!",
     ),
     {
-      message: "Reset token expired",
+      message: "Invalid or expired reset token",
     },
   );
 
@@ -609,9 +615,18 @@ test("resetPassword updates the password and invalidates refresh sessions", asyn
   assert.equal(prismaMock.$transaction.mock.calls.length, 1);
 
   const updateCall =
-    prismaMock.user.update.mock.calls[0]?.arguments[0];
+    prismaMock.user.updateMany.mock.calls[0]?.arguments[0];
 
   assert.equal(updateCall.where.id, "customer-1");
+  assert.equal(
+    updateCall.where.resetPasswordToken,
+    createHash("sha256")
+      .update("valid-reset-token")
+      .digest("hex"),
+  );
+  assert.ok(
+    updateCall.where.resetPasswordExpiresAt.gt instanceof Date,
+  );
   assert.equal(typeof updateCall.data.passwordHash, "string");
   assert.notEqual(
     updateCall.data.passwordHash,
@@ -624,6 +639,10 @@ test("resetPassword updates the password and invalidates refresh sessions", asyn
   assert.equal(
     updateCall.data.resetPasswordExpiresAt,
     null,
+  );
+  assert.equal(
+    prismaMock.user.updateMany.mock.calls.length,
+    1,
   );
 
   const revokeCall =

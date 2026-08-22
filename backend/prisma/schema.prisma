@@ -32,6 +32,13 @@ enum AdminType {
   SECURITY_ADMIN
 }
 
+enum BackupSnapshotStatus {
+  REQUESTED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
 enum AdminStatus {
   ACTIVE
   SUSPENDED
@@ -330,8 +337,9 @@ model User {
   updatedContent  ContentItem[]    @relation("ContentUpdater")
   refreshSessions RefreshSession[]
 
-  featureFlagsCreated FeatureFlag[] @relation("FeatureFlagCreator")
-  featureFlagsUpdated FeatureFlag[] @relation("FeatureFlagUpdater")
+  featureFlagsCreated FeatureFlag[]    @relation("FeatureFlagCreator")
+  featureFlagsUpdated FeatureFlag[]    @relation("FeatureFlagUpdater")
+  backupSnapshots     BackupSnapshot[] @relation("BackupSnapshotRequester")
 }
 
 model CustomerProfile {
@@ -842,6 +850,41 @@ model AdminActivity {
   @@index([actorId, createdAt])
   @@index([entityType, entityId])
   @@index([bookingId])
+}
+
+model BackupSnapshot {
+  id               String               @id @default(uuid())
+  administratorId  String
+  type             String               @default("ADMINISTRATIVE_SNAPSHOT")
+  status           BackupSnapshotStatus @default(REQUESTED)
+  provider         String               @default("SUPABASE")
+  requestedAt      DateTime             @default(now())
+  startedAt        DateTime?
+  completedAt      DateTime?
+  failedAt         DateTime?
+  storageReference String?
+  errorMessage     String?
+  metadata         Json?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  administrator User @relation("BackupSnapshotRequester", fields: [administratorId], references: [id])
+
+  @@index([administratorId])
+  @@index([status])
+  @@index([requestedAt])
+}
+
+model PlatformConfig {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       Json
+  description String?
+  updatedBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([updatedBy])
 }
 
 model AuditLog {

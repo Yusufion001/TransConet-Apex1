@@ -1,0 +1,971 @@
+transconet-parity-audit.sh:2:# TransConet Parity Audit v1.0
+transconet-parity-audit.sh:4:#   chmod +x parity-audit.sh
+transconet-parity-audit.sh:5:#   ./parity-audit.sh
+transconet-parity-audit.sh:8:#   parity-audit-YYYYMMDD-HHMMSS/
+transconet-parity-audit.sh:16:#     audit-logging.txt
+transconet-parity-audit.sh:20:# This is a static + runtime-evidence audit. It does NOT claim that a route
+transconet-parity-audit.sh:34:OUT="$ROOT/parity-audit-$TS"
+transconet-parity-audit.sh:47:  -g '!parity-audit-*/**'
+transconet-parity-audit.sh:86:# 7) Audit logging
+transconet-parity-audit.sh:87:scan '(audit(log|_log)?|auditTrail|auditEvent|activityLog|securityLog|logAudit|recordAudit|adminAction|actorId|performedBy|requestId|correlationId)' audit-logging.txt
+transconet-parity-audit.sh:103:  echo "Audit time: $(date -Iseconds)"
+transconet-parity-audit.sh:173:    ("audit_logging", "audit-logging.txt"),
+transconet-parity-audit.sh:177:    "audit_type": "static parity audit",
+transconet-parity-audit.sh:181:        "Authorization, validation, audit logging, and database behavior require code-path tracing or runtime verification.",
+transconet-parity-audit.sh:195:  echo "# TransConet Parity Audit"
+transconet-parity-audit.sh:199:  echo "## Audit objective"
+transconet-parity-audit.sh:201:  echo "Trace the chain: **navigation module → frontend API call → backend route → service → authorization boundary → validation → audit logging → real database behavior**."
+transconet-parity-audit.sh:207:  echo "- **Verified** should only be assigned after confirming the actual execution path, authorization behavior, validation outcome, audit event, and database mutation/read against a real environment."
+transconet-parity-audit.sh:208:  echo "- This audit does **not** print secret values."
+transconet-parity-audit.sh:219:  printf '| Audit logging | %s |\n' "$(count_lines "$OUT/audit-logging.txt")"
+transconet-parity-audit.sh:232:  echo '7. Security-sensitive/admin actions create the expected audit event.'
+transconet-parity-audit.sh:234:  echo '9. Error handling preserves authorization, validation, transaction, and audit guarantees.'
+transconet-parity-audit.sh:239:  for f in navigation.txt frontend-api-calls.txt backend-routes.txt backend-route-definitions.txt services.txt auth-boundaries.txt validation.txt audit-logging.txt database-behavior.txt runtime-smoke.txt environment.txt structure.txt; do
+transconet-parity-audit.sh:255:  echo "Upload this entire audit directory (or its ZIP) for detailed verification. The most useful files are report.md, findings.json, frontend-api-calls.txt, backend-routes.txt, services.txt, auth-boundaries.txt, validation.txt, audit-logging.txt, database-behavior.txt, and runtime-smoke.txt."
+transconet-parity-audit.sh:281:ZIP="$ROOT/parity-audit-$TS.zip"
+transconet-parity-audit.sh:290:echo "TransConet Parity Audit complete"
+transconet-parity-audit.sh:292:echo "Audit directory: $OUT"
+transconet-parity-audit.sh:298:echo "       PARITY_BASE_URL='https://your-api.example.com' ./parity-audit.sh"
+transconet-parity-audit.sh:300:echo "       PARITY_BASE_URL='https://your-api.example.com' PARITY_ROUTES_FILE=routes.txt ./parity-audit.sh"
+marketplace-report-chunks/context-05.txt:1743:backend/src/admin/security.routes.ts:45:router.get("/audit-logs", async (req, res) => {
+marketplace-part-01.txt:308:  actorId?: string;
+marketplace-part-01.txt:754:    actorId: data.transporterId,
+marketplace-part-01.txt:808:    actorId: vehicle.transporterId,
+marketplace-part-01.txt:985:    actorId: administratorId,
+marketplace-part-01.txt:1569:320-  auditLogs         AuditLog[]      @relation("AuditAdministrator")
+marketplace-part-01.txt:1571:322-  affectedAuditLogs AuditLog[]      @relation("AuditAffectedUser")
+marketplace-part-01.txt:1786:537-  requestId     String
+marketplace-part-01.txt:1800:551:  request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+marketplace-part-01.txt:1804:555-  @@unique([requestId, transporterId])
+marketplace-part-01.txt:1805:556-  @@index([requestId, status])
+marketplace-part-01.txt:2082:backend/src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+marketplace-part-01.txt:2121:backend/prisma/schema.prisma:551:  request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+marketplace-part-01.txt:2177:backend/src/bookings/booking.service.ts:69:    actorId: booking.customerId,
+marketplace-part-01.txt:2183:backend/src/bookings/booking.service.ts:88:    actorId: booking.customerId,
+marketplace-part-01.txt:2207:backend/src/bookings/booking.service.ts:408:      actorId: result.booking.transporterId ?? undefined,
+marketplace-part-01.txt:2351:backend/src/marketplace/marketplace.service.ts:91:    requestId: bid.requestId,
+marketplace-part-01.txt:2461:backend/src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+marketplace-part-01.txt:2815:    requestId: "request-1",
+marketplace-part-01.txt:2848:      requestId: "request-1",
+marketplace-part-01.txt:3470:      requestId: "request-1",
+marketplace-part-01.txt:3521:    requestId: "request-1",
+marketplace-part-01.txt:3542:    requestId: "request-1",
+marketplace-part-01.txt:3562:  assert.equal(createCall.data.requestId, "request-1");
+marketplace-part-01.txt:3614:      throw new Error("Unique constraint failed on the fields: (`requestId`,`transporterId`)");
+marketplace-part-01.txt:3620:      requestId: "request-1",
+backend/marketplace-audit.sh:6:REPORT="$ROOT/marketplace-audit-report.txt"
+backend/marketplace-audit.sh:41:echo "TransConet-Apex1 Marketplace / Bidding READ-ONLY AUDIT" | tee -a "$REPORT"
+backend/marketplace-audit.sh:180:  'MarketplaceRequest|MarketplaceBid|@@unique|@@index|agreedBidId|bookingId|requestId|transporterId|vehicleId' \
+backend/marketplace-audit.sh:273:section "17. TRANSACTION / CONCURRENCY AUDIT"
+backend/marketplace-audit.sh:293:section "19. MARKETPLACE RESPONSE DATA AUDIT"
+backend/marketplace-audit.sh:300:# 20. Audit logging
+backend/marketplace-audit.sh:303:section "20. MARKETPLACE AUDIT LOGGING"
+backend/marketplace-audit.sh:306:  'audit|AuditLog|auditLog|logAdmin|recordAudit|adminActivity' \
+backend/marketplace-audit.sh:307:  src/marketplace src/audit src/admin 2>/dev/null | tee -a "$REPORT"
+backend/marketplace-audit.sh:365:# 25. TypeScript audit
+backend/marketplace-audit.sh:382:# 26. Build audit
+backend/marketplace-audit.sh:427:section "30. QUICK AUDIT FLAGS"
+backend/marketplace-audit.sh:451:grep -q '@@unique(\[requestId, transporterId\])' prisma/schema.prisma \
+backend/marketplace-audit.sh:473:section "AUDIT COMPLETE"
+backend/marketplace-audit.sh:480:echo "READ-ONLY AUDIT COMPLETE."
+marketplace-report-chunks/context-04.txt:19:      requestId: "request-1",
+marketplace-report-chunks/context-04.txt:28:      requestId: "request-1",
+marketplace-report-chunks/context-04.txt:68:      requestId: "request-1",
+marketplace-report-chunks/context-04.txt:173:    requestId: "request-1",
+marketplace-report-chunks/context-04.txt:378:      requestId: "request-1",
+marketplace-report-chunks/context-04.txt:457:          requestId: "request-1",
+marketplace-report-chunks/context-04.txt:466:        requestId: "request-1",
+marketplace-report-chunks/context-04.txt:532:        requestId: "request-1",
+marketplace-report-chunks/context-04.txt:593:        requestId: "request-1",
+marketplace-report-chunks/context-04.txt:791:      actorId: "transporter-1",
+marketplace-report-chunks/context-04.txt:842:      actorId: "transporter-1",
+marketplace-report-chunks/context-04.txt:969:    label: "Audit Logs",
+marketplace-report-chunks/context-04.txt:1338:            View audit activity
+marketplace-report-chunks/context-04.txt:1909:    label: "Audit Logs",
+marketplace-report-chunks/context-04.txt:2227:            View audit activity
+marketplace-report-chunks/context-03.txt:2:backend/src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+marketplace-report-chunks/context-03.txt:41:backend/prisma/schema.prisma:551:  request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+marketplace-report-chunks/context-03.txt:97:backend/src/bookings/booking.service.ts:69:    actorId: booking.customerId,
+marketplace-report-chunks/context-03.txt:103:backend/src/bookings/booking.service.ts:88:    actorId: booking.customerId,
+marketplace-report-chunks/context-03.txt:127:backend/src/bookings/booking.service.ts:408:      actorId: result.booking.transporterId ?? undefined,
+marketplace-report-chunks/context-03.txt:271:backend/src/marketplace/marketplace.service.ts:91:    requestId: bid.requestId,
+marketplace-report-chunks/context-03.txt:381:backend/src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+marketplace-report-chunks/context-03.txt:735:    requestId: "request-1",
+marketplace-report-chunks/context-03.txt:768:      requestId: "request-1",
+marketplace-report-chunks/context-03.txt:1390:      requestId: "request-1",
+marketplace-report-chunks/context-03.txt:1441:    requestId: "request-1",
+marketplace-report-chunks/context-03.txt:1462:    requestId: "request-1",
+marketplace-report-chunks/context-03.txt:1482:  assert.equal(createCall.data.requestId, "request-1");
+marketplace-report-chunks/context-03.txt:1534:      throw new Error("Unique constraint failed on the fields: (`requestId`,`transporterId`)");
+marketplace-report-chunks/context-03.txt:1540:      requestId: "request-1",
+marketplace-part-00.txt:10:?? backend/marketplace-audit-report.txt
+marketplace-part-00.txt:11:?? backend/marketplace-audit.sh
+marketplace-part-00.txt:94:backend/src/messages/message.routes.ts.before-final-audit
+marketplace-part-00.txt:96:backend/src/messages/message.service.ts.before-final-audit
+marketplace-part-00.txt:384:        requestId: String(req.params.id),
+marketplace-part-00.txt:534:        requestId: true,
+marketplace-part-00.txt:578:  requestId: string;
+marketplace-part-00.txt:605:    requestId: bid.requestId,
+marketplace-part-00.txt:699:    actorId: data.customerId,
+marketplace-part-00.txt:701:      requestId: request.id,
+marketplace-part-00.txt:715:  requestId: string,
+marketplace-part-00.txt:722:      id: requestId,
+marketplace-part-00.txt:752:          requestId: true,
+marketplace-part-00.txt:798:  requestId: string;
+marketplace-part-00.txt:808:    where: { id: data.requestId },
+marketplace-part-00.txt:902:        requestId: data.requestId,
+marketplace-part-00.txt:920:      actorId: data.transporterId,
+marketplace-part-00.txt:923:        requestId: data.requestId,
+marketplace-part-00.txt:953:      requestId: true,
+marketplace-part-00.txt:983:    actorId: transporterId,
+marketplace-part-00.txt:986:      requestId: updated.requestId,
+marketplace-part-00.txt:995:  requestId: string,
+marketplace-part-00.txt:1007:        id: requestId,
+marketplace-part-00.txt:1048:        requestId,
+marketplace-part-00.txt:1052:        requestId: true,
+marketplace-part-00.txt:1162:        id: requestId,
+marketplace-part-00.txt:1202:        requestId,
+marketplace-part-00.txt:1220:        requestId,
+marketplace-part-00.txt:1275:        id: requestId,
+marketplace-part-00.txt:1310:    actorId: customerId,
+marketplace-part-00.txt:1313:      requestId: result.request.id,
+marketplace-part-00.txt:1327:    actorId: customerId,
+marketplace-part-00.txt:1329:      requestId: result.request.id,
+marketplace-part-00.txt:1342:    actorId: customerId,
+marketplace-part-00.txt:1350:      marketplaceRequestId: result.request.id,
+marketplace-part-00.txt:1360:    actorId: customerId,
+marketplace-part-00.txt:2063:backend/src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+marketplace-part-00.txt:2415:    await tx.auditLog.create({
+marketplace-part-00.txt:2441:    actorId: administratorId,
+marketplace-part-00.txt:2640:    actorId: booking.customerId,
+marketplace-part-00.txt:2659:    actorId: booking.customerId,
+marketplace-part-00.txt:2793:    actorId: transporterId,
+marketplace-part-00.txt:2805:    actorId: transporterId,
+marketplace-part-00.txt:2817:    actorId: transporterId,
+marketplace-part-00.txt:2979:      actorId: result.booking.transporterId ?? undefined,
+marketplace-part-00.txt:3161:    actorId: result.transporterId,
+marketplace-part-00.txt:3343:        requestId: String(req.params.id),
+marketplace-part-00.txt:3493:        requestId: true,
+marketplace-part-00.txt:3537:  requestId: string;
+marketplace-part-00.txt:3564:    requestId: bid.requestId,
+marketplace-part-00.txt:3658:    actorId: data.customerId,
+marketplace-part-00.txt:3660:      requestId: request.id,
+marketplace-part-00.txt:3674:  requestId: string,
+marketplace-part-00.txt:3681:      id: requestId,
+marketplace-part-00.txt:3711:          requestId: true,
+marketplace-part-00.txt:3757:  requestId: string;
+marketplace-part-00.txt:3767:    where: { id: data.requestId },
+marketplace-part-00.txt:3861:        requestId: data.requestId,
+marketplace-part-00.txt:3879:      actorId: data.transporterId,
+marketplace-part-00.txt:3882:        requestId: data.requestId,
+marketplace-part-00.txt:3912:      requestId: true,
+marketplace-part-00.txt:3942:    actorId: transporterId,
+marketplace-part-00.txt:3945:      requestId: updated.requestId,
+marketplace-part-00.txt:3954:  requestId: string,
+marketplace-part-00.txt:3966:        id: requestId,
+marketplace-part-00.txt:4007:        requestId,
+marketplace-part-00.txt:4011:        requestId: true,
+marketplace-part-00.txt:4121:        id: requestId,
+marketplace-part-00.txt:4161:        requestId,
+marketplace-part-00.txt:4179:        requestId,
+marketplace-part-00.txt:4234:        id: requestId,
+marketplace-part-00.txt:4269:    actorId: customerId,
+marketplace-part-00.txt:4272:      requestId: result.request.id,
+marketplace-part-00.txt:4286:    actorId: customerId,
+marketplace-part-00.txt:4288:      requestId: result.request.id,
+marketplace-part-00.txt:4301:    actorId: customerId,
+marketplace-part-00.txt:4309:      marketplaceRequestId: result.request.id,
+marketplace-part-00.txt:4319:    actorId: customerId,
+marketplace-report-chunks/context-02.txt:308:  actorId?: string;
+marketplace-report-chunks/context-02.txt:754:    actorId: data.transporterId,
+marketplace-report-chunks/context-02.txt:808:    actorId: vehicle.transporterId,
+marketplace-report-chunks/context-02.txt:985:    actorId: administratorId,
+marketplace-report-chunks/context-02.txt:1569:320-  auditLogs         AuditLog[]      @relation("AuditAdministrator")
+marketplace-report-chunks/context-02.txt:1571:322-  affectedAuditLogs AuditLog[]      @relation("AuditAffectedUser")
+marketplace-report-chunks/context-02.txt:1786:537-  requestId     String
+marketplace-report-chunks/context-02.txt:1800:551:  request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+marketplace-report-chunks/context-02.txt:1804:555-  @@unique([requestId, transporterId])
+marketplace-report-chunks/context-02.txt:1805:556-  @@index([requestId, status])
+backend/marketplace-audit-report.txt:1:TransConet-Apex1 Marketplace / Bidding READ-ONLY AUDIT
+backend/marketplace-audit-report.txt:21:?? marketplace-audit-report.txt
+backend/marketplace-audit-report.txt:22:?? marketplace-audit.sh
+backend/marketplace-audit-report.txt:79:    20	        requestId: true,
+backend/marketplace-audit-report.txt:123:    64	  requestId: string;
+backend/marketplace-audit-report.txt:150:    91	    requestId: bid.requestId,
+backend/marketplace-audit-report.txt:244:   185	    actorId: data.customerId,
+backend/marketplace-audit-report.txt:246:   187	      requestId: request.id,
+backend/marketplace-audit-report.txt:260:   201	  requestId: string,
+backend/marketplace-audit-report.txt:267:   208	      id: requestId,
+backend/marketplace-audit-report.txt:297:   238	          requestId: true,
+backend/marketplace-audit-report.txt:343:   284	  requestId: string;
+backend/marketplace-audit-report.txt:353:   294	    where: { id: data.requestId },
+backend/marketplace-audit-report.txt:447:   388	        requestId: data.requestId,
+backend/marketplace-audit-report.txt:465:   406	      actorId: data.transporterId,
+backend/marketplace-audit-report.txt:468:   409	        requestId: data.requestId,
+backend/marketplace-audit-report.txt:498:   439	      requestId: true,
+backend/marketplace-audit-report.txt:528:   469	    actorId: transporterId,
+backend/marketplace-audit-report.txt:531:   472	      requestId: updated.requestId,
+backend/marketplace-audit-report.txt:540:   481	  requestId: string,
+backend/marketplace-audit-report.txt:552:   493	        id: requestId,
+backend/marketplace-audit-report.txt:593:   534	        requestId,
+backend/marketplace-audit-report.txt:597:   538	        requestId: true,
+backend/marketplace-audit-report.txt:707:   648	        id: requestId,
+backend/marketplace-audit-report.txt:747:   688	        requestId,
+backend/marketplace-audit-report.txt:765:   706	        requestId,
+backend/marketplace-audit-report.txt:820:   761	        id: requestId,
+backend/marketplace-audit-report.txt:855:   796	    actorId: customerId,
+backend/marketplace-audit-report.txt:858:   799	      requestId: result.request.id,
+backend/marketplace-audit-report.txt:872:   813	    actorId: customerId,
+backend/marketplace-audit-report.txt:874:   815	      requestId: result.request.id,
+backend/marketplace-audit-report.txt:887:   828	    actorId: customerId,
+backend/marketplace-audit-report.txt:895:   836	      marketplaceRequestId: result.request.id,
+backend/marketplace-audit-report.txt:905:   846	    actorId: customerId,
+backend/marketplace-audit-report.txt:1649:   171	        requestId: String(req.params.id),
+backend/marketplace-audit-report.txt:1866:src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+backend/marketplace-audit-report.txt:2172:320-  auditLogs         AuditLog[]      @relation("AuditAdministrator")
+backend/marketplace-audit-report.txt:2174:322-  affectedAuditLogs AuditLog[]      @relation("AuditAffectedUser")
+backend/marketplace-audit-report.txt:2385:537-  requestId     String
+backend/marketplace-audit-report.txt:2399:551-  request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+backend/marketplace-audit-report.txt:2403:555-  @@unique([requestId, transporterId])
+backend/marketplace-audit-report.txt:2404:556-  @@index([requestId, status])
+backend/marketplace-audit-report.txt:2424:537-  requestId     String
+backend/marketplace-audit-report.txt:2438:551-  request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+backend/marketplace-audit-report.txt:2442:555-  @@unique([requestId, transporterId])
+backend/marketplace-audit-report.txt:2443:556-  @@index([requestId, status])
+backend/marketplace-audit-report.txt:2511:537:  requestId     String
+backend/marketplace-audit-report.txt:2515:551:  request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+backend/marketplace-audit-report.txt:2518:555:  @@unique([requestId, transporterId])
+backend/marketplace-audit-report.txt:2519:556:  @@index([requestId, status])
+backend/marketplace-audit-report.txt:2566:838:  @@index([actorId, createdAt])
+backend/marketplace-audit-report.txt:2638:222:    actorId: transporterId,
+backend/marketplace-audit-report.txt:2642:234:    actorId: transporterId,
+backend/marketplace-audit-report.txt:2646:246:    actorId: transporterId,
+backend/marketplace-audit-report.txt:2673:408:      actorId: result.booking.transporterId ?? undefined,
+backend/marketplace-audit-report.txt:2693:590:    actorId: result.transporterId,
+backend/marketplace-audit-report.txt:2874:src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+backend/marketplace-audit-report.txt:3286:src/marketplace/marketplace.service.ts:185:    actorId: data.customerId,
+backend/marketplace-audit-report.txt:3313:src/marketplace/marketplace.service.ts:406:      actorId: data.transporterId,
+backend/marketplace-audit-report.txt:3320:src/marketplace/marketplace.service.ts:469:    actorId: transporterId,
+backend/marketplace-audit-report.txt:3351:src/marketplace/marketplace.service.ts:796:    actorId: customerId,
+backend/marketplace-audit-report.txt:3353:src/marketplace/marketplace.service.ts:813:    actorId: customerId,
+backend/marketplace-audit-report.txt:3354:src/marketplace/marketplace.service.ts:828:    actorId: customerId,
+backend/marketplace-audit-report.txt:3357:src/marketplace/marketplace.service.ts:846:    actorId: customerId,
+backend/marketplace-audit-report.txt:3609:17. TRANSACTION / CONCURRENCY AUDIT
+backend/marketplace-audit-report.txt:3643:19. MARKETPLACE RESPONSE DATA AUDIT
+backend/marketplace-audit-report.txt:3721:20. MARKETPLACE AUDIT LOGGING
+backend/marketplace-audit-report.txt:3723:src/admin/administrator.service.ts:137:    await tx.auditLog.create({
+backend/marketplace-audit-report.txt:3724:src/admin/administrator.service.ts:299:    await tx.auditLog.create({
+backend/marketplace-audit-report.txt:3725:src/admin/administrator.service.ts:368:    await tx.auditLog.create({
+backend/marketplace-audit-report.txt:3726:src/admin/administrator.service.ts.bak:119:  await prisma.auditLog.create({
+backend/marketplace-audit-report.txt:3727:src/admin/administrator.service.ts.bak2:115:  await prisma.auditLog.create({
+backend/marketplace-audit-report.txt:3733:src/admin/financial.service.ts:236:  await prisma.auditLog.create({
+backend/marketplace-audit-report.txt:3734:src/admin/financial.service.ts:426:    await tx.auditLog.create({
+backend/marketplace-audit-report.txt:3735:src/admin/fleet.service.ts:68:    await tx.auditLog.create({
+backend/marketplace-audit-report.txt:3736:src/admin/platform-config.service.ts:71:    await tx.auditLog.create({
+backend/marketplace-audit-report.txt:3737:src/admin/platform-config.service.ts:122:    await tx.auditLog.create({
+backend/marketplace-audit-report.txt:3738:src/admin/security.service.ts:10:    recentAuditLogs,
+backend/marketplace-audit-report.txt:3739:src/admin/security.service.ts:28:    prisma.auditLog.findMany({
+backend/marketplace-audit-report.txt:3740:src/admin/security.service.ts:59:    recentAuditLogs,
+backend/marketplace-audit-report.txt:3741:src/admin/security.service.ts:64:export async function getSecurityAuditLogs(options?: {
+backend/marketplace-audit-report.txt:3742:src/admin/security.service.ts:75:  return prisma.auditLog.findMany({
+backend/marketplace-audit-report.txt:3743:src/admin/security.service.ts:165:  await prisma.auditLog.create({
+backend/marketplace-audit-report.txt:3744:src/admin/security.service.ts:213:  await prisma.auditLog.create({
+backend/marketplace-audit-report.txt:3745:src/admin/security.routes.ts:12:  getSecurityAuditLogs,
+backend/marketplace-audit-report.txt:3746:src/admin/security.routes.ts:45:router.get("/audit-logs", async (req, res) => {
+backend/marketplace-audit-report.txt:3747:src/admin/security.routes.ts:47:    const logs = await getSecurityAuditLogs({
+backend/marketplace-audit-report.txt:3751:src/admin/backup-recovery.service.ts:13:    auditLogs,
+backend/marketplace-audit-report.txt:3752:src/admin/backup-recovery.service.ts:20:    prisma.auditLog.count(),
+backend/marketplace-audit-report.txt:3753:src/admin/backup-recovery.service.ts:35:      auditLogs,
+backend/marketplace-audit-report.txt:3997:src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+backend/marketplace-audit-report.txt:4180:30. QUICK AUDIT FLAGS
+backend/marketplace-audit-report.txt:4185:AUDIT COMPLETE
+backend/marketplace-audit-report.txt:4188:/data/data/com.termux/files/home/TransConet-Apex1/backend/marketplace-audit-report.txt
+marketplace-report-chunks/context-01.txt:304:    await tx.auditLog.create({
+marketplace-report-chunks/context-01.txt:330:    actorId: administratorId,
+marketplace-report-chunks/context-01.txt:529:    actorId: booking.customerId,
+marketplace-report-chunks/context-01.txt:548:    actorId: booking.customerId,
+marketplace-report-chunks/context-01.txt:682:    actorId: transporterId,
+marketplace-report-chunks/context-01.txt:694:    actorId: transporterId,
+marketplace-report-chunks/context-01.txt:706:    actorId: transporterId,
+marketplace-report-chunks/context-01.txt:868:      actorId: result.booking.transporterId ?? undefined,
+marketplace-report-chunks/context-01.txt:1050:    actorId: result.transporterId,
+marketplace-report-chunks/context-01.txt:1232:        requestId: String(req.params.id),
+marketplace-report-chunks/context-01.txt:1382:        requestId: true,
+marketplace-report-chunks/context-01.txt:1426:  requestId: string;
+marketplace-report-chunks/context-01.txt:1453:    requestId: bid.requestId,
+marketplace-report-chunks/context-01.txt:1547:    actorId: data.customerId,
+marketplace-report-chunks/context-01.txt:1549:      requestId: request.id,
+marketplace-report-chunks/context-01.txt:1563:  requestId: string,
+marketplace-report-chunks/context-01.txt:1570:      id: requestId,
+marketplace-report-chunks/context-01.txt:1600:          requestId: true,
+marketplace-report-chunks/context-01.txt:1646:  requestId: string;
+marketplace-report-chunks/context-01.txt:1656:    where: { id: data.requestId },
+marketplace-report-chunks/context-01.txt:1750:        requestId: data.requestId,
+marketplace-report-chunks/context-01.txt:1768:      actorId: data.transporterId,
+marketplace-report-chunks/context-01.txt:1771:        requestId: data.requestId,
+marketplace-report-chunks/context-01.txt:1801:      requestId: true,
+marketplace-report-chunks/context-01.txt:1831:    actorId: transporterId,
+marketplace-report-chunks/context-01.txt:1834:      requestId: updated.requestId,
+marketplace-report-chunks/context-01.txt:1843:  requestId: string,
+marketplace-report-chunks/context-01.txt:1855:        id: requestId,
+marketplace-report-chunks/context-01.txt:1896:        requestId,
+marketplace-report-chunks/context-01.txt:1900:        requestId: true,
+marketplace-report-chunks/context-01.txt:2010:        id: requestId,
+marketplace-report-chunks/context-01.txt:2050:        requestId,
+marketplace-report-chunks/context-01.txt:2068:        requestId,
+marketplace-report-chunks/context-01.txt:2123:        id: requestId,
+marketplace-report-chunks/context-01.txt:2158:    actorId: customerId,
+marketplace-report-chunks/context-01.txt:2161:      requestId: result.request.id,
+marketplace-report-chunks/context-01.txt:2175:    actorId: customerId,
+marketplace-report-chunks/context-01.txt:2177:      requestId: result.request.id,
+marketplace-report-chunks/context-01.txt:2190:    actorId: customerId,
+marketplace-report-chunks/context-01.txt:2198:      marketplaceRequestId: result.request.id,
+marketplace-report-chunks/context-01.txt:2208:    actorId: customerId,
+backend/ZOD_INTEGRATION_REPORT.md:585:This master audit intentionally does NOT invent validation rules. Routes whose input shape cannot be safely inferred are reported for domain-specific schema creation instead.
+backend/scripts/integrate-zod-master.py:175:    "This master audit intentionally does NOT invent validation rules. "
+backend/scripts/integrate-zod-master.py:183:print("TRANSCONET-APEX1 MASTER ZOD INTEGRATION AUDIT")
+backend/scripts/backend-audit.sh:3:REPORT="audits/summary-$(date +%Y%m%d-%H%M%S).txt"
+backend/scripts/backend-audit.sh:36:echo "AUDIT LOGGING" >>"$REPORT"
+backend/scripts/backend-audit.sh:37:echo "AuditLog references: $(count AuditLog)" >>"$REPORT"
+backend/scripts/audit-zod-coverage.sh:4:echo "===== TRANSCONET ZOD COVERAGE AUDIT ====="
+backend/scripts/audit-zod-coverage.sh:37:echo "===== END ZOD AUDIT ====="
+marketplace-report-chunks/context-00.txt:10:?? backend/marketplace-audit-report.txt
+marketplace-report-chunks/context-00.txt:11:?? backend/marketplace-audit.sh
+marketplace-report-chunks/context-00.txt:94:backend/src/messages/message.routes.ts.before-final-audit
+marketplace-report-chunks/context-00.txt:96:backend/src/messages/message.service.ts.before-final-audit
+marketplace-report-chunks/context-00.txt:384:        requestId: String(req.params.id),
+marketplace-report-chunks/context-00.txt:534:        requestId: true,
+marketplace-report-chunks/context-00.txt:578:  requestId: string;
+marketplace-report-chunks/context-00.txt:605:    requestId: bid.requestId,
+marketplace-report-chunks/context-00.txt:699:    actorId: data.customerId,
+marketplace-report-chunks/context-00.txt:701:      requestId: request.id,
+marketplace-report-chunks/context-00.txt:715:  requestId: string,
+marketplace-report-chunks/context-00.txt:722:      id: requestId,
+marketplace-report-chunks/context-00.txt:752:          requestId: true,
+marketplace-report-chunks/context-00.txt:798:  requestId: string;
+marketplace-report-chunks/context-00.txt:808:    where: { id: data.requestId },
+marketplace-report-chunks/context-00.txt:902:        requestId: data.requestId,
+marketplace-report-chunks/context-00.txt:920:      actorId: data.transporterId,
+marketplace-report-chunks/context-00.txt:923:        requestId: data.requestId,
+marketplace-report-chunks/context-00.txt:953:      requestId: true,
+marketplace-report-chunks/context-00.txt:983:    actorId: transporterId,
+marketplace-report-chunks/context-00.txt:986:      requestId: updated.requestId,
+marketplace-report-chunks/context-00.txt:995:  requestId: string,
+marketplace-report-chunks/context-00.txt:1007:        id: requestId,
+marketplace-report-chunks/context-00.txt:1048:        requestId,
+marketplace-report-chunks/context-00.txt:1052:        requestId: true,
+marketplace-report-chunks/context-00.txt:1162:        id: requestId,
+marketplace-report-chunks/context-00.txt:1202:        requestId,
+marketplace-report-chunks/context-00.txt:1220:        requestId,
+marketplace-report-chunks/context-00.txt:1275:        id: requestId,
+marketplace-report-chunks/context-00.txt:1310:    actorId: customerId,
+marketplace-report-chunks/context-00.txt:1313:      requestId: result.request.id,
+marketplace-report-chunks/context-00.txt:1327:    actorId: customerId,
+marketplace-report-chunks/context-00.txt:1329:      requestId: result.request.id,
+marketplace-report-chunks/context-00.txt:1342:    actorId: customerId,
+marketplace-report-chunks/context-00.txt:1350:      marketplaceRequestId: result.request.id,
+marketplace-report-chunks/context-00.txt:1360:    actorId: customerId,
+marketplace-report-chunks/context-00.txt:2063:backend/src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+backend/audits/summary-20260818-071256.txt:23:AUDIT LOGGING
+backend/audits/summary-20260818-071256.txt:24:AuditLog references: 5
+marketplace-part-02.txt:19:      requestId: "request-1",
+marketplace-part-02.txt:28:      requestId: "request-1",
+marketplace-part-02.txt:68:      requestId: "request-1",
+marketplace-part-02.txt:173:    requestId: "request-1",
+marketplace-part-02.txt:378:      requestId: "request-1",
+marketplace-part-02.txt:457:          requestId: "request-1",
+marketplace-part-02.txt:466:        requestId: "request-1",
+marketplace-part-02.txt:532:        requestId: "request-1",
+marketplace-part-02.txt:593:        requestId: "request-1",
+marketplace-part-02.txt:791:      actorId: "transporter-1",
+marketplace-part-02.txt:842:      actorId: "transporter-1",
+marketplace-part-02.txt:969:    label: "Audit Logs",
+marketplace-part-02.txt:1338:            View audit activity
+marketplace-part-02.txt:1909:    label: "Audit Logs",
+marketplace-part-02.txt:2227:            View audit activity
+marketplace-part-02.txt:4254:backend/src/admin/security.routes.ts:45:router.get("/audit-logs", async (req, res) => {
+backend/audits/backend-audit-20260818-070448.txt:2:TransConet-Apex1 Backend Audit
+backend/audits/backend-audit-20260818-070448.txt:7:?? audits/
+backend/audits/backend-audit-20260818-070448.txt:36:✔ createAdministrator creates a normal administrator and audit log (6.299166ms)
+backend/audits/backend-audit-20260818-070448.txt:39:✔ changeAdministratorStatus suspends a normal administrator and writes an audit log (1.738594ms)
+backend/audits/backend-audit-20260818-070448.txt:136:✔ getSecurityOverview returns administrator security counts and recent audit logs (11.167864ms)
+backend/audits/backend-audit-20260818-070448.txt:137:✔ getSecurityAuditLogs applies administrator, affected-user and action filters (1.265938ms)
+backend/audits/backend-audit-20260818-070448.txt:138:✔ getSecurityAuditLogs caps the limit at 200 (0.763437ms)
+backend/audits/backend-audit-20260818-070448.txt:139:✔ getSecurityAuditLogs enforces a minimum limit of 1 (0.929114ms)
+backend/audits/backend-audit-20260818-070448.txt:143:✔ unlockAdministrator resets lock state, writes an audit log and publishes a realtime event (1.694636ms)
+backend/audits/backend-audit-20260818-070448.txt:763:===== AUDIT LOG COVERAGE =====
+backend/audits/backend-audit-20260818-070448.txt:764:src/admin/administrator.service.ts:137:    await tx.auditLog.create({
+backend/audits/backend-audit-20260818-070448.txt:765:src/admin/administrator.service.ts:299:    await tx.auditLog.create({
+backend/audits/backend-audit-20260818-070448.txt:766:src/admin/administrator.service.ts:368:    await tx.auditLog.create({
+backend/audits/backend-audit-20260818-070448.txt:767:src/admin/financial.service.ts:230:  await prisma.auditLog.create({
+backend/audits/backend-audit-20260818-070448.txt:768:src/admin/financial.service.ts:420:    await tx.auditLog.create({
+backend/audits/backend-audit-20260818-070448.txt:769:src/admin/fleet.service.ts:68:    await tx.auditLog.create({
+backend/audits/backend-audit-20260818-070448.txt:770:src/admin/security.service.ts:10:    recentAuditLogs,
+backend/audits/backend-audit-20260818-070448.txt:771:src/admin/security.service.ts:28:    prisma.auditLog.findMany({
+backend/audits/backend-audit-20260818-070448.txt:772:src/admin/security.service.ts:59:    recentAuditLogs,
+backend/audits/backend-audit-20260818-070448.txt:773:src/admin/security.service.ts:64:export async function getSecurityAuditLogs(options?: {
+backend/audits/backend-audit-20260818-070448.txt:774:src/admin/security.service.ts:75:  return prisma.auditLog.findMany({
+backend/audits/backend-audit-20260818-070448.txt:775:src/admin/security.service.ts:165:  await prisma.auditLog.create({
+backend/audits/backend-audit-20260818-070448.txt:776:src/admin/security.service.ts:213:  await prisma.auditLog.create({
+backend/audits/backend-audit-20260818-070448.txt:777:src/admin/security.routes.ts:11:  getSecurityAuditLogs,
+backend/audits/backend-audit-20260818-070448.txt:778:src/admin/security.routes.ts:39:    const logs = await getSecurityAuditLogs({
+backend/audits/backend-audit-20260818-070448.txt:779:src/admin/backup-recovery.service.ts:13:    auditLogs,
+backend/audits/backend-audit-20260818-070448.txt:780:src/admin/backup-recovery.service.ts:20:    prisma.auditLog.count(),
+backend/audits/backend-audit-20260818-070448.txt:781:src/admin/backup-recovery.service.ts:35:      auditLogs,
+backend/audits/backend-audit-20260818-070448.txt:782:src/settlements/settlement.service.ts:319:  await prisma.auditLog.create({
+backend/audits/backend-audit-20260818-070448.txt:783:src/settlements/settlement.service.ts:417:  await prisma.auditLog.create({
+backend/audits/backend-audit-20260818-070448.txt:784:src/settlements/settlement.service.ts:610:  await prisma.auditLog.create({
+backend/audits/backend-audit-20260818-070448.txt:1522:761:model AuditLog {
+backend/audits/backend-audit-20260818-070448.txt:1549:Audit saved to: audits/backend-audit-20260818-070448.txt
+parity-audit.sh:7:OUT="$ROOT/parity-audit-report.txt"
+parity-audit.sh:23:FULL PARITY AUDIT
+parity-audit.sh:28:AUDIT CHAIN
+parity-audit.sh:40: -> audit logging / AdminActivity
+parity-audit.sh:44:This is a READ-ONLY static/repository audit.
+parity-audit.sh:163:  'authenticate|requireAdmin|requireAdminModule|requireSuperAdmin|permission|ownership|ownerId|actorId' \
+parity-audit.sh:233:section "11. AUDIT LOGGING / ADMIN ACTIVITY"
+parity-audit.sh:236:  'adminActivity|AdminActivity|persistAdminActivity|recordAdminError|auditLog|audit' \
+parity-audit.sh:434:- audit row creation on success and failure paths
+parity-audit.sh:450: -> AdminActivity/audit record
+marketplace-integration-context.txt:10:?? backend/marketplace-audit-report.txt
+marketplace-integration-context.txt:11:?? backend/marketplace-audit.sh
+marketplace-integration-context.txt:94:backend/src/messages/message.routes.ts.before-final-audit
+marketplace-integration-context.txt:96:backend/src/messages/message.service.ts.before-final-audit
+marketplace-integration-context.txt:384:        requestId: String(req.params.id),
+marketplace-integration-context.txt:534:        requestId: true,
+marketplace-integration-context.txt:578:  requestId: string;
+marketplace-integration-context.txt:605:    requestId: bid.requestId,
+marketplace-integration-context.txt:699:    actorId: data.customerId,
+marketplace-integration-context.txt:701:      requestId: request.id,
+marketplace-integration-context.txt:715:  requestId: string,
+marketplace-integration-context.txt:722:      id: requestId,
+marketplace-integration-context.txt:752:          requestId: true,
+marketplace-integration-context.txt:798:  requestId: string;
+marketplace-integration-context.txt:808:    where: { id: data.requestId },
+marketplace-integration-context.txt:902:        requestId: data.requestId,
+marketplace-integration-context.txt:920:      actorId: data.transporterId,
+marketplace-integration-context.txt:923:        requestId: data.requestId,
+marketplace-integration-context.txt:953:      requestId: true,
+marketplace-integration-context.txt:983:    actorId: transporterId,
+marketplace-integration-context.txt:986:      requestId: updated.requestId,
+marketplace-integration-context.txt:995:  requestId: string,
+marketplace-integration-context.txt:1007:        id: requestId,
+marketplace-integration-context.txt:1048:        requestId,
+marketplace-integration-context.txt:1052:        requestId: true,
+marketplace-integration-context.txt:1162:        id: requestId,
+marketplace-integration-context.txt:1202:        requestId,
+marketplace-integration-context.txt:1220:        requestId,
+marketplace-integration-context.txt:1275:        id: requestId,
+marketplace-integration-context.txt:1310:    actorId: customerId,
+marketplace-integration-context.txt:1313:      requestId: result.request.id,
+marketplace-integration-context.txt:1327:    actorId: customerId,
+marketplace-integration-context.txt:1329:      requestId: result.request.id,
+marketplace-integration-context.txt:1342:    actorId: customerId,
+marketplace-integration-context.txt:1350:      marketplaceRequestId: result.request.id,
+marketplace-integration-context.txt:1360:    actorId: customerId,
+marketplace-integration-context.txt:2063:backend/src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+marketplace-integration-context.txt:2415:    await tx.auditLog.create({
+marketplace-integration-context.txt:2441:    actorId: administratorId,
+marketplace-integration-context.txt:2640:    actorId: booking.customerId,
+marketplace-integration-context.txt:2659:    actorId: booking.customerId,
+marketplace-integration-context.txt:2793:    actorId: transporterId,
+marketplace-integration-context.txt:2805:    actorId: transporterId,
+marketplace-integration-context.txt:2817:    actorId: transporterId,
+marketplace-integration-context.txt:2979:      actorId: result.booking.transporterId ?? undefined,
+marketplace-integration-context.txt:3161:    actorId: result.transporterId,
+marketplace-integration-context.txt:3343:        requestId: String(req.params.id),
+marketplace-integration-context.txt:3493:        requestId: true,
+marketplace-integration-context.txt:3537:  requestId: string;
+marketplace-integration-context.txt:3564:    requestId: bid.requestId,
+marketplace-integration-context.txt:3658:    actorId: data.customerId,
+marketplace-integration-context.txt:3660:      requestId: request.id,
+marketplace-integration-context.txt:3674:  requestId: string,
+marketplace-integration-context.txt:3681:      id: requestId,
+marketplace-integration-context.txt:3711:          requestId: true,
+marketplace-integration-context.txt:3757:  requestId: string;
+marketplace-integration-context.txt:3767:    where: { id: data.requestId },
+marketplace-integration-context.txt:3861:        requestId: data.requestId,
+marketplace-integration-context.txt:3879:      actorId: data.transporterId,
+marketplace-integration-context.txt:3882:        requestId: data.requestId,
+marketplace-integration-context.txt:3912:      requestId: true,
+marketplace-integration-context.txt:3942:    actorId: transporterId,
+marketplace-integration-context.txt:3945:      requestId: updated.requestId,
+marketplace-integration-context.txt:3954:  requestId: string,
+marketplace-integration-context.txt:3966:        id: requestId,
+marketplace-integration-context.txt:4007:        requestId,
+marketplace-integration-context.txt:4011:        requestId: true,
+marketplace-integration-context.txt:4121:        id: requestId,
+marketplace-integration-context.txt:4161:        requestId,
+marketplace-integration-context.txt:4179:        requestId,
+marketplace-integration-context.txt:4234:        id: requestId,
+marketplace-integration-context.txt:4269:    actorId: customerId,
+marketplace-integration-context.txt:4272:      requestId: result.request.id,
+marketplace-integration-context.txt:4286:    actorId: customerId,
+marketplace-integration-context.txt:4288:      requestId: result.request.id,
+marketplace-integration-context.txt:4301:    actorId: customerId,
+marketplace-integration-context.txt:4309:      marketplaceRequestId: result.request.id,
+marketplace-integration-context.txt:4319:    actorId: customerId,
+marketplace-integration-context.txt:4973:  actorId?: string;
+marketplace-integration-context.txt:5419:    actorId: data.transporterId,
+marketplace-integration-context.txt:5473:    actorId: vehicle.transporterId,
+marketplace-integration-context.txt:5650:    actorId: administratorId,
+marketplace-integration-context.txt:6234:320-  auditLogs         AuditLog[]      @relation("AuditAdministrator")
+marketplace-integration-context.txt:6236:322-  affectedAuditLogs AuditLog[]      @relation("AuditAffectedUser")
+marketplace-integration-context.txt:6451:537-  requestId     String
+marketplace-integration-context.txt:6465:551:  request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+marketplace-integration-context.txt:6469:555-  @@unique([requestId, transporterId])
+marketplace-integration-context.txt:6470:556-  @@index([requestId, status])
+marketplace-integration-context.txt:6747:backend/src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+marketplace-integration-context.txt:6786:backend/prisma/schema.prisma:551:  request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+marketplace-integration-context.txt:6842:backend/src/bookings/booking.service.ts:69:    actorId: booking.customerId,
+marketplace-integration-context.txt:6848:backend/src/bookings/booking.service.ts:88:    actorId: booking.customerId,
+marketplace-integration-context.txt:6872:backend/src/bookings/booking.service.ts:408:      actorId: result.booking.transporterId ?? undefined,
+marketplace-integration-context.txt:7016:backend/src/marketplace/marketplace.service.ts:91:    requestId: bid.requestId,
+marketplace-integration-context.txt:7126:backend/src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+marketplace-integration-context.txt:7480:    requestId: "request-1",
+marketplace-integration-context.txt:7513:      requestId: "request-1",
+marketplace-integration-context.txt:8135:      requestId: "request-1",
+marketplace-integration-context.txt:8186:    requestId: "request-1",
+marketplace-integration-context.txt:8207:    requestId: "request-1",
+marketplace-integration-context.txt:8227:  assert.equal(createCall.data.requestId, "request-1");
+marketplace-integration-context.txt:8279:      throw new Error("Unique constraint failed on the fields: (`requestId`,`transporterId`)");
+marketplace-integration-context.txt:8285:      requestId: "request-1",
+marketplace-integration-context.txt:8310:      requestId: "request-1",
+marketplace-integration-context.txt:8319:      requestId: "request-1",
+marketplace-integration-context.txt:8359:      requestId: "request-1",
+marketplace-integration-context.txt:8464:    requestId: "request-1",
+marketplace-integration-context.txt:8669:      requestId: "request-1",
+marketplace-integration-context.txt:8748:          requestId: "request-1",
+marketplace-integration-context.txt:8757:        requestId: "request-1",
+marketplace-integration-context.txt:8823:        requestId: "request-1",
+marketplace-integration-context.txt:8884:        requestId: "request-1",
+marketplace-integration-context.txt:9082:      actorId: "transporter-1",
+marketplace-integration-context.txt:9133:      actorId: "transporter-1",
+marketplace-integration-context.txt:9260:    label: "Audit Logs",
+marketplace-integration-context.txt:9629:            View audit activity
+marketplace-integration-context.txt:10200:    label: "Audit Logs",
+marketplace-integration-context.txt:10518:            View audit activity
+marketplace-integration-context.txt:12545:backend/src/admin/security.routes.ts:45:router.get("/audit-logs", async (req, res) => {
+backend/.audit/routes.txt:92:src/admin/security.routes.ts:45:router.get("/audit-logs", async (req, res) => {
+backend/.audit/routes-still-without-explicit-validation.txt:92:src/admin/security.routes.ts:45:router.get("/audit-logs", async (req, res) => {
+backend/.audit/raw-request-access.txt:158:src/marketplace/marketplace.routes.ts:171:        requestId: String(req.params.id),
+backend/.audit/core-route-validation-detail.txt:149:171:        requestId: String(req.params.id),
+backend/.audit/all-request-input-usage.txt:205:171:        requestId: String(req.params.id),
+backend/.audit/admin-route-validation-detail.txt:219:45:router.get("/audit-logs", async (req, res) => {
+backend/tests/backup-recovery.service.test.ts:5:const auditLogCreate = mock.fn(async ({ data }: any) => ({
+backend/tests/backup-recovery.service.test.ts:6:  id: "audit-1",
+backend/tests/backup-recovery.service.test.ts:16:  auditLog: {
+backend/tests/backup-recovery.service.test.ts:18:    create: auditLogCreate,
+backend/tests/backup-recovery.service.test.ts:32:    auditLog: {
+backend/tests/backup-recovery.service.test.ts:33:      create: auditLogCreate,
+backend/tests/backup-recovery.service.test.ts:46:      auditLog: counts.auditLog,
+backend/tests/backup-recovery.service.test.ts:80:    auditLogs: 60,
+backend/tests/backup-recovery.service.test.ts:84:test("createBackupSnapshotRecord creates an audit record and publishes realtime event", async () => {
+backend/tests/backup-recovery.service.test.ts:89:  assert.equal(result.auditLogId, "audit-1");
+backend/tests/backup-recovery.service.test.ts:93:  assert.equal(auditLogCreate.mock.callCount(), 1);
+backend/tests/backup-recovery.service.test.ts:94:  assert.equal(auditLogCreate.mock.calls[0].arguments[0].data.administratorId, "admin-1");
+backend/tests/backup-recovery.service.test.ts:96:    auditLogCreate.mock.calls[0].arguments[0].data.action,
+backend/tests/wallet.service.test.ts:146:        actorId: "transporter-1",
+backend/tests/wallet.service.test.ts:465:        actorId: "transporter-1",
+backend/.agents/skills/prisma-mongodb-upgrade/references/verify-cutover-checklist.md:41:6. **Storage-name addressing audited:** every ported call site uses collection storage
+backend/tests/vehicle.service.test.ts:140:      actorId: "transporter-1",
+backend/tests/vehicle.service.test.ts:191:      actorId: "transporter-1",
+backend/tests/tracking.service.test.ts:126:  assert.equal(event.actorId, "transporter-1");
+backend/tests/settlement.service.test.ts:17:  auditLog: {
+backend/tests/settlement.service.test.ts:50:    prismaMock.auditLog.create,
+backend/tests/settlement.service.test.ts:117:    prismaMock.auditLog.create.mock.calls.length,
+backend/tests/security.service.test.ts:10:  auditLog: {
+backend/tests/security.service.test.ts:33:  getSecurityAuditLogs,
+backend/tests/security.service.test.ts:44:    prismaMock.auditLog.findMany,
+backend/tests/security.service.test.ts:45:    prismaMock.auditLog.create,
+backend/tests/security.service.test.ts:56:  prismaMock.auditLog.create.mock.mockImplementation(
+backend/tests/security.service.test.ts:57:    async () => ({ id: "audit-1" }),
+backend/tests/security.service.test.ts:61:test("getSecurityOverview returns administrator security counts and recent audit logs", async () => {
+backend/tests/security.service.test.ts:68:  const auditLogs = [{ id: "audit-1", action: "ADMINISTRATOR_UPDATED" }];
+backend/tests/security.service.test.ts:70:  prismaMock.auditLog.findMany.mock.mockImplementation(
+backend/tests/security.service.test.ts:71:    async () => auditLogs,
+backend/tests/security.service.test.ts:83:  assert.deepEqual(result.recentAuditLogs, auditLogs);
+backend/tests/security.service.test.ts:87:  assert.equal(prismaMock.auditLog.findMany.mock.calls.length, 1);
+backend/tests/security.service.test.ts:89:  const auditArgs =
+backend/tests/security.service.test.ts:90:    prismaMock.auditLog.findMany.mock.calls[0]?.arguments[0];
+backend/tests/security.service.test.ts:92:  assert.deepEqual(auditArgs.orderBy, { createdAt: "desc" });
+backend/tests/security.service.test.ts:93:  assert.equal(auditArgs.take, 50);
+backend/tests/security.service.test.ts:96:test("getSecurityAuditLogs applies administrator, affected-user and action filters", async () => {
+backend/tests/security.service.test.ts:97:  const logs = [{ id: "audit-1", action: "ADMINISTRATOR_UNLOCKED" }];
+backend/tests/security.service.test.ts:99:  prismaMock.auditLog.findMany.mock.mockImplementation(
+backend/tests/security.service.test.ts:103:  const result = await getSecurityAuditLogs({
+backend/tests/security.service.test.ts:113:    prismaMock.auditLog.findMany.mock.calls[0]?.arguments[0];
+backend/tests/security.service.test.ts:125:test("getSecurityAuditLogs caps the limit at 200", async () => {
+backend/tests/security.service.test.ts:126:  prismaMock.auditLog.findMany.mock.mockImplementation(
+backend/tests/security.service.test.ts:130:  await getSecurityAuditLogs({ limit: 5000 });
+backend/tests/security.service.test.ts:133:    prismaMock.auditLog.findMany.mock.calls[0]?.arguments[0];
+backend/tests/security.service.test.ts:138:test("getSecurityAuditLogs enforces a minimum limit of 1", async () => {
+backend/tests/security.service.test.ts:139:  prismaMock.auditLog.findMany.mock.mockImplementation(
+backend/tests/security.service.test.ts:143:  await getSecurityAuditLogs({ limit: 0 });
+backend/tests/security.service.test.ts:146:    prismaMock.auditLog.findMany.mock.calls[0]?.arguments[0];
+backend/tests/security.service.test.ts:207:  assert.equal(prismaMock.auditLog.create.mock.calls.length, 0);
+backend/tests/security.service.test.ts:211:test("unlockAdministrator resets lock state, writes an audit log and publishes a realtime event", async () => {
+backend/tests/security.service.test.ts:250:  const auditArgs =
+backend/tests/security.service.test.ts:251:    prismaMock.auditLog.create.mock.calls[0]?.arguments[0];
+backend/tests/security.service.test.ts:253:  assert.equal(auditArgs.data.administratorId, "super-admin-1");
+backend/tests/security.service.test.ts:254:  assert.equal(auditArgs.data.affectedUserId, "admin-2");
+backend/tests/security.service.test.ts:255:  assert.equal(auditArgs.data.action, "ADMINISTRATOR_UNLOCKED");
+backend/tests/security.service.test.ts:256:  assert.equal(auditArgs.data.previousValue.failedLoginAttempts, 7);
+backend/tests/security.service.test.ts:257:  assert.equal(auditArgs.data.newValue.failedLoginAttempts, 0);
+backend/tests/security.service.test.ts:268:  assert.equal(eventArgs[1].actorId, "super-admin-1");
+backend/tests/security.service.test.ts:286:  assert.equal(prismaMock.auditLog.create.mock.calls.length, 0);
+backend/tests/security.service.test.ts:327:  const auditArgs =
+backend/tests/security.service.test.ts:328:    prismaMock.auditLog.create.mock.calls[0]?.arguments[0];
+backend/tests/security.service.test.ts:331:    auditArgs.data.action,
+backend/tests/security.service.test.ts:334:  assert.equal(auditArgs.data.affectedUserId, "admin-2");
+backend/tests/security.service.test.ts:336:    auditArgs.data.previousValue.twoFactorEnabled,
+backend/tests/security.service.test.ts:340:    auditArgs.data.newValue.twoFactorEnabled,
+backend/tests/security.service.test.ts:377:  const auditArgs =
+backend/tests/security.service.test.ts:378:    prismaMock.auditLog.create.mock.calls[0]?.arguments[0];
+backend/tests/security.service.test.ts:381:    auditArgs.data.action,
+backend/tests/security.routes.test.ts:49:    getSecurityAuditLogs: mock.fn(),
+backend/tests/marketplace.service.test.ts:218:      requestId: "request-1",
+backend/tests/marketplace.service.test.ts:269:    requestId: "request-1",
+backend/tests/marketplace.service.test.ts:290:    requestId: "request-1",
+backend/tests/marketplace.service.test.ts:310:  assert.equal(createCall.data.requestId, "request-1");
+backend/tests/marketplace.service.test.ts:362:      throw new Error("Unique constraint failed on the fields: (`requestId`,`transporterId`)");
+backend/tests/marketplace.service.test.ts:368:      requestId: "request-1",
+backend/tests/marketplace.service.test.ts:393:      requestId: "request-1",
+backend/tests/marketplace.service.test.ts:402:      requestId: "request-1",
+backend/tests/marketplace.service.test.ts:442:      requestId: "request-1",
+backend/tests/marketplace.service.test.ts:547:    requestId: "request-1",
+backend/tests/marketplace.service.test.ts:752:      requestId: "request-1",
+backend/tests/marketplace.service.test.ts:831:          requestId: "request-1",
+backend/tests/marketplace.service.test.ts:840:        requestId: "request-1",
+backend/tests/marketplace.service.test.ts:906:        requestId: "request-1",
+backend/tests/marketplace.service.test.ts:967:        requestId: "request-1",
+backend/tests/marketplace.routes.test.ts:294:    requestId: "request-1",
+backend/tests/marketplace.routes.test.ts:327:      requestId: "request-1",
+backend/tests/feature-management.service.test.ts:8:const auditLogCreateMock = mock.fn();
+backend/tests/feature-management.service.test.ts:19:  auditLog: {
+backend/tests/feature-management.service.test.ts:20:    create: auditLogCreateMock,
+backend/tests/feature-management.service.test.ts:67:    auditLog: {
+backend/tests/feature-management.service.test.ts:68:      create: auditLogCreateMock,
+backend/tests/feature-management.service.test.ts:78:  auditLogCreateMock.mock.resetCalls();
+backend/tests/feature-management.service.test.ts:116:  auditLogCreateMock.mock.mockImplementation(async () => ({}));
+backend/tests/feature-management.service.test.ts:130:  assert.equal(auditLogCreateMock.mock.calls.length, 1);
+backend/tests/feature-management.service.test.ts:138:      actorId: "admin-1",
+backend/tests/feature-management.service.test.ts:158:  assert.equal(auditLogCreateMock.mock.calls.length, 0);
+backend/tests/feature-management.service.test.ts:178:  auditLogCreateMock.mock.mockImplementation(async () => ({}));
+backend/tests/feature-management.service.test.ts:192:  assert.equal(auditLogCreateMock.mock.calls.length, 1);
+backend/tests/feature-management.service.test.ts:194:  const auditInput = auditLogCreateMock.mock.calls[0].arguments[0];
+backend/tests/feature-management.service.test.ts:196:  assert.equal(auditInput.data.administratorId, "admin-2");
+backend/tests/feature-management.service.test.ts:197:  assert.equal(auditInput.data.action, "FEATURE_FLAG_UPDATED");
+backend/tests/feature-management.service.test.ts:198:  assert.equal(auditInput.data.previousValue.enabled, false);
+backend/tests/feature-management.service.test.ts:199:  assert.equal(auditInput.data.newValue.enabled, true);
+backend/tests/feature-management.service.test.ts:200:  assert.equal(auditInput.data.previousValue.rolloutPercentage, 100);
+backend/tests/feature-management.service.test.ts:201:  assert.equal(auditInput.data.newValue.rolloutPercentage, 50);
+backend/tests/feature-management.service.test.ts:236:  auditLogCreateMock.mock.mockImplementation(async () => ({}));
+backend/tests/feature-management.service.test.ts:265:  auditLogCreateMock.mock.mockImplementation(async () => ({}));
+backend/tests/feature-management.service.test.ts:293:  auditLogCreateMock.mock.mockImplementation(async () => ({}));
+admin-app/src/modules/ActivityTimeline.tsx:116:        activity.actorId ?? "",
+admin-app/src/modules/ActivityTimeline.tsx:367:              <strong>{selected.actorId ?? "System"}</strong>
+admin-app/src/modules/BackupRecovery.tsx:302:              <span>Audit logs</span>
+admin-app/src/modules/BackupRecovery.tsx:303:              <strong>{records?.auditLogs ?? "—"}</strong>
+admin-app/src/modules/BackupRecovery.tsx:314:              Request an auditable application-level snapshot
+admin-app/src/modules/BackupRecovery.tsx:357:              <span>Audit log ID</span>
+admin-app/src/modules/BackupRecovery.tsx:358:              <strong>{snapshot.auditLogId}</strong>
+backend/tests/administrator.service.test.ts:15:  auditLog: {
+backend/tests/administrator.service.test.ts:44:    prismaMock.auditLog.create,
+backend/tests/administrator.service.test.ts:58:  prismaMock.auditLog.create.mock.mockImplementation(
+backend/tests/administrator.service.test.ts:59:    async () => ({ id: "audit-1" }),
+backend/tests/administrator.service.test.ts:145:test("createAdministrator creates a normal administrator and audit log", async () => {
+backend/tests/administrator.service.test.ts:196:    prismaMock.auditLog.create.mock.calls.length,
+backend/tests/administrator.service.test.ts:200:  const auditCall =
+backend/tests/administrator.service.test.ts:201:    prismaMock.auditLog.create.mock.calls[0]?.arguments[0];
+backend/tests/administrator.service.test.ts:204:    auditCall.data.action,
+backend/tests/administrator.service.test.ts:209:    auditCall.data.affectedUserId,
+backend/tests/administrator.service.test.ts:264:test("changeAdministratorStatus suspends a normal administrator and writes an audit log", async () => {
+backend/tests/administrator.service.test.ts:296:    prismaMock.auditLog.create.mock.calls.length,
+backend/tests/administrator.service.test.ts:300:  const auditCall =
+backend/tests/administrator.service.test.ts:301:    prismaMock.auditLog.create.mock.calls[0]?.arguments[0];
+backend/tests/administrator.service.test.ts:304:    auditCall.data.action,
+backend/tests/administrator.service.test.ts:309:    auditCall.data.affectedUserId,
+backend/.agents/skills/prisma-client-api/references/constructor.md:108:await withQueryTags({ route: '/api/users', requestId: 'req-123' }, () =>
+backend/src/subscriptions/subscription.service.ts:145:    actorId: transporterId,
+backend/src/subscriptions/subscription.service.ts:192:    actorId: transporterId,
+backend/src/subscriptions/subscription.service.ts:250:    actorId: result.transporterId,
+admin-app/src/modules/SecurityCenter.tsx:3:  getSecurityAuditLogs,
+admin-app/src/modules/SecurityCenter.tsx:8:  type SecurityAuditLog,
+admin-app/src/modules/SecurityCenter.tsx:35:function actorName(log: SecurityAuditLog) {
+admin-app/src/modules/SecurityCenter.tsx:64:  const [logs, setLogs] = useState<SecurityAuditLog[]>([]);
+admin-app/src/modules/SecurityCenter.tsx:89:      setLogs(data.recentAuditLogs);
+admin-app/src/modules/SecurityCenter.tsx:101:      const data = await getSecurityAuditLogs({
+admin-app/src/modules/SecurityCenter.tsx:108:      setError("Unable to load security audit activity.");
+admin-app/src/modules/SecurityCenter.tsx:330:            administrative audit history.
+admin-app/src/modules/SecurityCenter.tsx:470:            <strong>Audit Trail</strong>
+admin-app/src/modules/SecurityCenter.tsx:473:              the security audit-log API.
+admin-app/src/modules/SecurityCenter.tsx:624:            <span>Administrative security events and audit history</span>
+backend/src/settlements/settlement.service.ts:319:  await prisma.auditLog.create({
+backend/src/settlements/settlement.service.ts:338:    actorId: administratorId,
+backend/src/settlements/settlement.service.ts:417:  await prisma.auditLog.create({
+backend/src/settlements/settlement.service.ts:436:    actorId: administratorId,
+backend/src/settlements/settlement.service.ts:610:  await prisma.auditLog.create({
+backend/src/settlements/settlement.service.ts:631:    actorId: administratorId,
+backend/src/marketplace/marketplace.service.ts:20:        requestId: true,
+backend/src/marketplace/marketplace.service.ts:64:  requestId: string;
+backend/src/marketplace/marketplace.service.ts:91:    requestId: bid.requestId,
+backend/src/marketplace/marketplace.service.ts:185:    actorId: data.customerId,
+backend/src/marketplace/marketplace.service.ts:187:      requestId: request.id,
+backend/src/marketplace/marketplace.service.ts:201:  requestId: string,
+backend/src/marketplace/marketplace.service.ts:208:      id: requestId,
+backend/src/marketplace/marketplace.service.ts:238:          requestId: true,
+backend/src/marketplace/marketplace.service.ts:284:  requestId: string;
+backend/src/marketplace/marketplace.service.ts:294:    where: { id: data.requestId },
+backend/src/marketplace/marketplace.service.ts:388:        requestId: data.requestId,
+backend/src/marketplace/marketplace.service.ts:406:      actorId: data.transporterId,
+backend/src/marketplace/marketplace.service.ts:409:        requestId: data.requestId,
+backend/src/marketplace/marketplace.service.ts:439:      requestId: true,
+backend/src/marketplace/marketplace.service.ts:469:    actorId: transporterId,
+backend/src/marketplace/marketplace.service.ts:472:      requestId: updated.requestId,
+backend/src/marketplace/marketplace.service.ts:481:  requestId: string,
+backend/src/marketplace/marketplace.service.ts:493:        id: requestId,
+backend/src/marketplace/marketplace.service.ts:534:        requestId,
+backend/src/marketplace/marketplace.service.ts:538:        requestId: true,
+backend/src/marketplace/marketplace.service.ts:648:        id: requestId,
+backend/src/marketplace/marketplace.service.ts:688:        requestId,
+backend/src/marketplace/marketplace.service.ts:706:        requestId,
+backend/src/marketplace/marketplace.service.ts:761:        id: requestId,
+backend/src/marketplace/marketplace.service.ts:796:    actorId: customerId,
+backend/src/marketplace/marketplace.service.ts:799:      requestId: result.request.id,
+backend/src/marketplace/marketplace.service.ts:813:    actorId: customerId,
+backend/src/marketplace/marketplace.service.ts:815:      requestId: result.request.id,
+backend/src/marketplace/marketplace.service.ts:828:    actorId: customerId,
+backend/src/marketplace/marketplace.service.ts:836:      marketplaceRequestId: result.request.id,
+backend/src/marketplace/marketplace.service.ts:846:    actorId: customerId,
+backend/src/marketplace/marketplace.routes.ts:171:        requestId: String(req.params.id),
+admin-app/src/modules/Marketplace.tsx:683:                  <td>{bid.requestId}</td>
+backend/.gitignore:13:# Local development snapshots and audit artifacts
+backend/.gitignore:15:protection-audit.txt
+backend/.gitignore:16:routes-audit.txt
+backend/src/content/content.service.ts:32:    actorId: data.createdBy,
+backend/src/content/content.service.ts:83:    actorId: data.updatedBy,
+backend/src/content/content.service.ts:108:    actorId: administratorId,
+backend/prisma/schema.prisma.refresh-session-backup:257:  auditLogs         AuditLog[]      @relation("AuditAdministrator")
+backend/prisma/schema.prisma.refresh-session-backup:259:  affectedAuditLogs AuditLog[]      @relation("AuditAffectedUser")
+backend/prisma/schema.prisma.refresh-session-backup:619:  actorId     String?
+backend/prisma/schema.prisma.refresh-session-backup:628:  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+backend/prisma/schema.prisma.refresh-session-backup:632:  @@index([actorId, createdAt])
+backend/prisma/schema.prisma.refresh-session-backup:637:model AuditLog {
+backend/prisma/schema.prisma.refresh-session-backup:649:  administrator User  @relation("AuditAdministrator", fields: [administratorId], references: [id])
+backend/prisma/schema.prisma.refresh-session-backup:650:  affectedUser  User? @relation("AuditAffectedUser", fields: [affectedUserId], references: [id])
+backend/prisma/schema.prisma.refresh-session-backup:656:  actorId     String?
+admin-app/src/modules/ErrorCenter.tsx:80:        event.actorId ?? "",
+admin-app/src/modules/ErrorCenter.tsx:296:                  <strong>{selected.actorId ?? "SYSTEM"}</strong>
+backend/prisma/schema.prisma.security-backup:257:  auditLogs         AuditLog[]      @relation("AuditAdministrator")
+backend/prisma/schema.prisma.security-backup:259:  affectedAuditLogs AuditLog[]      @relation("AuditAffectedUser")
+backend/prisma/schema.prisma.security-backup:619:  actorId     String?
+backend/prisma/schema.prisma.security-backup:628:  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+backend/prisma/schema.prisma.security-backup:632:  @@index([actorId, createdAt])
+backend/prisma/schema.prisma.security-backup:637:model AuditLog {
+backend/prisma/schema.prisma.security-backup:649:  administrator User  @relation("AuditAdministrator", fields: [administratorId], references: [id])
+backend/prisma/schema.prisma.security-backup:650:  affectedUser  User? @relation("AuditAffectedUser", fields: [affectedUserId], references: [id])
+backend/prisma/schema.prisma.security-backup:656:  actorId     String?
+backend/prisma/schema.prisma:328:  auditLogs         AuditLog[]      @relation("AuditAdministrator")
+backend/prisma/schema.prisma:330:  affectedAuditLogs AuditLog[]      @relation("AuditAffectedUser")
+backend/prisma/schema.prisma:549:  requestId     String
+backend/prisma/schema.prisma:563:  request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+backend/prisma/schema.prisma:567:  @@unique([requestId, transporterId])
+backend/prisma/schema.prisma:568:  @@index([requestId, status])
+backend/prisma/schema.prisma:837:  actorId     String?
+backend/prisma/schema.prisma:846:  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+backend/prisma/schema.prisma:850:  @@index([actorId, createdAt])
+backend/prisma/schema.prisma:878:model AuditLog {
+backend/prisma/schema.prisma:890:  administrator User  @relation("AuditAdministrator", fields: [administratorId], references: [id])
+backend/prisma/schema.prisma:891:  affectedUser  User? @relation("AuditAffectedUser", fields: [affectedUserId], references: [id])
+backend/prisma/schema.prisma:897:  actorId     String?
+backend/src/verification/verification.service.ts:139:    actorId: userId,
+backend/src/wallet/wallet.service.ts:47:    actorId: transporterId,
+backend/src/wallet/wallet.service.ts:145:    actorId: userId,
+admin-app/src/App.tsx.before-command-center-api:95:    label: "Audit Logs",
+admin-app/src/App.tsx.before-command-center-api:413:            View audit activity
+backend/src/documents/document.service.ts:33:    actorId: data.userId,
+backend/src/documents/document.service.ts:129:    actorId: reviewedBy,
+backend/src/documents/document.service.ts:222:    actorId: reviewedBy,
+admin-app/src/App.tsx:154:    label: "Audit Logs",
+admin-app/src/App.tsx:585:            View audit activity
+backend/src/notifications/notification.service.ts:21:    actorId: data.recipientId,
+admin-app/src/api/activity.ts:7:  actorId: string | null;
+admin-app/src/api/backup-recovery.ts:18:    auditLogs: number;
+admin-app/src/api/backup-recovery.ts:30:  auditLogId: string;
+backend/src/messages/message.service.ts:83:    actorId: message.senderId,
+admin-app/check-admin-core-modules.sh:6:echo " TRANSCONET-APEX1 ADMIN FRONTEND MODULE AUDIT"
+admin-app/check-admin-core-modules.sh:95:echo " AUDIT COMPLETE"
+admin-app/src/api/security.ts:27:export type SecurityAuditLog = {
+admin-app/src/api/security.ts:59:  recentAuditLogs: SecurityAuditLog[];
+admin-app/src/api/security.ts:76:export async function getSecurityAuditLogs(filters?: {
+admin-app/src/api/security.ts:81:}): Promise<SecurityAuditLog[]> {
+admin-app/src/api/security.ts:82:  const response = await apiClient.get<ApiResponse<SecurityAuditLog[]>>(
+admin-app/src/api/security.ts:83:    "/admin/security/audit-logs",
+admin-app/src/api/errors.ts:7:  actorId: string | null;
+admin-app/src/api/marketplace.ts:63:  requestId: string;
+backend/src/payments/payment.service.ts:157:    actorId: customerId,
+backend/src/payments/payment.service.ts:368:    actorId: result.payment.customerId,
+backend/src/bookings/booking.service.ts:69:    actorId: booking.customerId,
+backend/src/bookings/booking.service.ts:88:    actorId: booking.customerId,
+backend/src/bookings/booking.service.ts:222:    actorId: transporterId,
+backend/src/bookings/booking.service.ts:234:    actorId: transporterId,
+backend/src/bookings/booking.service.ts:246:    actorId: transporterId,
+backend/src/bookings/booking.service.ts:408:      actorId: result.booking.transporterId ?? undefined,
+backend/src/bookings/booking.service.ts:590:    actorId: result.transporterId,
+backend/src/vehicles/vehicle.service.ts:16:    actorId: data.transporterId,
+backend/src/vehicles/vehicle.service.ts:70:    actorId: vehicle.transporterId,
+backend/src/middleware/error.middleware.ts:48:  const requestId =
+backend/src/middleware/error.middleware.ts:76:        actorId: user.id,
+backend/src/middleware/error.middleware.ts:79:          typeof requestId === "string"
+backend/src/middleware/error.middleware.ts:80:            ? requestId
+backend/src/middleware/error.middleware.ts:86:          requestId,
+backend/src/middleware/error.middleware.ts:114:      requestId,
+backend/src/middleware/error.middleware.ts:124:    requestId,
+backend/src/middleware/security-foundation.middleware.ts:124:function requestIdMiddleware(
+backend/src/middleware/security-foundation.middleware.ts:131:  const requestId =
+backend/src/middleware/security-foundation.middleware.ts:137:  res.setHeader("X-Request-ID", requestId);
+backend/src/middleware/security-foundation.middleware.ts:228:  app.use(requestIdMiddleware);
+backend/src/realtime/tracking.service.ts:97:    actorId: result.transporterId,
+backend/src/realtime/activity.service.ts:12:      actorId: event.actorId,
+backend/src/realtime/realtime.service.ts:31:  actorId?: string;
+backend/src/admin/marketplace.service.ts:60:    requestId: bid.requestId,
+backend/src/admin/marketplace.service.ts:252:          requestId: true,
+backend/src/admin/marketplace.service.ts:355:        requestId: true,
+backend/src/admin/marketplace.service.ts:417:      requestId: true,
+backend/src/admin/feature-management.service.ts:58:    await tx.auditLog.create({
+backend/src/admin/feature-management.service.ts:82:    actorId: administratorId,
+backend/src/admin/feature-management.service.ts:137:    await tx.auditLog.create({
+backend/src/admin/feature-management.service.ts:170:    actorId: administratorId,
+backend/src/admin/customer-management.service.ts:187:    await tx.auditLog.create({
+backend/src/admin/ai-automation.service.ts:114:    actorId: administratorId,
+backend/src/admin/reports.service.ts:86:    actorId: administratorId,
+backend/src/admin/risk-fraud.service.ts:90:    actorId: administratorId,
+backend/src/admin/backup-recovery.service.ts:14:      auditLogs,
+backend/src/admin/backup-recovery.service.ts:21:      prisma.auditLog.count(),
+backend/src/admin/backup-recovery.service.ts:31:      applicationSnapshotMode: "ADMINISTRATIVE_AUDIT_RECORD",
+backend/src/admin/backup-recovery.service.ts:39:        auditLogs,
+backend/src/admin/backup-recovery.service.ts:52:      applicationSnapshotMode: "ADMINISTRATIVE_AUDIT_RECORD",
+backend/src/admin/backup-recovery.service.ts:80:    const auditLog = await tx.auditLog.create({
+backend/src/admin/backup-recovery.service.ts:98:    return { snapshot, auditLog };
+backend/src/admin/backup-recovery.service.ts:114:    actorId: administratorId,
+backend/src/admin/backup-recovery.service.ts:117:      auditLogId: result.auditLog.id,
+backend/src/admin/backup-recovery.service.ts:123:    auditLogId: result.auditLog.id,
+backend/src/admin/database-health.service.ts:51:    actorId: administratorId,
+backend/src/admin/api-management.service.ts:47:    actorId: administratorId,
+backend/src/admin/error.service.ts:52:  actorId?: string;
+backend/src/admin/error.service.ts:63:      actorId: data.actorId,
+backend/src/admin/error.service.ts:75:    actorId: data.actorId,
+backend/src/admin/security.routes.ts:12:  getSecurityAuditLogs,
+backend/src/admin/security.routes.ts:45:router.get("/audit-logs", async (req, res) => {
+backend/src/admin/security.routes.ts:47:    const logs = await getSecurityAuditLogs({
+backend/src/admin/security.service.ts:10:    recentAuditLogs,
+backend/src/admin/security.service.ts:28:    prisma.auditLog.findMany({
+backend/src/admin/security.service.ts:59:    recentAuditLogs,
+backend/src/admin/security.service.ts:64:export async function getSecurityAuditLogs(options?: {
+backend/src/admin/security.service.ts:75:  return prisma.auditLog.findMany({
+backend/src/admin/security.service.ts:165:  await prisma.auditLog.create({
+backend/src/admin/security.service.ts:186:    actorId: administratorId,
+backend/src/admin/security.service.ts:213:  await prisma.auditLog.create({
+backend/src/admin/security.service.ts:236:    actorId: administratorId,
+backend/src/admin/platform-config.service.ts:71:    await tx.auditLog.create({
+backend/src/admin/platform-config.service.ts:98:    actorId: administratorId,
+backend/src/admin/platform-config.service.ts:122:    await tx.auditLog.create({
+backend/src/admin/platform-config.service.ts:143:    actorId: administratorId,
+backend/src/admin/role-permission.service.ts:80:    actorId: administratorId,
+backend/src/admin/marketing.service.ts:82:    actorId: administratorId,
+backend/src/admin/marketing.service.ts:141:    actorId: administratorId,
+backend/src/admin/marketing.service.ts:205:    actorId: administratorId,
+backend/src/admin/partner.service.ts:136:    actorId: administratorId,
+backend/src/admin/fleet.service.ts:68:    await tx.auditLog.create({
+backend/src/admin/fleet.service.ts:94:    actorId: administratorId,
+backend/src/admin/administrator.service.ts.bak2:115:  await prisma.auditLog.create({
+backend/src/admin/financial.service.ts:247:  await prisma.auditLog.create({
+backend/src/admin/financial.service.ts:278:    actorId: administratorId,
+backend/src/admin/financial.service.ts:437:    await tx.auditLog.create({
+backend/src/admin/financial.service.ts:488:    actorId: administratorId,
+backend/src/admin/administrator.service.ts:137:    await tx.auditLog.create({
+backend/src/admin/administrator.service.ts:299:    await tx.auditLog.create({
+backend/src/admin/administrator.service.ts:368:    await tx.auditLog.create({
+backend/src/disputes/dispute.service.ts:16:    actorId: dispute.customerId,
+backend/src/support/support.service.ts:86:      actorId: ticket.requesterId,
+backend/src/support/support.service.ts:98:    actorId: ticket.requesterId,
+backend/src/support/support.service.ts:140:    actorId: administratorId,
+backend/src/support/support.service.ts:225:    actorId: administratorId,
+backend/src/support/support.service.ts:254:    actorId: administratorId,
+backend/src/events/event.routes.ts:18:  actorId: z.string().uuid().optional(),
+parity-audit-report.txt:3:FULL PARITY AUDIT
+parity-audit-report.txt:8:AUDIT CHAIN
+parity-audit-report.txt:20: -> audit logging / AdminActivity
+parity-audit-report.txt:24:This is a READ-ONLY static/repository audit.
+parity-audit-report.txt:58:026. Audit Logs
+parity-audit-report.txt:340:45:router.get("/audit-logs", async (req, res) => {
+parity-audit-report.txt:405:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:278:    actorId: administratorId,
+parity-audit-report.txt:406:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:488:    actorId: administratorId,
+parity-audit-report.txt:442:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.service.ts:94:    actorId: administratorId,
+parity-audit-report.txt:443:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/partner.service.ts:136:    actorId: administratorId,
+parity-audit-report.txt:452:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.service.ts:82:    actorId: administratorId,
+parity-audit-report.txt:453:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.service.ts:141:    actorId: administratorId,
+parity-audit-report.txt:454:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/marketing.service.ts:205:    actorId: administratorId,
+parity-audit-report.txt:469:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/role-permission.service.ts:80:    actorId: administratorId,
+parity-audit-report.txt:482:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.service.ts:98:    actorId: administratorId,
+parity-audit-report.txt:483:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.service.ts:143:    actorId: administratorId,
+parity-audit-report.txt:494:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:186:    actorId: administratorId,
+parity-audit-report.txt:495:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:236:    actorId: administratorId,
+parity-audit-report.txt:508:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts:52:  actorId?: string;
+parity-audit-report.txt:509:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts:63:      actorId: data.actorId,
+parity-audit-report.txt:510:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/error.service.ts:75:    actorId: data.actorId,
+parity-audit-report.txt:517:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/api-management.service.ts:47:    actorId: administratorId,
+parity-audit-report.txt:524:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/database-health.service.ts:51:    actorId: administratorId,
+parity-audit-report.txt:531:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:114:    actorId: administratorId,
+parity-audit-report.txt:540:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/risk-fraud.service.ts:90:    actorId: administratorId,
+parity-audit-report.txt:549:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/reports.service.ts:86:    actorId: administratorId,
+parity-audit-report.txt:558:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/ai-automation.service.ts:114:    actorId: administratorId,
+parity-audit-report.txt:586:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.service.ts:82:    actorId: administratorId,
+parity-audit-report.txt:587:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.service.ts:170:    actorId: administratorId,
+parity-audit-report.txt:924:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:247:  await prisma.auditLog.create({
+parity-audit-report.txt:946:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:28:    prisma.auditLog.findMany({
+parity-audit-report.txt:947:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:75:  return prisma.auditLog.findMany({
+parity-audit-report.txt:951:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:165:  await prisma.auditLog.create({
+parity-audit-report.txt:954:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:213:  await prisma.auditLog.create({
+parity-audit-report.txt:973:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:21:      prisma.auditLog.count(),
+parity-audit-report.txt:1079:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:319:  await prisma.auditLog.create({
+parity-audit-report.txt:1080:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:417:  await prisma.auditLog.create({
+parity-audit-report.txt:1081:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:610:  await prisma.auditLog.create({
+parity-audit-report.txt:1091:11. AUDIT LOGGING / ADMIN ACTIVITY
+parity-audit-report.txt:1095:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.service.ts:137:    await tx.auditLog.create({
+parity-audit-report.txt:1096:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.service.ts:299:    await tx.auditLog.create({
+parity-audit-report.txt:1097:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/administrator.service.ts:368:    await tx.auditLog.create({
+parity-audit-report.txt:1105:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:247:  await prisma.auditLog.create({
+parity-audit-report.txt:1106:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/financial.service.ts:437:    await tx.auditLog.create({
+parity-audit-report.txt:1107:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/fleet.service.ts:68:    await tx.auditLog.create({
+parity-audit-report.txt:1108:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.service.ts:71:    await tx.auditLog.create({
+parity-audit-report.txt:1109:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/platform-config.service.ts:122:    await tx.auditLog.create({
+parity-audit-report.txt:1110:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:10:    recentAuditLogs,
+parity-audit-report.txt:1111:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:28:    prisma.auditLog.findMany({
+parity-audit-report.txt:1112:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:59:    recentAuditLogs,
+parity-audit-report.txt:1113:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:64:export async function getSecurityAuditLogs(options?: {
+parity-audit-report.txt:1114:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:75:  return prisma.auditLog.findMany({
+parity-audit-report.txt:1115:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:165:  await prisma.auditLog.create({
+parity-audit-report.txt:1116:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.service.ts:213:  await prisma.auditLog.create({
+parity-audit-report.txt:1117:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:12:  getSecurityAuditLogs,
+parity-audit-report.txt:1118:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:45:router.get("/audit-logs", async (req, res) => {
+parity-audit-report.txt:1119:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/security.routes.ts:47:    const logs = await getSecurityAuditLogs({
+parity-audit-report.txt:1124:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:14:      auditLogs,
+parity-audit-report.txt:1125:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:21:      prisma.auditLog.count(),
+parity-audit-report.txt:1126:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:31:      applicationSnapshotMode: "ADMINISTRATIVE_AUDIT_RECORD",
+parity-audit-report.txt:1127:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:39:        auditLogs,
+parity-audit-report.txt:1128:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:52:      applicationSnapshotMode: "ADMINISTRATIVE_AUDIT_RECORD",
+parity-audit-report.txt:1129:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:80:    const auditLog = await tx.auditLog.create({
+parity-audit-report.txt:1130:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:98:    return { snapshot, auditLog };
+parity-audit-report.txt:1131:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:117:      auditLogId: result.auditLog.id,
+parity-audit-report.txt:1132:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/backup-recovery.service.ts:123:    auditLogId: result.auditLog.id,
+parity-audit-report.txt:1134:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/customer-management.service.ts:187:    await tx.auditLog.create({
+parity-audit-report.txt:1135:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.service.ts:58:    await tx.auditLog.create({
+parity-audit-report.txt:1136:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/admin/feature-management.service.ts:137:    await tx.auditLog.create({
+parity-audit-report.txt:1143:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:319:  await prisma.auditLog.create({
+parity-audit-report.txt:1144:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:417:  await prisma.auditLog.create({
+parity-audit-report.txt:1145:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/settlements/settlement.service.ts:610:  await prisma.auditLog.create({
+parity-audit-report.txt:1618:- audit row creation on success and failure paths
+parity-audit-report.txt:1634: -> AdminActivity/audit record
+backend/src/events/event.service.ts:5:  actorId?: string;

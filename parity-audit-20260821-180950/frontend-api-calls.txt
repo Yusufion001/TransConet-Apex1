@@ -1,0 +1,442 @@
+transconet-parity-audit.sh:72:scan '(fetch\(|axios\.(get|post|put|patch|delete)|axios\(|api\.(get|post|put|patch|delete)|\.request\(|/api/|NEXT_PUBLIC_API|VITE_.*API|baseURL)' frontend-api-calls.txt
+transconet-parity-audit.sh:139:    echo "=== GET /api/health ==="
+transconet-parity-audit.sh:141:      --max-time 15 "$BASE_URL/api/health" || true
+transconet-parity-audit.sh:144:    echo "=== GET /api/csrf-token ==="
+transconet-parity-audit.sh:146:      --max-time 15 "$BASE_URL/api/csrf-token" || true
+parity-audit-report.txt:125:/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/admin.ts:27 | GET    | /admin/platform-overview
+parity-audit-report.txt:126:/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/api-management.ts:23 | GET    | /admin/api-management/overview
+parity-audit-report.txt:127:/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/api-management.ts:28 | GET    | /admin/api-management/health
+parity-audit-report.txt:128:/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/backup-recovery.ts:34 | GET    | /admin/backup-recovery
+parity-audit-report.txt:129:/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/backup-recovery.ts:39 | POST   | /admin/backup-recovery/snapshot
+parity-audit-report.txt:130:/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/client.ts:51 | POST   | ${apiUrl}/auth/refresh
+parity-audit-report.txt:131:/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/database-health.ts:20 | GET    | /admin/database-health
+parity-audit-report.txt:132:/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts:74 | GET    | /admin/live-trips/summary
+parity-audit-report.txt:133:/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts:85 | GET    | /admin/live-trips
+parity-audit-report.txt:134:/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts:98 | GET    | /admin/live-trips/${tripId}
+parity-audit-report.txt:135:/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts:110 | GET    | /admin/live-trips/${tripId}/tracking
+parity-audit-report.txt:136:/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/notifications.ts:46 | GET    | /admin/notifications${query ?
+parity-audit-report.txt:137:/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/notifications.ts:57 | GET    | /admin/notifications/summary
+parity-audit-report.txt:138:/data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/notifications.ts:68 | PATCH  | /admin/notifications/${id}/read
+parity-audit-report.txt:147:162:app.use("/api/admin", adminRoutes);
+parity-audit-report.txt:148:163:app.use("/api/admin/customers", adminCustomerManagementRoutes);
+parity-audit-report.txt:149:164:app.use("/api/admin/platform-config", adminPlatformConfigRoutes);
+parity-audit-report.txt:150:165:app.use("/api/admin/roles", adminRolePermissionRoutes);
+parity-audit-report.txt:151:166:app.use("/api/admin/security", adminSecurityRoutes);
+parity-audit-report.txt:152:167:app.use("/api/admin/support", adminSupportRoutes);
+parity-audit-report.txt:153:168:app.use("/api/admin/notifications", adminNotificationRoutes);
+parity-audit-report.txt:154:169:app.use("/api/admin/financial", adminFinancialRoutes);
+parity-audit-report.txt:155:170:app.use("/api/admin/features", adminFeatureManagementRoutes);
+parity-audit-report.txt:156:172:app.use("/api/admin/subscriptions", adminSubscriptionRoutes);
+parity-audit-report.txt:157:173:app.use("/api/admin/marketing", adminMarketingRoutes);
+parity-audit-report.txt:158:174:app.use("/api/admin/live-trips", adminLiveTripsRoutes);
+parity-audit-report.txt:159:175:app.use("/api/admin/verification", adminVerificationRoutes);
+parity-audit-report.txt:160:176:app.use("/api/admin/fleet", adminFleetRoutes);
+parity-audit-report.txt:161:177:app.use("/api/admin/marketplace", adminMarketplaceRoutes);
+parity-audit-report.txt:162:178:app.use("/api/admin/partners", adminPartnerRoutes);
+parity-audit-report.txt:163:179:app.use("/api/admin/errors", adminErrorRoutes);
+parity-audit-report.txt:164:180:app.use("/api/admin/api-management", adminApiManagementRoutes);
+parity-audit-report.txt:165:181:app.use("/api/admin/database-health", adminDatabaseHealthRoutes);
+parity-audit-report.txt:166:182:app.use("/api/admin/backup-recovery", adminBackupRecoveryRoutes);
+parity-audit-report.txt:167:183:app.use("/api/admin/risk-fraud", adminRiskFraudRoutes);
+parity-audit-report.txt:168:184:app.use("/api/admin/reports", adminReportsRoutes);
+parity-audit-report.txt:169:185:app.use("/api/admin/activity", adminActivityRoutes);
+parity-audit-report.txt:170:186:app.use("/api/admin/ai-automation", adminAIAutomationRoutes);
+parity-audit-report.txt:171:187:app.use("/api/admin/content", contentRoutes);
+parity-audit-report.txt:1142:/data/data/com.termux/files/home/TransConet-Apex1/backend/src/server.ts:185:app.use("/api/admin/activity", adminActivityRoutes);
+parity-audit-report.txt:1531:  /api/admin
+parity-audit-report.txt:1532:  /api/admin/customers
+parity-audit-report.txt:1533:  /api/admin/platform-config
+parity-audit-report.txt:1534:  /api/admin/roles
+parity-audit-report.txt:1535:  /api/admin/security
+parity-audit-report.txt:1536:  /api/admin/support
+parity-audit-report.txt:1537:  /api/admin/notifications
+parity-audit-report.txt:1538:  /api/admin/financial
+parity-audit-report.txt:1539:  /api/admin/features
+parity-audit-report.txt:1540:  /api/admin/subscriptions
+parity-audit-report.txt:1541:  /api/admin/marketing
+parity-audit-report.txt:1542:  /api/admin/live-trips
+parity-audit-report.txt:1543:  /api/admin/verification
+parity-audit-report.txt:1544:  /api/admin/fleet
+parity-audit-report.txt:1545:  /api/admin/marketplace
+parity-audit-report.txt:1546:  /api/admin/partners
+parity-audit-report.txt:1547:  /api/admin/errors
+parity-audit-report.txt:1548:  /api/admin/api-management
+parity-audit-report.txt:1549:  /api/admin/database-health
+parity-audit-report.txt:1550:  /api/admin/backup-recovery
+parity-audit-report.txt:1551:  /api/admin/risk-fraud
+parity-audit-report.txt:1552:  /api/admin/reports
+parity-audit-report.txt:1553:  /api/admin/activity
+parity-audit-report.txt:1554:  /api/admin/ai-automation
+parity-audit-report.txt:1555:  /api/admin/content
+parity-audit-report.txt:1559:  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/api-management.ts
+parity-audit-report.txt:1562:  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/api-management.ts
+parity-audit-report.txt:1565:  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/backup-recovery.ts
+parity-audit-report.txt:1568:  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/database-health.ts
+parity-audit-report.txt:1571:  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts
+parity-audit-report.txt:1574:  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts
+parity-audit-report.txt:1577:  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts
+parity-audit-report.txt:1580:  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/live-trips.ts
+parity-audit-report.txt:1583:  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/notifications.ts
+parity-audit-report.txt:1586:  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/notifications.ts
+parity-audit-report.txt:1589:  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/admin.ts
+parity-audit-report.txt:1592:  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/notifications.ts
+parity-audit-report.txt:1595:  source: /data/data/com.termux/files/home/TransConet-Apex1/admin-app/src/api/backup-recovery.ts
+parity-audit.sh:145:grep -nE 'app\.use\("/api/admin' \
+parity-audit.sh:322:    r'app\.use\(\s*["\'](/api/admin[^"\']*)["\']',
+marketplace-report-chunks/context-05.txt:130:} from "../api/administrators";
+marketplace-report-chunks/context-05.txt:703:} from "../api/role-permissions";
+marketplace-report-chunks/context-05.txt:704:import type { AdminModule } from "../api/administrators";
+marketplace-report-chunks/context-05.txt:1176:----- FILE: admin-app/src/api/admin.ts -----
+marketplace-report-chunks/context-05.txt:1211:----- FILE: admin-app/src/api/administrators.ts -----
+marketplace-report-chunks/context-05.txt:1348:----- FILE: admin-app/src/api/live-trips.ts -----
+marketplace-report-chunks/context-05.txt:1581:backend/src/server.ts:139:app.use("/api/marketplace", marketplaceRoutes);
+mobile-app/src/auth/auth.store.ts:8:} from "../api/auth";
+mobile-app/src/api/client.ts:23:  baseURL: apiUrl,
+mobile-app/src/api/client.ts:40:    const response = await axios.post<{
+marketplace-report-chunks/context-04.txt:860:import { getPlatformOverview, type PlatformOverview } from "./api/admin";
+marketplace-report-chunks/context-04.txt:869:} from "./api/live-trips";
+marketplace-report-chunks/context-04.txt:2336:----- FILE: admin-app/src/api/admin.ts -----
+marketplace-report-chunks/context-04.txt:2371:----- FILE: admin-app/src/api/administrators.ts -----
+marketplace-report-chunks/context-04.txt:2508:----- FILE: admin-app/src/api/live-trips.ts -----
+backend/marketplace-audit-report.txt:1801:src/server.ts:138:app.use("/api/marketplace", marketplaceRoutes);
+backend/marketplace-audit-report.txt:3102:src/server.ts:154:app.use("/api/subscriptions", subscriptionRoutes);
+backend/marketplace-audit-report.txt:3103:src/server.ts:162:app.use("/api/admin/subscriptions", adminSubscriptionRoutes);
+backend/marketplace-audit-report.txt:3931:src/server.ts:138:app.use("/api/marketplace", marketplaceRoutes);
+marketplace-report-chunks/context-00.txt:189:admin-app/src/api/admin.ts
+marketplace-report-chunks/context-00.txt:190:admin-app/src/api/administrators.ts
+marketplace-report-chunks/context-00.txt:191:admin-app/src/api/client.ts
+marketplace-report-chunks/context-00.txt:192:admin-app/src/api/client.ts.before-refresh
+marketplace-report-chunks/context-00.txt:193:admin-app/src/api/live-trips.ts
+marketplace-report-chunks/context-00.txt:194:admin-app/src/api/role-permissions.ts
+marketplace-report-chunks/context-00.txt:1997:backend/src/server.ts:139:app.use("/api/marketplace", marketplaceRoutes);
+backend/audits/backend-audit-20260818-070448.txt:1125:src/middleware/security-foundation.middleware.ts:241:      if (req.url === "/api/payments/webhook" || req.url === "/api/verification/youverify/webhook") {
+backend/audits/backend-audit-20260818-070448.txt:1213:src/server.ts:139:app.use("/api/verification/youverify", youverifyWebhookRoutes);
+marketplace-part-02.txt:860:import { getPlatformOverview, type PlatformOverview } from "./api/admin";
+marketplace-part-02.txt:869:} from "./api/live-trips";
+marketplace-part-02.txt:2336:----- FILE: admin-app/src/api/admin.ts -----
+marketplace-part-02.txt:2371:----- FILE: admin-app/src/api/administrators.ts -----
+marketplace-part-02.txt:2508:----- FILE: admin-app/src/api/live-trips.ts -----
+marketplace-part-02.txt:2641:} from "../api/administrators";
+marketplace-part-02.txt:3214:} from "../api/role-permissions";
+marketplace-part-02.txt:3215:import type { AdminModule } from "../api/administrators";
+marketplace-part-02.txt:3687:----- FILE: admin-app/src/api/admin.ts -----
+marketplace-part-02.txt:3722:----- FILE: admin-app/src/api/administrators.ts -----
+marketplace-part-02.txt:3859:----- FILE: admin-app/src/api/live-trips.ts -----
+marketplace-part-02.txt:4092:backend/src/server.ts:139:app.use("/api/marketplace", marketplaceRoutes);
+marketplace-report-chunks/context-02.txt:481:app.use("/api/bookings", bookingRoutes);
+marketplace-report-chunks/context-02.txt:482:app.use("/api/marketplace", marketplaceRoutes);
+marketplace-report-chunks/context-02.txt:483:app.use("/api/auth", authRoutes);
+marketplace-report-chunks/context-02.txt:484:app.use("/api/users", userRoutes);
+marketplace-report-chunks/context-02.txt:485:app.use("/api/documents", documentRoutes);
+marketplace-report-chunks/context-02.txt:486:app.use("/api/verification/youverify", youverifyWebhookRoutes);
+marketplace-report-chunks/context-02.txt:488:  "/api/verification",
+marketplace-report-chunks/context-02.txt:492:  "/api/payments",
+marketplace-report-chunks/context-02.txt:495:app.use("/api/vehicles", vehicleRoutes);
+marketplace-report-chunks/context-02.txt:496:app.use("/api/transporters", transporterRoutes);
+marketplace-report-chunks/context-02.txt:497:app.use("/api/wallet", walletRoutes);
+marketplace-report-chunks/context-02.txt:498:app.use("/api/subscriptions", subscriptionRoutes);
+marketplace-report-chunks/context-02.txt:499:app.use("/api/admin", adminRoutes);
+marketplace-report-chunks/context-02.txt:500:app.use("/api/admin/platform-config", adminPlatformConfigRoutes);
+marketplace-report-chunks/context-02.txt:501:app.use("/api/admin/roles", adminRolePermissionRoutes);
+marketplace-report-chunks/context-02.txt:502:app.use("/api/admin/security", adminSecurityRoutes);
+marketplace-report-chunks/context-02.txt:503:app.use("/api/admin/support", adminSupportRoutes);
+marketplace-report-chunks/context-02.txt:504:app.use("/api/admin/notifications", adminNotificationRoutes);
+marketplace-report-chunks/context-02.txt:505:app.use("/api/admin/financial", adminFinancialRoutes);
+marketplace-report-chunks/context-02.txt:506:app.use("/api/admin/subscriptions", adminSubscriptionRoutes);
+marketplace-report-chunks/context-02.txt:507:app.use("/api/admin/marketing", adminMarketingRoutes);
+marketplace-report-chunks/context-02.txt:508:app.use("/api/admin/live-trips", adminLiveTripsRoutes);
+marketplace-report-chunks/context-02.txt:509:app.use("/api/admin/verification", adminVerificationRoutes);
+marketplace-report-chunks/context-02.txt:510:app.use("/api/admin/fleet", adminFleetRoutes);
+marketplace-report-chunks/context-02.txt:511:app.use("/api/admin/partners", adminPartnerRoutes);
+marketplace-report-chunks/context-02.txt:512:app.use("/api/admin/errors", adminErrorRoutes);
+marketplace-report-chunks/context-02.txt:513:app.use("/api/admin/api-management", adminApiManagementRoutes);
+marketplace-report-chunks/context-02.txt:514:app.use("/api/admin/database-health", adminDatabaseHealthRoutes);
+marketplace-report-chunks/context-02.txt:515:app.use("/api/admin/backup-recovery", adminBackupRecoveryRoutes);
+marketplace-report-chunks/context-02.txt:516:app.use("/api/admin/risk-fraud", adminRiskFraudRoutes);
+marketplace-report-chunks/context-02.txt:517:app.use("/api/admin/reports", adminReportsRoutes);
+marketplace-report-chunks/context-02.txt:518:app.use("/api/admin/ai-automation", adminAIAutomationRoutes);
+marketplace-report-chunks/context-02.txt:519:app.use("/api/admin/content", contentRoutes);
+marketplace-report-chunks/context-02.txt:520:app.use("/api/marketing", marketingRoutes);
+marketplace-report-chunks/context-02.txt:521:app.use("/api/messages", messageRoutes);
+marketplace-report-chunks/context-02.txt:523:  "/api/notifications",
+marketplace-report-chunks/context-02.txt:527:  "/api/support",
+marketplace-report-chunks/context-02.txt:531:  "/api/disputes",
+marketplace-report-chunks/context-02.txt:535:  "/api/events",
+backend/src/payments/flutterwave.service.ts:44:  const response = await fetch(`${env.FLW_BASE_URL}${path}`, {
+backend/src/middleware/security-foundation.middleware.ts:104:      req.path === "/api/health"
+backend/src/middleware/security-foundation.middleware.ts:241:      if (req.url === "/api/payments/webhook" || req.url === "/api/verification/youverify/webhook") {
+marketplace-part-01.txt:481:app.use("/api/bookings", bookingRoutes);
+marketplace-part-01.txt:482:app.use("/api/marketplace", marketplaceRoutes);
+marketplace-part-01.txt:483:app.use("/api/auth", authRoutes);
+marketplace-part-01.txt:484:app.use("/api/users", userRoutes);
+marketplace-part-01.txt:485:app.use("/api/documents", documentRoutes);
+marketplace-part-01.txt:486:app.use("/api/verification/youverify", youverifyWebhookRoutes);
+marketplace-part-01.txt:488:  "/api/verification",
+marketplace-part-01.txt:492:  "/api/payments",
+marketplace-part-01.txt:495:app.use("/api/vehicles", vehicleRoutes);
+marketplace-part-01.txt:496:app.use("/api/transporters", transporterRoutes);
+marketplace-part-01.txt:497:app.use("/api/wallet", walletRoutes);
+marketplace-part-01.txt:498:app.use("/api/subscriptions", subscriptionRoutes);
+marketplace-part-01.txt:499:app.use("/api/admin", adminRoutes);
+marketplace-part-01.txt:500:app.use("/api/admin/platform-config", adminPlatformConfigRoutes);
+marketplace-part-01.txt:501:app.use("/api/admin/roles", adminRolePermissionRoutes);
+marketplace-part-01.txt:502:app.use("/api/admin/security", adminSecurityRoutes);
+marketplace-part-01.txt:503:app.use("/api/admin/support", adminSupportRoutes);
+marketplace-part-01.txt:504:app.use("/api/admin/notifications", adminNotificationRoutes);
+marketplace-part-01.txt:505:app.use("/api/admin/financial", adminFinancialRoutes);
+marketplace-part-01.txt:506:app.use("/api/admin/subscriptions", adminSubscriptionRoutes);
+marketplace-part-01.txt:507:app.use("/api/admin/marketing", adminMarketingRoutes);
+marketplace-part-01.txt:508:app.use("/api/admin/live-trips", adminLiveTripsRoutes);
+marketplace-part-01.txt:509:app.use("/api/admin/verification", adminVerificationRoutes);
+marketplace-part-01.txt:510:app.use("/api/admin/fleet", adminFleetRoutes);
+marketplace-part-01.txt:511:app.use("/api/admin/partners", adminPartnerRoutes);
+marketplace-part-01.txt:512:app.use("/api/admin/errors", adminErrorRoutes);
+marketplace-part-01.txt:513:app.use("/api/admin/api-management", adminApiManagementRoutes);
+marketplace-part-01.txt:514:app.use("/api/admin/database-health", adminDatabaseHealthRoutes);
+marketplace-part-01.txt:515:app.use("/api/admin/backup-recovery", adminBackupRecoveryRoutes);
+marketplace-part-01.txt:516:app.use("/api/admin/risk-fraud", adminRiskFraudRoutes);
+marketplace-part-01.txt:517:app.use("/api/admin/reports", adminReportsRoutes);
+marketplace-part-01.txt:518:app.use("/api/admin/ai-automation", adminAIAutomationRoutes);
+marketplace-part-01.txt:519:app.use("/api/admin/content", contentRoutes);
+marketplace-part-01.txt:520:app.use("/api/marketing", marketingRoutes);
+marketplace-part-01.txt:521:app.use("/api/messages", messageRoutes);
+marketplace-part-01.txt:523:  "/api/notifications",
+marketplace-part-01.txt:527:  "/api/support",
+marketplace-part-01.txt:531:  "/api/disputes",
+marketplace-part-01.txt:535:  "/api/events",
+marketplace-part-01.txt:2326:backend/src/server.ts:139:app.use("/api/marketplace", marketplaceRoutes);
+backend/.agents/skills/prisma-upgrade-v7/references/schema-changes.md:92:The `url`, `directUrl`, and `shadowDatabaseUrl` fields in the `datasource` block are deprecated in Prisma v7. Move them to `prisma.config.ts` and keep only the provider in `schema.prisma`:
+backend/.agents/skills/prisma-upgrade-v7/references/schema-changes.md:105:    shadowDatabaseUrl: env('SHADOW_DATABASE_URL'),
+backend/.agents/skills/prisma-upgrade-v7/references/prisma-config.md:57:### datasource.shadowDatabaseUrl
+backend/.agents/skills/prisma-upgrade-v7/references/prisma-config.md:64:  shadowDatabaseUrl: env('SHADOW_DATABASE_URL'),
+backend/.agents/skills/prisma-upgrade-v7/references/prisma-config.md:109:    shadowDatabaseUrl: env('SHADOW_DATABASE_URL'),
+backend/.agents/skills/prisma-compute/references/sdk-api.md:47:const databaseUrl = process.env.DATABASE_URL
+backend/.agents/skills/prisma-compute/references/sdk-api.md:48:if (!databaseUrl) throw new Error("DATABASE_URL is required")
+backend/.agents/skills/prisma-compute/references/sdk-api.md:58:  envVars: { DATABASE_URL: databaseUrl },
+backend/.agents/skills/prisma-compute/references/sdk-api.md:116:  filePaths: ['apps/api/package.json', 'apps/api/src/index.ts'],
+backend/.agents/skills/prisma-compute/references/frameworks.md:377:  --entry apps/api/dist/src/index.js \
+backend/.agents/skills/prisma-compute/references/compute-config.md:149:        file: "apps/api/.env",
+backend/.agents/skills/prisma-client-api/references/constructor.md:108:await withQueryTags({ route: '/api/users', requestId: 'req-123' }, () =>
+backend/.agents/skills/prisma-cli/references/migrate-dev.md:140:    shadowDatabaseUrl: env('SHADOW_DATABASE_URL'),
+backend/src/server.ts.security-foundation-backup:115:app.use("/api/bookings", bookingRoutes);
+backend/src/server.ts.security-foundation-backup:116:app.use("/api/auth", authRoutes);
+backend/src/server.ts.security-foundation-backup:117:app.use("/api/users", userRoutes);
+backend/src/server.ts.security-foundation-backup:118:app.use("/api/documents", documentRoutes);
+backend/src/server.ts.security-foundation-backup:120:  "/api/verification",
+backend/src/server.ts.security-foundation-backup:124:  "/api/payments",
+backend/src/server.ts.security-foundation-backup:127:app.use("/api/vehicles", vehicleRoutes);
+backend/src/server.ts.security-foundation-backup:128:app.use("/api/transporters", transporterRoutes);
+backend/src/server.ts.security-foundation-backup:129:app.use("/api/wallet", walletRoutes);
+backend/src/server.ts.security-foundation-backup:130:app.use("/api/admin", adminRoutes);
+backend/src/server.ts.security-foundation-backup:131:app.use("/api/admin/platform-config", adminPlatformConfigRoutes);
+backend/src/server.ts.security-foundation-backup:132:app.use("/api/admin/roles", adminRolePermissionRoutes);
+backend/src/server.ts.security-foundation-backup:133:app.use("/api/admin/support", adminSupportRoutes);
+backend/src/server.ts.security-foundation-backup:134:app.use("/api/admin/notifications", adminNotificationRoutes);
+backend/src/server.ts.security-foundation-backup:135:app.use("/api/admin/financial", adminFinancialRoutes);
+backend/src/server.ts.security-foundation-backup:136:app.use("/api/admin/marketing", adminMarketingRoutes);
+backend/src/server.ts.security-foundation-backup:137:app.use("/api/admin/live-trips", adminLiveTripsRoutes);
+backend/src/server.ts.security-foundation-backup:138:app.use("/api/admin/verification", adminVerificationRoutes);
+backend/src/server.ts.security-foundation-backup:139:app.use("/api/admin/fleet", adminFleetRoutes);
+backend/src/server.ts.security-foundation-backup:140:app.use("/api/admin/partners", adminPartnerRoutes);
+backend/src/server.ts.security-foundation-backup:141:app.use("/api/admin/errors", adminErrorRoutes);
+backend/src/server.ts.security-foundation-backup:142:app.use("/api/admin/api-management", adminApiManagementRoutes);
+backend/src/server.ts.security-foundation-backup:143:app.use("/api/admin/database-health", adminDatabaseHealthRoutes);
+backend/src/server.ts.security-foundation-backup:144:app.use("/api/admin/backup-recovery", adminBackupRecoveryRoutes);
+backend/src/server.ts.security-foundation-backup:145:app.use("/api/admin/risk-fraud", adminRiskFraudRoutes);
+backend/src/server.ts.security-foundation-backup:146:app.use("/api/admin/reports", adminReportsRoutes);
+backend/src/server.ts.security-foundation-backup:147:app.use("/api/admin/ai-automation", adminAIAutomationRoutes);
+backend/src/server.ts.security-foundation-backup:148:app.use("/api/admin/content", contentRoutes);
+backend/src/server.ts.security-foundation-backup:149:app.use("/api/messages", messageRoutes);
+backend/src/server.ts.security-foundation-backup:151:  "/api/notifications",
+backend/src/server.ts.security-foundation-backup:155:  "/api/support",
+backend/src/server.ts.security-foundation-backup:159:  "/api/disputes",
+backend/src/server.ts.security-foundation-backup:163:  "/api/events",
+backend/src/server.ts.security-backup:125:app.use("/api/bookings", bookingRoutes);
+backend/src/server.ts.security-backup:126:app.use("/api/auth", authRoutes);
+backend/src/server.ts.security-backup:127:app.use("/api/users", userRoutes);
+backend/src/server.ts.security-backup:128:app.use("/api/documents", documentRoutes);
+backend/src/server.ts.security-backup:130:  "/api/verification",
+backend/src/server.ts.security-backup:134:  "/api/payments",
+backend/src/server.ts.security-backup:137:app.use("/api/vehicles", vehicleRoutes);
+backend/src/server.ts.security-backup:138:app.use("/api/transporters", transporterRoutes);
+backend/src/server.ts.security-backup:139:app.use("/api/wallet", walletRoutes);
+backend/src/server.ts.security-backup:140:app.use("/api/admin", adminRoutes);
+backend/src/server.ts.security-backup:141:app.use("/api/admin/platform-config", adminPlatformConfigRoutes);
+backend/src/server.ts.security-backup:142:app.use("/api/admin/roles", adminRolePermissionRoutes);
+backend/src/server.ts.security-backup:143:app.use("/api/admin/support", adminSupportRoutes);
+backend/src/server.ts.security-backup:144:app.use("/api/admin/notifications", adminNotificationRoutes);
+backend/src/server.ts.security-backup:145:app.use("/api/admin/financial", adminFinancialRoutes);
+backend/src/server.ts.security-backup:146:app.use("/api/admin/marketing", adminMarketingRoutes);
+backend/src/server.ts.security-backup:147:app.use("/api/admin/live-trips", adminLiveTripsRoutes);
+backend/src/server.ts.security-backup:148:app.use("/api/admin/verification", adminVerificationRoutes);
+backend/src/server.ts.security-backup:149:app.use("/api/admin/fleet", adminFleetRoutes);
+backend/src/server.ts.security-backup:150:app.use("/api/admin/partners", adminPartnerRoutes);
+backend/src/server.ts.security-backup:151:app.use("/api/admin/errors", adminErrorRoutes);
+backend/src/server.ts.security-backup:152:app.use("/api/admin/api-management", adminApiManagementRoutes);
+backend/src/server.ts.security-backup:153:app.use("/api/admin/database-health", adminDatabaseHealthRoutes);
+backend/src/server.ts.security-backup:154:app.use("/api/admin/backup-recovery", adminBackupRecoveryRoutes);
+backend/src/server.ts.security-backup:155:app.use("/api/admin/risk-fraud", adminRiskFraudRoutes);
+backend/src/server.ts.security-backup:156:app.use("/api/admin/reports", adminReportsRoutes);
+backend/src/server.ts.security-backup:157:app.use("/api/admin/ai-automation", adminAIAutomationRoutes);
+backend/src/server.ts.security-backup:158:app.use("/api/admin/content", contentRoutes);
+backend/src/server.ts.security-backup:159:app.use("/api/messages", messageRoutes);
+backend/src/server.ts.security-backup:161:  "/api/notifications",
+backend/src/server.ts.security-backup:165:  "/api/support",
+backend/src/server.ts.security-backup:169:  "/api/disputes",
+backend/src/server.ts.security-backup:173:  "/api/events",
+backend/src/server.ts:144:app.use("/api/bookings", bookingRoutes);
+backend/src/server.ts:145:app.use("/api/marketplace", marketplaceRoutes);
+backend/src/server.ts:146:app.use("/api/auth", authRoutes);
+backend/src/server.ts:147:app.use("/api/users", userRoutes);
+backend/src/server.ts:148:app.use("/api/documents", documentRoutes);
+backend/src/server.ts:149:app.use("/api/verification/youverify", youverifyWebhookRoutes);
+backend/src/server.ts:151:  "/api/verification",
+backend/src/server.ts:155:  "/api/payments",
+backend/src/server.ts:158:app.use("/api/vehicles", vehicleRoutes);
+backend/src/server.ts:159:app.use("/api/transporters", transporterRoutes);
+backend/src/server.ts:160:app.use("/api/wallet", walletRoutes);
+backend/src/server.ts:161:app.use("/api/subscriptions", subscriptionRoutes);
+backend/src/server.ts:162:app.use("/api/admin", adminRoutes);
+backend/src/server.ts:163:app.use("/api/admin/customers", adminCustomerManagementRoutes);
+backend/src/server.ts:164:app.use("/api/admin/platform-config", adminPlatformConfigRoutes);
+backend/src/server.ts:165:app.use("/api/admin/roles", adminRolePermissionRoutes);
+backend/src/server.ts:166:app.use("/api/admin/security", adminSecurityRoutes);
+backend/src/server.ts:167:app.use("/api/admin/support", adminSupportRoutes);
+backend/src/server.ts:168:app.use("/api/admin/notifications", adminNotificationRoutes);
+backend/src/server.ts:169:app.use("/api/admin/financial", adminFinancialRoutes);
+backend/src/server.ts:170:app.use("/api/admin/features", adminFeatureManagementRoutes);
+backend/src/server.ts:171:app.use("/api/features", featureRoutes);
+backend/src/server.ts:172:app.use("/api/admin/subscriptions", adminSubscriptionRoutes);
+backend/src/server.ts:173:app.use("/api/admin/marketing", adminMarketingRoutes);
+backend/src/server.ts:174:app.use("/api/admin/live-trips", adminLiveTripsRoutes);
+backend/src/server.ts:175:app.use("/api/admin/verification", adminVerificationRoutes);
+backend/src/server.ts:176:app.use("/api/admin/fleet", adminFleetRoutes);
+backend/src/server.ts:177:app.use("/api/admin/marketplace", adminMarketplaceRoutes);
+backend/src/server.ts:178:app.use("/api/admin/partners", adminPartnerRoutes);
+backend/src/server.ts:179:app.use("/api/admin/errors", adminErrorRoutes);
+backend/src/server.ts:180:app.use("/api/admin/api-management", adminApiManagementRoutes);
+backend/src/server.ts:181:app.use("/api/admin/database-health", adminDatabaseHealthRoutes);
+backend/src/server.ts:182:app.use("/api/admin/backup-recovery", adminBackupRecoveryRoutes);
+backend/src/server.ts:183:app.use("/api/admin/risk-fraud", adminRiskFraudRoutes);
+backend/src/server.ts:184:app.use("/api/admin/reports", adminReportsRoutes);
+backend/src/server.ts:185:app.use("/api/admin/activity", adminActivityRoutes);
+backend/src/server.ts:186:app.use("/api/admin/ai-automation", adminAIAutomationRoutes);
+backend/src/server.ts:187:app.use("/api/admin/content", contentRoutes);
+backend/src/server.ts:188:app.use("/api/marketing", marketingRoutes);
+backend/src/server.ts:189:app.use("/api/messages", messageRoutes);
+backend/src/server.ts:191:  "/api/notifications",
+backend/src/server.ts:195:  "/api/support",
+backend/src/server.ts:199:  "/api/disputes",
+backend/src/server.ts:203:  "/api/events",
+marketplace-part-00.txt:189:admin-app/src/api/admin.ts
+marketplace-part-00.txt:190:admin-app/src/api/administrators.ts
+marketplace-part-00.txt:191:admin-app/src/api/client.ts
+marketplace-part-00.txt:192:admin-app/src/api/client.ts.before-refresh
+marketplace-part-00.txt:193:admin-app/src/api/live-trips.ts
+marketplace-part-00.txt:194:admin-app/src/api/role-permissions.ts
+marketplace-part-00.txt:1997:backend/src/server.ts:139:app.use("/api/marketplace", marketplaceRoutes);
+marketplace-report-chunks/context-03.txt:246:backend/src/server.ts:139:app.use("/api/marketplace", marketplaceRoutes);
+backend/src/verification/youverify/youverify.service.ts:38:  nin: "/v2/api/identity/ng/nin",
+backend/src/verification/youverify/youverify.service.ts:39:  vnin: "/v2/api/identity/ng/vnin",
+backend/src/verification/youverify/youverify.service.ts:40:  bvn: "/v2/api/identity/ng/bvn",
+backend/src/verification/youverify/youverify.service.ts:41:  drivers_license: "/v2/api/identity/ng/drivers-license",
+backend/src/verification/youverify/youverify.service.ts:42:  passport: "/v2/api/identity/ng/passport",
+backend/src/verification/youverify.client.ts:4:  private readonly baseUrl = env.YOUVERIFY_BASE_URL.replace(/\/+$/, "");
+backend/src/verification/youverify.client.ts:10:    const response = await fetch(
+backend/src/verification/youverify.client.ts:11:      `${this.baseUrl}${path}`,
+admin-app/src/modules/AIAutomation.tsx:7:} from "../api/ai-automation";
+admin-app/src/modules/ActivityTimeline.tsx:6:} from "../api/activity";
+admin-app/src/modules/BackupRecovery.tsx:7:} from "../api/backup-recovery";
+admin-app/src/modules/DatabaseHealth.tsx:5:} from "../api/database-health";
+admin-app/src/modules/ApiManagement.tsx:7:} from "../api/api-management";
+admin-app/src/modules/VerificationCenter.tsx:10:} from "../api/verification";
+admin-app/src/modules/Fleet.tsx:11:} from "../api/fleet";
+admin-app/src/modules/SupportCare.tsx:9:} from "../api/support";
+admin-app/src/modules/SupportCare.tsx:13:} from "../api/administrators";
+admin-app/src/modules/Subscriptions.tsx.before-billing-command-center:6:} from "../api/subscriptions";
+admin-app/src/api/client.ts.before-refresh:7:  import.meta.env.VITE_API_URL ??
+admin-app/src/api/client.ts.before-refresh:26:  baseURL: apiUrl,
+admin-app/src/modules/Customers.tsx:11:} from "../api/customers";
+admin-app/src/auth/auth.store.ts.before-server-logout:2:import { apiClient } from "../api/client";
+admin-app/src/modules/FinancialOperations.tsx:21:} from "../api/financial-operations";
+admin-app/src/modules/CustomerDirectory.tsx:5:} from "../api/customers";
+admin-app/src/auth/auth.store.ts:2:import { apiClient } from "../api/client";
+marketplace-integration-context.txt:189:admin-app/src/api/admin.ts
+marketplace-integration-context.txt:190:admin-app/src/api/administrators.ts
+marketplace-integration-context.txt:191:admin-app/src/api/client.ts
+marketplace-integration-context.txt:192:admin-app/src/api/client.ts.before-refresh
+marketplace-integration-context.txt:193:admin-app/src/api/live-trips.ts
+marketplace-integration-context.txt:194:admin-app/src/api/role-permissions.ts
+marketplace-integration-context.txt:1997:backend/src/server.ts:139:app.use("/api/marketplace", marketplaceRoutes);
+marketplace-integration-context.txt:5146:app.use("/api/bookings", bookingRoutes);
+marketplace-integration-context.txt:5147:app.use("/api/marketplace", marketplaceRoutes);
+marketplace-integration-context.txt:5148:app.use("/api/auth", authRoutes);
+marketplace-integration-context.txt:5149:app.use("/api/users", userRoutes);
+marketplace-integration-context.txt:5150:app.use("/api/documents", documentRoutes);
+marketplace-integration-context.txt:5151:app.use("/api/verification/youverify", youverifyWebhookRoutes);
+marketplace-integration-context.txt:5153:  "/api/verification",
+marketplace-integration-context.txt:5157:  "/api/payments",
+marketplace-integration-context.txt:5160:app.use("/api/vehicles", vehicleRoutes);
+marketplace-integration-context.txt:5161:app.use("/api/transporters", transporterRoutes);
+marketplace-integration-context.txt:5162:app.use("/api/wallet", walletRoutes);
+marketplace-integration-context.txt:5163:app.use("/api/subscriptions", subscriptionRoutes);
+marketplace-integration-context.txt:5164:app.use("/api/admin", adminRoutes);
+marketplace-integration-context.txt:5165:app.use("/api/admin/platform-config", adminPlatformConfigRoutes);
+marketplace-integration-context.txt:5166:app.use("/api/admin/roles", adminRolePermissionRoutes);
+marketplace-integration-context.txt:5167:app.use("/api/admin/security", adminSecurityRoutes);
+marketplace-integration-context.txt:5168:app.use("/api/admin/support", adminSupportRoutes);
+marketplace-integration-context.txt:5169:app.use("/api/admin/notifications", adminNotificationRoutes);
+marketplace-integration-context.txt:5170:app.use("/api/admin/financial", adminFinancialRoutes);
+marketplace-integration-context.txt:5171:app.use("/api/admin/subscriptions", adminSubscriptionRoutes);
+marketplace-integration-context.txt:5172:app.use("/api/admin/marketing", adminMarketingRoutes);
+marketplace-integration-context.txt:5173:app.use("/api/admin/live-trips", adminLiveTripsRoutes);
+marketplace-integration-context.txt:5174:app.use("/api/admin/verification", adminVerificationRoutes);
+marketplace-integration-context.txt:5175:app.use("/api/admin/fleet", adminFleetRoutes);
+marketplace-integration-context.txt:5176:app.use("/api/admin/partners", adminPartnerRoutes);
+marketplace-integration-context.txt:5177:app.use("/api/admin/errors", adminErrorRoutes);
+marketplace-integration-context.txt:5178:app.use("/api/admin/api-management", adminApiManagementRoutes);
+marketplace-integration-context.txt:5179:app.use("/api/admin/database-health", adminDatabaseHealthRoutes);
+marketplace-integration-context.txt:5180:app.use("/api/admin/backup-recovery", adminBackupRecoveryRoutes);
+marketplace-integration-context.txt:5181:app.use("/api/admin/risk-fraud", adminRiskFraudRoutes);
+marketplace-integration-context.txt:5182:app.use("/api/admin/reports", adminReportsRoutes);
+marketplace-integration-context.txt:5183:app.use("/api/admin/ai-automation", adminAIAutomationRoutes);
+marketplace-integration-context.txt:5184:app.use("/api/admin/content", contentRoutes);
+marketplace-integration-context.txt:5185:app.use("/api/marketing", marketingRoutes);
+marketplace-integration-context.txt:5186:app.use("/api/messages", messageRoutes);
+marketplace-integration-context.txt:5188:  "/api/notifications",
+marketplace-integration-context.txt:5192:  "/api/support",
+marketplace-integration-context.txt:5196:  "/api/disputes",
+marketplace-integration-context.txt:5200:  "/api/events",
+marketplace-integration-context.txt:6991:backend/src/server.ts:139:app.use("/api/marketplace", marketplaceRoutes);
+marketplace-integration-context.txt:9151:import { getPlatformOverview, type PlatformOverview } from "./api/admin";
+marketplace-integration-context.txt:9160:} from "./api/live-trips";
+marketplace-integration-context.txt:10627:----- FILE: admin-app/src/api/admin.ts -----
+marketplace-integration-context.txt:10662:----- FILE: admin-app/src/api/administrators.ts -----
+marketplace-integration-context.txt:10799:----- FILE: admin-app/src/api/live-trips.ts -----
+marketplace-integration-context.txt:10932:} from "../api/administrators";
+marketplace-integration-context.txt:11505:} from "../api/role-permissions";
+marketplace-integration-context.txt:11506:import type { AdminModule } from "../api/administrators";
+marketplace-integration-context.txt:11978:----- FILE: admin-app/src/api/admin.ts -----
+marketplace-integration-context.txt:12013:----- FILE: admin-app/src/api/administrators.ts -----
+marketplace-integration-context.txt:12150:----- FILE: admin-app/src/api/live-trips.ts -----
+marketplace-integration-context.txt:12383:backend/src/server.ts:139:app.use("/api/marketplace", marketplaceRoutes);
+admin-app/src/api/client.ts:7:  import.meta.env.VITE_API_URL ??
+admin-app/src/api/client.ts:27:  baseURL: apiUrl,
+admin-app/src/api/client.ts:51:  const response = await axios.post<RefreshResponse>(
+admin-app/src/modules/Subscriptions.tsx:6:} from "../api/subscriptions";
+admin-app/src/modules/ContentManagement.tsx:11:} from "../api/content";
+admin-app/src/modules/FeatureManagement.tsx:10:} from "../api/features";
+admin-app/src/modules/SecurityCenter.tsx:11:} from "../api/security";
+admin-app/src/modules/SecurityCenter.tsx:15:} from "../api/administrators";
+admin-app/src/modules/RolePermissions.tsx:7:} from "../api/role-permissions";
+admin-app/src/modules/RolePermissions.tsx:8:import type { AdminModule } from "../api/administrators";
+admin-app/src/App.tsx:27:import { getPlatformOverview, type PlatformOverview } from "./api/admin";
+admin-app/src/App.tsx:36:} from "./api/live-trips";
+admin-app/src/modules/ErrorCenter.tsx:7:} from "../api/errors";
+admin-app/src/modules/PartnerManagement.tsx:7:} from "../api/partners";
+admin-app/src/modules/RiskFraud.tsx:9:} from "../api/riskFraud";
+admin-app/src/modules/ReportCenter.tsx:7:} from "../api/reports";
+admin-app/src/modules/Marketplace.tsx:11:} from "../api/marketplace";
+admin-app/src/modules/MarketingCenter.tsx:10:} from "../api/marketing";
+admin-app/src/modules/Administrators.tsx:13:} from "../api/administrators";
+admin-app/src/modules/NotificationCenter.tsx:8:} from "../api/notifications";
