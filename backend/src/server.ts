@@ -203,9 +203,9 @@ app.use(
   "/api/events",
   eventRoutes,
 );
-app.use(applicationErrorMiddleware);
-
 applySecurityErrorHandler(app);
+
+app.use(applicationErrorMiddleware);
 
 app.get("/health", (_req, res) => {
   res.json({
