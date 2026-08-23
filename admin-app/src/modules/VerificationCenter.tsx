@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   approveVerificationDocument,
   getPendingVerificationDocuments,
@@ -70,7 +70,7 @@ export default function VerificationCenter() {
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [actionError, setActionError] = useState("");
 
-  async function loadVerificationData() {
+  const loadVerificationData = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -102,11 +102,11 @@ export default function VerificationCenter() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [view]);
 
   useEffect(() => {
     void loadVerificationData();
-  }, []);
+  }, [loadVerificationData]);
 
   const currentDocuments = view === "PENDING" ? pending : verified;
 

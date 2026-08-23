@@ -161,6 +161,7 @@ export default function Fleet() {
   }
 
   useEffect(() => {
+    // Intentional: this effect synchronizes component state with the backend API.
     void loadVehicles();
   }, []);
 

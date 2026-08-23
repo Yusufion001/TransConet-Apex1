@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getAdminNotifications,
   getNotificationSummary,
@@ -45,7 +45,7 @@ function NotificationCenter() {
     ).sort();
   }, [notifications]);
 
-  async function loadNotifications() {
+  const loadNotifications = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -72,7 +72,7 @@ function NotificationCenter() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [readFilter, typeFilter]);
 
   async function handleMarkAsRead(id: string) {
     try {
@@ -104,8 +104,9 @@ function NotificationCenter() {
   }
 
   useEffect(() => {
+    // Intentional: synchronize component state with the backend API.
     void loadNotifications();
-  }, [readFilter, typeFilter]);
+  }, [loadNotifications]);
 
   return (
     <section className="module-workspace notification-center-workspace">

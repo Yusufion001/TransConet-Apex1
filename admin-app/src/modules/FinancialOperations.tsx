@@ -153,6 +153,7 @@ export default function FinancialOperations() {
   }, [settlementFilter]);
 
   useEffect(() => {
+    // Intentional: this effect synchronizes component state with the backend API.
     void loadFinancialData();
   }, [loadFinancialData]);
 

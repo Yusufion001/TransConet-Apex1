@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getSecurityAuditLogs,
   getSecurityOverview,
@@ -94,7 +94,7 @@ export default function SecurityCenter() {
     }
   }
 
-  async function loadLogs() {
+  const loadLogs = useCallback(async () => {
     try {
       setLogsLoading(true);
 
@@ -109,7 +109,7 @@ export default function SecurityCenter() {
     } finally {
       setLogsLoading(false);
     }
-  }
+  }, [actionFilter]);
 
   async function loadAdministrators() {
     try {
@@ -229,7 +229,7 @@ export default function SecurityCenter() {
 
   useEffect(() => {
     void loadLogs();
-  }, [actionFilter]);
+  }, [loadLogs]);
 
   const actions = useMemo(
     () =>

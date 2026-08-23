@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getMarketplaceBids,
   getMarketplaceRequest,
@@ -86,7 +86,7 @@ export default function Marketplace() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function loadMarketplace() {
+  const loadMarketplace = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -126,7 +126,15 @@ export default function Marketplace() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [
+    requestSearch,
+    requestStatus,
+    requestPage,
+    bidSearch,
+    bidStatus,
+    bidPage,
+    selectedRequest,
+  ]);
 
   async function openRequest(id: string) {
     try {
@@ -143,15 +151,9 @@ export default function Marketplace() {
   }
 
   useEffect(() => {
+    // Intentional: synchronize component state with the backend API.
     void loadMarketplace();
-  }, [
-    requestSearch,
-    requestStatus,
-    requestPage,
-    bidSearch,
-    bidStatus,
-    bidPage,
-  ]);
+  }, [loadMarketplace]);
 
   const selectedBidId = selectedRequest?.agreedBidId;
 

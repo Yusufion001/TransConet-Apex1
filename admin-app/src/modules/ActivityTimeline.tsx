@@ -84,7 +84,7 @@ function ActivityTimeline() {
     void loadActivity(true);
   }, [loadActivity]);
 
-  const activities = result?.activities ?? [];
+  const activities = useMemo(() => result?.activities ?? [], [result]);
 
   const modules = useMemo(
     () =>

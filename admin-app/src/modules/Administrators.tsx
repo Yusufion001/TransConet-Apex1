@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   activateAdministrator,
   disableAdministrator,
@@ -85,7 +85,7 @@ export default function Administrators() {
   const [editType, setEditType] = useState<AdminType>("SUPPORT_ADMIN");
   const [editModules, setEditModules] = useState<AdminModule[]>([]);
 
-  async function loadAdministrators() {
+  const loadAdministrators = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -105,7 +105,7 @@ export default function Administrators() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [selected]);
 
   async function selectAdministrator(administrator: Administrator) {
     try {
@@ -186,7 +186,7 @@ export default function Administrators() {
 
   useEffect(() => {
     void loadAdministrators();
-  }, []);
+  }, [loadAdministrators]);
 
   const filteredAdministrators = useMemo(() => {
     const query = search.trim().toLowerCase();
