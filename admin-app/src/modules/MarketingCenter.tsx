@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createMarketingCampaign,
   getMarketingCampaign,
@@ -87,7 +87,7 @@ export default function MarketingCenter() {
     content: {},
   });
 
-  async function loadCampaigns() {
+  const loadCampaigns = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -103,7 +103,7 @@ export default function MarketingCenter() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [statusFilter, channelFilter]);
 
   async function openCampaign(id: string) {
     try {
@@ -228,8 +228,9 @@ export default function MarketingCenter() {
   }
 
   useEffect(() => {
+    // Intentional: synchronize component state with the backend API.
     void loadCampaigns();
-  }, [statusFilter, channelFilter]);
+  }, [loadCampaigns]);
 
   const filteredCampaigns = useMemo(() => {
     const query = search.trim().toLowerCase();

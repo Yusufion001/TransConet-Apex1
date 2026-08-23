@@ -55,6 +55,7 @@ export default function FeatureManagement() {
   }
 
   useEffect(() => {
+    // Intentional: this effect synchronizes component state with the backend API.
     void loadFeatures();
   }, []);
 

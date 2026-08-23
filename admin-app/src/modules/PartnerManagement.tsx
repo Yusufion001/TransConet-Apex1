@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getAdminPartner,
   getAdminPartners,
@@ -33,7 +33,7 @@ function PartnerManagement() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function loadPartners() {
+  const loadPartners = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -50,7 +50,7 @@ function PartnerManagement() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [selectedId]);
 
   async function selectPartner(userId: string) {
     try {
@@ -123,7 +123,7 @@ function PartnerManagement() {
 
   useEffect(() => {
     void loadPartners();
-  }, []);
+  }, [loadPartners]);
 
   const filteredPartners = useMemo(() => {
     const query = search.trim().toLowerCase();

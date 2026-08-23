@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import {
   createContent,
@@ -47,7 +47,7 @@ export default function ContentManagement() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  async function loadContent() {
+  const loadContent = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -69,11 +69,11 @@ export default function ContentManagement() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [typeFilter, statusFilter]);
 
   useEffect(() => {
     void loadContent();
-  }, [typeFilter, statusFilter]);
+  }, [loadContent]);
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase();

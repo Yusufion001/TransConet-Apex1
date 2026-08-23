@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./App.css";
 import Administrators from "./modules/Administrators";
 import Customers from "./modules/Customers";
@@ -618,7 +618,7 @@ function LiveOperations() {
   const [error, setError] = useState("");
   const [detailError, setDetailError] = useState("");
 
-  async function loadOperations() {
+  const loadOperations = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -645,7 +645,7 @@ function LiveOperations() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [statusFilter, selectedTrip]);
 
   async function selectTrip(trip: LiveTrip) {
     try {
@@ -672,7 +672,7 @@ function LiveOperations() {
 
   useEffect(() => {
     void loadOperations();
-  }, [statusFilter]);
+  }, [loadOperations]);
 
   return (
     <section className="module-workspace live-operations-workspace">

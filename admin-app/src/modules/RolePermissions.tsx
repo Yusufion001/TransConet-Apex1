@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getAdminRole,
   getAdminRoles,
@@ -54,7 +54,7 @@ export default function RolePermissions() {
   const [detailError, setDetailError] = useState("");
   const [notice, setNotice] = useState("");
 
-  async function loadRoles() {
+  const loadRoles = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -79,7 +79,7 @@ export default function RolePermissions() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [selected]);
 
   async function selectRole(role: AdminRole) {
     try {
@@ -146,7 +146,7 @@ export default function RolePermissions() {
 
   useEffect(() => {
     void loadRoles();
-  }, []);
+  }, [loadRoles]);
 
   const filteredRoles = useMemo(() => {
     const query = search.trim().toLowerCase();

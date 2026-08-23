@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getErrorEvents,
   getErrorOverview,
@@ -31,7 +31,7 @@ function ErrorCenter() {
   const [selected, setSelected] = useState<AdminErrorEvent | null>(null);
   const [error, setError] = useState("");
 
-  async function loadErrors(initial = false) {
+  const loadErrors = useCallback(async (initial = false) => {
     try {
       if (initial) setLoading(true);
       else setRefreshing(true);
@@ -59,11 +59,11 @@ function ErrorCenter() {
       setLoading(false);
       setRefreshing(false);
     }
-  }
+  }, [eventType, selected]);
 
   useEffect(() => {
     void loadErrors(true);
-  }, []);
+  }, [loadErrors]);
 
   const filteredEvents = useMemo(() => {
     const query = search.trim().toLowerCase();

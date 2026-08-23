@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   assignSupportTicket,
   getAdminSupportTickets,
@@ -112,7 +112,7 @@ export default function SupportCare() {
     }
   }
 
-  async function loadTickets() {
+  const loadTickets = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -141,11 +141,11 @@ export default function SupportCare() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [statusFilter, priorityFilter]);
 
   useEffect(() => {
     void loadTickets();
-  }, [statusFilter, priorityFilter]);
+  }, [loadTickets]);
 
   useEffect(() => {
     void loadAdministrators();

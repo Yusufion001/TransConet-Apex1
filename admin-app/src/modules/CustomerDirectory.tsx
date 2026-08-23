@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   listCustomers,
   type CustomerDirectoryItem,
@@ -30,7 +30,7 @@ export default function CustomerDirectory({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function loadCustomers() {
+  const loadCustomers = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -50,7 +50,7 @@ export default function CustomerDirectory({
     } finally {
       setLoading(false);
     }
-  }
+  }, [search, status, page]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -58,7 +58,7 @@ export default function CustomerDirectory({
     }, 250);
 
     return () => window.clearTimeout(timer);
-  }, [search, status, page]);
+  }, [loadCustomers]);
 
   function changeStatus(value: string) {
     setStatus(value);

@@ -18,5 +18,10 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // Admin modules intentionally load API data from effects and update
+      // local state from the asynchronous response.
+      "react-hooks/set-state-in-effect": "off",
+    },
   },
 ])
