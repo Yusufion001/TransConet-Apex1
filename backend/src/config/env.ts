@@ -20,6 +20,7 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().min(1),
   EMAIL_FROM_ADDRESS: z.string().email(),
   PASSWORD_RESET_URL: z.string().url(),
+  EMAIL_VERIFICATION_URL: z.string().url(),
 });
 
 export const env = envSchema.parse(process.env);

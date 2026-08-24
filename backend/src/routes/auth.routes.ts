@@ -9,9 +9,27 @@ import {
   refreshAccessToken,
   registerUser,
   resetPassword,
+  resendEmailVerification,
+  verifyEmail,
 } from "../services/auth.service.js";
 
 const router = Router();
+
+const emailVerificationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator(req) {
+    return ipKeyGenerator(req.ip ?? "unknown");
+  },
+  handler(_req, res) {
+    return res.status(429).json({
+      success: false,
+      error: "Too many verification requests. Please try again later.",
+    });
+  },
+});
 
 const passwordResetLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -56,6 +74,14 @@ const refreshSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
+const verifyEmailSchema = z.object({
+  token: z.string().min(1),
+});
+
+const resendVerificationSchema = z.object({
+  identifier: z.string().min(1),
+});
+
 router.post("/register", async (req, res) => {
   try {
     const input = registerSchema.parse(req.body);
@@ -90,6 +116,44 @@ router.post("/register", async (req, res) => {
     });
   }
 });
+
+router.post("/verify-email", async (req, res) => {
+  try {
+    const input = verifyEmailSchema.parse(req.body);
+    const result = await verifyEmail(input.token);
+
+    return res.json({
+      success: true,
+      data: result,
+    });
+  } catch {
+    return res.status(400).json({
+      success: false,
+      error: "Invalid or expired verification token",
+    });
+  }
+});
+
+router.post(
+  "/resend-verification",
+  passwordResetLimiter,
+  async (req, res) => {
+    try {
+      const input = resendVerificationSchema.parse(req.body);
+      const result = await resendEmailVerification(input.identifier);
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch {
+      return res.status(400).json({
+        success: false,
+        error: "Verification email request failed",
+      });
+    }
+  },
+);
 
 router.post("/login", async (req, res) => {
   try {

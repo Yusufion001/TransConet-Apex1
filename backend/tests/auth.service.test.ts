@@ -19,10 +19,18 @@ const prismaMock = {
     findUnique: mock.fn<(...args: any[]) => any>(),
     updateMany: mock.fn<(...args: any[]) => any>(),
   },
+  emailVerification: {
+    upsert: mock.fn<(...args: any[]) => any>(),
+    findUnique: mock.fn<(...args: any[]) => any>(),
+    updateMany: mock.fn<(...args: any[]) => any>(),
+  },
   $transaction: mock.fn<(...args: any[]) => any>(),
 };
 
 const sendPasswordResetEmailMock =
+  mock.fn<(...args: any[]) => any>();
+
+const sendEmailVerificationEmailMock =
   mock.fn<(...args: any[]) => any>();
 
 mock.module("../src/config/prisma.js", {
@@ -35,6 +43,7 @@ mock.module("../src/config/prisma.js", {
 mock.module("../src/services/email.service.js", {
   exports: {
     sendPasswordResetEmail: sendPasswordResetEmailMock,
+    sendEmailVerificationEmail: sendEmailVerificationEmailMock,
   },
 });
 
@@ -58,8 +67,12 @@ function resetMocks() {
     prismaMock.refreshSession.create,
     prismaMock.refreshSession.findUnique,
     prismaMock.refreshSession.updateMany,
+    prismaMock.emailVerification.upsert,
+    prismaMock.emailVerification.findUnique,
+    prismaMock.emailVerification.updateMany,
     prismaMock.$transaction,
     sendPasswordResetEmailMock,
+    sendEmailVerificationEmailMock,
   ]) {
     fn.mock.resetCalls();
   }
@@ -118,7 +131,7 @@ test("registerUser rejects an existing email or phone account", async () => {
   );
 });
 
-test("registerUser creates a customer profile and issues tokens", async () => {
+test("registerUser creates a customer profile and requires email verification", async () => {
   prismaMock.user.findFirst.mock.mockImplementation(async () => null);
 
   prismaMock.user.create.mock.mockImplementation(async () => ({
@@ -130,6 +143,9 @@ test("registerUser creates a customer profile and issues tokens", async () => {
     passwordHash: "hashed-password",
     role: "CUSTOMER",
     status: "PENDING",
+    createdAt: new Date("2026-08-23T00:00:00.000Z"),
+    updatedAt: new Date("2026-08-23T00:00:00.000Z"),
+    lastLoginAt: null,
     customerProfile: {
       userId: "customer-1",
     },
@@ -146,8 +162,10 @@ test("registerUser creates a customer profile and issues tokens", async () => {
 
   assert.equal(result.user.id, "customer-1");
   assert.equal(result.user.role, "CUSTOMER");
-  assert.equal(typeof result.accessToken, "string");
-  assert.equal(typeof result.refreshToken, "string");
+  assert.equal(result.authenticated, false);
+  assert.equal(result.requiresEmailVerification, true);
+  assert.equal("accessToken" in result, false);
+  assert.equal("refreshToken" in result, false);
 
   const createCall =
     prismaMock.user.create.mock.calls[0]?.arguments[0];
@@ -166,11 +184,15 @@ test("registerUser creates a customer profile and issues tokens", async () => {
 
   assert.equal(
     prismaMock.refreshSession.create.mock.calls.length,
+    0,
+  );
+  assert.equal(
+    prismaMock.emailVerification.upsert.mock.calls.length,
     1,
   );
 });
 
-test("registerUser creates a transporter profile for transporter accounts", async () => {
+test("registerUser creates a transporter profile and requires email verification", async () => {
   prismaMock.user.findFirst.mock.mockImplementation(async () => null);
 
   prismaMock.user.create.mock.mockImplementation(async () => ({
@@ -182,6 +204,9 @@ test("registerUser creates a transporter profile for transporter accounts", asyn
     passwordHash: "hashed-password",
     role: "TRANSPORTER",
     status: "PENDING",
+    createdAt: new Date("2026-08-23T00:00:00.000Z"),
+    updatedAt: new Date("2026-08-23T00:00:00.000Z"),
+    lastLoginAt: null,
     customerProfile: null,
     transporterProfile: {
       userId: "transporter-1",
@@ -199,8 +224,10 @@ test("registerUser creates a transporter profile for transporter accounts", asyn
 
   assert.equal(result.user.id, "transporter-1");
   assert.equal(result.user.role, "TRANSPORTER");
-  assert.equal(typeof result.accessToken, "string");
-  assert.equal(typeof result.refreshToken, "string");
+  assert.equal(result.authenticated, false);
+  assert.equal(result.requiresEmailVerification, true);
+  assert.equal("accessToken" in result, false);
+  assert.equal("refreshToken" in result, false);
 
   const createCall =
     prismaMock.user.create.mock.calls[0]?.arguments[0];

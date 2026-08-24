@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const createVehicleSchema = z.object({
-  transporterId: z.string().uuid("Invalid transporter ID"),
   registrationNumber: z.string().trim().min(1).max(50),
   vehicleType: z.string().trim().min(1).max(100),
   vehicleClass: z.enum([

@@ -22,7 +22,7 @@ router.use(authenticate);
 router.post(
   "/",
   authorize("TRANSPORTER"),
-  async (req, res) => {
+  async (req: AuthenticatedRequest, res) => {
   try {
     const parsed = createVehicleSchema.safeParse(req.body);
 
@@ -34,7 +34,7 @@ router.post(
       });
     }
 
-    const vehicle = await createVehicle(parsed.data);
+    const vehicle = await createVehicle({ ...parsed.data, transporterId: req.user!.id });
 
     res.json({
       success: true,

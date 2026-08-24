@@ -35,6 +35,7 @@ import {
   type LiveTripSummary,
   type TrackingPoint,
 } from "./api/live-trips";
+import { subscribeAdminRealtime, type AdminRealtimeEvent, type AdminVehicleLocation } from "./realtime/admin-realtime";
 
 type NavItem = {
   label: string;
@@ -617,6 +618,7 @@ function LiveOperations() {
   const [trackingLoading, setTrackingLoading] = useState(false);
   const [error, setError] = useState("");
   const [detailError, setDetailError] = useState("");
+  const [realtimeConnected, setRealtimeConnected] = useState(false);
 
   const loadOperations = useCallback(async () => {
     try {
@@ -647,6 +649,20 @@ function LiveOperations() {
     }
   }, [statusFilter, selectedTrip]);
 
+  async function selectTripById(tripId: string) {
+    try {
+      const [detail, trackingData] = await Promise.all([
+        getLiveTrip(tripId),
+        getLiveTripTracking(tripId),
+      ]);
+
+      setSelectedTrip(detail);
+      setTracking(trackingData.points);
+    } catch {
+      setDetailError("Unable to refresh the selected trip.");
+    }
+  }
+
   async function selectTrip(trip: LiveTrip) {
     try {
       setSelectedTrip(trip);
@@ -673,6 +689,148 @@ function LiveOperations() {
   useEffect(() => {
     void loadOperations();
   }, [loadOperations]);
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    let active = true;
+
+    void subscribeAdminRealtime("LIVE_TRIPS", {
+      onConnectionChange: (connected) => {
+        if (active) setRealtimeConnected(connected);
+      },
+
+      onAccessDenied: (message) => {
+        if (active) setError(message);
+      },
+
+      onModuleEvent: (event: AdminRealtimeEvent) => {
+        if (!active) return;
+
+        const terminalStatuses = new Set([
+          "CANCELLED",
+          "COMPLETED",
+          "DELIVERY_CONFIRMED",
+        ]);
+
+        if (
+          event.entityType === "BOOKING" &&
+          event.bookingId
+        ) {
+          const payload =
+            event.data && typeof event.data === "object"
+              ? event.data as Record<string, unknown>
+              : {};
+
+          const nextStatus =
+            typeof payload.status === "string"
+              ? payload.status
+              : event.eventType;
+
+          if (terminalStatuses.has(nextStatus)) {
+            setTrips((current) =>
+              current.filter((trip) => trip.id !== event.bookingId),
+            );
+
+            setSelectedTrip((current) =>
+              current?.id === event.bookingId ? null : current,
+            );
+
+            setTracking((current) =>
+              selectedTrip?.id === event.bookingId ? [] : current,
+            );
+
+            return;
+          }
+
+          setTrips((current) =>
+            current.map((trip) =>
+              trip.id === event.bookingId
+                ? {
+                    ...trip,
+                    status: nextStatus,
+                    transporter: trip.transporter,
+                    vehicle: trip.vehicle,
+                  }
+                : trip,
+            ),
+          );
+
+          if (selectedTrip?.id === event.bookingId) {
+            void selectTripById(event.bookingId);
+          }
+        }
+
+        void loadOperations();
+      },
+
+      onVehicleLocation: (location: AdminVehicleLocation) => {
+        if (!active || !location.vehicleId) return;
+
+        setTrips((current) =>
+          current.map((trip) =>
+            trip.vehicle?.id === location.vehicleId
+              ? {
+                  ...trip,
+                  vehicle: trip.vehicle
+                    ? {
+                        ...trip.vehicle,
+                        currentLatitude: location.latitude,
+                        currentLongitude: location.longitude,
+                      }
+                    : trip.vehicle,
+                }
+              : trip,
+          ),
+        );
+
+        if (
+          selectedTrip?.id === location.bookingId &&
+          location.bookingId
+        ) {
+          setTracking((current) => [
+            ...current,
+            {
+              id:
+                location.id ??
+                `${location.vehicleId}-${location.recordedAt ?? Date.now()}`,
+              bookingId: location.bookingId!,
+              vehicleId: location.vehicleId!,
+              latitude: location.latitude,
+              longitude: location.longitude,
+              speed: location.speed ?? null,
+              heading: location.heading ?? null,
+              accuracy: location.accuracy ?? null,
+              source: "REALTIME",
+              recordedAt:
+                location.recordedAt ?? new Date().toISOString(),
+            },
+          ]);
+        }
+      },
+    })
+      .then((cleanup) => {
+        if (active) {
+          unsubscribe = cleanup;
+        } else {
+          cleanup();
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setRealtimeConnected(false);
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Unable to connect to live operations realtime.",
+          );
+        }
+      });
+
+    return () => {
+      active = false;
+      unsubscribe?.();
+    };
+  }, [loadOperations, selectedTrip?.id]);
 
   return (
     <section className="module-workspace live-operations-workspace">
@@ -768,7 +926,7 @@ function LiveOperations() {
             </div>
             <span className="live-badge">
               <span className="status-dot" />
-              LIVE
+              {realtimeConnected ? "LIVE" : "SYNCING"}
             </span>
           </div>
 

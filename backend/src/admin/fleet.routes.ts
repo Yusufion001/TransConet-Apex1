@@ -3,6 +3,8 @@ import { z } from "zod";
 import { authenticate, type AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
 import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import { updateVehicleVerificationSchema } from "./vehicle-verification.validators.js";
+import { updateVehicleVerification } from "./vehicle-verification.service.js";
 import {
   getAdminVehicles,
   getAdminVehicle,
@@ -33,12 +35,6 @@ const fleetVehicleUpdateSchema = z.object({
     "AVAILABLE",
     "UNAVAILABLE",
     "ON_TRIP",
-  ]).optional(),
-  verificationStatus: z.enum([
-    "PENDING",
-    "APPROVED",
-    "REJECTED",
-    "SUSPENDED",
   ]).optional(),
 }).strict();
 
@@ -83,6 +79,45 @@ router.get("/:id", async (req, res) => {
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Server error",
+    });
+  }
+});
+
+router.patch("/:id/verification", async (req: AuthenticatedRequest, res) => {
+  try {
+    const input = updateVehicleVerificationSchema.parse(req.body);
+
+    const vehicle = await updateVehicleVerification(
+      String(req.params.id),
+      req.user!.id,
+      input.status,
+    );
+
+    return res.json({
+      success: true,
+      data: vehicle,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
+    const message =
+      error instanceof Error ? error.message : "Server error";
+
+    if (message === "Vehicle not found") {
+      return res.status(404).json({
+        success: false,
+        error: message,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: message,
     });
   }
 });

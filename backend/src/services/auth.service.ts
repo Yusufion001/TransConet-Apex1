@@ -4,7 +4,8 @@ import crypto from "crypto";
 
 import { env } from "../config/env.js";
 import { prisma } from "../config/prisma.js";
-import { sendPasswordResetEmail } from "./email.service.js";
+import { sendEmailVerificationEmail, sendPasswordResetEmail } from "./email.service.js";
+import { toUserDto } from "../users/user.dto.js";
 
 type UserRole = "CUSTOMER" | "TRANSPORTER" | "ADMIN";
 
@@ -193,12 +194,48 @@ export async function registerUser(input: {
       },
     });
 
+  if (user.email) {
+    const verificationToken =
+      crypto.randomBytes(32).toString("hex");
+
+    const verificationTokenHash =
+      hashToken(verificationToken);
+
+    const verificationExpiresAt =
+      new Date(Date.now() + 30 * 60 * 1000);
+
+    await prisma.emailVerification.upsert({
+      where: {
+        userId: user.id,
+      },
+      update: {
+        tokenHash: verificationTokenHash,
+        expiresAt: verificationExpiresAt,
+        consumedAt: null,
+        attempts: 0,
+      },
+      create: {
+        userId: user.id,
+        tokenHash: verificationTokenHash,
+        expiresAt: verificationExpiresAt,
+      },
+    });
+
+    try {
+      await sendEmailVerificationEmail(
+        user.email,
+        verificationToken,
+      );
+    } catch {
+      // Registration remains successful.
+      // The user can request another verification email.
+    }
+  }
+
   return {
-    user,
-    ...await issueTokens(
-      user.id,
-      user.role,
-    ),
+    user: toUserDto(user),
+    requiresEmailVerification: Boolean(user.email),
+    authenticated: false,
   };
 }
 
@@ -224,10 +261,14 @@ export async function loginUser(
     throw new Error("Invalid credentials");
   }
 
-  if (
-    user.status === "BLOCKED" ||
-    user.status === "SUSPENDED"
-  ) {
+  /*
+   * Only ACTIVE accounts may authenticate.
+   *
+   * PENDING accounts must complete the required
+   * verification/activation flow before login.
+   * BLOCKED and SUSPENDED accounts are also denied.
+   */
+  if (user.status !== "ACTIVE") {
     throw new Error("This account is not active");
   }
 
@@ -316,6 +357,174 @@ export async function loginUser(
       user.id,
       user.role,
     ),
+  };
+}
+
+
+export async function verifyEmail(token: string) {
+  const tokenHash = hashToken(token);
+
+  const result = await prisma.$transaction(async (tx) => {
+    const verification =
+      await tx.emailVerification.findUnique({
+        where: {
+          tokenHash,
+        },
+        include: {
+          user: true,
+        },
+      });
+
+    if (
+      !verification ||
+      verification.consumedAt ||
+      verification.expiresAt <= new Date()
+    ) {
+      throw new Error(
+        "Invalid or expired verification token",
+      );
+    }
+
+    const now = new Date();
+
+    /*
+     * Consume the verification token atomically.
+     * Only one concurrent request can activate this token.
+     */
+    const consumed =
+      await tx.emailVerification.updateMany({
+        where: {
+          id: verification.id,
+          tokenHash,
+          consumedAt: null,
+          expiresAt: {
+            gt: now,
+          },
+        },
+        data: {
+          consumedAt: now,
+        },
+      });
+
+    if (consumed.count !== 1) {
+      throw new Error(
+        "Invalid or expired verification token",
+      );
+    }
+
+    /*
+     * Activate the account only after the verification token
+     * has been successfully consumed.
+     */
+    const user = await tx.user.update({
+      where: {
+        id: verification.userId,
+      },
+      data: {
+        emailVerifiedAt: now,
+        status: "ACTIVE",
+      },
+      include: {
+        customerProfile: true,
+        transporterProfile: true,
+        adminProfile: true,
+      },
+    });
+
+    /*
+     * A PENDING registration must never retain an old session.
+     * Revoke any existing refresh sessions before issuing the
+     * first authenticated session.
+     */
+    await tx.refreshSession.updateMany({
+      where: {
+        userId: user.id,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: now,
+      },
+    });
+
+    return user;
+  });
+
+  /*
+   * Issue the first authenticated session only after the
+   * activation transaction has committed successfully.
+   */
+  return {
+    user: toUserDto(result),
+    ...await issueTokens(
+      result.id,
+      result.role,
+    ),
+  };
+}
+
+export async function resendEmailVerification(identifier: string) {
+  const user =
+    await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { phone: identifier },
+        ],
+      },
+    });
+
+  /*
+   * Keep this response generic so the endpoint cannot
+   * be used to enumerate registered accounts.
+   */
+  if (!user || !user.email || user.emailVerifiedAt) {
+    return {
+      message:
+        "If an eligible account exists, a verification email has been sent.",
+    };
+  }
+
+  const verificationToken =
+    crypto.randomBytes(32).toString("hex");
+
+  const verificationTokenHash =
+    hashToken(verificationToken);
+
+  const expiresAt =
+    new Date(Date.now() + 30 * 60 * 1000);
+
+  await prisma.emailVerification.upsert({
+    where: {
+      userId: user.id,
+    },
+    update: {
+      tokenHash: verificationTokenHash,
+      expiresAt,
+      consumedAt: null,
+      attempts: {
+        increment: 1,
+      },
+    },
+    create: {
+      userId: user.id,
+      tokenHash: verificationTokenHash,
+      expiresAt,
+      attempts: 1,
+    },
+  });
+
+  try {
+    await sendEmailVerificationEmail(
+      user.email,
+      verificationToken,
+    );
+  } catch {
+    // Do not expose email delivery failures.
+  }
+
+  return {
+    message:
+      "If an eligible account exists, a verification email has been sent.",
   };
 }
 
