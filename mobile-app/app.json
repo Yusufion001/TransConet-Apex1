@@ -13,14 +13,15 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+      "predictiveBackGestureEnabled": false,
+      "package": "com.transconet.apex1"
     },
     "plugins": [
       "expo-router",
       "expo-secure-store"
+    ],
+    "platforms": [
+      "android"
     ]
   }
 }
