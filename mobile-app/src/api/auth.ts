@@ -1,12 +1,17 @@
 import { apiClient } from "./client";
-import type { AuthSession, AuthUser, UserRole } from "../auth/auth.types";
+import type {
+  AuthSession,
+  AuthUser,
+  RegistrationResult,
+  UserRole,
+} from "../auth/auth.types";
 
 type ApiResponse<T> = {
   success: boolean;
   data: T;
 };
 
-type AuthResult = {
+type LoginResult = {
   accessToken: string;
   refreshToken?: string;
   user: AuthUser;
@@ -29,21 +34,47 @@ export type LoginInput = {
 export async function login(
   input: LoginInput,
 ): Promise<AuthSession> {
-  const response = await apiClient.post<ApiResponse<AuthResult>>(
-    "/auth/login",
-    input,
-  );
+  const response = await apiClient.post<
+    ApiResponse<LoginResult>
+  >("/auth/login", input);
 
   return response.data.data;
 }
 
 export async function register(
   input: RegisterInput,
+): Promise<RegistrationResult> {
+  const response = await apiClient.post<
+    ApiResponse<RegistrationResult>
+  >("/auth/register", input);
+
+  return response.data.data;
+}
+
+export async function verifyEmail(
+  token: string,
 ): Promise<AuthSession> {
-  const response = await apiClient.post<ApiResponse<AuthResult>>(
-    "/auth/register",
-    input,
-  );
+  const response = await apiClient.post<
+    ApiResponse<LoginResult>
+  >("/auth/verify-email", { token });
+
+  return response.data.data;
+}
+
+export async function getCurrentUser(): Promise<AuthUser> {
+  const response = await apiClient.get<
+    ApiResponse<AuthUser>
+  >("/auth/me");
+
+  return response.data.data;
+}
+
+export async function resendEmailVerification(
+  identifier: string,
+) {
+  const response = await apiClient.post<
+    ApiResponse<{ message: string }>
+  >("/auth/resend-verification", { identifier });
 
   return response.data.data;
 }
@@ -57,10 +88,7 @@ export async function forgotPassword(
 ) {
   const response = await apiClient.post<
     ApiResponse<unknown>
-  >(
-    "/auth/forgot-password",
-    { identifier },
-  );
+  >("/auth/forgot-password", { identifier });
 
   return response.data.data;
 }
@@ -71,13 +99,10 @@ export async function resetPassword(
 ) {
   const response = await apiClient.post<
     ApiResponse<unknown>
-  >(
-    "/auth/reset-password",
-    {
-      token,
-      password,
-    },
-  );
+  >("/auth/reset-password", {
+    token,
+    password,
+  });
 
   return response.data.data;
 }

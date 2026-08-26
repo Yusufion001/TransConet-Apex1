@@ -2,6 +2,7 @@ import { Router } from "express";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { authenticate, AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { z } from "zod";
+import { getUserById } from "../users/user.service.js";
 import {
   forgotPassword,
   loginUser,
@@ -154,6 +155,29 @@ router.post(
     }
   },
 );
+
+router.get("/me", authenticate, async (req: AuthenticatedRequest, res) => {
+  try {
+    const user = await getUserById(req.user!.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: user,
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      error: "Unable to retrieve current user",
+    });
+  }
+});
 
 router.post("/login", async (req, res) => {
   try {

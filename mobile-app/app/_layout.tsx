@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { useAuthStore } from "../src/auth/auth.store";
+import { QueryProvider } from "../src/providers/query-provider";
 
 export default function RootLayout() {
   const hydrate = useAuthStore((state) => state.hydrate);
@@ -10,11 +11,13 @@ export default function RootLayout() {
   }, [hydrate]);
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        animation: "fade",
-      }}
-    />
+    <QueryProvider>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "fade",
+        }}
+      />
+    </QueryProvider>
   );
 }
