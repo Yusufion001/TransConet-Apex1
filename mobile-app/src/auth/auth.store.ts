@@ -1,8 +1,10 @@
 import { create } from "zustand";
 import {
+  getCurrentUser,
   login,
   logout,
   register,
+  verifyEmail,
   type LoginInput,
   type RegisterInput,
 } from "../api/auth";
@@ -12,7 +14,11 @@ import {
   getRefreshToken,
   saveTokens,
 } from "../storage/auth-storage";
-import type { AuthSession, AuthUser } from "./auth.types";
+import type {
+  AuthSession,
+  AuthUser,
+  RegistrationResult,
+} from "./auth.types";
 
 type AuthState = {
   user: AuthUser | null;
@@ -23,7 +29,8 @@ type AuthState = {
 
   hydrate: () => Promise<void>;
   signIn: (input: LoginInput) => Promise<AuthSession>;
-  signUp: (input: RegisterInput) => Promise<AuthSession>;
+  signUp: (input: RegisterInput) => Promise<RegistrationResult>;
+  verifyEmail: (token: string) => Promise<AuthSession>;
   signOut: () => Promise<void>;
 };
 
@@ -42,12 +49,79 @@ export const useAuthStore = create<AuthState>((set) => ({
           getRefreshToken(),
         ]);
 
+      if (!accessToken) {
+        set({
+          user: null,
+          accessToken: null,
+          refreshToken,
+        });
+        return;
+      }
+
       set({
         accessToken,
         refreshToken,
+        loading: true,
       });
+
+      try {
+        const user = await getCurrentUser();
+
+        set({
+          user,
+          accessToken,
+          refreshToken,
+        });
+      } catch {
+        /*
+         * The access token may be expired.
+         *
+         * The API client's refresh interceptor will attempt
+         * to refresh it when /auth/me returns 401.
+         *
+         * If authentication still cannot be restored, clear
+         * the local session.
+         */
+        const refreshedAccessToken =
+          await getAccessToken();
+
+        const refreshedRefreshToken =
+          await getRefreshToken();
+
+        if (!refreshedAccessToken) {
+          await clearTokens();
+
+          set({
+            user: null,
+            accessToken: null,
+            refreshToken: null,
+          });
+          return;
+        }
+
+        try {
+          const user = await getCurrentUser();
+
+          set({
+            user,
+            accessToken: refreshedAccessToken,
+            refreshToken: refreshedRefreshToken,
+          });
+        } catch {
+          await clearTokens();
+
+          set({
+            user: null,
+            accessToken: null,
+            refreshToken: null,
+          });
+        }
+      }
     } finally {
-      set({ hydrated: true });
+      set({
+        hydrated: true,
+        loading: false,
+      });
     }
   },
 
@@ -78,7 +152,34 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true });
 
     try {
-      const session = await register(input);
+      const result = await register(input);
+
+      /*
+       * Registration does NOT authenticate the user.
+       *
+       * The backend creates new accounts as PENDING.
+       * Email accounts must complete verification before
+       * an authenticated session is issued.
+       */
+      await clearTokens();
+
+      set({
+        user: null,
+        accessToken: null,
+        refreshToken: null,
+      });
+
+      return result;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  verifyEmail: async (token) => {
+    set({ loading: true });
+
+    try {
+      const session = await verifyEmail(token);
 
       await saveTokens(
         session.accessToken,
@@ -104,8 +205,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       try {
         await logout();
       } catch {
-        // The local session must still be cleared if the
-        // network request fails.
+        // Local authentication state must still be cleared.
       }
     } finally {
       await clearTokens();
