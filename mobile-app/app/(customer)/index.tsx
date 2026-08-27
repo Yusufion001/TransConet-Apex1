@@ -17,6 +17,10 @@ import {
   type Booking,
 } from "../../src/api/bookings";
 import {
+  calculateRoute,
+  type RouteResult,
+} from "../../src/api/routing";
+import {
   joinBookingRealtime,
   type VehicleLocation,
 } from "../../src/realtime/booking-realtime";
@@ -27,6 +31,7 @@ export default function CustomerHome() {
 
   const [vehicleLocation, setVehicleLocation] =
     useState<VehicleLocation | null>(null);
+  const [route, setRoute] = useState<RouteResult | null>(null);
 
   const bookingsQuery = useQuery({
     queryKey: ["customer-bookings", user?.id],
@@ -38,11 +43,14 @@ export default function CustomerHome() {
 
   const activeBooking = useMemo<Booking | null>(() => {
     const activeStatuses = new Set([
-      "PENDING",
+      "REQUESTED",
+      "SEARCHING",
+      "ASSIGNED",
       "ACCEPTED",
       "DRIVER_ARRIVING",
       "ARRIVED",
       "IN_TRANSIT",
+      "DISPUTED",
     ]);
 
     return (
@@ -53,10 +61,14 @@ export default function CustomerHome() {
   useEffect(() => {
     if (!activeBooking?.id) {
       setVehicleLocation(null);
+      setRoute(null);
       return;
     }
 
     let cleanup: (() => void) | undefined;
+
+    setVehicleLocation(null);
+    setRoute(null);
 
     void joinBookingRealtime(activeBooking.id, {
       onVehicleLocation: setVehicleLocation,
@@ -73,6 +85,60 @@ export default function CustomerHome() {
 
     return () => cleanup?.();
   }, [activeBooking?.id]);
+
+  useEffect(() => {
+    if (!activeBooking) {
+      return;
+    }
+
+    const originLatitude = Number(activeBooking.pickupLatitude);
+    const originLongitude = Number(activeBooking.pickupLongitude);
+    const destinationLatitude = Number(activeBooking.destinationLatitude);
+    const destinationLongitude = Number(activeBooking.destinationLongitude);
+
+    if (
+      !Number.isFinite(originLatitude) ||
+      !Number.isFinite(originLongitude) ||
+      !Number.isFinite(destinationLatitude) ||
+      !Number.isFinite(destinationLongitude)
+    ) {
+      setRoute(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    void calculateRoute(
+      {
+        latitude: originLatitude,
+        longitude: originLongitude,
+      },
+      {
+        latitude: destinationLatitude,
+        longitude: destinationLongitude,
+      },
+    )
+      .then((result) => {
+        if (!cancelled) {
+          setRoute(result);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRoute(null);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeBooking?.id,
+    activeBooking?.pickupLatitude,
+    activeBooking?.pickupLongitude,
+    activeBooking?.destinationLatitude,
+    activeBooking?.destinationLongitude,
+  ]);
 
   const pickupLatitude = activeBooking
     ? Number(activeBooking.pickupLatitude)
@@ -318,27 +384,42 @@ export default function CustomerHome() {
                     description={activeBooking.destination}
                   />
 
-                  <Polyline
-                    coordinates={[
-                      {
-                        latitude: pickupLatitude,
-                        longitude: pickupLongitude,
-                      },
-                      ...(vehicleLocation
-                        ? [
-                            {
-                              latitude: vehicleLocation.latitude,
-                              longitude: vehicleLocation.longitude,
-                            },
-                          ]
-                        : []),
-                      {
-                        latitude: destinationLatitude,
-                        longitude: destinationLongitude,
-                      },
-                    ]}
-                    strokeWidth={4}
-                  />
+                  {route?.coordinates?.length ? (
+                    <Polyline
+                      coordinates={route.coordinates}
+                      strokeWidth={4}
+                    />
+                  ) : (
+                    <Polyline
+                      coordinates={[
+                        {
+                          latitude: pickupLatitude,
+                          longitude: pickupLongitude,
+                        },
+                        {
+                          latitude: destinationLatitude,
+                          longitude: destinationLongitude,
+                        },
+                      ]}
+                      strokeWidth={4}
+                    />
+                  )}
+
+                  {vehicleLocation && (
+                    <Polyline
+                      coordinates={[
+                        {
+                          latitude: vehicleLocation.latitude,
+                          longitude: vehicleLocation.longitude,
+                        },
+                        {
+                          latitude: destinationLatitude,
+                          longitude: destinationLongitude,
+                        },
+                      ]}
+                      strokeWidth={3}
+                    />
+                  )}
                 </>
               )}
 

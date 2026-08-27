@@ -63,7 +63,9 @@ import {
 import { env } from "./config/env.js";
 import { applicationErrorMiddleware } from "./middleware/error.middleware.js";
 import authRoutes from "./routes/auth.routes.js";
+import verificationWebRoutes from "./routes/verification-web.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import routingRoutes from "./routes/routing.routes.js";
 const app = express();
 const httpServer = createServer(app);
 
@@ -141,10 +143,13 @@ initializeRealtime(io);
 initializeSocketEvents(io);
 
 applySecurityFoundation(app);
+app.use("/", verificationWebRoutes);
+
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/marketplace", marketplaceRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/routes", routingRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/verification/youverify", youverifyWebhookRoutes);
 app.use(

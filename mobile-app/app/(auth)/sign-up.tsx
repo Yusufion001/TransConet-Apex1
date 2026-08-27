@@ -24,14 +24,16 @@ export default function SignUpScreen() {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [contact, setContact] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<MobileRole>("CUSTOMER");
 
   const handleSignUp = async () => {
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
-    const trimmedContact = contact.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPhone = phone.trim();
 
     if (!trimmedFirstName || !trimmedLastName) {
       Alert.alert(
@@ -41,32 +43,42 @@ export default function SignUpScreen() {
       return;
     }
 
-    if (!trimmedContact || !password) {
+    if (!trimmedEmail || !password) {
       Alert.alert(
         "Account details required",
-        "Enter your email or phone number and password.",
+        "Enter your email address and password.",
       );
       return;
     }
 
-    const looksLikeEmail = trimmedContact.includes("@");
-
     try {
-      const session = await signUp({
+      const result = await signUp({
         firstName: trimmedFirstName,
         lastName: trimmedLastName,
-        ...(looksLikeEmail
-          ? { email: trimmedContact }
-          : { phone: trimmedContact }),
+        email: trimmedEmail,
+        ...(trimmedPhone ? { phone: trimmedPhone } : {}),
         password,
         role,
       });
 
-      if (session.user.role === "CUSTOMER") {
-        router.replace("/(customer)");
-      } else if (session.user.role === "TRANSPORTER") {
-        router.replace("/(transporter)");
+      if (result.requiresEmailVerification) {
+        router.replace({
+          pathname: "/(auth)/verify-email",
+          params: { identifier: trimmedEmail },
+        });
+        return;
       }
+
+      Alert.alert(
+        "Account created",
+        "Your account has been created. You can now sign in.",
+        [
+          {
+            text: "Sign In",
+            onPress: () => router.replace("/(auth)/sign-in"),
+          },
+        ],
+      );
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
@@ -122,12 +134,26 @@ export default function SignUpScreen() {
                 editable={!loading}
               />
 
-              <Text style={styles.label}>EMAIL OR PHONE</Text>
+              <Text style={styles.label}>EMAIL ADDRESS</Text>
               <TextInput
-                value={contact}
-                onChangeText={setContact}
-                placeholder="Email address or phone number"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Email address"
                 placeholderTextColor="#999999"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                style={styles.input}
+                editable={!loading}
+              />
+
+              <Text style={styles.label}>PHONE NUMBER (OPTIONAL)</Text>
+              <TextInput
+                value={phone}
+                onChangeText={setPhone}
+                placeholder="Phone number"
+                placeholderTextColor="#999999"
+                keyboardType="phone-pad"
                 autoCapitalize="none"
                 autoCorrect={false}
                 style={styles.input}
