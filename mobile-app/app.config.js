@@ -22,18 +22,6 @@ module.exports = {
             }
           ]
         },
-        {
-          action: "VIEW",
-          autoVerify: true,
-          category: ["BROWSABLE", "DEFAULT"],
-          data: [
-            {
-              scheme: "https",
-              host: "verify.transconet.com",
-              pathPrefix: "/verify-email"
-            }
-          ]
-        }
       ],
       adaptiveIcon: {
         backgroundColor: "#E6F4FE",
