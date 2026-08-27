@@ -51,7 +51,7 @@ const passwordResetLimiter = rateLimit({
 const registerSchema = z.object({
   firstName: z.string().min(2).max(50),
   lastName: z.string().min(2).max(50),
-  email: z.string().email().optional(),
+  email: z.string().email(),
   phone: z.string().min(7).max(20).optional(),
   password: z.string().min(8).max(128),
   role: z.enum(["CUSTOMER", "TRANSPORTER"]),
@@ -86,13 +86,6 @@ const resendVerificationSchema = z.object({
 router.post("/register", async (req, res) => {
   try {
     const input = registerSchema.parse(req.body);
-
-    if (!input.email && !input.phone) {
-      return res.status(400).json({
-        success: false,
-        error: "Email or phone is required",
-      });
-    }
 
     const result = await registerUser(input);
 
