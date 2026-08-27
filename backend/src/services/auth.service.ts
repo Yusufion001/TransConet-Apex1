@@ -136,7 +136,7 @@ async function issueTokens(
 export async function registerUser(input: {
   firstName: string;
   lastName: string;
-  email?: string;
+  email: string;
   phone?: string;
   password: string;
   role: UserRole;
