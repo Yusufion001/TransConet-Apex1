@@ -20,7 +20,7 @@ type LoginResult = {
 export type RegisterInput = {
   firstName: string;
   lastName: string;
-  email?: string;
+  email: string;
   phone?: string;
   password: string;
   role: Exclude<UserRole, "ADMIN">;

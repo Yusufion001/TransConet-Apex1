@@ -23,14 +23,16 @@ export type CargoCategory =
   | "REFRIGERATED";
 
 export type BookingStatus =
-  | "PENDING"
+  | "REQUESTED"
+  | "SEARCHING"
+  | "ASSIGNED"
   | "ACCEPTED"
   | "DRIVER_ARRIVING"
   | "ARRIVED"
   | "IN_TRANSIT"
-  | "DELIVERED"
-  | "CANCELLED"
-  | "COMPLETED";
+  | "DISPUTED"
+  | "COMPLETED"
+  | "CANCELLED";
 
 export type Booking = {
   id: string;

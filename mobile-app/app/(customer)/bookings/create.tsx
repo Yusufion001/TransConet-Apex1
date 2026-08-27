@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { router } from "expo-router";
+import * as Location from "expo-location";
 import {
+  ActivityIndicator,
   Alert,
   Pressable,
   ScrollView,
@@ -11,32 +13,159 @@ import {
 } from "react-native";
 import { createBooking } from "../../../src/api/bookings";
 
+type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
+
 export default function CreateBooking() {
   const [pickupLocation, setPickupLocation] = useState("");
   const [destination, setDestination] = useState("");
   const [cargoDescription, setCargoDescription] = useState("");
   const [cargoWeight, setCargoWeight] = useState("");
+  const [pickupCoordinates, setPickupCoordinates] =
+    useState<Coordinates | null>(null);
   const [loading, setLoading] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
+
+  async function useCurrentLocation() {
+    setLocationLoading(true);
+
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+
+      if (permission.status !== "granted") {
+        Alert.alert(
+          "Location permission required",
+          "Please allow TransConet to access your location so your pickup point can be identified.",
+        );
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      const coordinates = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      };
+
+      setPickupCoordinates(coordinates);
+
+      try {
+        const addresses = await Location.reverseGeocodeAsync(coordinates);
+        const address = addresses[0];
+
+        if (address) {
+          const parts = [
+            address.name,
+            address.street,
+            address.city,
+            address.region,
+          ].filter(Boolean);
+
+          if (parts.length > 0) {
+            setPickupLocation(parts.join(", "));
+          }
+        }
+      } catch {
+        // Coordinates are still valid even if reverse geocoding fails.
+      }
+    } catch (error) {
+      Alert.alert(
+        "Unable to get location",
+        error instanceof Error
+          ? error.message
+          : "Please enter your pickup location manually.",
+      );
+    } finally {
+      setLocationLoading(false);
+    }
+  }
+
+  async function resolveAddress(
+    address: string,
+  ): Promise<Coordinates | null> {
+    const results = await Location.geocodeAsync(address);
+
+    if (!results.length) {
+      return null;
+    }
+
+    const result = results[0];
+
+    if (
+      !Number.isFinite(result.latitude) ||
+      !Number.isFinite(result.longitude)
+    ) {
+      return null;
+    }
+
+    return {
+      latitude: result.latitude,
+      longitude: result.longitude,
+    };
+  }
 
   async function submit() {
     if (!pickupLocation.trim() || !destination.trim() || !cargoWeight.trim()) {
-      Alert.alert("Missing information", "Please enter pickup, destination, and cargo weight.");
+      Alert.alert(
+        "Missing information",
+        "Please enter pickup, destination, and cargo weight.",
+      );
+      return;
+    }
+
+    const numericWeight = Number(cargoWeight);
+
+    if (!Number.isFinite(numericWeight) || numericWeight <= 0) {
+      Alert.alert(
+        "Invalid cargo weight",
+        "Cargo weight must be greater than zero.",
+      );
       return;
     }
 
     setLoading(true);
 
     try {
+      let resolvedPickup = pickupCoordinates;
+
+      if (!resolvedPickup) {
+        resolvedPickup = await resolveAddress(pickupLocation.trim());
+      }
+
+      if (!resolvedPickup) {
+        Alert.alert(
+          "Pickup location not found",
+          "We could not determine the coordinates for the pickup location. Please enter a more specific address or use your current location.",
+        );
+        return;
+      }
+
+      const resolvedDestination = await resolveAddress(
+        destination.trim(),
+      );
+
+      if (!resolvedDestination) {
+        Alert.alert(
+          "Destination not found",
+          "We could not determine the coordinates for the destination. Please enter a more specific address.",
+        );
+        return;
+      }
+
       const booking = await createBooking({
         pickupLocation: pickupLocation.trim(),
         destination: destination.trim(),
-        pickupLatitude: 0,
-        pickupLongitude: 0,
-        destinationLatitude: 0,
-        destinationLongitude: 0,
+        pickupLatitude: resolvedPickup.latitude,
+        pickupLongitude: resolvedPickup.longitude,
+        destinationLatitude: resolvedDestination.latitude,
+        destinationLongitude: resolvedDestination.longitude,
         cargoDescription: cargoDescription.trim() || undefined,
         truckCategory: "LIGHT_TRUCK",
-        cargoWeight: Number(cargoWeight),
+        cargoWeight: numericWeight,
       });
 
       router.replace(`/(customer)/bookings/${booking.id}`);
@@ -51,21 +180,53 @@ export default function CreateBooking() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.title}>Book Transport</Text>
+
       <Text style={styles.subtitle}>
         Tell us what you need moved and where it needs to go.
       </Text>
 
       <Text style={styles.label}>Pickup location</Text>
+
       <TextInput
         value={pickupLocation}
-        onChangeText={setPickupLocation}
+        onChangeText={(value) => {
+          setPickupLocation(value);
+          setPickupCoordinates(null);
+        }}
         placeholder="Where should we collect it?"
         style={styles.input}
       />
 
+      <Pressable
+        disabled={locationLoading || loading}
+        onPress={useCurrentLocation}
+        style={[
+          styles.locationButton,
+          (locationLoading || loading) && styles.buttonDisabled,
+        ]}
+      >
+        {locationLoading ? (
+          <ActivityIndicator />
+        ) : (
+          <Text style={styles.locationButtonText}>
+            Use my current location
+          </Text>
+        )}
+      </Pressable>
+
+      {pickupCoordinates && (
+        <Text style={styles.coordinateText}>
+          Pickup location confirmed
+        </Text>
+      )}
+
       <Text style={styles.label}>Destination</Text>
+
       <TextInput
         value={destination}
         onChangeText={setDestination}
@@ -74,6 +235,7 @@ export default function CreateBooking() {
       />
 
       <Text style={styles.label}>Cargo weight</Text>
+
       <TextInput
         value={cargoWeight}
         onChangeText={setCargoWeight}
@@ -83,6 +245,7 @@ export default function CreateBooking() {
       />
 
       <Text style={styles.label}>Cargo description</Text>
+
       <TextInput
         value={cargoDescription}
         onChangeText={setCargoDescription}
@@ -93,9 +256,10 @@ export default function CreateBooking() {
 
       <View style={styles.notice}>
         <Text style={styles.noticeTitle}>Transport matching</Text>
+
         <Text style={styles.noticeText}>
-          TransConet will use the shipment requirements to connect your request
-          with suitable transport capacity.
+          TransConet will use your shipment requirements and verified
+          locations to connect your request with suitable transport capacity.
         </Text>
       </View>
 
@@ -109,7 +273,11 @@ export default function CreateBooking() {
         </Text>
       </Pressable>
 
-      <Pressable onPress={() => router.back()} style={styles.cancel}>
+      <Pressable
+        disabled={loading}
+        onPress={() => router.back()}
+        style={styles.cancel}
+      >
         <Text style={styles.cancelText}>Cancel</Text>
       </Pressable>
     </ScrollView>
@@ -149,6 +317,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
+    marginBottom: 18,
+  },
+  locationButton: {
+    borderWidth: 1,
+    borderColor: "#175CD3",
+    borderRadius: 14,
+    paddingVertical: 13,
+    alignItems: "center",
+    marginTop: -6,
+    marginBottom: 10,
+  },
+  locationButtonText: {
+    color: "#175CD3",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  coordinateText: {
+    color: "#027A48",
+    fontSize: 13,
+    fontWeight: "700",
     marginBottom: 18,
   },
   textArea: {

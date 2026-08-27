@@ -21,6 +21,7 @@ const envSchema = z.object({
   EMAIL_FROM_ADDRESS: z.string().email(),
   PASSWORD_RESET_URL: z.string().url(),
   EMAIL_VERIFICATION_URL: z.string().url(),
+  GOOGLE_MAP_PLATFORM_KEY: z.string().min(1).optional(),
 });
 
 export const env = envSchema.parse(process.env);
