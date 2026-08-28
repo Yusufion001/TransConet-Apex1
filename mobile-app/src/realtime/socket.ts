@@ -6,10 +6,17 @@ const extra = Constants.expoConfig?.extra as
   | { apiUrl?: string }
   | undefined;
 
-const apiUrl =
+const configuredApiUrl =
   extra?.apiUrl ??
-  process.env.EXPO_PUBLIC_API_URL ??
-  "http://127.0.0.1:4000/api";
+  process.env.EXPO_PUBLIC_API_URL;
+
+const apiUrl = configuredApiUrl?.trim().replace(/\/$/, "");
+
+if (!apiUrl) {
+  throw new Error(
+    "TransConet API URL is not configured. Set EXPO_PUBLIC_API_URL before starting or building the mobile app.",
+  );
+}
 
 const socketUrl = apiUrl.replace(/\/api\/?$/, "");
 

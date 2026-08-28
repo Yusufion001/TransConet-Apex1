@@ -3,9 +3,14 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from "axios";
 
-const apiUrl =
-  import.meta.env.VITE_API_URL ??
-  "http://127.0.0.1:4000/api";
+const configuredApiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = configuredApiUrl?.trim().replace(/\/$/, "");
+
+if (!apiUrl) {
+  throw new Error(
+    "TransConet Admin API URL is not configured. Set VITE_API_URL before building the Admin app.",
+  );
+}
 
 const ACCESS_TOKEN_KEY = "transconet_admin_access_token";
 const REFRESH_TOKEN_KEY = "transconet_admin_refresh_token";
