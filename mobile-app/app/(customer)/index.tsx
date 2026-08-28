@@ -1,5 +1,7 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
+  Image,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useAuthStore } from "../../src/auth/auth.store";
 import { getCustomerBookings, type Booking } from "../../src/api/bookings";
+import { getAdvertisements } from "../../src/api/marketing";
 
 export default function CustomerHome() {
   const user = useAuthStore((state) => state.user);
@@ -23,6 +26,37 @@ export default function CustomerHome() {
   });
 
   const bookings = bookingsQuery.data ?? [];
+
+  const advertisementsQuery = useQuery({
+    queryKey: ["customer-home-advertisements"],
+    queryFn: () => getAdvertisements("MOBILE_HOME"),
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    refetchOnMount: true,
+  });
+
+  const advertisements = advertisementsQuery.data ?? [];
+  const [advertisementIndex, setAdvertisementIndex] = useState(0);
+
+  useEffect(() => {
+    if (advertisements.length <= 1) return;
+
+    const timer = setInterval(() => {
+      setAdvertisementIndex(
+        (current) => (current + 1) % advertisements.length,
+      );
+    }, 8000);
+
+    return () => clearInterval(timer);
+  }, [advertisements.length]);
+
+  useEffect(() => {
+    if (advertisementIndex >= advertisements.length) {
+      setAdvertisementIndex(0);
+    }
+  }, [advertisements.length, advertisementIndex]);
+
+  const advertisement = advertisements[advertisementIndex] ?? null;
 
   const activeBooking = useMemo<Booking | null>(() => {
     const activeStatuses = new Set([
@@ -64,10 +98,7 @@ export default function CustomerHome() {
             accessibilityRole="button"
             accessibilityLabel="Notifications"
             style={styles.notificationButton}
-            onPress={() => {
-              // Notifications route does not currently exist.
-              // The icon remains visible as specified by the approved layout.
-            }}
+            onPress={() => router.push("/(customer)/notifications")}
           >
             <Text style={styles.notificationIcon}>🔔</Text>
           </Pressable>
@@ -79,13 +110,61 @@ export default function CustomerHome() {
           </Text>
         </View>
 
-        {/* ADVERT CARD */}
-        <View style={styles.adCard}>
-          <Text style={styles.adTitle}>ADVERT CARD</Text>
-          <Text style={styles.adText}>
-            Admin-controlled advert
-          </Text>
-        </View>
+        {/* ADMIN-CONTROLLED ADVERTISEMENT */}
+        {advertisement ? (
+          <View style={styles.adCard}>
+            {advertisement.imageUrl ? (
+              <Image
+                source={{ uri: advertisement.imageUrl }}
+                style={styles.adImage}
+                resizeMode="cover"
+                accessibilityLabel={advertisement.title}
+              />
+            ) : null}
+
+            <View style={styles.adContent}>
+              <Text style={styles.adTitle}>
+                {advertisement.title}
+              </Text>
+
+              {advertisement.description ? (
+                <Text style={styles.adText}>
+                  {advertisement.description}
+                </Text>
+              ) : null}
+
+              {advertisement.ctaLabel && advertisement.ctaUrl ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={advertisement.ctaLabel}
+                  onPress={() => {
+                    void Linking.openURL(advertisement.ctaUrl!);
+                  }}
+                  style={styles.adButton}
+                >
+                  <Text style={styles.adButtonText}>
+                    {advertisement.ctaLabel}
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+
+            {advertisements.length > 1 ? (
+              <View style={styles.adIndicators}>
+                {advertisements.map((item, index) => (
+                  <View
+                    key={item.id}
+                    style={[
+                      styles.adIndicator,
+                      index === advertisementIndex &&
+                        styles.adIndicatorActive,
+                    ]}
+                  />
+                ))}
+              </View>
+            ) : null}
+          </View>
+        ) : null}
 
         {/* CUSTOMER SERVICES */}
         <View style={styles.section}>
@@ -111,10 +190,9 @@ export default function CustomerHome() {
               accessibilityRole="button"
               accessibilityLabel="Logistics"
               style={styles.serviceCard}
-              onPress={() => {
-                // No dedicated logistics route currently exists.
-                // Keep the approved UI without inventing a route.
-              }}
+              onPress={() =>
+                router.push("/(customer)/bookings/create")
+              }
             >
               <Text style={styles.serviceIcon}>📦</Text>
               <Text style={styles.serviceTitle}>
@@ -199,9 +277,7 @@ export default function CustomerHome() {
           accessibilityRole="button"
           accessibilityLabel="Account"
           style={styles.navItem}
-          onPress={() => {
-            // Account route does not currently exist.
-          }}
+          onPress={() => router.push("/(customer)/account")}
         >
           <Text style={styles.navIcon}>◉</Text>
           <Text style={styles.navText}>Account</Text>
@@ -260,9 +336,38 @@ const styles = StyleSheet.create({
     minHeight: 150,
     borderRadius: 20,
     backgroundColor: "#0B63CE",
+    overflow: "hidden",
+  },
+
+  adImage: {
+    width: "100%",
+    height: 170,
+  },
+
+  adContent: {
     alignItems: "center",
     justifyContent: "center",
-    padding: 24,
+    padding: 20,
+  },
+
+  adIndicators: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+    paddingBottom: 12,
+  },
+
+  adIndicator: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "rgba(255,255,255,0.45)",
+  },
+
+  adIndicatorActive: {
+    width: 18,
+    backgroundColor: "#FFFFFF",
   },
 
   adTitle: {
@@ -276,6 +381,20 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 15,
     color: "#FFFFFF",
+  },
+
+  adButton: {
+    marginTop: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: "#FFFFFF",
+  },
+
+  adButtonText: {
+    color: "#0B63CE",
+    fontSize: 13,
+    fontWeight: "800",
   },
 
   section: {
