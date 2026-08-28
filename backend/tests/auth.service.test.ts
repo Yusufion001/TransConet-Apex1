@@ -33,15 +33,14 @@ const sendPasswordResetEmailMock =
 const sendEmailVerificationEmailMock =
   mock.fn<(...args: any[]) => any>();
 
-mock.module("../src/config/prisma.js", {
-  exports: {
-    default: prismaMock,
+mock.module(new URL("../src/config/prisma.js", import.meta.url).href, {
+  namedExports: {
     prisma: prismaMock,
   },
 });
 
-mock.module("../src/services/email.service.js", {
-  exports: {
+mock.module(new URL("../src/services/email.service.js", import.meta.url).href, {
+  namedExports: {
     sendPasswordResetEmail: sendPasswordResetEmailMock,
     sendEmailVerificationEmail: sendEmailVerificationEmailMock,
   },

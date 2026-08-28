@@ -12,39 +12,39 @@ const RouterMock = () => ({
 });
 
 mock.module("express", {
-  exports: {
+  namedExports: {
     Router: RouterMock,
   },
 });
 
-mock.module("../src/middleware/auth.middleware.js", {
-  exports: {
+mock.module(new URL("../src/middleware/auth.middleware.js", import.meta.url).href, {
+  namedExports: {
     authenticate: mock.fn(),
   },
 });
 
-mock.module("../src/middleware/admin.middleware.js", {
-  exports: {
+mock.module(new URL("../src/middleware/admin.middleware.js", import.meta.url).href, {
+  namedExports: {
     requireAdmin: mock.fn(),
   },
 });
 
-mock.module("../src/middleware/admin-module.middleware.js", {
-  exports: {
+mock.module(new URL("../src/middleware/admin-module.middleware.js", import.meta.url).href, {
+  namedExports: {
     requireAdminModule: mock.fn(() => mock.fn()),
   },
 });
 
 const requireSuperAdminMock = mock.fn();
 
-mock.module("../src/middleware/super-admin.middleware.js", {
-  exports: {
+mock.module(new URL("../src/middleware/super-admin.middleware.js", import.meta.url).href, {
+  namedExports: {
     requireSuperAdmin: requireSuperAdminMock,
   },
 });
 
-mock.module("../src/admin/security.service.js", {
-  exports: {
+mock.module(new URL("../src/admin/security.service.js", import.meta.url).href, {
+  namedExports: {
     getSecurityOverview: mock.fn(),
     getSecurityAuditLogs: mock.fn(),
     getAdministratorSecurity: mock.fn(),

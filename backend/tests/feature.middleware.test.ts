@@ -5,7 +5,7 @@ import type { AuthenticatedRequest } from "../src/middleware/auth.middleware.js"
 
 const evaluateFeatureMock = mock.fn();
 
-mock.module("../src/features/feature.service.js", {
+mock.module(new URL("../src/features/feature.service.js", import.meta.url).href, {
   namedExports: {
     evaluateFeature: evaluateFeatureMock,
   },

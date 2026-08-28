@@ -12,9 +12,8 @@ const prismaMock = {
   },
 };
 
-mock.module("../src/config/prisma.js", {
-  exports: {
-    default: prismaMock,
+mock.module(new URL("../src/config/prisma.js", import.meta.url).href, {
+  namedExports: {
     prisma: prismaMock,
   },
 });

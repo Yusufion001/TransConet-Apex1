@@ -4,7 +4,7 @@ import { test, mock } from "node:test";
 const findUniqueMock = mock.fn();
 const findManyMock = mock.fn();
 
-mock.module("../src/config/prisma.js", {
+mock.module(new URL("../src/config/prisma.js", import.meta.url).href, {
   namedExports: {
     prisma: {
       featureFlag: {
