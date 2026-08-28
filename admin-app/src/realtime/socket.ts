@@ -1,8 +1,13 @@
 import { io, type Socket } from "socket.io-client";
 
-const apiUrl =
-  import.meta.env.VITE_API_URL ??
-  "http://127.0.0.1:4000/api";
+const configuredApiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = configuredApiUrl?.trim().replace(/\/$/, "");
+
+if (!apiUrl) {
+  throw new Error(
+    "TransConet Admin API URL is not configured. Set VITE_API_URL before building the Admin app.",
+  );
+}
 
 const socketUrl = apiUrl.replace(/\/api\/?$/, "");
 
