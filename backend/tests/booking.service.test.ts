@@ -62,33 +62,32 @@ const publishBookingEventMock =
 const createSettlementMock =
   mock.fn<(...args: any[]) => any>();
 
-mock.module("../src/settlements/settlement.service.js", {
-  exports: {
+mock.module(new URL("../src/settlements/settlement.service.js", import.meta.url).href, {
+  namedExports: {
     createSettlement: createSettlementMock,
   },
 });
 
-mock.module("../src/config/prisma.js", {
-  exports: {
-    default: prismaMock,
+mock.module(new URL("../src/config/prisma.js", import.meta.url).href, {
+  namedExports: {
     prisma: prismaMock,
   },
 });
 
-mock.module("../src/events/event.service.js", {
-  exports: {
+mock.module(new URL("../src/events/event.service.js", import.meta.url).href, {
+  namedExports: {
     createShipmentEvent: createShipmentEventMock,
   },
 });
 
-mock.module("../src/realtime/event-bus.js", {
-  exports: {
+mock.module(new URL("../src/realtime/event-bus.js", import.meta.url).href, {
+  namedExports: {
     publishEvent: publishEventMock,
   },
 });
 
-mock.module("../src/realtime/realtime.service.js", {
-  exports: {
+mock.module(new URL("../src/realtime/realtime.service.js", import.meta.url).href, {
+  namedExports: {
     publishAdminEvent: publishAdminEventMock,
     publishBookingEvent: publishBookingEventMock,
   },

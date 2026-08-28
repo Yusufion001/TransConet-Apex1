@@ -16,15 +16,14 @@ const prismaMock = {
 
 const publishEventMock = mock.fn<(...args: any[]) => any>();
 
-mock.module("../src/config/prisma.js", {
-  exports: {
-    default: prismaMock,
+mock.module(new URL("../src/config/prisma.js", import.meta.url).href, {
+  namedExports: {
     prisma: prismaMock,
   },
 });
 
-mock.module("../src/realtime/event-bus.js", {
-  exports: {
+mock.module(new URL("../src/realtime/event-bus.js", import.meta.url).href, {
+  namedExports: {
     publishEvent: publishEventMock,
   },
 });

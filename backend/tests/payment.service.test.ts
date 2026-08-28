@@ -42,27 +42,26 @@ const publishEventMock = mock.fn<(...args: any[]) => any>();
 const createSettlementMock =
   mock.fn<(...args: any[]) => any>();
 
-mock.module("../src/settlements/settlement.service.js", {
-  exports: {
+mock.module(new URL("../src/settlements/settlement.service.js", import.meta.url).href, {
+  namedExports: {
     createSettlement: createSettlementMock,
   },
 });
 
-mock.module("../src/config/prisma.js", {
-  exports: {
-    default: prismaMock,
+mock.module(new URL("../src/config/prisma.js", import.meta.url).href, {
+  namedExports: {
     prisma: prismaMock,
   },
 });
 
-mock.module("../src/notifications/notification.service.js", {
-  exports: {
+mock.module(new URL("../src/notifications/notification.service.js", import.meta.url).href, {
+  namedExports: {
     createNotification: createNotificationMock,
   },
 });
 
-mock.module("../src/realtime/event-bus.js", {
-  exports: {
+mock.module(new URL("../src/realtime/event-bus.js", import.meta.url).href, {
+  namedExports: {
     publishEvent: publishEventMock,
   },
 });
@@ -70,8 +69,8 @@ mock.module("../src/realtime/event-bus.js", {
 const initializeFlutterwavePaymentMock =
   mock.fn<(...args: any[]) => any>();
 
-mock.module("../src/payments/flutterwave.service.js", {
-  exports: {
+mock.module(new URL("../src/payments/flutterwave.service.js", import.meta.url).href, {
+  namedExports: {
     initializeFlutterwavePayment: initializeFlutterwavePaymentMock,
   },
 });

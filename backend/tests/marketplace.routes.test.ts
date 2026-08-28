@@ -12,7 +12,7 @@ const RouterMock = () => ({
 });
 
 mock.module("express", {
-  exports: {
+  namedExports: {
     Router: RouterMock,
   },
 });
@@ -43,15 +43,15 @@ const withdrawMarketplaceBidMock = mock.fn();
 const selectMarketplaceBidMock = mock.fn();
 const getVisibleMarketplaceLoadsMock = mock.fn();
 
-mock.module("../src/middleware/auth.middleware.js", {
-  exports: {
+mock.module(new URL("../src/middleware/auth.middleware.js", import.meta.url).href, {
+  namedExports: {
     authenticate: authenticateMock,
     authorize: authorizeMock,
   },
 });
 
-mock.module("../src/marketplace/marketplace.service.js", {
-  exports: {
+mock.module(new URL("../src/marketplace/marketplace.service.js", import.meta.url).href, {
+  namedExports: {
     createMarketplaceRequest: createMarketplaceRequestMock,
     getMarketplaceRequest: getMarketplaceRequestMock,
     createMarketplaceBid: createMarketplaceBidMock,
@@ -60,8 +60,8 @@ mock.module("../src/marketplace/marketplace.service.js", {
   },
 });
 
-mock.module("../src/marketplace/visibility.service.js", {
-  exports: {
+mock.module(new URL("../src/marketplace/visibility.service.js", import.meta.url).href, {
+  namedExports: {
     getVisibleMarketplaceLoads: getVisibleMarketplaceLoadsMock,
   },
 });

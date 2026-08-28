@@ -35,7 +35,7 @@ const transaction = mock.fn(async (callback: any) =>
   }),
 );
 
-mock.module("../src/config/prisma.js", {
+mock.module(new URL("../src/config/prisma.js", import.meta.url).href, {
   namedExports: {
     prisma: {
       user: { count: counts.user },
@@ -51,7 +51,7 @@ mock.module("../src/config/prisma.js", {
 
 const publishAdminEvent = mock.fn();
 
-mock.module("../src/realtime/realtime.service.js", {
+mock.module(new URL("../src/realtime/realtime.service.js", import.meta.url).href, {
   namedExports: {
     publishAdminEvent,
   },
