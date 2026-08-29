@@ -11,22 +11,22 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import { resetPassword } from "../../src/api/auth";
 
 export default function ResetPasswordScreen() {
-  const params = useLocalSearchParams<{ token?: string }>();
-  const token = typeof params.token === "string" ? params.token : "";
-
+  const [token, setToken] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    if (!token) {
+    const normalizedToken = token.trim();
+
+    if (!/^\d{6}$/.test(normalizedToken)) {
       Alert.alert(
-        "Invalid reset link",
-        "This password-reset link is missing its reset token.",
+        "Invalid reset token",
+        "Enter the 6-digit reset token sent to your email.",
       );
       return;
     }
@@ -50,7 +50,7 @@ export default function ResetPasswordScreen() {
     setLoading(true);
 
     try {
-      await resetPassword(token, password);
+      await resetPassword(normalizedToken, password);
 
       Alert.alert(
         "Password updated",
@@ -84,10 +84,26 @@ export default function ResetPasswordScreen() {
             <Text style={styles.brand}>TRANSCONET</Text>
             <Text style={styles.title}>Create a new password.</Text>
             <Text style={styles.subtitle}>
-              Choose a secure password with at least 8 characters.
+              Enter the 6-digit token from your email, then create a new password.
             </Text>
 
             <View style={styles.form}>
+              <Text style={styles.label}>RESET TOKEN</Text>
+              <TextInput
+                value={token}
+                onChangeText={(value) =>
+                  setToken(value.replace(/\D/g, "").slice(0, 6))
+                }
+                placeholder="Enter 6-digit token"
+                placeholderTextColor="#999999"
+                keyboardType="number-pad"
+                maxLength={6}
+                autoCapitalize="none"
+                autoCorrect={false}
+                style={styles.input}
+                editable={!loading}
+              />
+
               <Text style={styles.label}>NEW PASSWORD</Text>
               <TextInput
                 value={password}

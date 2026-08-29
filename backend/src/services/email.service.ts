@@ -7,24 +7,20 @@ export async function sendPasswordResetEmail(
   email: string,
   resetToken: string,
 ) {
-  const resetUrl =
-    `${env.PASSWORD_RESET_URL}?token=${encodeURIComponent(resetToken)}`;
-
   const result = await resend.emails.send({
     from: env.EMAIL_FROM_ADDRESS,
     to: email,
-    subject: "Reset your TransConet password",
+    subject: "Your TransConet password reset token",
     html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.6">
+      <div style="font-family:Arial,sans-serif;line-height:1.6;max-width:600px;margin:auto">
         <h2>Reset your TransConet password</h2>
         <p>We received a request to reset your TransConet password.</p>
-        <p>
-          <a href="${resetUrl}"
-             style="display:inline-block;padding:12px 20px;background:#111827;color:#fff;text-decoration:none;border-radius:6px">
-            Reset Password
-          </a>
-        </p>
-        <p>This link expires in 30 minutes.</p>
+        <p>Your password reset token is:</p>
+        <div style="font-size:32px;font-weight:800;letter-spacing:8px;padding:16px 20px;background:#f3f4f6;border-radius:8px;text-align:center">
+          ${resetToken}
+        </div>
+        <p><strong>This token expires in 1 minute.</strong></p>
+        <p>Enter this token together with your new password and password confirmation in the TransConet app.</p>
         <p>If you did not request this reset, you can safely ignore this email.</p>
       </div>
     `,
