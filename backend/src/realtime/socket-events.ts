@@ -52,4 +52,34 @@ export function initializeSocketEvents(io: Server) {
       );
     }
   });
+
+  eventBus.on("message", (event) => {
+    if (event.recipientId) {
+      io.to(`user:${event.recipientId}`).emit(
+        "message:created",
+        event,
+      );
+    }
+
+    if (event.bookingId) {
+      io.to(event.bookingId).emit(
+        "booking:activity",
+        event,
+      );
+    }
+  });
+
+  eventBus.on("notification", (event) => {
+    if (event.recipientId) {
+      io.to(`user:${event.recipientId}`).emit(
+        "notification:created",
+        event,
+      );
+    }
+
+    io.to("administration").emit(
+      "admin:notification",
+      event,
+    );
+  });
 }

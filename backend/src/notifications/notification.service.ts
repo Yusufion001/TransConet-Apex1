@@ -22,6 +22,16 @@ export async function createNotification(data: {
     data: notification,
   });
 
+publishEvent("notification", {
+  eventType: "NOTIFICATION_CREATED",
+  module: "NOTIFICATION_CENTER",
+  actorId: data.recipientId,
+  recipientId: data.recipientId,
+  entityType: "NOTIFICATION",
+  entityId: notification.id,
+  data: notification,
+});
+
   return notification;
 }
 

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  getAdminBooking,
+  getAdminBooking, getBookingAssignmentOptions, assignAdminBooking,
   getAdminBookings,
   updateAdminBookingStatus,
   type Booking,
   type BookingDetail,
   type BookingStatus,
+  type BookingAssignmentTransporter,
 } from "../api/bookings-shipments";
 
 const statuses: Array<BookingStatus | ""> = [
@@ -116,6 +117,11 @@ export default function BookingsShipments() {
   const [error, setError] = useState("");
 
   const [updating, setUpdating] = useState(false);
+  const [assignmentOptions, setAssignmentOptions] = useState<BookingAssignmentTransporter[]>([]);
+  const [selectedTransporterId, setSelectedTransporterId] = useState("");
+  const [selectedVehicleId, setSelectedVehicleId] = useState("");
+  const [assignmentLoading, setAssignmentLoading] = useState(false);
+
 
   const loadBookings = useCallback(async () => {
     try {
@@ -163,6 +169,60 @@ export default function BookingsShipments() {
       );
     } finally {
       setDetailLoading(false);
+    }
+  }
+
+  async function loadAssignmentOptions() {
+    try {
+      setAssignmentLoading(true);
+
+      const options = await getBookingAssignmentOptions();
+      setAssignmentOptions(options);
+
+      const currentTransporterId = selected?.transporterId ?? "";
+      const currentVehicleId = selected?.vehicleId ?? "";
+
+      setSelectedTransporterId(currentTransporterId);
+      setSelectedVehicleId(currentVehicleId);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to load transporter and vehicle options.",
+      );
+    } finally {
+      setAssignmentLoading(false);
+    }
+  }
+
+  async function assignBooking() {
+    if (!selected || !selectedTransporterId || !selectedVehicleId) {
+      setError("Select both a transporter and a vehicle.");
+      return;
+    }
+
+    try {
+      setAssignmentLoading(true);
+      setError("");
+
+      const updated = await assignAdminBooking(
+        selected.id,
+        selectedTransporterId,
+        selectedVehicleId,
+      );
+
+      const refreshed = await getAdminBooking(selected.id);
+      setSelected(refreshed ?? { ...selected, ...updated });
+
+      await loadBookings();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to assign transporter and vehicle.",
+      );
+    } finally {
+      setAssignmentLoading(false);
     }
   }
 
@@ -300,6 +360,66 @@ export default function BookingsShipments() {
                         </option>
                       ))}
                   </select>
+                </div>
+
+                <div className="customer-actions">
+                  <strong>Transporter & Vehicle Assignment</strong>
+
+                  <select
+                    value={selectedTransporterId}
+                    disabled={assignmentLoading}
+                    onFocus={() => {
+                      if (!assignmentOptions.length) {
+                        void loadAssignmentOptions();
+                      }
+                    }}
+                    onChange={(event) => {
+                      setSelectedTransporterId(event.target.value);
+                      setSelectedVehicleId("");
+                    }}
+                  >
+                    <option value="">Select transporter</option>
+                    {assignmentOptions.map((transporter) => (
+                      <option key={transporter.id} value={transporter.id}>
+                        {transporter.firstName} {transporter.lastName}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={selectedVehicleId}
+                    disabled={
+                      assignmentLoading || !selectedTransporterId
+                    }
+                    onChange={(event) =>
+                      setSelectedVehicleId(event.target.value)
+                    }
+                  >
+                    <option value="">Select vehicle</option>
+                    {(
+                      assignmentOptions.find(
+                        (transporter) =>
+                          transporter.id === selectedTransporterId,
+                      )?.vehicles ?? []
+                    ).map((vehicle) => (
+                      <option key={vehicle.id} value={vehicle.id}>
+                        {vehicle.registrationNumber} ·{" "}
+                        {vehicle.vehicleType}
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="button"
+                    disabled={
+                      assignmentLoading ||
+                      !selectedTransporterId ||
+                      !selectedVehicleId
+                    }
+                    onClick={() => void assignBooking()}
+                  >
+                    {assignmentLoading ? "Assigning…" : "Assign Booking"}
+                  </button>
                 </div>
 
                 <div className="customer-actions">

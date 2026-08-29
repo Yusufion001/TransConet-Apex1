@@ -138,6 +138,37 @@ export async function getAdminBookings(params?: {
   return response.data.data;
 }
 
+export type BookingAssignmentVehicle = {
+  id: string;
+  registrationNumber: string;
+  vehicleType: string;
+  vehicleClass: string;
+  availabilityStatus?: string | null;
+  verificationStatus?: string | null;
+};
+
+export type BookingAssignmentTransporter = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email?: string | null;
+  phone?: string | null;
+  status?: string | null;
+  transporterTier?: string | null;
+  vehicles: BookingAssignmentVehicle[];
+};
+
+export async function getBookingAssignmentOptions(): Promise<
+  BookingAssignmentTransporter[]
+> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data: BookingAssignmentTransporter[];
+  }>("/admin/bookings/assignment-options");
+
+  return response.data.data;
+}
+
 export async function getAdminBooking(id: string) {
   const response = await apiClient.get<{
     success: boolean;
