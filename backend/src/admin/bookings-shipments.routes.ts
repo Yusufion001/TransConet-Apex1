@@ -6,6 +6,7 @@ import { requireAdminModule } from "../middleware/admin-module.middleware.js";
 import {
   adminAssignBooking,
   adminUpdateBookingStatus,
+  getBookingAssignmentOptions,
   getAdminBooking,
   listAdminBookings,
 } from "./bookings-shipments.service.js";
@@ -62,6 +63,25 @@ const assignmentSchema = z.object({
 
 router.use(requireAdmin);
 router.use(requireAdminModule(AdminModule.LIVE_TRIPS));
+
+router.get("/assignment-options", async (_req, res) => {
+  try {
+    const options = await getBookingAssignmentOptions();
+
+    return res.json({
+      success: true,
+      data: options,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to load booking assignment options",
+    });
+  }
+});
 
 router.get("/", async (req, res) => {
   try {

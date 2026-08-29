@@ -228,6 +228,60 @@ export async function getAdminBooking(id: string) {
   };
 }
 
+
+export async function getBookingAssignmentOptions() {
+  const transporters = await prisma.user.findMany({
+    where: {
+      role: "TRANSPORTER",
+      status: "ACTIVE",
+      transporterProfile: {
+        isNot: null,
+      },
+    },
+    orderBy: [
+      { firstName: "asc" },
+      { lastName: "asc" },
+    ],
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      status: true,
+      transporterTier: true,
+      vehicles: {
+        where: {
+          verificationStatus: "APPROVED",
+          availabilityStatus: "AVAILABLE",
+        },
+        orderBy: {
+          registrationNumber: "asc",
+        },
+        select: {
+          id: true,
+          registrationNumber: true,
+          vehicleType: true,
+          vehicleClass: true,
+          availabilityStatus: true,
+          verificationStatus: true,
+        },
+      },
+    },
+  });
+
+  return transporters.map((transporter) => ({
+    id: transporter.id,
+    firstName: transporter.firstName,
+    lastName: transporter.lastName,
+    email: transporter.email,
+    phone: transporter.phone,
+    status: transporter.status,
+    transporterTier: transporter.transporterTier,
+    vehicles: transporter.vehicles,
+  }));
+}
+
 export async function adminUpdateBookingStatus(
   id: string,
   status: any,
