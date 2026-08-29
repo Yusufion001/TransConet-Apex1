@@ -35,9 +35,9 @@ export default function ForgotPasswordScreen() {
       await forgotPassword(value);
 
       Alert.alert(
-        "Request submitted",
-        "If an account matches the information provided, password-reset instructions will be sent.",
-        [{ text: "OK", onPress: () => router.replace("/(auth)/sign-in") }],
+        "Reset token sent",
+        "A 6-digit reset token has been sent to your email. The token expires in 1 minute.",
+        [{ text: "Continue", onPress: () => router.replace("/(auth)/reset-password") }],
       );
     } catch (error: any) {
       const message =
