@@ -549,7 +549,7 @@ export async function forgotPassword(
   }
 
   const resetToken =
-    crypto.randomBytes(32).toString("hex");
+    String(crypto.randomInt(100000, 1000000));
 
   const resetTokenHash =
     hashToken(resetToken);
@@ -557,7 +557,7 @@ export async function forgotPassword(
   const expiresAt =
     new Date(
       Date.now() +
-        1000 * 60 * 30,
+        1000 * 60,
     );
 
   await prisma.user.update({
