@@ -5,6 +5,7 @@ import Customers from "./modules/Customers";
 import RolePermissions from "./modules/RolePermissions";
 import FinancialOperations from "./modules/FinancialOperations";
 import MarketingCenter from "./modules/MarketingCenter";
+import BookingsShipments from "./modules/BookingsShipments";
 import Marketplace from "./modules/Marketplace";
 import Subscriptions from "./modules/Subscriptions";
 import SupportCare from "./modules/SupportCare";
@@ -398,6 +399,8 @@ function App() {
           />
         ) : active === "Live Operations" ? (
           <LiveOperations />
+        ) : active === "Bookings & Shipments" ? (
+          <BookingsShipments />
         ) : active === "Marketing Center" || active === "Marketing" ? (
           <MarketingCenter />
         ) : active === "Customers" ? (
