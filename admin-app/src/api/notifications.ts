@@ -72,3 +72,19 @@ export async function markNotificationAsRead(
 
   return response.data.data;
 }
+
+export async function createNotification(data: {
+  recipientId: string;
+  type: string;
+  title: string;
+  message: string;
+  relatedType?: string;
+  relatedId?: string;
+}): Promise<AdminNotification> {
+  const response = await apiClient.post<{
+    success: boolean;
+    data: AdminNotification;
+  }>("/notifications", data);
+
+  return response.data.data;
+}

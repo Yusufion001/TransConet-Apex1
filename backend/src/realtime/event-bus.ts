@@ -8,13 +8,14 @@ eventBus.setMaxListeners(100);
 
 export type RealtimeEvent = AdminRealtimeEvent & {
   channel: string;
+  recipientId?: string;
 };
 
 export function publishEvent(
   channel: string,
   event: Omit<RealtimeEvent, "channel" | "eventId" | "timestamp">,
 ) {
-  const payload = {
+  const payload: RealtimeEvent = {
     channel,
     eventId: crypto.randomUUID(),
     timestamp: new Date().toISOString(),

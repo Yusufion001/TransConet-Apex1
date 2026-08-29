@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { createAdminInvitation } from "./admin-invitation.service.js";
 import {
   AdminModule,
   AdminStatus,
@@ -104,9 +105,8 @@ export async function createAdministrator(
     }
   }
 
-  return prisma.$transaction(async (tx) => {
-    const administrator =
-      await tx.adminProfile.create({
+  const administrator = await prisma.$transaction(async (tx) => {
+      const createdAdministrator = await tx.adminProfile.create({
         data: {
           userId: input.userId,
           isSuperAdministrator:
@@ -149,8 +149,15 @@ export async function createAdministrator(
       },
     });
 
-    return administrator;
+    return createdAdministrator;
   });
+
+  await createAdminInvitation(
+    input.creatorId,
+    input.userId,
+  );
+
+  return administrator;
 }
 
 export async function listAdministrators(

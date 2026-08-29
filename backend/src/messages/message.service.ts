@@ -1,5 +1,6 @@
 import { prisma } from "../config/prisma.js";
 import { publishBookingEvent } from "../realtime/realtime.service.js";
+import { publishEvent } from "../realtime/event-bus.js";
 
 export async function createMessage(data: {
   senderId: string;
@@ -94,6 +95,7 @@ export async function createMessage(data: {
 
   return message;
 }
+
 
 export async function getBookingMessages(
   bookingId: string,

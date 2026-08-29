@@ -559,7 +559,7 @@ test("forgotPassword stores a hashed reset token and sends the reset email", asy
 
   assert.equal(emailCall?.[0], "customer@example.com");
   assert.equal(typeof emailCall?.[1], "string");
-  assert.equal(emailCall?.[1].length, 64);
+  assert.match(emailCall?.[1], /^\d{6}$/);
 });
 
 test("forgotPassword does not expose email delivery failures", async () => {

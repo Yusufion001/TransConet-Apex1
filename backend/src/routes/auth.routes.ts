@@ -3,6 +3,7 @@ import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { authenticate, AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { z } from "zod";
 import { getUserById } from "../users/user.service.js";
+import { acceptAdminInvitation } from "../admin/admin-invitation.service.js";
 import {
   forgotPassword,
   loginUser,
@@ -70,6 +71,11 @@ const resetPasswordSchema = z.object({
   token: z.string().min(1),
   password: z.string().min(8),
 });
+const acceptAdminInvitationSchema = z.object({
+  token: z.string().min(1),
+  password: z.string().min(8).max(128),
+});
+
 
 const refreshSchema = z.object({
   refreshToken: z.string().min(1),
@@ -241,6 +247,39 @@ router.post("/forgot-password", passwordResetLimiter, async (req, res) => {
     });
   }
 });
+
+
+router.post(
+  "/accept-admin-invitation",
+  passwordResetLimiter,
+  async (req, res) => {
+    try {
+      const input = acceptAdminInvitationSchema.parse(req.body);
+
+      const result = await acceptAdminInvitation(
+        input.token,
+        input.password,
+      );
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        error: "Administrator invitation acceptance failed",
+      });
+    }
+  },
+);
 
 router.post(
   "/reset-password",

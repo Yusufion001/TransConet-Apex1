@@ -302,6 +302,8 @@ model User {
   transporterProfile TransporterProfile?
   adminProfile       AdminProfile?
 
+  adminInvitations AdminInvitation[] @relation("AdminInvitationUser")
+
   customerBookings     Booking[]                 @relation("CustomerBookings")
   transporterBookings  Booking[]                 @relation("TransporterBookings")
   vehicles             Vehicle[]                 @relation("TransporterVehicles")
@@ -339,6 +341,7 @@ model User {
   createdContent  ContentItem[]    @relation("ContentCreator")
   updatedContent  ContentItem[]    @relation("ContentUpdater")
   refreshSessions RefreshSession[]
+  adminInvitationsCreated AdminInvitation[] @relation("AdminInvitationCreator")
 
   featureFlagsCreated FeatureFlag[]    @relation("FeatureFlagCreator")
   featureFlagsUpdated FeatureFlag[]    @relation("FeatureFlagUpdater")
@@ -1015,6 +1018,27 @@ model RefreshSession {
   @@index([familyId])
   @@index([expiresAt])
   @@index([revokedAt])
+}
+
+model AdminInvitation {
+  id String @id @default(uuid())
+
+  userId String @unique
+  createdBy String
+
+  tokenHash String @unique
+  expiresAt DateTime
+  consumedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation("AdminInvitationUser", fields: [userId], references: [id], onDelete: Cascade)
+  creator User @relation("AdminInvitationCreator", fields: [createdBy], references: [id])
+
+  @@index([createdBy])
+  @@index([expiresAt])
+  @@index([consumedAt])
 }
 
 model SubscriptionPlan {

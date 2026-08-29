@@ -24,6 +24,27 @@ mock.module(new URL("../src/config/prisma.js", import.meta.url).href, {
   },
 });
 
+const createAdminInvitationMock = mock.fn<
+  (...args: any[]) => any
+>(async () => ({
+  invitationId: "invitation-1",
+  expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+  message: "Administrator invitation email has been sent",
+}));
+
+mock.module(
+  new URL(
+    "../src/admin/admin-invitation.service.js",
+    import.meta.url,
+  ).href,
+  {
+    namedExports: {
+      createAdminInvitation:
+        createAdminInvitationMock,
+    },
+  },
+);
+
 const {
   createAdministrator,
   updateAdministrator,
@@ -172,6 +193,19 @@ test("createAdministrator creates a normal administrator and audit log", async (
       },
     }),
   );
+
+mock.module(
+  new URL(
+    "../src/admin/admin-invitation.service.js",
+    import.meta.url,
+  ).href,
+  {
+    namedExports: {
+      createAdminInvitation:
+        createAdminInvitationMock,
+    },
+  },
+);
 
   const result = await createAdministrator({
     creatorId: "super-admin-1",

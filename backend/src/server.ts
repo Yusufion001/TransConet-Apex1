@@ -126,6 +126,7 @@ io.use(async (socket, next) => {
     }
 
     socket.data.user = user;
+    socket.join(`user:${user.id}`);
 
     if (user.role === "ADMIN") {
       if (!user.adminProfile || user.adminProfile.status !== "ACTIVE") {

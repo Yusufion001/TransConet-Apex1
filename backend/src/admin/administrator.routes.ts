@@ -20,6 +20,8 @@ import {
   updateAdministrator,
 } from "./administrator.service.js";
 
+import { resendAdminInvitation } from "./admin-invitation.service.js";
+
 const router = Router();
 
 router.use(requireSuperAdmin);
@@ -175,6 +177,37 @@ router.patch(
       return res.json({
         success: true,
         data: administrator,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
+      return handleError(error, res);
+    }
+  },
+);
+
+router.post(
+  "/:userId/resend-invitation",
+  async (
+    req: AuthenticatedRequest,
+    res,
+  ) => {
+    try {
+      const params = administratorIdParamsSchema.parse(req.params);
+
+      const result = await resendAdminInvitation(
+        req.user!.id,
+        params.userId,
+      );
+
+      return res.json({
+        success: true,
+        data: result,
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
