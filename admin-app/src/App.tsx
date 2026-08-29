@@ -75,6 +75,11 @@ const primaryNav: NavItem[] = [
     description: "Transport requests and marketplace activity",
   },
   {
+    label: "Marketing Center",
+    section: "MARKETPLACE",
+    description: "Create, schedule, publish, and manage customer and transporter advertisements",
+  },
+  {
     label: "Bidding",
     description: "Monitor marketplace bidding",
   },
