@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import "./App.css";
 import Administrators from "./modules/Administrators";
 import Customers from "./modules/Customers";
+import Transporters from "./modules/Transporters";
 import RolePermissions from "./modules/RolePermissions";
 import FinancialOperations from "./modules/FinancialOperations";
 import MarketingCenter from "./modules/MarketingCenter";
@@ -405,6 +406,8 @@ function App() {
           <MarketingCenter />
         ) : active === "Customers" ? (
           <Customers />
+        ) : active === "Transporters" ? (
+          <Transporters />
         ) : active === "Fleet" ? (
           <Fleet />
         ) : active === "Marketplace" ? (
