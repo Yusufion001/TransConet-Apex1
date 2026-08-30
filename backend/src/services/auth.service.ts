@@ -243,11 +243,14 @@ export async function loginUser(
   identifier: string,
   password: string,
 ) {
+  const normalizedIdentifier = identifier.trim();
+  const emailIdentifier = normalizedIdentifier.toLowerCase();
+
   const user = await prisma.user.findFirst({
     where: {
       OR: [
-        { email: identifier },
-        { phone: identifier },
+        { email: emailIdentifier },
+        { phone: normalizedIdentifier },
       ],
     },
     include: {
