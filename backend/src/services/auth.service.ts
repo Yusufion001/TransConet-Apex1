@@ -352,7 +352,7 @@ export async function loginUser(
   }
 
   return {
-    user,
+    user: toUserDto(user),
     ...await issueTokens(
       user.id,
       user.role,
