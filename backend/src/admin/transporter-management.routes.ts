@@ -41,6 +41,8 @@ router.get("/", async (req, res) => {
       data: result,
     });
   } catch (error) {
+    console.error("ADMIN_TRANSPORTERS_LIST_ERROR", error);
+
     if (error instanceof z.ZodError) {
       return res.status(400).json({
         success: false,
