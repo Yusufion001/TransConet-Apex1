@@ -5,6 +5,7 @@ import {
   logout,
   register,
   verifyEmail,
+  verifyPhoneVerificationOtp,
   type LoginInput,
   type RegisterInput,
 } from "../api/auth";
@@ -31,6 +32,10 @@ type AuthState = {
   signIn: (input: LoginInput) => Promise<AuthSession>;
   signUp: (input: RegisterInput) => Promise<RegistrationResult>;
   verifyEmail: (token: string) => Promise<AuthSession>;
+  verifyPhoneOtp: (
+    phoneVerificationToken: string,
+    pin: string,
+  ) => Promise<AuthSession>;
   signOut: () => Promise<void>;
 };
 
@@ -180,6 +185,32 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     try {
       const session = await verifyEmail(token);
+
+      await saveTokens(
+        session.accessToken,
+        session.refreshToken,
+      );
+
+      set({
+        user: session.user,
+        accessToken: session.accessToken,
+        refreshToken: session.refreshToken ?? null,
+      });
+
+      return session;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  verifyPhoneOtp: async (phoneVerificationToken, pin) => {
+    set({ loading: true });
+
+    try {
+      const session = await verifyPhoneVerificationOtp(
+        phoneVerificationToken,
+        pin,
+      );
 
       await saveTokens(
         session.accessToken,

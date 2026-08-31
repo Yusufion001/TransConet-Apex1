@@ -61,6 +61,34 @@ export async function verifyEmail(
   return response.data.data;
 }
 
+export async function sendPhoneVerificationOtp(
+  phoneVerificationToken: string,
+): Promise<{ message: string; verified: boolean; phoneVerificationToken?: string }> {
+  const response = await apiClient.post<
+    ApiResponse<{
+      message: string;
+      verified: boolean;
+      phoneVerificationToken?: string;
+    }>
+  >("/auth/send-phone-otp", { phoneVerificationToken });
+
+  return response.data.data;
+}
+
+export async function verifyPhoneVerificationOtp(
+  phoneVerificationToken: string,
+  pin: string,
+): Promise<AuthSession> {
+  const response = await apiClient.post<
+    ApiResponse<LoginResult>
+  >("/auth/verify-phone-otp", {
+    phoneVerificationToken,
+    pin,
+  });
+
+  return response.data.data;
+}
+
 export async function getCurrentUser(): Promise<AuthUser> {
   const response = await apiClient.get<
     ApiResponse<AuthUser>

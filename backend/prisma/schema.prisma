@@ -299,6 +299,12 @@ model User {
   emailVerifiedAt   DateTime?
   emailVerification EmailVerification?
 
+  phoneVerifiedAt             DateTime?
+  phoneVerificationPinId      String?
+  phoneVerificationExpiresAt  DateTime?
+  phoneVerificationAttempts   Int       @default(0)
+  phoneVerificationLastSentAt DateTime?
+
   customerProfile    CustomerProfile?
   transporterProfile TransporterProfile?
   adminProfile       AdminProfile?
@@ -339,9 +345,9 @@ model User {
   disputesAsTransporter Dispute[] @relation("DisputeTransporter")
   assignedDisputes      Dispute[] @relation("DisputeAdministrator")
 
-  createdContent  ContentItem[]    @relation("ContentCreator")
-  updatedContent  ContentItem[]    @relation("ContentUpdater")
-  refreshSessions RefreshSession[]
+  createdContent          ContentItem[]     @relation("ContentCreator")
+  updatedContent          ContentItem[]     @relation("ContentUpdater")
+  refreshSessions         RefreshSession[]
   adminInvitationsCreated AdminInvitation[] @relation("AdminInvitationCreator")
 
   featureFlagsCreated FeatureFlag[]    @relation("FeatureFlagCreator")
@@ -1024,17 +1030,17 @@ model RefreshSession {
 model AdminInvitation {
   id String @id @default(uuid())
 
-  userId String @unique
+  userId    String @unique
   createdBy String
 
-  tokenHash String @unique
-  expiresAt DateTime
+  tokenHash  String    @unique
+  expiresAt  DateTime
   consumedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user User @relation("AdminInvitationUser", fields: [userId], references: [id], onDelete: Cascade)
+  user    User @relation("AdminInvitationUser", fields: [userId], references: [id], onDelete: Cascade)
   creator User @relation("AdminInvitationCreator", fields: [createdBy], references: [id])
 
   @@index([createdBy])

@@ -34,7 +34,7 @@ type ApiResponse<T> = {
 
 export async function getAdminRoles(): Promise<AdminRole[]> {
   const response = await apiClient.get<ApiResponse<AdminRole[]>>(
-    "/admin/role-permission",
+    "/admin/roles",
   );
 
   return response.data.data;
@@ -42,7 +42,7 @@ export async function getAdminRoles(): Promise<AdminRole[]> {
 
 export async function getAdminRole(userId: string): Promise<AdminRole> {
   const response = await apiClient.get<ApiResponse<AdminRole>>(
-    `/admin/role-permission/${userId}`,
+    `/admin/roles/${userId}`,
   );
 
   return response.data.data;
@@ -53,7 +53,7 @@ export async function updateAdminPermissions(
   assignedModules: AdminModule[],
 ): Promise<AdminRole> {
   const response = await apiClient.patch<ApiResponse<AdminRole>>(
-    `/admin/role-permission/${userId}/permissions`,
+    `/admin/roles/${userId}/permissions`,
     { assignedModules },
   );
 

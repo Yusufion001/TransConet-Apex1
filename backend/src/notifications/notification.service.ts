@@ -8,9 +8,23 @@ export async function createNotification(data: {
   message: string;
   relatedType?: string;
   relatedId?: string;
+  actorId?: string;
 }) {
+  const { actorId, ...notificationData } = data;
+
   const notification = await prisma.notification.create({
-    data,
+    data: notificationData,
+    include: {
+      recipient: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          role: true,
+        },
+      },
+    },
   });
 
   publishEvent("admin", {
@@ -18,14 +32,14 @@ export async function createNotification(data: {
     module: "NOTIFICATION_CENTER",
     entityType: "NOTIFICATION",
     entityId: notification.id,
-    actorId: data.recipientId,
+    actorId: actorId ?? data.recipientId,
     data: notification,
   });
 
 publishEvent("notification", {
   eventType: "NOTIFICATION_CREATED",
   module: "NOTIFICATION_CENTER",
-  actorId: data.recipientId,
+  actorId: actorId ?? data.recipientId,
   recipientId: data.recipientId,
   entityType: "NOTIFICATION",
   entityId: notification.id,

@@ -27,7 +27,10 @@ router.post(
   async (req: AuthenticatedRequest, res) => {
     try {
       const input = notificationCreateSchema.parse(req.body);
-      const notification = await createNotification(input);
+      const notification = await createNotification({
+        ...input,
+        actorId: req.user!.id,
+      });
 
       res.json({ success: true, data: toNotificationDto(notification) });
     } catch (error) {

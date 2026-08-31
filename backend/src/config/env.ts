@@ -22,6 +22,11 @@ const envSchema = z.object({
   PASSWORD_RESET_URL: z.string().url(),
   EMAIL_VERIFICATION_URL: z.string().url(),
   ADMIN_INVITATION_URL: z.string().url(),
+  TERMII_API_KEY: z.string().min(1),
+  TERMII_BASE_URL: z.string().url(),
+  TERMII_SENDER_ID: z.string().min(1),
+  TERMII_CHANNEL: z.enum(["generic", "dnd"]).default("generic"),
+  TERMII_OTP_TTL_MINUTES: z.coerce.number().int().min(1).max(60).default(10),
   GOOGLE_MAP_PLATFORM_KEY: z.string().min(1).optional(),
 });
 
