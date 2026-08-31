@@ -803,6 +803,128 @@ button {
   border-color: #2563eb;
 }
 
+.administrator-add-button {
+  min-height: 38px;
+  white-space: nowrap;
+}
+
+.administrator-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, .52);
+}
+
+.administrator-create-modal {
+  width: min(820px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #e1e6ee;
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .25);
+  padding: 24px;
+}
+
+.administrator-create-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.administrator-create-header h2 {
+  margin: 4px 0 6px;
+  font-size: 20px;
+  color: #172033;
+}
+
+.administrator-create-header p {
+  margin: 0;
+  color: #7b8494;
+  font-size: 11px;
+}
+
+.modal-close-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+  background: white;
+  color: #5f6878;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-close-button:hover {
+  background: #f8fafc;
+}
+
+.administrator-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.administrator-form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.administrator-form-grid label > span {
+  color: #687386;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.administrator-form-grid input,
+.administrator-form-grid select {
+  min-height: 40px;
+  border: 1px solid #dfe4ec;
+  border-radius: 8px;
+  background: white;
+  color: #172033;
+  padding: 0 11px;
+  font: inherit;
+  font-size: 11px;
+  outline: none;
+}
+
+.administrator-form-grid input:focus,
+.administrator-form-grid select:focus {
+  border-color: #2563eb;
+}
+
+.administrator-form-full {
+  grid-column: 1 / -1;
+}
+
+.administrator-create-modules {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #eef0f4;
+}
+
+.administrator-create-error {
+  margin-bottom: 16px;
+}
+
+.administrator-create-footer {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #eef0f4;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .administrator-layout {
   margin-top: 16px;
   display: grid;
@@ -1143,6 +1265,32 @@ button {
 }
 
 @media (max-width: 760px) {
+  .administrator-modal-backdrop {
+    padding: 10px;
+    align-items: flex-start;
+  }
+
+  .administrator-create-modal {
+    max-height: calc(100vh - 20px);
+    padding: 18px;
+    border-radius: 12px;
+  }
+
+  .administrator-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .administrator-form-full {
+    grid-column: auto;
+  }
+
+  .administrator-create-footer {
+    flex-direction: column-reverse;
+  }
+
+  .administrator-create-footer button {
+    width: 100%;
+  }
   .administrator-toolbar {
     align-items: stretch;
     flex-direction: column;
