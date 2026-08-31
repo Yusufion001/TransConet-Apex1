@@ -101,6 +101,29 @@ export type MarketplaceRequest = {
   bidCount: number;
 };
 
+export type MarketplacePricingConfig = {
+  baseRate: number;
+  weightMultipliers: {
+    upTo100: number;
+    upTo1000: number;
+    upTo5000: number;
+    upTo10000: number;
+    above10000: number;
+  };
+  truckMultipliers: Record<string, number>;
+  distanceRatePerKm: number;
+};
+
+export type MarketplacePricing = {
+  id: string;
+  key: "PRICING_CONFIG";
+  value: MarketplacePricingConfig;
+  description: string | null;
+  updatedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type MarketplaceSummary = {
   openRequests: number;
   agreedRequests: number;
@@ -174,6 +197,29 @@ export async function getMarketplaceBids(params?: {
 export async function getMarketplaceBid(id: string): Promise<MarketplaceBid> {
   const response = await apiClient.get<ApiResponse<MarketplaceBid>>(
     `/admin/marketplace/bids/${id}`,
+  );
+
+  return response.data.data;
+}
+
+export async function getMarketplacePricing(): Promise<MarketplacePricing | null> {
+  const response = await apiClient.get<
+    ApiResponse<MarketplacePricing | null>
+  >("/admin/marketplace/pricing");
+
+  return response.data.data;
+}
+
+export async function updateMarketplacePricing(
+  value: MarketplacePricingConfig,
+  description?: string | null,
+): Promise<MarketplacePricing> {
+  const response = await apiClient.put<ApiResponse<MarketplacePricing>>(
+    "/admin/marketplace/pricing",
+    {
+      value,
+      description,
+    },
   );
 
   return response.data.data;
