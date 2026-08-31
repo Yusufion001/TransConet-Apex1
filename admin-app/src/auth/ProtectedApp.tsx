@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import App from "../App";
 import Login from "./Login";
+import AdminInvitationSetup from "./AdminInvitationSetup";
 import { useAuthStore } from "./auth.store";
 
 export default function ProtectedApp() {
@@ -41,6 +42,17 @@ export default function ProtectedApp() {
       );
     };
   }, [clearLocalSession]);
+
+  const invitationToken =
+    new URLSearchParams(window.location.search).get("token")?.trim() ?? "";
+
+  if (invitationToken) {
+    return <AdminInvitationSetup />;
+  }
+
+  if (window.location.pathname === "/login") {
+    return <Login />;
+  }
 
   if (isLoading) {
     return (

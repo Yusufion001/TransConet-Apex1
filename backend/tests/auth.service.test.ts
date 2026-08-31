@@ -264,6 +264,8 @@ test("loginUser rejects an incorrect password", async () => {
 
   prismaMock.user.findFirst.mock.mockImplementation(async () => ({
     id: "customer-1",
+    firstName: "Test",
+    lastName: "Customer",
     email: "customer@example.com",
     phone: null,
     passwordHash,
@@ -306,6 +308,10 @@ test("loginUser accepts an active customer and issues tokens", async () => {
     },
     transporterProfile: null,
     adminProfile: null,
+    profilePhoto: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastLoginAt: null,
   }));
 
   const result = await loginUser(
@@ -361,6 +367,8 @@ test("loginUser rejects a suspended account before password authentication", asy
 test("loginUser rejects an administrator without an admin profile", async () => {
   prismaMock.user.findFirst.mock.mockImplementation(async () => ({
     id: "admin-1",
+    firstName: "Test",
+    lastName: "Administrator",
     email: "admin@example.com",
     phone: null,
     passwordHash: "unused",
@@ -480,6 +488,10 @@ test("loginUser accepts an active administrator and resets security counters", a
       failedLoginAttempts: 3,
       lockedUntil: null,
     },
+    profilePhoto: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastLoginAt: null,
   }));
 
   const result = await loginUser(

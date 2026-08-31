@@ -11,6 +11,7 @@ const prismaMock = {
   },
   user: {
     findUnique: mock.fn<(...args: any[]) => any>(),
+    create: mock.fn<(...args: any[]) => any>(),
   },
   auditLog: {
     create: mock.fn<(...args: any[]) => any>(),
@@ -61,6 +62,7 @@ function resetMocks() {
     prismaMock.adminProfile.update,
     prismaMock.adminProfile.findMany,
     prismaMock.user.findUnique,
+    prismaMock.user.create,
     prismaMock.auditLog.create,
     prismaMock.$transaction,
   ]) {
@@ -107,7 +109,9 @@ test("createAdministrator rejects a non-Super Administrator creator", async () =
   await assert.rejects(
     createAdministrator({
       creatorId: "admin-1",
-      userId: "user-1",
+      firstName: "Jane",
+      lastName: "Doe",
+      email: "jane@example.com",
       administratorType: "SUPPORT_ADMIN",
       assignedModules: ["SUPPORT_CARE"],
     }),
@@ -117,66 +121,47 @@ test("createAdministrator rejects a non-Super Administrator creator", async () =
     },
   );
 
-  assert.equal(
-    prismaMock.adminProfile.create.mock.calls.length,
-    0,
-  );
+  assert.equal(prismaMock.user.create.mock.calls.length, 0);
+  assert.equal(prismaMock.adminProfile.create.mock.calls.length, 0);
 });
 
-test("createAdministrator rejects a second Super Administrator", async () => {
-  mockFindUniqueSequence(
-    activeSuperAdmin,
-    null,
-  );
-
-  prismaMock.user.findUnique.mock.mockImplementation(
-    async () => ({
-      id: "user-2",
-      role: "ADMIN",
-    }),
-  );
-
-  prismaMock.adminProfile.findFirst.mock.mockImplementation(
-    async () => ({
-      userId: "existing-super-admin",
-      isSuperAdministrator: true,
-    }),
+test("createAdministrator rejects creation of a Super Administrator", async () => {
+  prismaMock.adminProfile.findUnique.mock.mockImplementation(
+    async () => activeSuperAdmin,
   );
 
   await assert.rejects(
     createAdministrator({
       creatorId: "super-admin-1",
-      userId: "user-2",
-      administratorType: "SUPER_ADMIN",
-      assignedModules: ["ROLE_PERMISSION"],
-    }),
-    {
-      message:
-        "A Super Administrator already exists",
-    },
-  );
-
-  assert.equal(
-    prismaMock.adminProfile.create.mock.calls.length,
-    0,
-  );
-});
-
-test("createAdministrator creates a normal administrator and audit log", async () => {
-  mockFindUniqueSequence(
-    activeSuperAdmin,
-    null,
-  );
-
-  prismaMock.user.findUnique.mock.mockImplementation(
-    async () => ({
-      id: "user-2",
       firstName: "Jane",
       lastName: "Doe",
       email: "jane@example.com",
-      phone: null,
-      role: "ADMIN",
-      status: "ACTIVE",
+      administratorType: "SUPER_ADMIN",
+      assignedModules: ["PLATFORM_OVERVIEW"],
+    }),
+    {
+      message:
+        "A new Super Administrator cannot be created through Administrator Management",
+    },
+  );
+
+  assert.equal(prismaMock.user.create.mock.calls.length, 0);
+  assert.equal(prismaMock.adminProfile.create.mock.calls.length, 0);
+});
+
+test("createAdministrator creates a pending administrator and sends invitation", async () => {
+  prismaMock.adminProfile.findUnique.mock.mockImplementation(
+    async () => activeSuperAdmin,
+  );
+
+  prismaMock.user.findUnique.mock.mockImplementation(
+    async () => null,
+  );
+
+  prismaMock.user.create.mock.mockImplementation(
+    async (args: any) => ({
+      id: "user-2",
+      ...args.data,
     }),
   );
 
@@ -189,59 +174,164 @@ test("createAdministrator creates a normal administrator and audit log", async (
       status: "ACTIVE",
       user: {
         id: "user-2",
+        firstName: "Jane",
+        lastName: "Doe",
         email: "jane@example.com",
+        phone: null,
+        role: "ADMIN",
+        status: "PENDING",
       },
     }),
   );
 
-mock.module(
-  new URL(
-    "../src/admin/admin-invitation.service.js",
-    import.meta.url,
-  ).href,
-  {
-    namedExports: {
-      createAdminInvitation:
-        createAdminInvitationMock,
-    },
-  },
-);
-
   const result = await createAdministrator({
     creatorId: "super-admin-1",
-    userId: "user-2",
+    firstName: " Jane ",
+    lastName: " Doe ",
+    email: "JANE@EXAMPLE.COM ",
     administratorType: "SUPPORT_ADMIN",
     assignedModules: ["SUPPORT_CARE"],
   });
 
   assert.equal(result.userId, "user-2");
-  assert.equal(
-    result.administratorType,
-    "SUPPORT_ADMIN",
-  );
+  assert.equal(result.administratorType, "SUPPORT_ADMIN");
+  assert.equal(result.status, "ACTIVE");
+
+  assert.equal(prismaMock.user.create.mock.calls.length, 1);
+
+  const userCreate =
+    prismaMock.user.create.mock.calls[0]?.arguments[0];
+
+  assert.equal(userCreate.data.firstName, "Jane");
+  assert.equal(userCreate.data.lastName, "Doe");
+  assert.equal(userCreate.data.email, "jane@example.com");
+  assert.equal(userCreate.data.role, "ADMIN");
+  assert.equal(userCreate.data.status, "PENDING");
+  assert.equal(typeof userCreate.data.passwordHash, "string");
+  assert.ok(userCreate.data.passwordHash.length > 0);
 
   assert.equal(
     prismaMock.adminProfile.create.mock.calls.length,
     1,
   );
 
-  assert.equal(
-    prismaMock.auditLog.create.mock.calls.length,
-    1,
+  const profileCreate =
+    prismaMock.adminProfile.create.mock.calls[0]?.arguments[0];
+
+  assert.equal(profileCreate.data.userId, "user-2");
+  assert.equal(profileCreate.data.isSuperAdministrator, false);
+  assert.equal(profileCreate.data.administratorType, "SUPPORT_ADMIN");
+  assert.deepEqual(
+    profileCreate.data.assignedModules,
+    ["SUPPORT_CARE"],
   );
+  assert.equal(profileCreate.data.status, "ACTIVE");
+  assert.equal(profileCreate.data.createdBy, "super-admin-1");
+
+  assert.equal(prismaMock.auditLog.create.mock.calls.length, 1);
 
   const auditCall =
     prismaMock.auditLog.create.mock.calls[0]?.arguments[0];
 
-  assert.equal(
-    auditCall.data.action,
-    "ADMINISTRATOR_CREATED",
+  assert.equal(auditCall.data.action, "ADMINISTRATOR_CREATED");
+  assert.equal(auditCall.data.affectedUserId, "user-2");
+  assert.equal(auditCall.data.newValue.userStatus, "PENDING");
+
+  assert.equal(createAdminInvitationMock.mock.calls.length, 1);
+
+  const invitationCall =
+    createAdminInvitationMock.mock.calls[0]?.arguments;
+
+  assert.deepEqual(invitationCall, [
+    "super-admin-1",
+    "user-2",
+  ]);
+});
+
+test("createAdministrator rejects an existing email", async () => {
+  prismaMock.adminProfile.findUnique.mock.mockImplementation(
+    async () => activeSuperAdmin,
   );
 
-  assert.equal(
-    auditCall.data.affectedUserId,
-    "user-2",
+  prismaMock.user.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "existing-user",
+    }),
   );
+
+  await assert.rejects(
+    createAdministrator({
+      creatorId: "super-admin-1",
+      firstName: "Jane",
+      lastName: "Doe",
+      email: "jane@example.com",
+      administratorType: "SUPPORT_ADMIN",
+      assignedModules: ["SUPPORT_CARE"],
+    }),
+    {
+      message:
+        "A user with this email address already exists",
+    },
+  );
+
+  assert.equal(prismaMock.user.create.mock.calls.length, 0);
+});
+
+test("createAdministrator rejects an existing phone number", async () => {
+  prismaMock.adminProfile.findUnique.mock.mockImplementation(
+    async () => activeSuperAdmin,
+  );
+
+  let call = 0;
+  prismaMock.user.findUnique.mock.mockImplementation(
+    async () => {
+      call += 1;
+      return call === 1 ? null : { id: "existing-user" };
+    },
+  );
+
+  await assert.rejects(
+    createAdministrator({
+      creatorId: "super-admin-1",
+      firstName: "Jane",
+      lastName: "Doe",
+      email: "jane@example.com",
+      phone: "08012345678",
+      administratorType: "SUPPORT_ADMIN",
+      assignedModules: ["SUPPORT_CARE"],
+    }),
+    {
+      message:
+        "A user with this phone number already exists",
+    },
+  );
+
+  assert.equal(prismaMock.user.create.mock.calls.length, 0);
+});
+
+test("createAdministrator rejects empty assigned modules", async () => {
+  prismaMock.adminProfile.findUnique.mock.mockImplementation(
+    async () => activeSuperAdmin,
+  );
+
+  await assert.rejects(
+    createAdministrator({
+      creatorId: "super-admin-1",
+      firstName: "Jane",
+      lastName: "Doe",
+      email: "jane@example.com",
+      administratorType: "SUPPORT_ADMIN",
+      assignedModules: [],
+    }),
+    {
+      message:
+        "At least one administrator module is required",
+    },
+  );
+
+  assert.equal(prismaMock.user.findUnique.mock.calls.length, 0);
+  assert.equal(prismaMock.user.create.mock.calls.length, 0);
+  assert.equal(prismaMock.adminProfile.create.mock.calls.length, 0);
 });
 
 test("updateAdministrator refuses to modify the Super Administrator", async () => {
@@ -341,114 +431,5 @@ test("changeAdministratorStatus suspends a normal administrator and writes an au
   assert.equal(
     auditCall.data.affectedUserId,
     "admin-2",
-  );
-});
-
-test("createAdministrator rejects a missing user", async () => {
-  mockFindUniqueSequence(activeSuperAdmin, null);
-
-  prismaMock.user.findUnique.mock.mockImplementation(
-    async () => null,
-  );
-
-  await assert.rejects(
-    createAdministrator({
-      creatorId: "super-admin-1",
-      userId: "missing-user",
-      administratorType: "SUPPORT_ADMIN",
-      assignedModules: ["SUPPORT_CARE"],
-    }),
-    { message: "User not found" },
-  );
-
-  assert.equal(
-    prismaMock.adminProfile.create.mock.calls.length,
-    0,
-  );
-});
-
-test("createAdministrator rejects a user who is not an ADMIN", async () => {
-  mockFindUniqueSequence(activeSuperAdmin, null);
-
-  prismaMock.user.findUnique.mock.mockImplementation(
-    async () => ({
-      id: "user-2",
-      role: "CUSTOMER",
-    }),
-  );
-
-  await assert.rejects(
-    createAdministrator({
-      creatorId: "super-admin-1",
-      userId: "user-2",
-      administratorType: "SUPPORT_ADMIN",
-      assignedModules: ["SUPPORT_CARE"],
-    }),
-    { message: "The user role must be ADMIN" },
-  );
-
-  assert.equal(
-    prismaMock.adminProfile.create.mock.calls.length,
-    0,
-  );
-});
-
-test("createAdministrator rejects an existing administrator profile", async () => {
-  mockFindUniqueSequence(
-    activeSuperAdmin,
-    {
-      userId: "admin-2",
-      isSuperAdministrator: false,
-      administratorType: "SUPPORT_ADMIN",
-      status: "ACTIVE",
-    },
-  );
-
-  prismaMock.user.findUnique.mock.mockImplementation(
-    async () => ({
-      id: "user-2",
-      role: "ADMIN",
-    }),
-  );
-
-  await assert.rejects(
-    createAdministrator({
-      creatorId: "super-admin-1",
-      userId: "user-2",
-      administratorType: "SUPPORT_ADMIN",
-      assignedModules: ["SUPPORT_CARE"],
-    }),
-    { message: "Administrator profile already exists" },
-  );
-
-  assert.equal(
-    prismaMock.adminProfile.create.mock.calls.length,
-    0,
-  );
-});
-
-test("createAdministrator rejects empty assigned modules", async () => {
-  prismaMock.adminProfile.findUnique.mock.mockImplementation(
-    async () => activeSuperAdmin,
-  );
-
-  await assert.rejects(
-    createAdministrator({
-      creatorId: "super-admin-1",
-      userId: "user-2",
-      administratorType: "SUPPORT_ADMIN",
-      assignedModules: [],
-    }),
-    { message: "At least one administrator module is required" },
-  );
-
-  assert.equal(
-    prismaMock.user.findUnique.mock.calls.length,
-    0,
-  );
-
-  assert.equal(
-    prismaMock.adminProfile.create.mock.calls.length,
-    0,
   );
 });
