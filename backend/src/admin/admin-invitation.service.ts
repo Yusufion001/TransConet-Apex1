@@ -45,6 +45,10 @@ export async function acceptAdminInvitation(
     throw new Error("Administrator profile not found");
   }
 
+  if (invitation.user.status !== "PENDING") {
+    throw new Error("Administrator invitation is no longer valid");
+  }
+
   if (invitation.user.adminProfile.status !== "ACTIVE") {
     throw new Error("Administrator account is not active");
   }
