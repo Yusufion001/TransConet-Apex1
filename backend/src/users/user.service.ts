@@ -13,6 +13,7 @@ const userResponseSelect = {
   createdAt: true,
   updatedAt: true,
   lastLoginAt: true,
+
   customerProfile: {
     select: {
       userId: true,
@@ -24,6 +25,7 @@ const userResponseSelect = {
       totalBookings: true,
     },
   },
+
   transporterProfile: {
     select: {
       userId: true,
@@ -35,6 +37,16 @@ const userResponseSelect = {
       tier2Approved: true,
       rating: true,
       totalTrips: true,
+    },
+  },
+
+  adminProfile: {
+    select: {
+      id: true,
+      status: true,
+      isSuperAdministrator: true,
+      administratorType: true,
+      assignedModules: true,
     },
   },
 };

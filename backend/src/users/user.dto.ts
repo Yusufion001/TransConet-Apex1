@@ -20,6 +20,14 @@ export type TransporterProfileDto = {
   totalTrips: number;
 };
 
+export type AdminProfileDto = {
+  id?: string;
+  status: string;
+  isSuperAdministrator: boolean;
+  administratorType: string;
+  assignedModules: string[];
+};
+
 export type UserDto = {
   id: string;
   firstName: string;
@@ -34,11 +42,10 @@ export type UserDto = {
   lastLoginAt: string | null;
   customerProfile: CustomerProfileDto | null;
   transporterProfile: TransporterProfileDto | null;
+  adminProfile: AdminProfileDto | null;
 };
 
-function toCustomerProfileDto(
-  profile: CustomerProfileDto,
-): CustomerProfileDto {
+function toCustomerProfileDto(profile: CustomerProfileDto): CustomerProfileDto {
   return {
     userId: profile.userId,
     city: profile.city,
@@ -50,9 +57,7 @@ function toCustomerProfileDto(
   };
 }
 
-function toTransporterProfileDto(
-  profile: TransporterProfileDto,
-): TransporterProfileDto {
+function toTransporterProfileDto(profile: TransporterProfileDto): TransporterProfileDto {
   return {
     userId: profile.userId,
     companyName: profile.companyName,
@@ -80,6 +85,7 @@ export function toUserDto(user: {
   lastLoginAt: Date | null;
   customerProfile: CustomerProfileDto | null;
   transporterProfile: TransporterProfileDto | null;
+  adminProfile?: AdminProfileDto | null;
 }): UserDto {
   return {
     id: user.id,
@@ -98,6 +104,15 @@ export function toUserDto(user: {
       : null,
     transporterProfile: user.transporterProfile
       ? toTransporterProfileDto(user.transporterProfile)
+      : null,
+    adminProfile: user.adminProfile
+      ? {
+          id: user.adminProfile.id,
+          status: user.adminProfile.status,
+          isSuperAdministrator: user.adminProfile.isSuperAdministrator,
+          administratorType: user.adminProfile.administratorType,
+          assignedModules: user.adminProfile.assignedModules,
+        }
       : null,
   };
 }
