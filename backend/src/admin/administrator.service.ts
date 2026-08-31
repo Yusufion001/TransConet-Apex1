@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { prisma } from "../config/prisma.js";
 import { createAdminInvitation } from "./admin-invitation.service.js";
 import {
@@ -6,31 +7,16 @@ import {
   AdminType,
 } from "../../generated/prisma/enums.js";
 
-type CreateAdministratorInput = {
-  creatorId: string;
-  userId: string;
-  administratorType: AdminType;
-  assignedModules: AdminModule[];
-};
-
-type UpdateAdministratorInput = {
-  administratorType?: AdminType;
-  assignedModules?: AdminModule[];
-};
-
 async function getActiveSuperAdministrator(creatorId: string) {
-  const administrator =
-    await prisma.adminProfile.findUnique({
-      where: {
-        userId: creatorId,
-      },
-      select: {
-        userId: true,
-        isSuperAdministrator: true,
-        administratorType: true,
-        status: true,
-      },
-    });
+  const administrator = await prisma.adminProfile.findUnique({
+    where: { userId: creatorId },
+    select: {
+      userId: true,
+      isSuperAdministrator: true,
+      administratorType: true,
+      status: true,
+    },
+  });
 
   if (
     !administrator ||
@@ -46,105 +32,128 @@ async function getActiveSuperAdministrator(creatorId: string) {
   return administrator;
 }
 
+type CreateAdministratorInput = {
+  creatorId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  administratorType: AdminType;
+  assignedModules: AdminModule[];
+};
+
+type UpdateAdministratorInput = {
+  administratorType?: AdminType;
+  assignedModules?: AdminModule[];
+};
+
 export async function createAdministrator(
   input: CreateAdministratorInput,
 ) {
   await getActiveSuperAdministrator(input.creatorId);
 
+  const firstName = input.firstName.trim();
+  const lastName = input.lastName.trim();
+  const email = input.email.trim().toLowerCase();
+  const phone = input.phone?.trim() || undefined;
+
+  if (!firstName || !lastName) {
+    throw new Error("First name and last name are required");
+  }
+
+  if (!email) {
+    throw new Error("Administrator email is required");
+  }
+
   if (!input.assignedModules.length) {
+    throw new Error("At least one administrator module is required");
+  }
+
+  if (input.administratorType === AdminType.SUPER_ADMIN) {
     throw new Error(
-      "At least one administrator module is required",
+      "A new Super Administrator cannot be created through Administrator Management",
     );
   }
 
-  const user =
-    await prisma.user.findUnique({
-      where: {
-        id: input.userId,
-      },
+  const existingEmail = await prisma.user.findUnique({
+    where: { email },
+    select: { id: true },
+  });
+
+  if (existingEmail) {
+    throw new Error("A user with this email address already exists");
+  }
+
+  if (phone) {
+    const existingPhone = await prisma.user.findUnique({
+      where: { phone },
+      select: { id: true },
     });
 
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  if (user.role !== "ADMIN") {
-    throw new Error(
-      "The user role must be ADMIN",
-    );
-  }
-
-  const existingAdministrator =
-    await prisma.adminProfile.findUnique({
-      where: {
-        userId: input.userId,
-      },
-    });
-
-  if (existingAdministrator) {
-    throw new Error(
-      "Administrator profile already exists",
-    );
-  }
-
-  if (
-    input.administratorType ===
-      AdminType.SUPER_ADMIN
-  ) {
-    const existingSuperAdmin =
-      await prisma.adminProfile.findFirst({
-        where: {
-          isSuperAdministrator: true,
-        },
-      });
-
-    if (existingSuperAdmin) {
-      throw new Error(
-        "A Super Administrator already exists",
-      );
+    if (existingPhone) {
+      throw new Error("A user with this phone number already exists");
     }
   }
 
+  /*
+   * User.passwordHash is required by the database schema.
+   * The invited administrator does not receive or use this value.
+   * It is replaced when the invitation is accepted and the administrator
+   * creates their real password.
+   */
+  const bcrypt = await import("bcryptjs");
+  const temporaryPasswordHash = await bcrypt.hash(
+    crypto.randomBytes(32).toString("hex"),
+    12,
+  );
+
   const administrator = await prisma.$transaction(async (tx) => {
-      const createdAdministrator = await tx.adminProfile.create({
-        data: {
-          userId: input.userId,
-          isSuperAdministrator:
-            input.administratorType ===
-            AdminType.SUPER_ADMIN,
-          administratorType:
-            input.administratorType,
-          assignedModules:
-            input.assignedModules,
-          status: AdminStatus.ACTIVE,
-          createdBy: input.creatorId,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-              phone: true,
-              role: true,
-              status: true,
-            },
+    const user = await tx.user.create({
+      data: {
+        firstName,
+        lastName,
+        email,
+        phone,
+        passwordHash: temporaryPasswordHash,
+        role: "ADMIN",
+        status: "PENDING",
+      },
+    });
+
+    const createdAdministrator = await tx.adminProfile.create({
+      data: {
+        userId: user.id,
+        isSuperAdministrator: false,
+        administratorType: input.administratorType,
+        assignedModules: input.assignedModules,
+        status: AdminStatus.ACTIVE,
+        createdBy: input.creatorId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            role: true,
+            status: true,
           },
         },
-      });
+      },
+    });
 
     await tx.auditLog.create({
       data: {
         administratorId: input.creatorId,
         action: "ADMINISTRATOR_CREATED",
-        affectedUserId: input.userId,
+        affectedUserId: user.id,
         newValue: {
-          administratorType:
-            input.administratorType,
-          assignedModules:
-            input.assignedModules,
+          administratorType: input.administratorType,
+          assignedModules: input.assignedModules,
           status: AdminStatus.ACTIVE,
+          userStatus: "PENDING",
         },
       },
     });
@@ -154,7 +163,7 @@ export async function createAdministrator(
 
   await createAdminInvitation(
     input.creatorId,
-    input.userId,
+    administrator.userId,
   );
 
   return administrator;
