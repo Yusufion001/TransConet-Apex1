@@ -1,25 +1,66 @@
 import { prisma } from "../config/prisma.js";
 import { publishEvent } from "../realtime/event-bus.js";
+import { AdminStatus } from "../../generated/prisma/enums.js";
 import type { AdminModule } from "../../generated/prisma/enums.js";
+
+const adminRoleSelect = {
+  userId: true,
+  isSuperAdministrator: true,
+  administratorType: true,
+  assignedModules: true,
+  permissions: true,
+  status: true,
+  createdBy: true,
+  failedLoginAttempts: true,
+  lockedUntil: true,
+  twoFactorEnabled: true,
+  lastLoginAt: true,
+  lastActionAt: true,
+  createdAt: true,
+  updatedAt: true,
+  user: {
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      phone: true,
+      role: true,
+      status: true,
+    },
+  },
+} as const;
+
+async function requireActiveSuperAdministrator(
+  administratorId: string,
+) {
+  const administrator = await prisma.adminProfile.findUnique({
+    where: { userId: administratorId },
+    select: {
+      userId: true,
+      isSuperAdministrator: true,
+      administratorType: true,
+      status: true,
+    },
+  });
+
+  if (
+    !administrator ||
+    !administrator.isSuperAdministrator ||
+    administrator.administratorType !== "SUPER_ADMIN" ||
+    administrator.status !== AdminStatus.ACTIVE
+  ) {
+    throw new Error(
+      "Only an active Super Administrator can modify administrator permissions",
+    );
+  }
+
+  return administrator;
+}
 
 export async function getAdminRoles() {
   return prisma.adminProfile.findMany({
-    select: {
-      userId: true,
-      administratorType: true,
-      status: true,
-      isSuperAdministrator: true,
-      assignedModules: true,
-      user: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          status: true,
-        },
-      },
-    },
+    select: adminRoleSelect,
     orderBy: { createdAt: "desc" },
   });
 }
@@ -27,22 +68,7 @@ export async function getAdminRoles() {
 export async function getAdminRole(userId: string) {
   return prisma.adminProfile.findUnique({
     where: { userId },
-    select: {
-      userId: true,
-      administratorType: true,
-      status: true,
-      isSuperAdministrator: true,
-      assignedModules: true,
-      user: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          email: true,
-          status: true,
-        },
-      },
-    },
+    select: adminRoleSelect,
   });
 }
 
@@ -51,6 +77,8 @@ export async function updateAdminPermissions(
   administratorId: string,
   assignedModules: AdminModule[],
 ) {
+  await requireActiveSuperAdministrator(administratorId);
+
   const existing = await prisma.adminProfile.findUnique({
     where: { userId },
   });
@@ -70,6 +98,7 @@ export async function updateAdminPermissions(
     data: {
       assignedModules,
     },
+    select: adminRoleSelect,
   });
 
   publishEvent("admin", {
@@ -78,7 +107,10 @@ export async function updateAdminPermissions(
     entityType: "ADMINISTRATOR",
     entityId: userId,
     actorId: administratorId,
-    data: updated,
+    data: {
+      userId,
+      assignedModules: updated.assignedModules,
+    },
   });
 
   return updated;

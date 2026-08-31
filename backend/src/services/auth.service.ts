@@ -5,6 +5,7 @@ import crypto from "crypto";
 import { env } from "../config/env.js";
 import { prisma } from "../config/prisma.js";
 import { sendEmailVerificationEmail, sendPasswordResetEmail } from "./email.service.js";
+import { sendPhoneOtp, verifyPhoneOtp } from "./termii.service.js";
 import { toUserDto } from "../users/user.dto.js";
 
 type UserRole = "CUSTOMER" | "TRANSPORTER" | "ADMIN";
@@ -18,6 +19,35 @@ type RefreshTokenPayload = {
 
 function hashToken(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+function createPhoneVerificationToken(userId: string) {
+  return jwt.sign(
+    {
+      sub: userId,
+      type: "phone_verification",
+    },
+    env.JWT_ACCESS_SECRET,
+    {
+      expiresIn: "24h",
+    },
+  );
+}
+
+function verifyPhoneVerificationToken(token: string): string {
+  const payload = jwt.verify(token, env.JWT_ACCESS_SECRET);
+
+  if (
+    typeof payload !== "object" ||
+    payload === null ||
+    typeof payload.sub !== "string" ||
+    payload.sub.length === 0 ||
+    payload.type !== "phone_verification"
+  ) {
+    throw new Error("Invalid phone verification token");
+  }
+
+  return payload.sub;
 }
 
 function createAccessToken(userId: string, role: UserRole) {
@@ -194,6 +224,15 @@ export async function registerUser(input: {
       },
     });
 
+  if (user.phone) {
+    try {
+      await sendPhoneVerificationOtp(user.id);
+    } catch {
+      // Registration remains successful.
+      // The user can request another phone verification OTP.
+    }
+  }
+
   if (user.email) {
     const verificationToken =
       crypto.randomBytes(32).toString("hex");
@@ -235,6 +274,10 @@ export async function registerUser(input: {
   return {
     user: toUserDto(user),
     requiresEmailVerification: Boolean(user.email),
+    requiresPhoneVerification: Boolean(user.phone),
+    phoneVerificationToken: user.phone
+      ? createPhoneVerificationToken(user.id)
+      : undefined,
     authenticated: false,
   };
 }
@@ -364,6 +407,199 @@ export async function loginUser(
 }
 
 
+export async function sendPhoneVerificationOtp(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      phone: true,
+      phoneVerifiedAt: true,
+      phoneVerificationLastSentAt: true,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (!user.phone) {
+    throw new Error("A phone number is required for phone verification");
+  }
+
+  if (user.phoneVerifiedAt) {
+    return {
+      message: "Phone number is already verified",
+      verified: true,
+      phoneVerificationToken: createPhoneVerificationToken(user.id),
+    };
+  }
+
+  if (
+    user.phoneVerificationLastSentAt &&
+    Date.now() - user.phoneVerificationLastSentAt.getTime() < 60 * 1000
+  ) {
+    throw new Error("Please wait before requesting another verification code");
+  }
+
+  const otp = await sendPhoneOtp(user.phone);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      phoneVerificationPinId: otp.pinId,
+      phoneVerificationExpiresAt: new Date(
+        Date.now() + env.TERMII_OTP_TTL_MINUTES * 60 * 1000,
+      ),
+      phoneVerificationAttempts: 0,
+      phoneVerificationLastSentAt: new Date(),
+    },
+  });
+
+  return {
+    message: "Verification code sent successfully",
+    verified: false,
+    phoneVerificationToken: createPhoneVerificationToken(user.id),
+  };
+}
+
+export async function resendPhoneVerificationOtp(
+  phoneVerificationToken: string,
+) {
+  const userId = verifyPhoneVerificationToken(phoneVerificationToken);
+
+  return sendPhoneVerificationOtp(userId);
+}
+
+export async function verifyPhoneVerificationOtp(
+  phoneVerificationToken: string,
+  pin: string,
+) {
+  const userId = verifyPhoneVerificationToken(phoneVerificationToken);
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      role: true,
+      phone: true,
+      phoneVerifiedAt: true,
+      phoneVerificationPinId: true,
+      phoneVerificationExpiresAt: true,
+      phoneVerificationAttempts: true,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  if (user.phoneVerifiedAt) {
+    return {
+      message: "Phone number is already verified",
+      verified: true,
+    };
+  }
+
+  if (!user.phone || !user.phoneVerificationPinId) {
+    throw new Error("No active phone verification request");
+  }
+
+  if (
+    !user.phoneVerificationExpiresAt ||
+    user.phoneVerificationExpiresAt <= new Date()
+  ) {
+    throw new Error("Verification code has expired");
+  }
+
+  if (user.phoneVerificationAttempts >= 3) {
+    throw new Error("Too many verification attempts");
+  }
+
+  /*
+   * Verify with Termii before consuming a local attempt.
+   * A provider/network failure therefore does not consume
+   * one of the user's three verification attempts.
+   */
+  await verifyPhoneOtp(
+    user.phoneVerificationPinId,
+    pin,
+  );
+
+  const now = new Date();
+
+  /*
+   * Activate the account atomically after successful OTP
+   * verification.
+   *
+   * Phone verification is sufficient for activation.
+   * Email verification is not required when the phone OTP
+   * has been successfully verified.
+   */
+  const result = await prisma.$transaction(async (tx) => {
+    const updated = await tx.user.updateMany({
+      where: {
+        id: user.id,
+        phoneVerifiedAt: null,
+        phoneVerificationPinId: user.phoneVerificationPinId,
+        phoneVerificationExpiresAt: {
+          gt: now,
+        },
+        phoneVerificationAttempts: {
+          lt: 3,
+        },
+      },
+      data: {
+        phoneVerifiedAt: now,
+        phoneVerificationPinId: null,
+        phoneVerificationExpiresAt: null,
+        phoneVerificationAttempts: 0,
+        status: "ACTIVE",
+      },
+    });
+
+    if (updated.count !== 1) {
+      throw new Error(
+        "Phone verification request is no longer valid",
+      );
+    }
+
+    await tx.refreshSession.updateMany({
+      where: {
+        userId: user.id,
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: now,
+      },
+    });
+
+    return tx.user.findUnique({
+      where: {
+        id: user.id,
+      },
+      include: {
+        customerProfile: true,
+        transporterProfile: true,
+        adminProfile: true,
+      },
+    });
+  });
+
+  if (!result) {
+    throw new Error("User not found");
+  }
+
+  return {
+    message: "Phone number verified successfully",
+    verified: true,
+    user: toUserDto(result),
+    ...await issueTokens(
+      result.id,
+      result.role,
+    ),
+  };
+}
+
 export async function verifyEmail(token: string) {
   const tokenHash = hashToken(token);
 
@@ -416,8 +652,11 @@ export async function verifyEmail(token: string) {
     }
 
     /*
-     * Activate the account only after the verification token
-     * has been successfully consumed.
+     * Either email verification or phone verification is
+     * sufficient to activate the account.
+     *
+     * Email is required during registration, but a supplied
+     * phone number does not make email verification mandatory.
      */
     const user = await tx.user.update({
       where: {

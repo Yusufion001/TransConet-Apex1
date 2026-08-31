@@ -61,10 +61,34 @@ export default function SignUpScreen() {
         role,
       });
 
+      /*
+       * Email is required during registration, but either
+       * email verification OR phone verification can activate
+       * the account.
+       */
+      if (
+        result.requiresPhoneVerification &&
+        result.phoneVerificationToken &&
+        trimmedPhone
+      ) {
+        router.replace({
+          pathname: "/(auth)/verify-account",
+          params: {
+            email: trimmedEmail,
+            phone: trimmedPhone,
+            phoneVerificationToken:
+              result.phoneVerificationToken,
+          },
+        });
+        return;
+      }
+
       if (result.requiresEmailVerification) {
         router.replace({
           pathname: "/(auth)/verify-email",
-          params: { identifier: trimmedEmail },
+          params: {
+            identifier: trimmedEmail,
+          },
         });
         return;
       }
@@ -75,7 +99,8 @@ export default function SignUpScreen() {
         [
           {
             text: "Sign In",
-            onPress: () => router.replace("/(auth)/sign-in"),
+            onPress: () =>
+              router.replace("/(auth)/sign-in"),
           },
         ],
       );

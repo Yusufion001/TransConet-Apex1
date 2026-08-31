@@ -19,5 +19,7 @@ export type AuthSession = {
 export type RegistrationResult = {
   user: AuthUser;
   requiresEmailVerification: boolean;
+  requiresPhoneVerification: boolean;
+  phoneVerificationToken?: string;
   authenticated: false;
 };

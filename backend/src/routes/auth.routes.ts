@@ -13,6 +13,9 @@ import {
   resetPassword,
   resendEmailVerification,
   verifyEmail,
+  sendPhoneVerificationOtp,
+  resendPhoneVerificationOtp,
+  verifyPhoneVerificationOtp,
 } from "../services/auth.service.js";
 
 const router = Router();
@@ -89,6 +92,15 @@ const resendVerificationSchema = z.object({
   identifier: z.string().min(1),
 });
 
+const phoneVerificationSchema = z.object({
+  phoneVerificationToken: z.string().min(1),
+});
+
+const phoneOtpSchema = z.object({
+  phoneVerificationToken: z.string().min(1),
+  pin: z.string().regex(/^\d{6}$/, "Verification code must be 6 digits"),
+});
+
 router.post("/register", async (req, res) => {
   try {
     const input = registerSchema.parse(req.body);
@@ -150,6 +162,78 @@ router.post(
       return res.status(400).json({
         success: false,
         error: "Verification email request failed",
+      });
+    }
+  },
+);
+
+router.post(
+  "/send-phone-otp",
+  emailVerificationLimiter,
+  async (req, res) => {
+    try {
+      const input = phoneVerificationSchema.parse(req.body);
+
+      const result = await resendPhoneVerificationOtp(
+        input.phoneVerificationToken,
+      );
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to send phone verification code";
+
+      return res.status(400).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
+
+router.post(
+  "/verify-phone-otp",
+  async (req, res) => {
+    try {
+      const input = phoneOtpSchema.parse(req.body);
+
+      const result = await verifyPhoneVerificationOtp(
+        input.phoneVerificationToken,
+        input.pin,
+      );
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Phone verification failed";
+
+      return res.status(400).json({
+        success: false,
+        error: message,
       });
     }
   },
