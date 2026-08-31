@@ -6,10 +6,12 @@ const resend = new Resend(env.RESEND_API_KEY);
 export async function sendPasswordResetEmail(
   email: string,
   resetToken: string,
+  cc?: string,
 ) {
   const result = await resend.emails.send({
     from: env.EMAIL_FROM_ADDRESS,
     to: email,
+    ...(cc ? { cc } : {}),
     subject: "Your TransConet password reset token",
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.6;max-width:600px;margin:auto">

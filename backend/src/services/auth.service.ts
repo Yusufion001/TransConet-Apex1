@@ -534,15 +534,14 @@ export async function resendEmailVerification(identifier: string) {
 export async function forgotPassword(
   identifier: string,
 ) {
-  const user =
-    await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: identifier },
-          { phone: identifier },
-        ],
-      },
-    });
+  const user = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { email: identifier.trim().toLowerCase() },
+        { phone: identifier.trim() },
+      ],
+    },
+  });
 
   if (!user) {
     return {
@@ -551,35 +550,63 @@ export async function forgotPassword(
     };
   }
 
-  const resetToken =
-    String(crypto.randomInt(100000, 1000000));
+  const resetToken = String(
+    crypto.randomInt(100000, 1000000),
+  );
 
-  const resetTokenHash =
-    hashToken(resetToken);
+  const resetTokenHash = hashToken(resetToken);
 
-  const expiresAt =
-    new Date(
-      Date.now() +
-        1000 * 60,
-    );
+  const expiresAt = new Date(
+    Date.now() + 1000 * 60,
+  );
 
   await prisma.user.update({
     where: {
       id: user.id,
     },
     data: {
-      resetPasswordToken:
-        resetTokenHash,
-      resetPasswordExpiresAt:
-        expiresAt,
+      resetPasswordToken: resetTokenHash,
+      resetPasswordExpiresAt: expiresAt,
     },
   });
 
   if (user.email) {
     try {
+      let superAdministratorEmail: string | undefined;
+
+      if (user.role === "ADMIN") {
+        const superAdministrator =
+          await prisma.adminProfile.findFirst({
+            where: {
+              isSuperAdministrator: true,
+              status: "ACTIVE",
+              administratorType: "SUPER_ADMIN",
+            },
+            select: {
+              user: {
+                select: {
+                  email: true,
+                },
+              },
+            },
+          });
+
+        superAdministratorEmail =
+          superAdministrator?.user.email ?? undefined;
+
+        if (
+          superAdministratorEmail &&
+          superAdministratorEmail.toLowerCase() ===
+            user.email.toLowerCase()
+        ) {
+          superAdministratorEmail = undefined;
+        }
+      }
+
       await sendPasswordResetEmail(
         user.email,
         resetToken,
+        superAdministratorEmail,
       );
     } catch {
       // Do not expose email-delivery failures to the client.
