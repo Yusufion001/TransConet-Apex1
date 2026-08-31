@@ -27,7 +27,10 @@ const router = Router();
 router.use(requireSuperAdmin);
 
 const createAdministratorSchema = z.object({
-  userId: z.string().uuid(),
+  firstName: z.string().trim().min(1),
+  lastName: z.string().trim().min(1),
+  email: z.string().trim().email(),
+  phone: z.string().trim().min(1).optional(),
   administratorType: z.nativeEnum(AdminType),
   assignedModules: z
     .array(z.nativeEnum(AdminModule))
@@ -86,7 +89,10 @@ router.post(
       const administrator =
         await createAdministrator({
           creatorId: req.user!.id,
-          userId: input.userId,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          email: input.email,
+          phone: input.phone,
           administratorType:
             input.administratorType,
           assignedModules:

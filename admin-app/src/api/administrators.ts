@@ -79,6 +79,21 @@ type ApiResponse<T> = {
   data: T;
 };
 
+export async function createAdministrator(data: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  administratorType: AdminType;
+  assignedModules: AdminModule[];
+}): Promise<Administrator> {
+  const response = await apiClient.post<ApiResponse<Administrator>>(
+    "/admin/administrators",
+    data,
+  );
+  return response.data.data;
+}
+
 export async function getAdministrators(): Promise<Administrator[]> {
   const response = await apiClient.get<ApiResponse<Administrator[]>>(
     "/admin/administrators",
