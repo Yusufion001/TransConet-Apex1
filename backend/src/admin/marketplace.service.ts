@@ -1,4 +1,10 @@
 import { prisma } from "../config/prisma.js";
+import { Prisma } from "../../generated/prisma/client.js";
+import {
+  getPlatformConfigValue,
+  upsertPlatformConfig,
+} from "./platform-config.service.js";
+import { validatePlatformConfigValue } from "./platform-config.registry.js";
 
 function serializeDecimal(value: unknown) {
   if (value === null || value === undefined) return value;
@@ -528,4 +534,48 @@ export async function getAdminMarketplaceSummary() {
     selectedBids,
     eligibleVehicles: vehicles,
   };
+}
+
+export async function getAdminMarketplacePricing() {
+  const config = await getPlatformConfigValue("PRICING_CONFIG");
+
+  if (!config) {
+    return null;
+  }
+
+  return {
+    id: config.id,
+    key: config.key,
+    value: config.value,
+    description: config.description,
+    updatedBy: config.updatedBy,
+    createdAt: config.createdAt,
+    updatedAt: config.updatedAt,
+  };
+}
+
+export async function updateAdminMarketplacePricing(
+  value: unknown,
+  description: string | null,
+  administratorId: string,
+) {
+  const validation = validatePlatformConfigValue(
+    "PRICING_CONFIG",
+    value,
+  );
+
+  if (!validation.success) {
+    if (validation.error instanceof Error) {
+      throw validation.error;
+    }
+
+    throw new Error(validation.error);
+  }
+
+  return upsertPlatformConfig(
+    "PRICING_CONFIG",
+    validation.data as Prisma.InputJsonValue,
+    description,
+    administratorId,
+  );
 }

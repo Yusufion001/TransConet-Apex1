@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { authenticate } from "../middleware/auth.middleware.js";
+import { authenticate, type AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
 import { requireAdminModule } from "../middleware/admin-module.middleware.js";
 import {
@@ -9,6 +9,8 @@ import {
   getAdminMarketplaceRequest,
   getAdminMarketplaceRequests,
   getAdminMarketplaceSummary,
+  getAdminMarketplacePricing,
+  updateAdminMarketplacePricing,
 } from "./marketplace.service.js";
 
 const router = Router();
@@ -23,6 +25,60 @@ const querySchema = z.object({
 router.use(authenticate);
 router.use(requireAdmin);
 router.use(requireAdminModule("FLEET_MARKETPLACE"));
+
+router.get("/pricing", async (_req, res) => {
+  try {
+    const pricing = await getAdminMarketplacePricing();
+
+    return res.json({
+      success: true,
+      data: pricing,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to load marketplace pricing",
+    });
+  }
+});
+
+router.put("/pricing", async (req: AuthenticatedRequest, res) => {
+  try {
+    const input = z.object({
+      value: z.unknown(),
+      description: z.string().trim().max(1000).nullable().optional(),
+    }).strict().parse(req.body);
+
+    const pricing = await updateAdminMarketplacePricing(
+      input.value,
+      input.description ?? null,
+      req.user!.id,
+    );
+
+    return res.json({
+      success: true,
+      data: pricing,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to update marketplace pricing",
+    });
+  }
+});
 
 router.get("/summary", async (_req, res) => {
   try {

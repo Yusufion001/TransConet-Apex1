@@ -4,10 +4,14 @@ import {
   getMarketplaceRequest,
   getMarketplaceRequests,
   getMarketplaceSummary,
+  getMarketplacePricing,
+  updateMarketplacePricing,
   type MarketplaceBid,
   type MarketplaceRequest,
   type MarketplaceRequestStatus,
   type MarketplaceSummary,
+  type MarketplacePricing,
+  type MarketplacePricingConfig,
 } from "../api/marketplace";
 
 function labelize(value: string | null | undefined) {
@@ -86,6 +90,14 @@ export default function Marketplace() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [pricing, setPricing] = useState<MarketplacePricing | null>(null);
+  const [pricingForm, setPricingForm] =
+    useState<MarketplacePricingConfig | null>(null);
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [pricingSaving, setPricingSaving] = useState(false);
+  const [pricingError, setPricingError] = useState("");
+  const [pricingSuccess, setPricingSuccess] = useState("");
+
   const loadMarketplace = useCallback(async () => {
     try {
       setLoading(true);
@@ -136,6 +148,47 @@ export default function Marketplace() {
     selectedRequest,
   ]);
 
+  const loadMarketplacePricing = useCallback(async () => {
+    try {
+      setPricingLoading(true);
+      setPricingError("");
+
+      const data = await getMarketplacePricing();
+
+      setPricing(data);
+      setPricingForm(data?.value ?? null);
+    } catch {
+      setPricingError("Unable to load fare configuration.");
+    } finally {
+      setPricingLoading(false);
+    }
+  }, []);
+
+  async function saveMarketplacePricing() {
+    if (!pricingForm) return;
+
+    try {
+      setPricingSaving(true);
+      setPricingError("");
+      setPricingSuccess("");
+
+      const updated = await updateMarketplacePricing(
+        pricingForm,
+        pricing?.description ?? "Fleet Marketplace fare calculation configuration",
+      );
+
+      setPricing(updated);
+      setPricingForm(updated.value);
+      setPricingSuccess("Fare configuration saved successfully.");
+    } catch {
+      setPricingError(
+        "Unable to save fare configuration. Check the values and try again.",
+      );
+    } finally {
+      setPricingSaving(false);
+    }
+  }
+
   async function openRequest(id: string) {
     try {
       setDetailLoading(true);
@@ -154,6 +207,10 @@ export default function Marketplace() {
     // Intentional: synchronize component state with the backend API.
     void loadMarketplace();
   }, [loadMarketplace]);
+
+  useEffect(() => {
+    void loadMarketplacePricing();
+  }, [loadMarketplacePricing]);
 
   const selectedBidId = selectedRequest?.agreedBidId;
 
@@ -464,6 +521,214 @@ export default function Marketplace() {
           value={loading ? "…" : String(summary?.eligibleVehicles ?? 0)}
           detail="Approved and available fleet"
         />
+      </div>
+
+      <div className="section-title">
+        <h3>Fare Configuration</h3>
+        <span>Marketplace pricing rules used for fare calculation</span>
+      </div>
+
+      <div className="panel customer-detail-panel">
+        {pricingLoading ? (
+          <div className="customer-state">
+            Loading fare configuration…
+          </div>
+        ) : !pricingForm ? (
+          <div className="empty-activity">
+            <strong>Fare configuration unavailable</strong>
+            <span>
+              No editable pricing configuration is currently available.
+            </span>
+          </div>
+        ) : (
+          <>
+            <div className="detail-grid">
+              <label>
+                <span>Base Rate</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={pricingForm.baseRate}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      baseRate: Number(event.target.value),
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                <span>Distance Rate / Km</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={pricingForm.distanceRatePerKm}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      distanceRatePerKm: Number(event.target.value),
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                <span>Weight ≤ 100</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={pricingForm.weightMultipliers.upTo100}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      weightMultipliers: {
+                        ...pricingForm.weightMultipliers,
+                        upTo100: Number(event.target.value),
+                      },
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                <span>Weight ≤ 1,000</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={pricingForm.weightMultipliers.upTo1000}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      weightMultipliers: {
+                        ...pricingForm.weightMultipliers,
+                        upTo1000: Number(event.target.value),
+                      },
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                <span>Weight ≤ 5,000</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={pricingForm.weightMultipliers.upTo5000}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      weightMultipliers: {
+                        ...pricingForm.weightMultipliers,
+                        upTo5000: Number(event.target.value),
+                      },
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                <span>Weight ≤ 10,000</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={pricingForm.weightMultipliers.upTo10000}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      weightMultipliers: {
+                        ...pricingForm.weightMultipliers,
+                        upTo10000: Number(event.target.value),
+                      },
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                <span>Weight &gt; 10,000</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={pricingForm.weightMultipliers.above10000}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      weightMultipliers: {
+                        ...pricingForm.weightMultipliers,
+                        above10000: Number(event.target.value),
+                      },
+                    })
+                  }
+                />
+              </label>
+            </div>
+
+            <div className="section-title">
+              <h3>Truck Multipliers</h3>
+              <span>Vehicle-category pricing multipliers</span>
+            </div>
+
+            <div className="detail-grid">
+              {Object.entries(pricingForm.truckMultipliers).map(
+                ([truckCategory, multiplier]) => (
+                  <label key={truckCategory}>
+                    <span>{labelize(truckCategory)}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={multiplier}
+                      onChange={(event) =>
+                        setPricingForm({
+                          ...pricingForm,
+                          truckMultipliers: {
+                            ...pricingForm.truckMultipliers,
+                            [truckCategory]: Number(event.target.value),
+                          },
+                        })
+                      }
+                    />
+                  </label>
+                ),
+              )}
+            </div>
+
+            {pricingError && (
+              <div className="panel customer-state error-state">
+                {pricingError}
+              </div>
+            )}
+
+            {pricingSuccess && (
+              <div className="panel customer-state">
+                {pricingSuccess}
+              </div>
+            )}
+
+            <div className="operations-toolbar">
+              <span>
+                Last updated: {dateTime(pricing?.updatedAt)}
+              </span>
+
+              <button
+                type="button"
+                className="refresh-button"
+                disabled={pricingSaving}
+                onClick={() => void saveMarketplacePricing()}
+              >
+                {pricingSaving ? "Saving…" : "Save Fare Configuration"}
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="section-title">
