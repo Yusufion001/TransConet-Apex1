@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   activateAdministrator,
+  createAdministrator,
   disableAdministrator,
   getAdministrator,
   getAdministrators,
@@ -82,6 +83,16 @@ export default function Administrators() {
   const [error, setError] = useState("");
   const [detailError, setDetailError] = useState("");
   const [notice, setNotice] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [createFirstName, setCreateFirstName] = useState("");
+  const [createLastName, setCreateLastName] = useState("");
+  const [createEmail, setCreateEmail] = useState("");
+  const [createPhone, setCreatePhone] = useState("");
+  const [createType, setCreateType] =
+    useState<AdminType>("SUPPORT_ADMIN");
+  const [createModules, setCreateModules] = useState<AdminModule[]>([]);
   const [editType, setEditType] = useState<AdminType>("SUPPORT_ADMIN");
   const [editModules, setEditModules] = useState<AdminModule[]>([]);
 
@@ -222,6 +233,68 @@ export default function Administrators() {
     (administrator) => administrator.isSuperAdministrator,
   ).length;
 
+  function toggleCreateModule(module: AdminModule) {
+    setCreateModules((current) =>
+      current.includes(module)
+        ? current.filter((item) => item !== module)
+        : [...current, module],
+    );
+  }
+
+  function resetCreateForm() {
+    setCreateFirstName("");
+    setCreateLastName("");
+    setCreateEmail("");
+    setCreatePhone("");
+    setCreateType("SUPPORT_ADMIN");
+    setCreateModules([]);
+    setCreateError("");
+  }
+
+  async function submitCreateAdministrator() {
+    if (
+      !createFirstName.trim() ||
+      !createLastName.trim() ||
+      !createEmail.trim() ||
+      createModules.length === 0
+    ) {
+      setCreateError(
+        "First name, last name, email and at least one module are required.",
+      );
+      return;
+    }
+
+    try {
+      setCreating(true);
+      setCreateError("");
+      setNotice("");
+
+      await createAdministrator({
+        firstName: createFirstName.trim(),
+        lastName: createLastName.trim(),
+        email: createEmail.trim().toLowerCase(),
+        phone: createPhone.trim() || undefined,
+        administratorType: createType,
+        assignedModules: createModules,
+      });
+
+      setShowCreate(false);
+      resetCreateForm();
+      setNotice(
+        "Administrator created successfully. An invitation email has been sent.",
+      );
+      await loadAdministrators();
+    } catch (error) {
+      setCreateError(
+        error instanceof Error
+          ? error.message
+          : "Unable to create administrator.",
+      );
+    } finally {
+      setCreating(false);
+    }
+  }
+
   function toggleModule(module: AdminModule) {
     setEditModules((current) =>
       current.includes(module)
@@ -303,13 +376,215 @@ export default function Administrators() {
 
         <button
           type="button"
+          className="primary-action administrator-add-button"
+          onClick={() => {
+            resetCreateForm();
+            setShowCreate(true);
+          }}
+          disabled={creating}
+        >
+          + Add Administrator
+        </button>
+
+        <button
+          type="button"
           className="refresh-button"
           onClick={() => void loadAdministrators()}
           disabled={loading}
         >
           {loading ? "Refreshing…" : "Refresh"}
         </button>
+
+        <button
+          type="button"
+          className="primary-action administrator-add-button"
+          onClick={() => {
+            resetCreateForm();
+            setShowCreate(true);
+          }}
+          disabled={creating}
+        >
+          + Add Administrator
+        </button>
       </div>
+
+      {showCreate && (
+        <div className="administrator-modal-backdrop">
+          <div
+            className="administrator-create-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-administrator-title"
+          >
+            <div className="administrator-create-header">
+              <div>
+                <span className="module-kicker">
+                  TRANSCONET-APEX1 ADMINISTRATION
+                </span>
+                <h2 id="create-administrator-title">
+                  Add Administrator
+                </h2>
+                <p>
+                  Create an administrator account and send a secure
+                  invitation email.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="modal-close-button"
+                onClick={() => {
+                  if (!creating) {
+                    setShowCreate(false);
+                    resetCreateForm();
+                  }
+                }}
+                disabled={creating}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            {createError && (
+              <div className="module-error administrator-create-error">
+                <strong>Unable to create administrator</strong>
+                <p>{createError}</p>
+              </div>
+            )}
+
+            <div className="administrator-form-grid">
+              <label>
+                <span>First Name</span>
+                <input
+                  value={createFirstName}
+                  onChange={(event) =>
+                    setCreateFirstName(event.target.value)
+                  }
+                  placeholder="First name"
+                  disabled={creating}
+                />
+              </label>
+
+              <label>
+                <span>Last Name</span>
+                <input
+                  value={createLastName}
+                  onChange={(event) =>
+                    setCreateLastName(event.target.value)
+                  }
+                  placeholder="Last name"
+                  disabled={creating}
+                />
+              </label>
+
+              <label>
+                <span>Email Address</span>
+                <input
+                  type="email"
+                  value={createEmail}
+                  onChange={(event) =>
+                    setCreateEmail(event.target.value)
+                  }
+                  placeholder="administrator@example.com"
+                  disabled={creating}
+                />
+              </label>
+
+              <label>
+                <span>Phone Number</span>
+                <input
+                  value={createPhone}
+                  onChange={(event) =>
+                    setCreatePhone(event.target.value)
+                  }
+                  placeholder="Optional"
+                  disabled={creating}
+                />
+              </label>
+
+              <label className="administrator-form-full">
+                <span>Administrator Type</span>
+                <select
+                  value={createType}
+                  onChange={(event) =>
+                    setCreateType(event.target.value as AdminType)
+                  }
+                  disabled={creating}
+                >
+                  {ADMIN_TYPES.filter(
+                    (type) => type !== "SUPER_ADMIN",
+                  ).map((type) => (
+                    <option key={type} value={type}>
+                      {labelize(type)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <div className="administrator-create-modules">
+              <div className="administrator-section-heading">
+                <div>
+                  <strong>Assigned Modules</strong>
+                  <span>
+                    Select the administration areas this administrator
+                    will be authorized to access.
+                  </span>
+                </div>
+              </div>
+
+              <div className="admin-module-grid">
+                {ADMIN_MODULES.map((module) => (
+                  <label
+                    key={module}
+                    className="admin-module-option"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={createModules.includes(module)}
+                      onChange={() => toggleCreateModule(module)}
+                      disabled={creating}
+                    />
+                    <span>{labelize(module)}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="administrator-create-footer">
+              <button
+                type="button"
+                className="secondary-action"
+                onClick={() => {
+                  setShowCreate(false);
+                  resetCreateForm();
+                }}
+                disabled={creating}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="primary-action"
+                onClick={() => void submitCreateAdministrator()}
+                disabled={
+                  creating ||
+                  !createFirstName.trim() ||
+                  !createLastName.trim() ||
+                  !createEmail.trim() ||
+                  createModules.length === 0
+                }
+              >
+                {creating
+                  ? "Creating & Sending Invitation…"
+                  : "Create & Send Invitation"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="administrator-layout">
         <div className="administrator-directory panel">
