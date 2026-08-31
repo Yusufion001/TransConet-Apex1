@@ -4,8 +4,21 @@ import crypto from "crypto";
 
 import { env } from "../config/env.js";
 import { prisma } from "../config/prisma.js";
-import { sendEmailVerificationEmail, sendPasswordResetEmail } from "./email.service.js";
+import {
+  sendEmailVerificationEmail,
+  sendPasswordResetEmail,
+} from "./email.service.js";
 import { sendPhoneOtp, verifyPhoneOtp } from "./termii.service.js";
+import {
+  sendRegistrationSuccessEmail,
+  sendRegistrationFailureEmail,
+  sendRegistrationSuccessSms,
+  sendRegistrationFailureSms,
+  sendVerificationSuccessEmail,
+  sendVerificationFailureEmail,
+  sendVerificationSuccessSms,
+  sendVerificationFailureSms,
+} from "./communication.service.js";
 import { toUserDto } from "../users/user.dto.js";
 
 type UserRole = "CUSTOMER" | "TRANSPORTER" | "ADMIN";
@@ -171,8 +184,9 @@ export async function registerUser(input: {
   password: string;
   role: UserRole;
 }) {
-  const passwordHash =
-    await bcrypt.hash(input.password, 12);
+  try {
+    const passwordHash =
+      await bcrypt.hash(input.password, 12);
 
   const existing =
     await prisma.user.findFirst({
@@ -271,15 +285,45 @@ export async function registerUser(input: {
     }
   }
 
-  return {
-    user: toUserDto(user),
-    requiresEmailVerification: Boolean(user.email),
-    requiresPhoneVerification: Boolean(user.phone),
-    phoneVerificationToken: user.phone
-      ? createPhoneVerificationToken(user.id)
-      : undefined,
-    authenticated: false,
-  };
+    const recipient = {
+      email: user.email,
+      phone: user.phone,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
+
+    await Promise.allSettled([
+      sendRegistrationSuccessEmail(recipient),
+      sendRegistrationSuccessSms(recipient),
+    ]);
+
+    return {
+      user: toUserDto(user),
+      requiresEmailVerification: Boolean(user.email),
+      requiresPhoneVerification: Boolean(user.phone),
+      phoneVerificationToken: user.phone
+        ? createPhoneVerificationToken(user.id)
+        : undefined,
+      authenticated: false,
+    };
+  } catch (error) {
+    await Promise.allSettled([
+      sendRegistrationFailureEmail({
+        email: input.email,
+        phone: input.phone,
+        firstName: input.firstName,
+        lastName: input.lastName,
+      }),
+      sendRegistrationFailureSms({
+        email: input.email,
+        phone: input.phone,
+        firstName: input.firstName,
+        lastName: input.lastName,
+      }),
+    ]);
+
+    throw error;
+  }
 }
 
 export async function loginUser(
@@ -589,6 +633,21 @@ export async function verifyPhoneVerificationOtp(
     throw new Error("User not found");
   }
 
+  await Promise.allSettled([
+    sendVerificationSuccessSms({
+      email: result.email,
+      phone: result.phone,
+      firstName: result.firstName,
+      lastName: result.lastName,
+    }),
+    sendVerificationSuccessEmail({
+      email: result.email,
+      phone: result.phone,
+      firstName: result.firstName,
+      lastName: result.lastName,
+    }),
+  ]);
+
   return {
     message: "Phone number verified successfully",
     verified: true,
@@ -695,6 +754,21 @@ export async function verifyEmail(token: string) {
    * Issue the first authenticated session only after the
    * activation transaction has committed successfully.
    */
+  await Promise.allSettled([
+    sendVerificationSuccessEmail({
+      email: result.email,
+      phone: result.phone,
+      firstName: result.firstName,
+      lastName: result.lastName,
+    }),
+    sendVerificationSuccessSms({
+      email: result.email,
+      phone: result.phone,
+      firstName: result.firstName,
+      lastName: result.lastName,
+    }),
+  ]);
+
   return {
     user: toUserDto(result),
     ...await issueTokens(

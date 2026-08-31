@@ -142,3 +142,26 @@ export async function sendAdminInvitationEmail(
 
   return result.data;
 }
+
+export async function sendBusinessEmail(
+  email: string,
+  subject: string,
+  message: string,
+) {
+  const result = await resend.emails.send({
+    from: env.EMAIL_FROM_ADDRESS,
+    to: email,
+    subject,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;max-width:600px;margin:auto">
+        <p>${message}</p>
+      </div>
+    `,
+  });
+
+  if (result.error) {
+    throw new Error("Failed to send business email");
+  }
+
+  return result.data;
+}

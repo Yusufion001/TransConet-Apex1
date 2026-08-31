@@ -116,3 +116,22 @@ export async function verifyPhoneOtp(
     phone: result.msisdn,
   };
 }
+
+export async function sendSms(
+  phone: string,
+  message: string,
+) {
+  const to = normalizePhoneNumber(phone);
+
+  return termiiRequest<{
+    messageId?: string;
+    message?: string;
+    status?: string;
+  }>("/sms/send", {
+    to,
+    from: env.TERMII_SENDER_ID,
+    channel: env.TERMII_CHANNEL,
+    sms: message,
+    type: "plain",
+  });
+}
