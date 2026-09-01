@@ -1,44 +1,45 @@
 import { prisma } from "../config/prisma.js";
 import { createShipmentEvent } from "../events/event.service.js";
 import { publishEvent } from "../realtime/event-bus.js";
+import { toSupportTicketDto } from "./support.dto.js";
 
-type SupportStatus =
+export type SupportStatus =
   | "OPEN"
   | "IN_PROGRESS"
   | "RESOLVED"
   | "CLOSED";
 
-type SupportPriority =
+export type SupportPriority =
   | "LOW"
   | "MEDIUM"
   | "HIGH"
   | "URGENT";
 
-async function requireSupportAdministrator(
-  administratorId: string,
-) {
-  const administrator =
-    await prisma.adminProfile.findUnique({
-      where: {
-        userId: administratorId,
-      },
-      select: {
-        userId: true,
-        status: true,
-        isSuperAdministrator: true,
-        administratorType: true,
-        assignedModules: true,
-      },
-    });
+type AdminTicketFilters = {
+  status?: SupportStatus;
+  priority?: SupportPriority;
+};
+
+async function requireSupportAdministrator(administratorId: string) {
+  const administrator = await prisma.adminProfile.findUnique({
+    where: {
+      userId: administratorId,
+    },
+    select: {
+      userId: true,
+      status: true,
+      isSuperAdministrator: true,
+      administratorType: true,
+      assignedModules: true,
+    },
+  });
 
   if (!administrator) {
     throw new Error("Administrator profile not found");
   }
 
   if (administrator.status !== "ACTIVE") {
-    throw new Error(
-      "Administrator account is not active",
-    );
+    throw new Error("Administrator account is not active");
   }
 
   if (
@@ -46,25 +47,26 @@ async function requireSupportAdministrator(
     administrator.administratorType !== "SUPER_ADMIN" &&
     !administrator.assignedModules.includes("SUPPORT_CARE")
   ) {
-    throw new Error(
-      "Administrator is not authorized for SUPPORT_CARE",
-    );
+    throw new Error("Administrator is not authorized for SUPPORT_CARE");
   }
 
   return administrator;
 }
 
-async function requireTicket(id: string) {
-  const ticket =
-    await prisma.supportTicket.findUnique({
-      where: { id },
-    });
+async function requireSupportTicket(id: string) {
+  const ticket = await prisma.supportTicket.findUnique({
+    where: { id },
+  });
 
   if (!ticket) {
     throw new Error("Support ticket not found");
   }
 
   return ticket;
+}
+
+async function requireSupportAssignee(administratorId: string) {
+  return requireSupportAdministrator(administratorId);
 }
 
 export async function createTicket(data: {
@@ -75,10 +77,9 @@ export async function createTicket(data: {
   description: string;
   priority?: SupportPriority;
 }) {
-  const ticket =
-    await prisma.supportTicket.create({
-      data,
-    });
+  const ticket = await prisma.supportTicket.create({
+    data,
+  });
 
   if (ticket.bookingId) {
     await createShipmentEvent({
@@ -90,22 +91,22 @@ export async function createTicket(data: {
     });
   }
 
+  const ticketDto = toSupportTicketDto(ticket);
+
   publishEvent("admin", {
     eventType: "SUPPORT_TICKET_CREATED",
     module: "SUPPORT_CARE",
     entityType: "SUPPORT_TICKET",
     entityId: ticket.id,
     actorId: ticket.requesterId,
-    data: ticket,
+    data: ticketDto,
   });
 
-  return ticket;
+  return ticketDto;
 }
 
-export async function getUserTickets(
-  requesterId: string,
-) {
-  return prisma.supportTicket.findMany({
+export async function getUserTickets(requesterId: string) {
+  const tickets = await prisma.supportTicket.findMany({
     where: {
       requesterId,
     },
@@ -113,42 +114,14 @@ export async function getUserTickets(
       createdAt: "desc",
     },
   });
+
+  return tickets.map(toSupportTicketDto);
 }
 
-export async function updateTicketStatus(
-  id: string,
-  status: SupportStatus,
-  administratorId: string,
+export async function getAdminTickets(
+  filters?: AdminTicketFilters,
 ) {
-  await requireSupportAdministrator(
-    administratorId,
-  );
-
-  await requireTicket(id);
-
-  const ticket =
-    await prisma.supportTicket.update({
-      where: { id },
-      data: { status },
-    });
-
-  publishEvent("admin", {
-    eventType: "SUPPORT_TICKET_STATUS_UPDATED",
-    module: "SUPPORT_CARE",
-    entityType: "SUPPORT_TICKET",
-    entityId: ticket.id,
-    actorId: administratorId,
-    data: ticket,
-  });
-
-  return ticket;
-}
-
-export async function getAdminTickets(filters?: {
-  status?: SupportStatus;
-  priority?: SupportPriority;
-}) {
-  return prisma.supportTicket.findMany({
+  const tickets = await prisma.supportTicket.findMany({
     where: {
       ...(filters?.status
         ? { status: filters.status }
@@ -157,7 +130,18 @@ export async function getAdminTickets(filters?: {
         ? { priority: filters.priority }
         : {}),
     },
-    include: {
+    select: {
+      id: true,
+      requesterId: true,
+      bookingId: true,
+      category: true,
+      subject: true,
+      description: true,
+      priority: true,
+      status: true,
+      assignedAdminId: true,
+      createdAt: true,
+      updatedAt: true,
       requester: {
         select: {
           id: true,
@@ -175,85 +159,164 @@ export async function getAdminTickets(filters?: {
           email: true,
         },
       },
-      booking: true,
+      booking: {
+        select: {
+          id: true,
+          status: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
     },
   });
+
+  return tickets.map(toSupportTicketDto);
 }
 
 export async function assignTicket(
-  id: string,
-  administratorId: string,
+  ticketId: string,
+  assigneeAdministratorId: string,
+  actorAdministratorId: string,
 ) {
-  await requireSupportAdministrator(
-    administratorId,
-  );
+  await requireSupportAdministrator(actorAdministratorId);
+  await requireSupportTicket(ticketId);
+  await requireSupportAssignee(assigneeAdministratorId);
 
-  await requireTicket(id);
-
-  const assignee =
-    await prisma.adminProfile.findUnique({
-      where: {
-        userId: administratorId,
+  const ticket = await prisma.supportTicket.update({
+    where: {
+      id: ticketId,
+    },
+    data: {
+      assignedAdminId: assigneeAdministratorId,
+    },
+    select: {
+      id: true,
+      requesterId: true,
+      bookingId: true,
+      category: true,
+      subject: true,
+      description: true,
+      priority: true,
+      status: true,
+      assignedAdminId: true,
+      createdAt: true,
+      updatedAt: true,
+      requester: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+        },
       },
-      select: {
-        userId: true,
+      assignedAdmin: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
       },
-    });
-
-  if (!assignee) {
-    throw new Error(
-      "Administrator profile not found",
-    );
-  }
-
-  const ticket =
-    await prisma.supportTicket.update({
-      where: { id },
-      data: {
-        assignedAdminId: administratorId,
+      booking: {
+        select: {
+          id: true,
+          status: true,
+        },
       },
-    });
+    },
+  });
+
+  const ticketDto = toSupportTicketDto(ticket);
 
   publishEvent("admin", {
     eventType: "SUPPORT_TICKET_ASSIGNED",
     module: "SUPPORT_CARE",
     entityType: "SUPPORT_TICKET",
     entityId: ticket.id,
-    actorId: administratorId,
-    data: ticket,
+    actorId: actorAdministratorId,
+    data: ticketDto,
   });
 
-  return ticket;
+  return ticketDto;
 }
 
-export async function updateAdminTicketStatus(
-  id: string,
+export async function updateTicketStatus(
+  ticketId: string,
   status: SupportStatus,
   administratorId: string,
 ) {
-  await requireSupportAdministrator(
+  return updateAdminTicketStatus(
+    ticketId,
+    status,
     administratorId,
   );
+}
 
-  await requireTicket(id);
+export async function updateAdminTicketStatus(
+  ticketId: string,
+  status: SupportStatus,
+  actorAdministratorId: string,
+) {
+  await requireSupportAdministrator(actorAdministratorId);
+  await requireSupportTicket(ticketId);
 
-  const ticket =
-    await prisma.supportTicket.update({
-      where: { id },
-      data: { status },
-    });
+  const ticket = await prisma.supportTicket.update({
+    where: {
+      id: ticketId,
+    },
+    data: {
+      status,
+    },
+    select: {
+      id: true,
+      requesterId: true,
+      bookingId: true,
+      category: true,
+      subject: true,
+      description: true,
+      priority: true,
+      status: true,
+      assignedAdminId: true,
+      createdAt: true,
+      updatedAt: true,
+      requester: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+        },
+      },
+      assignedAdmin: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+        },
+      },
+      booking: {
+        select: {
+          id: true,
+          status: true,
+        },
+      },
+    },
+  });
+
+  const ticketDto = toSupportTicketDto(ticket);
 
   publishEvent("admin", {
     eventType: "SUPPORT_TICKET_STATUS_UPDATED",
     module: "SUPPORT_CARE",
     entityType: "SUPPORT_TICKET",
     entityId: ticket.id,
-    actorId: administratorId,
-    data: ticket,
+    actorId: actorAdministratorId,
+    data: ticketDto,
   });
 
-  return ticket;
+  return ticketDto;
 }
