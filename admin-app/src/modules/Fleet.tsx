@@ -10,8 +10,10 @@ import {
   type VehicleVerificationStatus,
 } from "../api/fleet";
 
-function statusClass(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+function statusClass(value: string | null | undefined) {
+  return String(value ?? "UNKNOWN")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-");
 }
 
 function formatCoordinate(
@@ -54,8 +56,8 @@ const verificationStatuses: VehicleVerificationStatus[] = [
   "SUSPENDED",
 ];
 
-function labelize(value: string) {
-  return value
+function labelize(value: string | null | undefined) {
+  return String(value ?? "UNKNOWN")
     .toLowerCase()
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
