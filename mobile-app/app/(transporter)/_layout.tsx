@@ -1,7 +1,6 @@
 import { Drawer } from "expo-router/drawer";
-import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
+import { Pressable, ScrollView, Text, View, StyleSheet } from "react-native";
 import { router } from "expo-router";
-import { Text, View, StyleSheet } from "react-native";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../src/auth/auth.store";
 import { getTransporterWallet } from "../../src/api/wallet";
@@ -43,8 +42,20 @@ function TransporterDrawerContent(props: any) {
     router.replace("/(auth)/sign-in");
   };
 
+  const item = (label: string, path: string) => (
+    <Pressable
+      style={styles.menuItem}
+      onPress={() => {
+        props.navigation.closeDrawer();
+        go(path);
+      }}
+    >
+      <Text style={styles.menuLabel}>{label}</Text>
+    </Pressable>
+  );
+
   return (
-    <DrawerContentScrollView {...props}>
+    <ScrollView contentContainerStyle={styles.drawer}>
       <View style={styles.brand}>
         <Text style={styles.brandTitle}>TRANSCONET</Text>
         <Text style={styles.brandSubtitle}>Transporter</Text>
@@ -52,19 +63,25 @@ function TransporterDrawerContent(props: any) {
 
       <View style={styles.separator} />
 
-      <DrawerItem label="⌂  Home" onPress={() => go("/(transporter)")} />
-      <DrawerItem label="▣  Assignments" onPress={() => go("/(transporter)/bookings")} />
-      <DrawerItem label="⇄  Marketplace" onPress={() => go("/(transporter)/marketplace")} />
-      <DrawerItem label="🚚  Fleet" onPress={() => go("/(transporter)/vehicles")} />
-      <DrawerItem label="₦  Wallet" onPress={() => go("/(transporter)/wallet")} />
-      <DrawerItem label="🔔  Notifications" onPress={() => go("/(transporter)/notifications")} />
-      <DrawerItem label="👤  Account" onPress={() => go("/(transporter)/account")} />
+      {item("⌂  Home", "/(transporter)")}
+      {item("▣  Assignments", "/(transporter)/bookings")}
+      {item("⇄  Marketplace", "/(transporter)/marketplace")}
+      {item("🚚  Fleet", "/(transporter)/vehicles")}
+      {item("₦  Wallet", "/(transporter)/wallet")}
+      {item("🔔  Notifications", "/(transporter)/notifications")}
+      {item("👤  Account", "/(transporter)/account")}
 
       <View style={styles.separator} />
 
-      <DrawerItem label="⚙  Settings" onPress={() => go("/(transporter)/settings")} />
-      <DrawerItem label="↪  Sign Out" onPress={() => void logout()} />
-    </DrawerContentScrollView>
+      {item("⚙  Settings", "/(transporter)/settings")}
+
+      <Pressable
+        style={styles.menuItem}
+        onPress={() => void logout()}
+      >
+        <Text style={styles.menuLabel}>↪  Sign Out</Text>
+      </Pressable>
+    </ScrollView>
   );
 }
 
@@ -100,6 +117,19 @@ export default function TransporterLayout() {
 }
 
 const styles = StyleSheet.create({
+  drawer: {
+    paddingBottom: 24,
+  },
+  menuItem: {
+    minHeight: 50,
+    justifyContent: "center",
+    paddingHorizontal: 18,
+  },
+  menuLabel: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#475467",
+  },
   headerBalance: {
     marginRight: 16,
     fontSize: 14,
