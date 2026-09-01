@@ -142,6 +142,22 @@ export async function updateBookingStatus(
   return response.data.data;
 }
 
+export async function uploadProofOfDelivery(
+  bookingId: string,
+  proofOfDelivery: string,
+  deliveryConfirmationCode: string,
+): Promise<Booking> {
+  const response = await apiClient.patch<ApiResponse<Booking>>(
+    `/bookings/${bookingId}/proof-of-delivery`,
+    {
+      proofOfDelivery,
+      deliveryConfirmationCode,
+    },
+  );
+
+  return response.data.data;
+}
+
 export async function confirmDelivery(
   bookingId: string,
   code: string,
