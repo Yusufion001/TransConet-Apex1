@@ -36,6 +36,12 @@ const fleetVehicleUpdateSchema = z.object({
     "UNAVAILABLE",
     "ON_TRIP",
   ]).optional(),
+  verificationStatus: z.enum([
+    "PENDING",
+    "APPROVED",
+    "REJECTED",
+    "SUSPENDED",
+  ]).optional(),
 }).strict();
 
 const router = Router();
