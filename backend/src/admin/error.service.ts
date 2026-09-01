@@ -1,5 +1,5 @@
 import { prisma } from "../config/prisma.js";
-import { publishEvent } from "../realtime/event-bus.js";
+import { emitRealtimeEvent } from "../realtime/event-bus.js";
 
 export async function getErrorOverview(limit = 100) {
   const safeLimit = Math.min(Math.max(limit, 1), 200);
@@ -67,13 +67,23 @@ export async function recordAdminError(data: {
     },
   });
 
-  publishEvent("admin", {
-    eventType: data.eventType,
+  /*
+   * The activity is already persisted above.
+   *
+   * Publish the existing database record directly to realtime.
+   * Do not use publishEvent() here because that would persist it again.
+   */
+  emitRealtimeEvent({
+    channel: "admin",
+    eventId: activity.id,
+    timestamp: activity.createdAt.toISOString(),
+    eventType: activity.eventType,
     module: "ERROR_CENTER",
-    entityType: data.entityType,
-    entityId: data.entityId,
-    actorId: data.actorId,
-    data: activity,
+    actorId: activity.actorId ?? undefined,
+    entityType: activity.entityType ?? undefined,
+    entityId: activity.entityId ?? undefined,
+    bookingId: activity.bookingId ?? undefined,
+    data: activity.data ?? undefined,
   });
 
   return activity;

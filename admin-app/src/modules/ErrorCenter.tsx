@@ -5,6 +5,10 @@ import {
   type AdminErrorEvent,
   type ErrorOverview,
 } from "../api/errors";
+import {
+  subscribeAdminRealtime,
+  type AdminRealtimeEvent,
+} from "../realtime/admin-realtime";
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -64,6 +68,143 @@ function ErrorCenter() {
   useEffect(() => {
     void loadErrors(true);
   }, [loadErrors]);
+
+  useEffect(() => {
+    let active = true;
+    let unsubscribe: (() => void) | undefined;
+
+    const isErrorEvent = (event: AdminRealtimeEvent) => {
+      const value = event.eventType.toUpperCase();
+
+      return (
+        event.module === "ERROR_CENTER" ||
+        value.includes("ERROR") ||
+        value.includes("FAILED") ||
+        value.includes("FAILURE") ||
+        value.includes("CRITICAL") ||
+        value.includes("FATAL")
+      );
+    };
+
+    void subscribeAdminRealtime("ERROR_CENTER", {
+      onConnectionChange: (connected) => {
+        if (!active) return;
+
+        if (!connected) {
+          setError("Error Center realtime connection lost. Refresh to resynchronize.");
+        } else {
+          setError("");
+        }
+      },
+
+      onAccessDenied: (message) => {
+        if (!active) return;
+        setError(message);
+      },
+
+      onActivity: (event) => {
+        if (!active || !isErrorEvent(event)) return;
+
+        const incoming: AdminErrorEvent = {
+          id: event.eventId,
+          eventType: event.eventType,
+          module: event.module ?? "ERROR_CENTER",
+          actorId: event.actorId ?? null,
+          entityType: event.entityType ?? null,
+          entityId: event.entityId ?? null,
+          bookingId: event.bookingId ?? null,
+          title: event.eventType,
+          description: null,
+          data: event.data ?? null,
+          createdAt: event.timestamp,
+        };
+
+        setEvents((current) => {
+          if (current.some((item) => item.id === incoming.id)) {
+            return current;
+          }
+
+          return [incoming, ...current].slice(0, 200);
+        });
+
+        setOverview((current) => {
+          if (!current) return current;
+
+          if (current.errors.some((item) => item.id === incoming.id)) {
+            return current;
+          }
+
+          return {
+            ...current,
+            total: current.total + 1,
+            errors: [incoming, ...current.errors].slice(0, 200),
+            synchronizedAt: new Date().toISOString(),
+          };
+        });
+      },
+
+      onModuleEvent: (event) => {
+        if (!active || !isErrorEvent(event)) return;
+
+        const incoming: AdminErrorEvent = {
+          id: event.eventId,
+          eventType: event.eventType,
+          module: event.module ?? "ERROR_CENTER",
+          actorId: event.actorId ?? null,
+          entityType: event.entityType ?? null,
+          entityId: event.entityId ?? null,
+          bookingId: event.bookingId ?? null,
+          title: event.eventType,
+          description: null,
+          data: event.data ?? null,
+          createdAt: event.timestamp,
+        };
+
+        setEvents((current) => {
+          if (current.some((item) => item.id === incoming.id)) {
+            return current;
+          }
+
+          return [incoming, ...current].slice(0, 200);
+        });
+
+        setOverview((current) => {
+          if (!current) return current;
+
+          if (current.errors.some((item) => item.id === incoming.id)) {
+            return current;
+          }
+
+          return {
+            ...current,
+            total: current.total + 1,
+            errors: [incoming, ...current.errors].slice(0, 200),
+            synchronizedAt: new Date().toISOString(),
+          };
+        });
+      },
+    })
+      .then((cleanup) => {
+        if (!active) {
+          cleanup();
+          return;
+        }
+
+        unsubscribe = cleanup;
+      })
+      .catch(() => {
+        if (active) {
+          setError(
+            "Unable to connect to Error Center realtime monitoring.",
+          );
+        }
+      });
+
+    return () => {
+      active = false;
+      unsubscribe?.();
+    };
+  }, []);
 
   const filteredEvents = useMemo(() => {
     const query = search.trim().toLowerCase();

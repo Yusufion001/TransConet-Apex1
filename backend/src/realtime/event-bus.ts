@@ -11,6 +11,10 @@ export type RealtimeEvent = AdminRealtimeEvent & {
   recipientId?: string;
 };
 
+export function emitRealtimeEvent(payload: RealtimeEvent) {
+  eventBus.emit(payload.channel, payload);
+}
+
 export function publishEvent(
   channel: string,
   event: Omit<RealtimeEvent, "channel" | "eventId" | "timestamp">,
@@ -28,5 +32,5 @@ export function publishEvent(
     });
   }
 
-  eventBus.emit(channel, payload);
+  emitRealtimeEvent(payload);
 }
