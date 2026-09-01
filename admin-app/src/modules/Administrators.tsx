@@ -395,17 +395,6 @@ export default function Administrators() {
           {loading ? "Refreshing…" : "Refresh"}
         </button>
 
-        <button
-          type="button"
-          className="primary-action administrator-add-button"
-          onClick={() => {
-            resetCreateForm();
-            setShowCreate(true);
-          }}
-          disabled={creating}
-        >
-          + Add Administrator
-        </button>
       </div>
 
       {showCreate && (

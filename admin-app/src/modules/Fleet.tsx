@@ -92,11 +92,12 @@ export default function Fleet() {
   }
 
   async function openVehicle(id: string) {
-    try {
-      setSelectedId(id);
-      setDetailLoading(true);
-      setError("");
+    setSelectedId(id);
+    setSelectedVehicle(null);
+    setDetailLoading(true);
+    setError("");
 
+    try {
       const vehicle = await getFleetVehicle(id);
 
       setSelectedVehicle(vehicle);
@@ -112,8 +113,10 @@ export default function Fleet() {
         availabilityStatus: vehicle.availabilityStatus,
         verificationStatus: vehicle.verificationStatus,
       });
-    } catch {
-      setError("Unable to load vehicle information.");
+    } catch (error) {
+      console.error("[TransConet Admin] Unable to load fleet vehicle:", error);
+      setSelectedVehicle(null);
+      setError("Unable to load vehicle information. Please try again.");
     } finally {
       setDetailLoading(false);
     }
@@ -206,7 +209,50 @@ export default function Fleet() {
     (vehicle) => vehicle.verificationStatus === "PENDING",
   ).length;
 
-  if (selectedId && selectedVehicle) {
+  if (selectedId) {
+    if (detailLoading || !selectedVehicle) {
+      return (
+        <section className="dashboard">
+          <div className="module-header">
+            <div>
+              <button
+                type="button"
+                className="customer-back-button"
+                onClick={() => {
+                  setSelectedId(null);
+                  setSelectedVehicle(null);
+                  setDetailLoading(false);
+                  setError("");
+                }}
+              >
+                ← Fleet Directory
+              </button>
+
+              <div className="module-kicker">
+                OPERATIONS / FLEET MANAGEMENT
+              </div>
+
+              <h2>Vehicle</h2>
+
+              <p>
+                Loading the selected vehicle administration record.
+              </p>
+            </div>
+          </div>
+
+          {error ? (
+            <div className="panel customer-state error-state">
+              {error}
+            </div>
+          ) : (
+            <div className="panel customer-state">
+              Loading vehicle…
+            </div>
+          )}
+        </section>
+      );
+    }
+
     const transporter = selectedVehicle.transporter;
 
     return (
