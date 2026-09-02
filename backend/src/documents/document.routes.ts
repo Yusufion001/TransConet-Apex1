@@ -21,6 +21,7 @@ import {
   getVerifiedDocuments,
 } from "./document.service.js";
 import { toDocumentDto } from "./document.dto.js";
+import { supabaseStorageService } from "../storage/supabase-storage.service.js";
 
 const router = Router();
 
@@ -33,6 +34,60 @@ const userIdParamsSchema = z.object({
 });
 
 router.use(authenticate);
+
+router.post(
+  "/upload-url",
+  authorize("CUSTOMER", "TRANSPORTER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const input = z.object({
+        type: z.enum([
+          "DRIVERS_LICENSE",
+          "VEHICLE_REGISTRATION",
+          "INSURANCE",
+          "BUSINESS_DOCUMENT",
+          "IDENTITY_DOCUMENT",
+          "OTHER",
+        ]),
+        fileName: z.string().trim().min(1).max(255),
+      }).parse(req.body);
+
+      const extension = input.fileName.includes(".")
+        ? input.fileName.substring(input.fileName.lastIndexOf(".")).toLowerCase()
+        : "";
+
+      const safeExtension = extension.replace(/[^a-z0-9.]/g, "");
+
+      const storagePath =
+        `${req.user!.id}/${input.type}/${crypto.randomUUID()}${safeExtension}`;
+
+      const upload = await supabaseStorageService.createSignedUploadUrl(
+        storagePath,
+      );
+
+      res.json({
+        success: true,
+        data: {
+          storagePath,
+          signedUrl: upload.signedUrl,
+          token: upload.token,
+        },
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Server error",
+      });
+    }
+  },
+);
 
 router.post(
   "/",

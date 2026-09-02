@@ -8,6 +8,7 @@ export function toDocumentDto(document: any) {
     userId: document.userId,
     type: document.type,
     fileUrl: document.fileUrl,
+    storagePath: document.storagePath ?? null,
     status: document.status,
     rejectionReason: document.rejectionReason,
     adminApproved: document.adminApproved,

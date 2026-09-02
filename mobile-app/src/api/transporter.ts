@@ -6,6 +6,33 @@ type ApiResponse<T> = {
   data: T;
 };
 
+export type TransporterOnboardingStatus = {
+  emailVerified: boolean;
+  profileCompleted: boolean;
+  identityDocumentSubmitted: boolean;
+  identityVerificationStatus: "NOT_STARTED" | "PENDING" | "VERIFIED" | "REJECTED";
+  identityDocumentApproved: boolean;
+  vehicleRegistered: boolean;
+  vehicleApproved: boolean;
+  vehicleAvailable: boolean;
+  vehicleLocated: boolean;
+  adminApproved: boolean;
+  tier: "TIER_1" | "TIER_2" | null;
+  tier2Approved: boolean;
+  tier2Eligible: boolean;
+  marketplaceReady: boolean;
+  currentStep:
+    | "EMAIL_VERIFICATION"
+    | "PROFILE_SETUP"
+    | "DOCUMENTS"
+    | "IDENTITY_VERIFICATION"
+    | "VEHICLE"
+    | "ADMIN_REVIEW"
+    | "APPROVED"
+    | "TIER_2_DOCUMENTS"
+    | "TIER_2_REVIEW";
+};
+
 export type MarketplaceLoad = {
   id: string;
   customerId?: string;
@@ -99,6 +126,22 @@ export async function getTransporterBookings(
   return response.data.data;
 }
 
+export async function createTransporterProfile(input: {
+  companyName?: string;
+  businessRegistrationNumber?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+}) {
+  const response = await apiClient.post<ApiResponse<unknown>>(
+    "/transporters",
+    input,
+  );
+
+  return response.data.data;
+}
+
 export async function getTransporterVehicles(
   transporterId: string,
 ): Promise<Vehicle[]> {
@@ -134,6 +177,82 @@ export async function updateVehicle(
 ) {
   const response = await apiClient.patch<ApiResponse<Vehicle>>(
     `/vehicles/${vehicleId}`,
+    input,
+  );
+
+  return response.data.data;
+}
+
+export async function getTransporterOnboardingStatus(
+  transporterId: string,
+): Promise<TransporterOnboardingStatus> {
+  const response = await apiClient.get<ApiResponse<TransporterOnboardingStatus>>(
+    `/transporters/${transporterId}/onboarding`,
+  );
+
+  return response.data.data;
+}
+
+export type TransporterDocumentType =
+  | "IDENTITY_DOCUMENT"
+  | "DRIVERS_LICENSE"
+  | "VEHICLE_REGISTRATION"
+  | "INSURANCE"
+  | "BUSINESS_DOCUMENT"
+  | "OTHER";
+
+export type TransporterDocument = {
+  id: string;
+  userId: string;
+  type: TransporterDocumentType;
+  fileUrl: string;
+  storagePath?: string | null;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  rejectionReason?: string | null;
+  verificationProvider?: string | null;
+  externalVerificationId?: string | null;
+  verifiedAt?: string | null;
+  adminApproved: boolean;
+  adminApprovedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export async function getTransporterDocuments(
+  transporterId: string,
+): Promise<TransporterDocument[]> {
+  const response = await apiClient.get<ApiResponse<TransporterDocument[]>>(
+    `/documents/user/${transporterId}`,
+  );
+
+  return response.data.data;
+}
+
+export async function requestDocumentUploadUrl(input: {
+  type: TransporterDocumentType;
+  fileName: string;
+}): Promise<{
+  storagePath: string;
+  signedUrl: string;
+  token: string;
+}> {
+  const response = await apiClient.post<
+    ApiResponse<{
+      storagePath: string;
+      signedUrl: string;
+      token: string;
+    }>
+  >("/documents/upload-url", input);
+
+  return response.data.data;
+}
+
+export async function createTransporterDocument(input: {
+  type: TransporterDocumentType;
+  storagePath: string;
+}): Promise<TransporterDocument> {
+  const response = await apiClient.post<ApiResponse<TransporterDocument>>(
+    "/documents",
     input,
   );
 

@@ -1,9 +1,11 @@
+import { Redirect, router } from "expo-router";
 import { Drawer } from "expo-router/drawer";
+import React from "react";
 import { Pressable, ScrollView, Text, View, StyleSheet } from "react-native";
-import { router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../src/auth/auth.store";
 import { getTransporterWallet } from "../../src/api/wallet";
+import { getTransporterOnboardingStatus } from "../../src/api/transporter";
 
 function money(value: string | number | undefined) {
   if (value === undefined || value === null || value === "") return "₦0";
@@ -86,6 +88,79 @@ function TransporterDrawerContent(props: any) {
 }
 
 export default function TransporterLayout() {
+  const user = useAuthStore((state) => state.user);
+  const [route, setRoute] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!user || user.role !== "TRANSPORTER") {
+      setRoute("/(auth)/sign-in");
+      return;
+    }
+
+    let cancelled = false;
+
+    const checkOnboarding = async () => {
+      try {
+        const onboarding = await getTransporterOnboardingStatus(user.id);
+
+        if (cancelled) return;
+
+        if (onboarding.marketplaceReady) {
+          setRoute("READY");
+          return;
+        }
+
+        switch (onboarding.currentStep) {
+          case "PROFILE_SETUP":
+            setRoute("/(transporter-onboarding)/profile");
+            break;
+          case "DOCUMENTS":
+          case "IDENTITY_VERIFICATION":
+            setRoute("/(transporter-onboarding)/documents");
+            break;
+          case "VEHICLE":
+            setRoute("/(transporter-onboarding)/vehicle");
+            break;
+          case "ADMIN_REVIEW":
+          case "TIER_2_DOCUMENTS":
+          case "TIER_2_REVIEW":
+          case "APPROVED":
+            setRoute("/(transporter-onboarding)/review");
+            break;
+          case "EMAIL_VERIFICATION":
+            setRoute("/(auth)/verify-email");
+            break;
+          default:
+            setRoute("/(transporter-onboarding)/profile");
+        }
+      } catch (error) {
+        console.error("Failed to check transporter onboarding:", error);
+
+        if (!cancelled) {
+          setRoute("/(transporter-onboarding)/profile");
+        }
+      }
+    };
+
+    void checkOnboarding();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  if (!route) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Checking onboarding...</Text>
+      </View>
+    );
+  }
+
+  if (route !== "READY") {
+    return <Redirect href={route as any} />;
+  }
+
   return (
     <Drawer
       drawerContent={(props) => <TransporterDrawerContent {...props} />}
@@ -117,6 +192,17 @@ export default function TransporterLayout() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  loadingText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#667085",
+  },
   drawer: {
     paddingBottom: 24,
   },

@@ -99,8 +99,15 @@ export const documentCreateSchema = z.object({
     "IDENTITY_DOCUMENT",
     "OTHER",
   ]),
-  fileUrl: z.string().url(),
-});
+  fileUrl: z.string().url().optional(),
+  storagePath: z.string().trim().min(1).optional(),
+}).refine(
+  (data) => Boolean(data.storagePath || data.fileUrl),
+  {
+    message: "Either storagePath or fileUrl is required",
+    path: ["storagePath"],
+  },
+);
 
 export const documentRejectionSchema = z.object({
   rejectionReason: z.string().trim().min(1).max(1000),
