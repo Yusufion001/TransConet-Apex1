@@ -1,3 +1,4 @@
+import { getTransporterOnboardingStatus } from "./transporter-onboarding.service.js";
 import { Router } from "express";
 import { toTransporterDto } from "./transporter.dto.js";
 import { toVehicleDto } from "../vehicles/vehicle.dto.js";
@@ -45,6 +46,37 @@ router.post("/", authorize("TRANSPORTER"), async (req: AuthenticatedRequest, res
     });
   }
 });
+
+router.get(
+  "/:id/onboarding",
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const transporterId = String(req.params.id);
+
+      if (
+        req.user!.role !== "ADMIN" &&
+        req.user!.id !== transporterId
+      ) {
+        return res.status(403).json({
+          success: false,
+          error: "Access denied",
+        });
+      }
+
+      const data = await getTransporterOnboardingStatus(transporterId);
+
+      return res.json({
+        success: true,
+        data,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Server error",
+      });
+    }
+  },
+);
 
 router.get("/:id", async (req: AuthenticatedRequest, res) => {
   try {

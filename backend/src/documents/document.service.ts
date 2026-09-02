@@ -10,11 +10,15 @@ export async function createDocument(data: {
     | "BUSINESS_DOCUMENT"
     | "IDENTITY_DOCUMENT"
     | "OTHER";
-  fileUrl: string;
+  fileUrl?: string;
+  storagePath?: string;
 }) {
   const document = await prisma.document.create({
     data: {
-      ...data,
+      userId: data.userId,
+      type: data.type,
+      fileUrl: data.fileUrl ?? data.storagePath!,
+      storagePath: data.storagePath ?? null,
       verificationProvider: null,
       externalVerificationId: null,
       providerResponse: undefined,
@@ -74,13 +78,21 @@ export async function approveDocument(
       throw new Error("Document is already approved");
     }
 
+      const requiresYouverify = [
+      "IDENTITY_DOCUMENT",
+      "DRIVERS_LICENSE",
+    ].includes(existingDocument.type);
+
     if (
-      existingDocument.verificationProvider !== "YOUVERIFY" ||
-      !existingDocument.externalVerificationId ||
-      !existingDocument.verifiedAt
+      requiresYouverify &&
+      (
+        existingDocument.verificationProvider !== "YOUVERIFY" ||
+        !existingDocument.externalVerificationId ||
+        !existingDocument.verifiedAt
+      )
     ) {
       throw new Error(
-        "Document must have a successful Youverify verification before admin approval",
+        "This document must have a successful Youverify verification before admin approval",
       );
     }
 
@@ -106,16 +118,6 @@ export async function approveDocument(
         });
       }
 
-      if (existingDocument.user.role === "TRANSPORTER") {
-        await tx.transporterProfile.update({
-          where: {
-            userId: existingDocument.user.id,
-          },
-          data: {
-            verificationStatus: "APPROVED",
-          },
-        });
-      }
     }
 
     return document;

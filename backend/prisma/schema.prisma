@@ -785,6 +785,7 @@ model Document {
   userId          String
   type            DocumentType
   fileUrl         String
+  storagePath     String?
   status          DocumentStatus @default(PENDING)
   rejectionReason String?
   reviewedBy      String?

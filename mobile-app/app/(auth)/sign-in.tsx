@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { Link, router } from "expo-router";
 import { useAuthStore } from "../../src/auth/auth.store";
+import { getTransporterOnboardingStatus } from "../../src/api/transporter";
 
 export default function SignInScreen() {
   const signIn = useAuthStore((state) => state.signIn);
@@ -41,7 +42,41 @@ export default function SignInScreen() {
       if (session.user.role === "CUSTOMER") {
         router.replace("/(customer)");
       } else if (session.user.role === "TRANSPORTER") {
-        router.replace("/(transporter)");
+        const onboarding = await getTransporterOnboardingStatus(
+          session.user.id,
+        );
+
+        if (onboarding.marketplaceReady) {
+          router.replace("/(transporter)");
+        } else {
+          switch (onboarding.currentStep) {
+            case "PROFILE_SETUP":
+              router.replace("/(transporter-onboarding)/profile");
+              break;
+            case "DOCUMENTS":
+            case "IDENTITY_VERIFICATION":
+              router.replace("/(transporter-onboarding)/documents");
+              break;
+            case "VEHICLE":
+              router.replace("/(transporter-onboarding)/vehicle");
+              break;
+            case "ADMIN_REVIEW":
+            case "APPROVED":
+              router.replace("/(transporter-onboarding)/review");
+              break;
+            case "TIER_2_DOCUMENTS":
+              router.replace("/(transporter-onboarding)/tier2-documents");
+              break;
+            case "TIER_2_REVIEW":
+              router.replace("/(transporter-onboarding)/tier2-review");
+              break;
+            case "EMAIL_VERIFICATION":
+              router.replace("/(auth)/verify-email");
+              break;
+            default:
+              router.replace("/(transporter-onboarding)/profile");
+          }
+        }
       } else {
         Alert.alert(
           "Account unavailable",
