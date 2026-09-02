@@ -20,6 +20,14 @@ export type TransporterOnboardingStatus = {
   tier: "TIER_1" | "TIER_2" | null;
   tier2Approved: boolean;
   tier2Eligible: boolean;
+  tier2: {
+    insuranceSubmitted: boolean;
+    insuranceApproved: boolean;
+    businessCertificateSubmitted: boolean;
+    businessCertificateApproved: boolean;
+    requirementsMet: boolean;
+    approved: boolean;
+  };
   marketplaceReady: boolean;
   currentStep:
     | "EMAIL_VERIFICATION"
@@ -183,14 +191,106 @@ export async function updateVehicle(
   return response.data.data;
 }
 
+type TransporterOnboardingApiResponse = {
+  transporterId: string;
+  accountStatus: string;
+  emailVerified: boolean;
+  profile: {
+    exists: boolean;
+    completed: boolean;
+    verificationStatus: string;
+  };
+  identity: {
+    submitted: boolean;
+    youverifyVerified: boolean;
+    verificationPending: boolean;
+    rejected: boolean;
+  };
+  vehicle: {
+    registered: boolean;
+    approved: boolean;
+    available: boolean;
+    locationReady: boolean;
+  };
+  adminApproval: {
+    approved: boolean;
+  };
+  tier: "TIER_1" | "TIER_2" | null;
+  tier2Eligible: boolean;
+  tier2: {
+    insuranceSubmitted: boolean;
+    insuranceApproved: boolean;
+    businessCertificateSubmitted: boolean;
+    businessCertificateApproved: boolean;
+    requirementsMet: boolean;
+    approved: boolean;
+  };
+  marketplaceReady: boolean;
+  currentStep: string;
+};
+
 export async function getTransporterOnboardingStatus(
   transporterId: string,
 ): Promise<TransporterOnboardingStatus> {
-  const response = await apiClient.get<ApiResponse<TransporterOnboardingStatus>>(
+  const response = await apiClient.get<ApiResponse<TransporterOnboardingApiResponse>>(
     `/transporters/${transporterId}/onboarding`,
   );
 
-  return response.data.data;
+  const data = response.data.data;
+
+  let identityVerificationStatus: TransporterOnboardingStatus["identityVerificationStatus"] =
+    "NOT_STARTED";
+
+  if (data.identity.rejected) {
+    identityVerificationStatus = "REJECTED";
+  } else if (data.identity.youverifyVerified) {
+    identityVerificationStatus = "VERIFIED";
+  } else if (data.identity.verificationPending) {
+    identityVerificationStatus = "PENDING";
+  }
+
+  const currentStepMap: Record<string, TransporterOnboardingStatus["currentStep"]> = {
+    EMAIL_VERIFICATION: "EMAIL_VERIFICATION",
+    PROFILE_SETUP: "PROFILE_SETUP",
+    DOCUMENTS: "DOCUMENTS",
+    YOUVERIFY: "IDENTITY_VERIFICATION",
+    VEHICLE: "VEHICLE",
+    ADMIN_REVIEW: "ADMIN_REVIEW",
+    APPROVED: "APPROVED",
+    TIER_2_DOCUMENTS: "TIER_2_DOCUMENTS",
+    TIER_2_REVIEW: "TIER_2_REVIEW",
+    TIER_2_APPROVAL: "TIER_2_REVIEW",
+  };
+
+  return {
+    emailVerified: data.emailVerified,
+    profileCompleted: data.profile.completed,
+    identityDocumentSubmitted: data.identity.submitted,
+    identityVerificationStatus,
+    identityDocumentApproved: data.identity.youverifyVerified,
+    vehicleRegistered: data.vehicle.registered,
+    vehicleApproved: data.vehicle.approved,
+    vehicleAvailable: data.vehicle.available,
+    vehicleLocated: data.vehicle.locationReady,
+    adminApproved: data.adminApproval.approved,
+    tier: data.tier,
+    tier2Approved: data.tier2.approved,
+    tier2Eligible: data.tier2Eligible,
+    tier2: {
+      insuranceSubmitted: data.tier2.insuranceSubmitted,
+      insuranceApproved: data.tier2.insuranceApproved,
+      businessCertificateSubmitted:
+        data.tier2.businessCertificateSubmitted,
+      businessCertificateApproved:
+        data.tier2.businessCertificateApproved,
+      requirementsMet: data.tier2.requirementsMet,
+      approved: data.tier2.approved,
+    },
+    marketplaceReady: data.marketplaceReady,
+    currentStep:
+      currentStepMap[data.currentStep] ??
+      (data.marketplaceReady ? "APPROVED" : "ADMIN_REVIEW"),
+  };
 }
 
 export type TransporterDocumentType =
@@ -253,6 +353,32 @@ export async function createTransporterDocument(input: {
 }): Promise<TransporterDocument> {
   const response = await apiClient.post<ApiResponse<TransporterDocument>>(
     "/documents",
+    input,
+  );
+
+  return response.data.data;
+}
+
+
+export type TransporterVerificationType =
+  | "nin"
+  | "vnin"
+  | "bvn"
+  | "drivers_license"
+  | "passport";
+
+export async function startTransporterVerification(input: {
+  documentId: string;
+  verificationType?: TransporterVerificationType;
+  verificationId: string;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: string;
+  subjectConsent: boolean;
+  selfieImage?: string;
+}): Promise<TransporterDocument> {
+  const response = await apiClient.post<ApiResponse<TransporterDocument>>(
+    "/verification/start",
     input,
   );
 

@@ -118,10 +118,12 @@ export default function TransporterReviewScreen() {
     }
 
     if (status.currentStep === "TIER_2_DOCUMENTS") {
+      router.replace("/(transporter-onboarding)/tier2-documents");
       return;
     }
 
     if (status.currentStep === "TIER_2_REVIEW") {
+      router.replace("/(transporter-onboarding)/tier2-review");
       return;
     }
 

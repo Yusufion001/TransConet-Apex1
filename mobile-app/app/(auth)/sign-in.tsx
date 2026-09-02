@@ -61,10 +61,14 @@ export default function SignInScreen() {
               router.replace("/(transporter-onboarding)/vehicle");
               break;
             case "ADMIN_REVIEW":
-            case "TIER_2_DOCUMENTS":
-            case "TIER_2_REVIEW":
             case "APPROVED":
               router.replace("/(transporter-onboarding)/review");
+              break;
+            case "TIER_2_DOCUMENTS":
+              router.replace("/(transporter-onboarding)/tier2-documents");
+              break;
+            case "TIER_2_REVIEW":
+              router.replace("/(transporter-onboarding)/tier2-review");
               break;
             case "EMAIL_VERIFICATION":
               router.replace("/(auth)/verify-email");
