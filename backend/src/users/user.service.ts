@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { publishAdminEvent } from "../realtime/realtime.service.js";
 import { toUserDto } from "./user.dto.js";
 
 const userResponseSelect = {
@@ -75,5 +76,16 @@ export async function updateUser(
     select: userResponseSelect,
   });
 
-  return toUserDto(user);
+  const userDto = toUserDto(user);
+
+  await publishAdminEvent({
+    eventType: "USER_PROFILE_UPDATED",
+    module: "ACTIVITY_TIMELINE",
+    actorId: id,
+    entityType: "USER",
+    entityId: id,
+    data: userDto,
+  });
+
+  return userDto;
 }

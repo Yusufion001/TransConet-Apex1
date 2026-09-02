@@ -14,6 +14,7 @@ import messageRoutes from "./messages/message.routes.js";
 import notificationRoutes from "./notifications/notification.routes.js";
 import supportRoutes from "./support/support.routes.js";
 import disputeRoutes from "./disputes/dispute.routes.js";
+import reviewRoutes from "./reviews/review.routes.js";
 import eventRoutes from "./events/event.routes.js";
 import verificationRoutes from "./verification/verification.routes.js";
 import youverifyWebhookRoutes from "./verification/youverify/youverify.webhook.routes.js";
@@ -146,6 +147,7 @@ initializeSocketEvents(io);
 applySecurityFoundation(app);
 app.use("/", verificationWebRoutes);
 
+app.use("/api/reviews", reviewRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/marketplace", marketplaceRoutes);
 app.use("/api/auth", authRoutes);

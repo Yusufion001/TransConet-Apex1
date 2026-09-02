@@ -26,3 +26,7 @@ export const updateVehicleSchema = z.object({
   color: z.string().trim().min(1).max(50).optional(),
   capacity: z.coerce.number().finite().positive().optional(),
 });
+
+export const updateVehicleAvailabilitySchema = z.object({
+  availabilityStatus: z.enum(["AVAILABLE", "UNAVAILABLE"]),
+});

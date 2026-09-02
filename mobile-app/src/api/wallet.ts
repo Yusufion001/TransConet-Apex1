@@ -1,21 +1,35 @@
 import { apiClient } from "./client";
 
-export type Wallet = {
+export type WalletTransaction = {
   id: string;
-  transporterId: string;
-  balance: string | number;
-  availableBalance?: string | number;
-  pendingBalance?: string | number;
-  totalEarned?: string | number;
-  currency?: string;
-  status?: string;
+  walletId: string;
+  bookingId: string | null;
+  amount: string;
+  transactionType: string;
+  description: string | null;
+  createdAt: string;
 };
 
 export type Withdrawal = {
   id: string;
-  amount: string | number;
+  walletId?: string;
+  amount: string;
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
   status: string;
   createdAt: string;
+};
+
+export type Wallet = {
+  id: string;
+  transporterId: string;
+  availableBalance: string;
+  pendingBalance: string;
+  createdAt: string;
+  updatedAt: string;
+  transactions?: WalletTransaction[];
+  withdrawals?: Withdrawal[];
 };
 
 type ApiResponse<T> = {

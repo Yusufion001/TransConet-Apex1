@@ -69,7 +69,6 @@ export const updateBookingStatusSchema = z.object({
 
 export const proofOfDeliverySchema = z.object({
   proofOfDelivery: z.string().trim().min(1).max(2000),
-  deliveryConfirmationCode: z.string().trim().min(4).max(100),
 });
 
 export const confirmDeliverySchema = z.object({

@@ -8,6 +8,7 @@ type PaymentRecord = {
   currency: string;
   provider: string;
   transactionReference: string;
+  checkoutUrl: string | null;
   status: string;
   createdAt: Date;
   updatedAt: Date;
@@ -20,6 +21,7 @@ export type PaymentDto = {
   currency: string;
   provider: string;
   transactionReference: string;
+  checkoutUrl: string | null;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -33,6 +35,7 @@ export function toPaymentDto(payment: PaymentRecord): PaymentDto {
     currency: payment.currency,
     provider: payment.provider,
     transactionReference: payment.transactionReference,
+    checkoutUrl: payment.checkoutUrl,
     status: payment.status,
     createdAt: payment.createdAt.toISOString(),
     updatedAt: payment.updatedAt.toISOString(),

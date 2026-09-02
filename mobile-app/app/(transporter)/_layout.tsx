@@ -27,7 +27,7 @@ function HeaderBalance() {
 
   return (
     <Text style={styles.headerBalance}>
-      {money(query.data?.availableBalance ?? query.data?.balance)}
+      {money(query.data?.availableBalance)}
     </Text>
   );
 }
@@ -72,6 +72,8 @@ function TransporterDrawerContent(props: any) {
       {item("₦  Wallet", "/(transporter)/wallet")}
       {item("🔔  Notifications", "/(transporter)/notifications")}
       {item("👤  Account", "/(transporter)/account")}
+      {item("🆘  Support", "/(transporter)/support")}
+      {item("⚖  Disputes", "/(transporter)/disputes")}
 
       <View style={styles.separator} />
 
@@ -184,6 +186,8 @@ export default function TransporterLayout() {
       <Drawer.Screen name="wallet/index" options={{ title: "Wallet" }} />
       <Drawer.Screen name="notifications/index" options={{ title: "Notifications" }} />
       <Drawer.Screen name="account" options={{ title: "Account" }} />
+      <Drawer.Screen name="support" options={{ title: "Support" }} />
+      <Drawer.Screen name="disputes" options={{ title: "Disputes" }} />
       <Drawer.Screen name="settings" options={{ title: "Settings" }} />
       <Drawer.Screen name="marketplace/[id]" options={{ drawerItemStyle: { display: "none" } }} />
       <Drawer.Screen name="bookings/[id]" options={{ drawerItemStyle: { display: "none" } }} />
