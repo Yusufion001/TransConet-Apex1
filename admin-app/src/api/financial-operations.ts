@@ -79,6 +79,73 @@ export type PaymentWebhookEvent = {
   payment?: FinancialPayment | null;
 };
 
+export type CommissionPaymentStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "SUCCESS"
+  | "FAILED"
+  | "REJECTED"
+  | "CANCELLED";
+
+export type CommissionPaymentProvider =
+  | "BANK_TRANSFER"
+  | "FLUTTERWAVE";
+
+export type CommissionPayment = {
+  id: string;
+  negotiationAgreementId: string;
+  transporterId: string;
+  amount: string | number;
+  currency: string;
+  provider: CommissionPaymentProvider;
+  transactionReference: string;
+  checkoutUrl?: string | null;
+  idempotencyKey?: string | null;
+  status: CommissionPaymentStatus;
+  submittedAt: string;
+  verifiedAt?: string | null;
+  verifiedBy?: string | null;
+  rejectionReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+
+  negotiationAgreement?: {
+    id: string;
+    agreedFare: string | number;
+    commissionAmount: string | number;
+    currency: string;
+    status: string;
+    commissionStatus: string;
+    agreedAt?: string | null;
+    customer?: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      email?: string | null;
+    } | null;
+    transporter?: {
+      id: string;
+      firstName: string;
+      lastName: string;
+      email?: string | null;
+    } | null;
+  } | null;
+
+  transporter?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email?: string | null;
+  } | null;
+
+  verifier?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email?: string | null;
+  } | null;
+};
+
 export type SettlementStatus =
   | "PENDING"
   | "AWAITING_APPROVAL"
@@ -301,6 +368,46 @@ export async function updateWithdrawalStatus(
     ApiResponse<FinancialWithdrawal>
   >(`/admin/financial/withdrawals/${id}/status`, {
     status,
+  });
+
+  return response.data.data;
+}
+
+
+export async function getCommissionPayments(params?: {
+  status?: CommissionPaymentStatus;
+}) {
+  const response = await apiClient.get<
+    ApiResponse<CommissionPayment[]>
+  >("/admin/financial/commission-payments", { params });
+
+  return response.data.data;
+}
+
+export async function getCommissionPayment(id: string) {
+  const response = await apiClient.get<
+    ApiResponse<CommissionPayment>
+  >(`/admin/financial/commission-payments/${id}`);
+
+  return response.data.data;
+}
+
+export async function verifyCommissionPayment(id: string) {
+  const response = await apiClient.post<
+    ApiResponse<CommissionPayment>
+  >(`/admin/financial/commission-payments/${id}/verify`, {});
+
+  return response.data.data;
+}
+
+export async function rejectCommissionPayment(
+  id: string,
+  rejectionReason: string,
+) {
+  const response = await apiClient.post<
+    ApiResponse<CommissionPayment>
+  >(`/admin/financial/commission-payments/${id}/reject`, {
+    rejectionReason,
   });
 
   return response.data.data;

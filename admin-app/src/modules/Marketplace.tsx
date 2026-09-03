@@ -500,6 +500,49 @@ export default function Marketplace() {
         </div>
       )}
 
+      <div className="panel negotiated-marketplace-banner">
+        <div>
+          <div className="module-kicker">NEGOTIATED FARE WORKFLOW</div>
+          <h3>Marketplace fare and commission are separate financial flows</h3>
+          <p>
+            Customers use the marketplace to receive transporter bids and
+            select an agreed transport fare. The agreed fare is paid directly
+            to the selected transporter; TransConet does not collect that
+            negotiated fare from the customer.
+          </p>
+        </div>
+
+        <div className="negotiated-marketplace-steps">
+          <div>
+            <strong>1</strong>
+            <span>Customer request</span>
+          </div>
+          <div>
+            <strong>2</strong>
+            <span>Transporter bids</span>
+          </div>
+          <div>
+            <strong>3</strong>
+            <span>Bid selected</span>
+          </div>
+          <div>
+            <strong>4</strong>
+            <span>Fare paid directly</span>
+          </div>
+          <div>
+            <strong>5</strong>
+            <span>Commission handled separately</span>
+          </div>
+        </div>
+
+        <div className="negotiated-marketplace-note">
+          <strong>Administration control:</strong> platform commission is
+          calculated from the applicable commission rule and is handled
+          separately in <strong>Financial Operations → Negotiated Commissions</strong>.
+          It must not be treated as transporter Wallet earnings.
+        </div>
+      </div>
+
       <div className="stats-grid">
         <StatCard
           label="Open Loads"
@@ -783,7 +826,7 @@ export default function Marketplace() {
                 <th>Route</th>
                 <th>Customer</th>
                 <th>Load</th>
-                <th>Fare</th>
+                <th>Estimated / Agreed Fare</th>
                 <th>Bids</th>
                 <th>Created</th>
               </tr>
@@ -827,7 +870,14 @@ export default function Marketplace() {
                     </small>
                   </td>
 
-                  <td>{money(request.estimatedFare)}</td>
+                  <td>
+                    <strong>{money(request.estimatedFare)}</strong>
+                    <small>
+                      {request.status === "AGREED"
+                        ? "Negotiated outcome"
+                        : "Marketplace estimate"}
+                    </small>
+                  </td>
                   <td>{request.bidCount}</td>
                   <td>{dateTime(request.createdAt)}</td>
                 </tr>
@@ -857,7 +907,9 @@ export default function Marketplace() {
 
       <div className="section-title">
         <h3>Bid Activity</h3>
-        <span>Transporter offers across the marketplace</span>
+        <span>
+          Transporter offers; a selected bid establishes the negotiated fare
+        </span>
       </div>
 
       <div className="panel">

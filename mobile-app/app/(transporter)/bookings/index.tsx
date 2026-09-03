@@ -126,20 +126,30 @@ export default function TransporterBookings() {
           >
             <Pressable style={styles.card}>
               <View style={styles.cardTop}>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    { backgroundColor: `${statusColor(booking.status)}15` },
-                  ]}
-                >
-                  <Text
+                <View style={styles.badgeRow}>
+                  <View
                     style={[
-                      styles.statusText,
-                      { color: statusColor(booking.status) },
+                      styles.statusBadge,
+                      { backgroundColor: `${statusColor(booking.status)}15` },
                     ]}
                   >
-                    {statusLabel(booking.status)}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.statusText,
+                        { color: statusColor(booking.status) },
+                      ]}
+                    >
+                      {statusLabel(booking.status)}
+                    </Text>
+                  </View>
+
+                  {booking.paymentMethod === "NEGOTIATE" && (
+                    <View style={styles.negotiatedBadge}>
+                      <Text style={styles.negotiatedBadgeText}>
+                        NEGOTIATED
+                      </Text>
+                    </View>
+                  )}
                 </View>
 
                 <Text style={styles.id}>
@@ -263,6 +273,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  negotiatedBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    backgroundColor: "#FFF7E8",
+    borderWidth: 1,
+    borderColor: "#F2C94C",
+  },
+  negotiatedBadgeText: {
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 0.7,
+    color: "#7A4E00",
   },
   statusBadge: {
     borderRadius: 999,

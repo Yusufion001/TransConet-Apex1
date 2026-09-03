@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,6 +17,11 @@ import {
   updateBookingStatus,
   uploadProofOfDelivery,
 } from "../../../src/api/bookings";
+import {
+  getCommissionPaymentStatus,
+  initializeCommissionPayment,
+  type CommissionPaymentProvider,
+} from "../../../src/api/commission-payments";
 import {
   getBookingMessages,
   sendBookingMessage,
@@ -95,6 +101,7 @@ export default function TransporterBookingDetails() {
     useState<VehicleLocation | null>(null);
 
   const [proof, setProof] = useState("");
+  const [bankTransferReference, setBankTransferReference] = useState("");
 
   const query = useQuery({
     queryKey: ["transporter-booking", id],
@@ -126,6 +133,56 @@ export default function TransporterBookingDetails() {
 
     return () => cleanup?.();
   }, [id, query.refetch]);
+
+  const commissionQuery = useQuery({
+    queryKey: [
+      "transporter-commission-payment",
+      query.data?.negotiationAgreementId,
+    ],
+    queryFn: () =>
+      getCommissionPaymentStatus(
+        query.data!.negotiationAgreementId!,
+      ),
+    enabled:
+      query.data?.paymentMethod === "NEGOTIATE" &&
+      Boolean(query.data?.negotiationAgreementId),
+  });
+
+  const commissionPaymentMutation = useMutation({
+    mutationFn: ({
+      provider,
+      transactionReference,
+    }: {
+      provider: CommissionPaymentProvider;
+      transactionReference?: string;
+    }) =>
+      initializeCommissionPayment(
+        query.data!.negotiationAgreementId!,
+        provider,
+        transactionReference,
+      ),
+    onSuccess: async (payment) => {
+      await commissionQuery.refetch();
+
+      if (payment.provider === "FLUTTERWAVE" && payment.checkoutUrl) {
+        await Linking.openURL(payment.checkoutUrl);
+        return;
+      }
+
+      Alert.alert(
+        "Commission payment submitted",
+        "Your bank transfer reference has been submitted. The payment will remain pending until TransConet verifies it.",
+      );
+    },
+    onError: (error: unknown) => {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to submit commission payment.";
+
+      Alert.alert("Commission payment failed", message);
+    },
+  });
 
   const messagesQuery = useQuery({
     queryKey: ["transporter-booking-messages", id],
@@ -216,6 +273,42 @@ export default function TransporterBookingDetails() {
       Alert.alert("Submission failed", message);
     },
   });
+
+  useEffect(() => {
+    const handleCommissionReturn = (url: string | null) => {
+      if (!url || !url.startsWith("transconet://commission-payment-return")) {
+        return;
+      }
+
+      const separator = url.includes("?") ? "?" : "";
+      const queryString = separator ? url.split("?")[1] ?? "" : "";
+      const params = new URLSearchParams(queryString);
+      const status = params.get("status");
+
+      void commissionQuery.refetch();
+
+      if (status === "success") {
+        Alert.alert(
+          "Commission payment",
+          "Your commission payment was completed successfully.",
+        );
+      } else if (status === "failed") {
+        Alert.alert(
+          "Commission payment",
+          "The commission payment was not completed. You can review the payment status and try again if the commission is still due.",
+        );
+      }
+    };
+
+    const subscription = Linking.addEventListener(
+      "url",
+      ({ url }) => handleCommissionReturn(url),
+    );
+
+    void Linking.getInitialURL().then(handleCommissionReturn);
+
+    return () => subscription.remove();
+  }, [commissionQuery.refetch]);
 
   const action = useMemo(
     () => nextAction(query.data?.status ?? ""),
@@ -383,9 +476,171 @@ export default function TransporterBookingDetails() {
         />
 
         <InfoRow
-          label="Payment"
-          value={booking.paymentStatus}
+          label="Payment method"
+          value={
+            booking.paymentMethod === "NEGOTIATE"
+              ? "Negotiated"
+              : booking.paymentMethod.replace(/_/g, " ")
+          }
         />
+
+        {booking.paymentMethod === "NEGOTIATE" ? (
+          <View style={styles.commissionCard}>
+            <Text style={styles.commissionTitle}>
+              TRANSCONET COMMISSION
+            </Text>
+
+            <Text style={styles.commissionHeadline}>
+              Separate from your earnings
+            </Text>
+
+            <Text style={styles.commissionText}>
+              The customer pays the agreed negotiated fare directly to you.
+              TransConet does not collect that fare. Your separate platform
+              commission is shown below and is not part of your Wallet.
+            </Text>
+
+            {commissionQuery.isLoading ? (
+              <View style={styles.commissionLoading}>
+                <ActivityIndicator size="small" />
+                <Text style={styles.commissionLoadingText}>
+                  Loading commission obligation...
+                </Text>
+              </View>
+            ) : commissionQuery.isError ? (
+              <View style={styles.commissionNotice}>
+                <Text style={styles.commissionNoticeText}>
+                  Unable to load the current commission payment status.
+                </Text>
+                <Pressable
+                  onPress={() => void commissionQuery.refetch()}
+                  style={styles.commissionSecondaryButton}
+                >
+                  <Text style={styles.commissionSecondaryButtonText}>
+                    Retry
+                  </Text>
+                </Pressable>
+              </View>
+            ) : commissionQuery.data ? (
+              <>
+                <View style={styles.commissionAmountBox}>
+                  <Text style={styles.commissionAmountLabel}>
+                    COMMISSION DUE
+                  </Text>
+                  <Text style={styles.commissionAmount}>
+                    {String(commissionQuery.data.commissionAmount)}{" "}
+                    {commissionQuery.data.currency}
+                  </Text>
+                  <Text style={styles.commissionStatus}>
+                    {formatStatus(commissionQuery.data.commissionStatus)}
+                  </Text>
+                </View>
+
+                {commissionQuery.data.commissionPayment?.status ===
+                  "SUCCESS" ||
+                commissionQuery.data.commissionStatus === "PAID" ? (
+                  <View style={styles.commissionSuccess}>
+                    <Text style={styles.commissionSuccessText}>
+                      Commission payment verified successfully.
+                    </Text>
+                  </View>
+                ) : commissionQuery.data.commissionPayment?.status ===
+                    "PENDING" ||
+                  commissionQuery.data.commissionPayment?.status ===
+                    "PROCESSING" ||
+                  commissionQuery.data.commissionStatus ===
+                    "PAYMENT_PENDING" ? (
+                  <View style={styles.commissionNotice}>
+                    <Text style={styles.commissionNoticeText}>
+                      Commission payment is pending verification. If you
+                      submitted a bank transfer, TransConet will verify it
+                      through Financial Operations.
+                    </Text>
+                  </View>
+                ) : commissionQuery.data.commissionStatus === "DUE" ? (
+                  <View style={styles.commissionActions}>
+                    <Pressable
+                      disabled={commissionPaymentMutation.isPending}
+                      onPress={() =>
+                        commissionPaymentMutation.mutate({
+                          provider: "FLUTTERWAVE",
+                        })
+                      }
+                      style={[
+                        styles.commissionPrimaryButton,
+                        commissionPaymentMutation.isPending &&
+                          styles.commissionButtonDisabled,
+                      ]}
+                    >
+                      {commissionPaymentMutation.isPending ? (
+                        <ActivityIndicator color="#FFFFFF" />
+                      ) : (
+                        <Text style={styles.commissionPrimaryButtonText}>
+                          Pay Commission with Flutterwave
+                        </Text>
+                      )}
+                    </Pressable>
+
+                    <Text style={styles.commissionOrText}>
+                      OR
+                    </Text>
+
+                    <TextInput
+                      value={bankTransferReference}
+                      onChangeText={setBankTransferReference}
+                      placeholder="Bank transfer reference"
+                      autoCapitalize="characters"
+                      editable={!commissionPaymentMutation.isPending}
+                      style={styles.commissionInput}
+                    />
+
+                    <Pressable
+                      disabled={
+                        commissionPaymentMutation.isPending ||
+                        bankTransferReference.trim().length < 3
+                      }
+                      onPress={() =>
+                        commissionPaymentMutation.mutate({
+                          provider: "BANK_TRANSFER",
+                          transactionReference:
+                            bankTransferReference.trim(),
+                        })
+                      }
+                      style={[
+                        styles.commissionSecondaryButton,
+                        (commissionPaymentMutation.isPending ||
+                          bankTransferReference.trim().length < 3) &&
+                          styles.commissionButtonDisabled,
+                      ]}
+                    >
+                      <Text style={styles.commissionSecondaryButtonText}>
+                        Submit Bank Transfer
+                      </Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <View style={styles.commissionNotice}>
+                    <Text style={styles.commissionNoticeText}>
+                      Commission status:{" "}
+                      {formatStatus(commissionQuery.data.commissionStatus)}.
+                    </Text>
+                  </View>
+                )}
+              </>
+            ) : (
+              <View style={styles.commissionNotice}>
+                <Text style={styles.commissionNoticeText}>
+                  Commission information is not currently available.
+                </Text>
+              </View>
+            )}
+          </View>
+        ) : (
+          <InfoRow
+            label="Payment"
+            value={booking.paymentStatus}
+          />
+        )}
 
         <InfoRow
           label="Shipment ID"
@@ -750,6 +1005,146 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     textAlign: "right",
+  },
+  commissionCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
+    padding: 16,
+    marginTop: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+  },
+  commissionTitle: {
+    color: "#667085",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.2,
+  },
+  commissionHeadline: {
+    color: "#101828",
+    fontSize: 17,
+    fontWeight: "800",
+    marginTop: 7,
+  },
+  commissionText: {
+    color: "#475467",
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 7,
+  },
+  commissionNotice: {
+    backgroundColor: "#FFF7E8",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 12,
+  },
+  commissionNoticeText: {
+    color: "#7A4E00",
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: "600",
+  },
+  commissionLoading: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 14,
+  },
+  commissionLoadingText: {
+    color: "#667085",
+    fontSize: 13,
+  },
+  commissionAmountBox: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+  },
+  commissionAmountLabel: {
+    color: "#667085",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1,
+  },
+  commissionAmount: {
+    color: "#101828",
+    fontSize: 22,
+    fontWeight: "900",
+    marginTop: 5,
+  },
+  commissionStatus: {
+    color: "#475467",
+    fontSize: 12,
+    marginTop: 4,
+  },
+  commissionActions: {
+    marginTop: 14,
+  },
+  commissionPrimaryButton: {
+    minHeight: 46,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    backgroundColor: "#111827",
+  },
+  commissionPrimaryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  commissionSecondaryButton: {
+    minHeight: 44,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    marginTop: 10,
+  },
+  commissionSecondaryButtonText: {
+    color: "#344054",
+    fontSize: 13,
+    fontWeight: "800",
+    textAlign: "center",
+  },
+  commissionButtonDisabled: {
+    opacity: 0.5,
+  },
+  commissionOrText: {
+    color: "#98A2B3",
+    fontSize: 11,
+    fontWeight: "800",
+    textAlign: "center",
+    marginVertical: 10,
+  },
+  commissionInput: {
+    minHeight: 46,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 14,
+    color: "#101828",
+    fontSize: 14,
+  },
+  commissionSuccess: {
+    backgroundColor: "#ECFDF3",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 12,
+  },
+  commissionSuccessText: {
+    color: "#027A48",
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: "700",
   },
   liveCard: {
     backgroundColor: "#EEF6FF",

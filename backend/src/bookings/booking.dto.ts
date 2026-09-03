@@ -67,6 +67,11 @@ export function toBookingDto(booking: BookingModel) {
 
     paymentStatus: booking.paymentStatus,
     paymentMethod: booking.paymentMethod,
+    marketplaceRequestId: null,
+    negotiationAgreementId: null,
+    commissionAmount: null,
+    commissionCurrency: null,
+    commissionStatus: null,
 
     acceptedAt: date(booking.acceptedAt),
     arrivedAt: date(booking.arrivedAt),

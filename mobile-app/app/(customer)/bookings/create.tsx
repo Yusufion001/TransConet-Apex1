@@ -309,9 +309,9 @@ export default function CreateBooking() {
 
       {fareEstimate !== null && (
         <View style={styles.paymentSection}>
-          <Text style={styles.paymentTitle}>How would you like to pay?</Text>
+          <Text style={styles.paymentTitle}>How would you like to arrange the fare?</Text>
           <Text style={styles.paymentSubtitle}>
-            Choose one option to continue with this shipment.
+            Choose how you want to proceed with this shipment.
           </Text>
 
           {[
@@ -328,7 +328,7 @@ export default function CreateBooking() {
             {
               value: "NEGOTIATE" as const,
               title: "Negotiate Fare",
-              description: "Enter the marketplace and negotiate the transport fare with transporters.",
+              description: "Negotiate the transport fare directly with a transporter. The agreed fare is paid directly to the transporter, not through TransConet.",
             },
           ].map((option) => (
             <Pressable

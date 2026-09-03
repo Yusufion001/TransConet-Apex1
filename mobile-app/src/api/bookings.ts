@@ -55,6 +55,12 @@ export type Booking = {
   status: BookingStatus;
   fare: string | null;
   paymentStatus: string;
+  paymentMethod: "FLUTTERWAVE" | "BANK_TRANSFER" | "NEGOTIATE";
+  marketplaceRequestId: string | null;
+  negotiationAgreementId: string | null;
+  commissionAmount: string | null;
+  commissionCurrency: string | null;
+  commissionStatus: string | null;
   acceptedAt: string | null;
   arrivedAt: string | null;
   pickedUpAt: string | null;

@@ -104,7 +104,7 @@ export default function TransporterHome() {
           <Pressable style={styles.actionCard}>
             <Text style={styles.icon}>▣</Text>
             <Text style={styles.actionTitle}>Assignments</Text>
-            <Text style={styles.actionText}>Manage your shipments.</Text>
+            <Text style={styles.actionText}>Manage accepted transport assignments.</Text>
           </Pressable>
         </Link>
 
@@ -112,16 +112,16 @@ export default function TransporterHome() {
           <Pressable style={styles.actionCard}>
             <Text style={styles.icon}>⇄</Text>
             <Text style={styles.actionTitle}>Marketplace</Text>
-            <Text style={styles.actionText}>Find new opportunities.</Text>
+            <Text style={styles.actionText}>Find opportunities and submit bids.</Text>
           </Pressable>
         </Link>
       </View>
 
       <View style={styles.operationsCard}>
         <Text style={styles.operationsLabel}>TRANSPORTER OPERATIONS</Text>
-        <Text style={styles.operationsTitle}>Everything else is in the menu</Text>
+        <Text style={styles.operationsTitle}>Manage every part of your transport operation</Text>
         <Text style={styles.operationsText}>
-          Use ☰ above to access Fleet, Wallet, Notifications, Account and Settings.
+          Use ☰ above to access Fleet, Wallet, Notifications, Account and Settings. Accepted bids become assignments, and negotiated assignments may create a separate TransConet commission obligation.
         </Text>
       </View>
     </ScrollView>

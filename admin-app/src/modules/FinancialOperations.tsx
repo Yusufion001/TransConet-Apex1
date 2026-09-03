@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   approveSettlement,
+  getCommissionPayments,
   getFinancialOverview,
   getFinancialPayments,
   getFinancialWithdrawals,
@@ -9,12 +10,15 @@ import {
   rejectSettlement,
   releaseSettlement,
   resubmitSettlement,
+  rejectCommissionPayment,
   retryPaymentWebhook,
   submitSettlement,
+  verifyCommissionPayment,
   updateWithdrawalStatus,
   type FinancialOverview,
   type FinancialPayment,
   type FinancialWithdrawal,
+  type CommissionPayment,
   type PaymentWebhookEvent,
   type Settlement,
   type SettlementStatus,
@@ -25,7 +29,8 @@ type Tab =
   | "payments"
   | "webhooks"
   | "settlements"
-  | "withdrawals";
+  | "withdrawals"
+  | "commissions";
 
 function formatDate(value?: string | null) {
   if (!value) return "—";
@@ -104,6 +109,8 @@ export default function FinancialOperations() {
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [withdrawals, setWithdrawals] =
     useState<FinancialWithdrawal[]>([]);
+  const [commissionPayments, setCommissionPayments] =
+    useState<CommissionPayment[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] =
@@ -124,6 +131,7 @@ export default function FinancialOperations() {
         webhookData,
         settlementData,
         withdrawalData,
+        commissionPaymentData,
       ] = await Promise.all([
         getFinancialOverview(),
         getFinancialPayments(),
@@ -134,6 +142,7 @@ export default function FinancialOperations() {
             : undefined,
         ),
         getFinancialWithdrawals(),
+        getCommissionPayments(),
       ]);
 
       setOverview(overviewData);
@@ -141,6 +150,7 @@ export default function FinancialOperations() {
       setWebhooks(webhookData);
       setSettlements(settlementData);
       setWithdrawals(withdrawalData);
+      setCommissionPayments(commissionPaymentData);
     } catch (err) {
       setError(
         err instanceof Error
@@ -195,6 +205,7 @@ export default function FinancialOperations() {
     { id: "webhooks", label: "Webhooks" },
     { id: "settlements", label: "Settlements" },
     { id: "withdrawals", label: "Withdrawals" },
+    { id: "commissions", label: "Negotiated Commissions" },
   ];
 
   if (loading && !overview) {
@@ -279,6 +290,18 @@ export default function FinancialOperations() {
           label="Withdrawal Queue"
           value={overview?.withdrawals.pending ?? 0}
           detail="Awaiting processing"
+        />
+
+        <Stat
+          label="Commission Queue"
+          value={
+            commissionPayments.filter(
+              (item) =>
+                item.status === "PENDING" &&
+                item.provider === "BANK_TRANSFER",
+            ).length
+          }
+          detail="Negotiated commissions awaiting verification"
         />
       </div>
 
@@ -404,7 +427,198 @@ export default function FinancialOperations() {
           }
         />
       )}
+
+      {activeTab === "commissions" && (
+        <CommissionPaymentsPanel
+          payments={commissionPayments}
+          actionLoading={actionLoading}
+          onVerify={(id) =>
+            void runAction(
+              `commission-verify:${id}`,
+              () => verifyCommissionPayment(id),
+            )
+          }
+          onReject={(id) => {
+            const reason = window.prompt(
+              "Enter the commission payment rejection reason:",
+            );
+
+            if (!reason?.trim()) return;
+
+            void runAction(
+              `commission-reject:${id}`,
+              () => rejectCommissionPayment(id, reason),
+            );
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+function CommissionPaymentsPanel({
+  payments,
+  actionLoading,
+  onVerify,
+  onReject,
+}: {
+  payments: CommissionPayment[];
+  actionLoading: string | null;
+  onVerify: (id: string) => void;
+  onReject: (id: string) => void;
+}) {
+  return (
+    <div className="panel">
+      <div className="panel-header">
+        <div>
+          <h2>Negotiated Commission Payments</h2>
+          <p>
+            Review platform commission payments created from
+            negotiated marketplace agreements. These commissions
+            are separate from transporter Wallet earnings and
+            withdrawals.
+          </p>
+        </div>
+      </div>
+
+      <div className="operations-message">
+        <strong>Negotiated fare is paid directly to the transporter.</strong>
+        <span>
+          TransConet does not collect the negotiated transport fare
+          from the customer.
+        </span>
+        <span>
+          This workspace controls the separate TransConet commission
+          obligation.
+        </span>
+      </div>
+
+      {!payments.length ? (
+        <EmptyState
+          title="No negotiated commission payments."
+          description="No commission payment records were returned by the backend."
+        />
+      ) : (
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Payment</th>
+                <th>Transporter</th>
+                <th>Customer</th>
+                <th>Agreed Fare</th>
+                <th>Commission</th>
+                <th>Provider</th>
+                <th>Status</th>
+                <th>Submitted</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {payments.map((payment) => {
+                const agreement = payment.negotiationAgreement;
+                const transporter =
+                  agreement?.transporter ?? payment.transporter;
+                const customer = agreement?.customer;
+                const canReview =
+                  payment.status === "PENDING" &&
+                  payment.provider === "BANK_TRANSFER";
+
+                return (
+                  <tr key={payment.id}>
+                    <td>
+                      <div>{payment.id}</div>
+                      <small>
+                        Ref: {payment.transactionReference}
+                      </small>
+                    </td>
+
+                    <td>
+                      {transporter
+                        ? `${transporter.firstName} ${transporter.lastName}`
+                        : payment.transporterId}
+                    </td>
+
+                    <td>
+                      {customer
+                        ? `${customer.firstName} ${customer.lastName}`
+                        : "—"}
+                    </td>
+
+                    <td>
+                      {formatAmount(
+                        agreement?.agreedFare,
+                        agreement?.currency ?? payment.currency,
+                      )}
+                    </td>
+
+                    <td>
+                      <strong>
+                        {formatAmount(
+                          payment.amount,
+                          payment.currency,
+                        )}
+                      </strong>
+                    </td>
+
+                    <td>{payment.provider}</td>
+
+                    <td>
+                      <span
+                        className={`status-pill ${statusClass(
+                          payment.status,
+                        )}`}
+                      >
+                        {payment.status}
+                      </span>
+                    </td>
+
+                    <td>{formatDate(payment.submittedAt)}</td>
+
+                    <td>
+                      {canReview ? (
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <button
+                            type="button"
+                            className="text-button"
+                            disabled={actionLoading === `commission-verify:${payment.id}`}
+                            onClick={() => onVerify(payment.id)}
+                          >
+                            {actionLoading === `commission-verify:${payment.id}`
+                              ? "Verifying…"
+                              : "Verify"}
+                          </button>
+
+                          <button
+                            type="button"
+                            className="text-button"
+                            disabled={actionLoading === `commission-reject:${payment.id}`}
+                            onClick={() => onReject(payment.id)}
+                          >
+                            {actionLoading === `commission-reject:${payment.id}`
+                              ? "Rejecting…"
+                              : "Reject"}
+                          </button>
+                        </div>
+                      ) : (
+                        <span>—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }
 
