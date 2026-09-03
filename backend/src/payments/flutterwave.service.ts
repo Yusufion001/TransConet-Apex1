@@ -12,6 +12,8 @@ type FlutterwaveInitializeInput = {
   currency: string;
   customer: FlutterwaveCustomer;
   redirectUrl?: string;
+  title?: string;
+  description?: string;
 };
 
 type FlutterwaveInitializeResponse = {
@@ -78,8 +80,9 @@ export async function initializeFlutterwavePayment(
           phonenumber: input.customer.phonenumber ?? undefined,
         },
         customizations: {
-          title: "TransConet Shipment Payment",
-          description: "Payment for TransConet shipment",
+          title: input.title ?? "TransConet Shipment Payment",
+          description:
+            input.description ?? "Payment for TransConet shipment",
         },
       }),
     });
