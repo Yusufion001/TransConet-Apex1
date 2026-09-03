@@ -6,12 +6,18 @@ import {
   getMarketplaceSummary,
   getMarketplacePricing,
   updateMarketplacePricing,
+  getMarketplaceCommissionRules,
+  createMarketplaceCommissionRule,
+  updateMarketplaceCommissionRule,
+  updateMarketplaceCommissionRuleStatus,
   type MarketplaceBid,
   type MarketplaceRequest,
   type MarketplaceRequestStatus,
   type MarketplaceSummary,
   type MarketplacePricing,
   type MarketplacePricingConfig,
+  type MarketplaceCommissionRule,
+  type MarketplaceCommissionRuleInput,
 } from "../api/marketplace";
 
 function labelize(value: string | null | undefined) {
@@ -98,6 +104,28 @@ export default function Marketplace() {
   const [pricingError, setPricingError] = useState("");
   const [pricingSuccess, setPricingSuccess] = useState("");
 
+  const [commissionRules, setCommissionRules] = useState<
+    MarketplaceCommissionRule[]
+  >([]);
+  const [commissionLoading, setCommissionLoading] = useState(false);
+  const [commissionSaving, setCommissionSaving] = useState(false);
+  const [commissionError, setCommissionError] = useState("");
+  const [commissionSuccess, setCommissionSuccess] = useState("");
+  const [commissionEditingId, setCommissionEditingId] = useState<string | null>(
+    null,
+  );
+  const [commissionForm, setCommissionForm] =
+    useState<MarketplaceCommissionRuleInput>({
+      name: "",
+      description: "",
+      type: "PERCENTAGE",
+      rate: 5,
+      currency: "NGN",
+      minAmount: null,
+      maxAmount: null,
+      transporterTier: null,
+    });
+
   const loadMarketplace = useCallback(async () => {
     try {
       setLoading(true);
@@ -164,6 +192,119 @@ export default function Marketplace() {
     }
   }, []);
 
+  const loadCommissionRules = useCallback(async () => {
+    try {
+      setCommissionLoading(true);
+      setCommissionError("");
+      const data = await getMarketplaceCommissionRules();
+      setCommissionRules(data);
+    } catch {
+      setCommissionError("Unable to load commission rules.");
+    } finally {
+      setCommissionLoading(false);
+    }
+  }, []);
+
+  async function saveCommissionRule() {
+    try {
+      setCommissionSaving(true);
+      setCommissionError("");
+      setCommissionSuccess("");
+
+      if (commissionEditingId) {
+        const updated = await updateMarketplaceCommissionRule(
+          commissionEditingId,
+          commissionForm,
+        );
+        setCommissionRules((current) =>
+          current.map((rule) => (rule.id === updated.id ? updated : rule)),
+        );
+        setCommissionSuccess("Commission rule updated successfully.");
+      } else {
+        const created = await createMarketplaceCommissionRule(commissionForm);
+        setCommissionRules((current) => [created, ...current]);
+        setCommissionSuccess("Commission rule created successfully.");
+      }
+
+      setCommissionEditingId(null);
+      setCommissionForm({
+        name: "",
+        description: "",
+        type: "PERCENTAGE",
+        rate: 5,
+        currency: "NGN",
+        minAmount: null,
+        maxAmount: null,
+        transporterTier: null,
+      });
+    } catch {
+      setCommissionError(
+        "Unable to save commission rule. Check the values and try again.",
+      );
+    } finally {
+      setCommissionSaving(false);
+    }
+  }
+
+  async function toggleCommissionRule(rule: MarketplaceCommissionRule) {
+    try {
+      setCommissionError("");
+      setCommissionSuccess("");
+
+      const updated = await updateMarketplaceCommissionRuleStatus(
+        rule.id,
+        rule.status === "ACTIVE" ? "INACTIVE" : "ACTIVE",
+      );
+
+      setCommissionRules((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item)),
+      );
+      setCommissionSuccess(
+        updated.status === "ACTIVE"
+          ? "Commission rule activated."
+          : "Commission rule deactivated.",
+      );
+    } catch {
+      setCommissionError("Unable to update commission rule status.");
+    }
+  }
+
+  function editCommissionRule(rule: MarketplaceCommissionRule) {
+    setCommissionEditingId(rule.id);
+    setCommissionForm({
+      name: rule.name,
+      description: rule.description,
+      type: rule.type,
+      rate: Number(rule.rate),
+      currency: rule.currency ?? "NGN",
+      minAmount:
+        rule.minAmount === null ? null : Number(rule.minAmount),
+      maxAmount:
+        rule.maxAmount === null ? null : Number(rule.maxAmount),
+      transporterTier: rule.transporterTier,
+      effectiveFrom: rule.effectiveFrom,
+      effectiveTo: rule.effectiveTo,
+    });
+    setCommissionError("");
+    setCommissionSuccess("");
+  }
+
+  function resetCommissionForm() {
+    setCommissionEditingId(null);
+    setCommissionForm({
+      name: "",
+      description: "",
+      type: "PERCENTAGE",
+      rate: 5,
+      currency: "NGN",
+      minAmount: null,
+      maxAmount: null,
+      transporterTier: null,
+    });
+    setCommissionError("");
+    setCommissionSuccess("");
+  }
+
   async function saveMarketplacePricing() {
     if (!pricingForm) return;
 
@@ -210,7 +351,8 @@ export default function Marketplace() {
 
   useEffect(() => {
     void loadMarketplacePricing();
-  }, [loadMarketplacePricing]);
+    void loadCommissionRules();
+  }, [loadMarketplacePricing, loadCommissionRules]);
 
   const selectedBidId = selectedRequest?.agreedBidId;
 
@@ -771,6 +913,277 @@ export default function Marketplace() {
               </button>
             </div>
           </>
+        )}
+      </div>
+
+      <div className="section-title">
+        <h3>Commission Rules</h3>
+        <span>Editable commission rules used for marketplace settlements</span>
+      </div>
+
+      <div className="panel customer-detail-panel">
+        <div className="customer-state">
+          <strong>Commission Control</strong>
+          <span>
+            Percentage rules use values such as 5 = 5%. Fixed rules use a
+            fixed amount in the selected currency. Only active rules within
+            their effective dates are used by the existing commission engine.
+          </span>
+        </div>
+
+        <div className="detail-grid">
+          <label>
+            <span>Rule Name</span>
+            <input
+              value={commissionForm.name}
+              onChange={(event) =>
+                setCommissionForm({
+                  ...commissionForm,
+                  name: event.target.value,
+                })
+              }
+              placeholder="Marketplace commission"
+            />
+          </label>
+
+          <label>
+            <span>Type</span>
+            <select
+              value={commissionForm.type}
+              onChange={(event) =>
+                setCommissionForm({
+                  ...commissionForm,
+                  type: event.target.value as "PERCENTAGE" | "FIXED",
+                })
+              }
+            >
+              <option value="PERCENTAGE">Percentage</option>
+              <option value="FIXED">Fixed</option>
+            </select>
+          </label>
+
+          <label>
+            <span>{commissionForm.type === "PERCENTAGE" ? "Rate %" : "Fixed Amount"}</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={commissionForm.rate}
+              onChange={(event) =>
+                setCommissionForm({
+                  ...commissionForm,
+                  rate: Number(event.target.value),
+                })
+              }
+            />
+          </label>
+
+          <label>
+            <span>Currency</span>
+            <input
+              value={commissionForm.currency ?? ""}
+              onChange={(event) =>
+                setCommissionForm({
+                  ...commissionForm,
+                  currency: event.target.value.toUpperCase(),
+                })
+              }
+              maxLength={10}
+            />
+          </label>
+
+          <label>
+            <span>Transporter Tier</span>
+            <select
+              value={commissionForm.transporterTier ?? ""}
+              onChange={(event) =>
+                setCommissionForm({
+                  ...commissionForm,
+                  transporterTier:
+                    event.target.value === ""
+                      ? null
+                      : (event.target.value as "TIER_1" | "TIER_2"),
+                })
+              }
+            >
+              <option value="">All tiers</option>
+              <option value="TIER_1">Tier 1</option>
+              <option value="TIER_2">Tier 2</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Minimum Fare</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={commissionForm.minAmount ?? ""}
+              onChange={(event) =>
+                setCommissionForm({
+                  ...commissionForm,
+                  minAmount:
+                    event.target.value === ""
+                      ? null
+                      : Number(event.target.value),
+                })
+              }
+            />
+          </label>
+
+          <label>
+            <span>Maximum Fare</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={commissionForm.maxAmount ?? ""}
+              onChange={(event) =>
+                setCommissionForm({
+                  ...commissionForm,
+                  maxAmount:
+                    event.target.value === ""
+                      ? null
+                      : Number(event.target.value),
+                })
+              }
+            />
+          </label>
+
+          <label>
+            <span>Description</span>
+            <input
+              value={commissionForm.description ?? ""}
+              onChange={(event) =>
+                setCommissionForm({
+                  ...commissionForm,
+                  description: event.target.value,
+                })
+              }
+              placeholder="Optional rule description"
+            />
+          </label>
+        </div>
+
+        {commissionError && (
+          <div className="panel customer-state error-state">
+            {commissionError}
+          </div>
+        )}
+
+        {commissionSuccess && (
+          <div className="panel customer-state">
+            {commissionSuccess}
+          </div>
+        )}
+
+        <div className="operations-toolbar">
+          <span>
+            {commissionEditingId
+              ? "Editing existing commission rule"
+              : "Create a new commission rule"}
+          </span>
+          <div className="operations-controls">
+            {commissionEditingId && (
+              <button
+                type="button"
+                className="refresh-button"
+                onClick={resetCommissionForm}
+                disabled={commissionSaving}
+              >
+                Cancel Edit
+              </button>
+            )}
+            <button
+              type="button"
+              className="refresh-button"
+              onClick={() => void saveCommissionRule()}
+              disabled={commissionSaving || !commissionForm.name.trim()}
+            >
+              {commissionSaving
+                ? "Saving…"
+                : commissionEditingId
+                  ? "Update Commission Rule"
+                  : "Create Commission Rule"}
+            </button>
+          </div>
+        </div>
+
+        <div className="section-title">
+          <h3>Configured Rules</h3>
+          <span>Activate, deactivate, or edit existing rules</span>
+        </div>
+
+        {commissionLoading ? (
+          <div className="customer-state">Loading commission rules…</div>
+        ) : commissionRules.length === 0 ? (
+          <div className="empty-activity">
+            <strong>No commission rules configured</strong>
+            <span>Create a rule above to control marketplace commission.</span>
+          </div>
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Rate</th>
+                  <th>Tier</th>
+                  <th>Fare Range</th>
+                  <th>Effective</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {commissionRules.map((rule) => (
+                  <tr key={rule.id}>
+                    <td>{rule.name}</td>
+                    <td>{labelize(rule.type)}</td>
+                    <td>
+                      {rule.type === "PERCENTAGE"
+                        ? `${Number(rule.rate).toFixed(2)}%`
+                        : money(rule.rate)}
+                    </td>
+                    <td>{labelize(rule.transporterTier)}</td>
+                    <td>
+                      {money(rule.minAmount)} — {money(rule.maxAmount)}
+                    </td>
+                    <td>
+                      {dateTime(rule.effectiveFrom)}
+                      {rule.effectiveTo
+                        ? ` — ${dateTime(rule.effectiveTo)}`
+                        : " — No expiry"}
+                    </td>
+                    <td>
+                      <span className={`status-badge ${statusClass(rule.status)}`}>
+                        {labelize(rule.status)}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="operations-controls">
+                        <button
+                          type="button"
+                          className="refresh-button"
+                          onClick={() => editCommissionRule(rule)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="refresh-button"
+                          onClick={() => void toggleCommissionRule(rule)}
+                        >
+                          {rule.status === "ACTIVE" ? "Deactivate" : "Activate"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
