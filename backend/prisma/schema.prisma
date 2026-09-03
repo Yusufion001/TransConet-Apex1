@@ -121,6 +121,31 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum PaymentMethod {
+  FLUTTERWAVE
+  BANK_TRANSFER
+  NEGOTIATE
+}
+
+enum NegotiationStatus {
+  NEGOTIATING
+  FARE_AGREED
+  COMMISSION_DUE
+  COMMISSION_PENDING
+  COMMISSION_VERIFIED
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+}
+
+enum CommissionObligationStatus {
+  DUE
+  PAYMENT_PENDING
+  VERIFIED
+  WAIVED
+  CANCELLED
+}
+
 enum SubscriptionStatus {
   PENDING
   ACTIVE
@@ -142,6 +167,20 @@ enum CommissionType {
 enum CommissionStatus {
   ACTIVE
   INACTIVE
+}
+
+enum CommissionPaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+  REJECTED
+  CANCELLED
+}
+
+enum CommissionPaymentProvider {
+  FLUTTERWAVE
+  BANK_TRANSFER
 }
 
 enum SettlementStatus {
@@ -318,6 +357,10 @@ model User {
   wallet               Wallet?
   marketplaceRequests  MarketplaceRequest[]      @relation("MarketplaceRequests")
   marketplaceBids      MarketplaceBid[]          @relation("MarketplaceBids")
+  negotiationAgreementsAsCustomer NegotiationAgreement[] @relation("NegotiationCustomer")
+  negotiationAgreementsAsTransporter NegotiationAgreement[] @relation("NegotiationTransporter")
+  commissionPaymentsAsTransporter CommissionPayment[] @relation("TransporterCommissionPayments")
+  commissionPaymentsVerified CommissionPayment[] @relation("CommissionPaymentVerifiers")
   subscriptions        TransporterSubscription[]
   subscriptionInvoices SubscriptionInvoice[]
 
@@ -340,6 +383,8 @@ model User {
   auditLogs         AuditLog[]      @relation("AuditAdministrator")
   adminActivities   AdminActivity[]
   affectedAuditLogs AuditLog[]      @relation("AuditAffectedUser")
+  customerBankTransfers BankTransferPayment[] @relation("CustomerBankTransfers")
+  bankTransferVerifications BankTransferPayment[] @relation("BankTransferVerifiers")
 
   disputesAsCustomer    Dispute[] @relation("DisputeCustomer")
   disputesAsTransporter Dispute[] @relation("DisputeTransporter")
@@ -488,6 +533,8 @@ model Booking {
   fare   Decimal       @db.Decimal(14, 2)
 
   paymentStatus PaymentStatus @default(PENDING)
+  paymentMethod PaymentMethod @default(FLUTTERWAVE)
+  bankTransferPayment BankTransferPayment?
 
   acceptedAt  DateTime?
   arrivedAt   DateTime?
@@ -549,6 +596,7 @@ model MarketplaceRequest {
 
   customer User     @relation("MarketplaceRequests", fields: [customerId], references: [id], onDelete: Cascade)
   booking  Booking? @relation(fields: [bookingId], references: [id])
+  negotiationAgreement NegotiationAgreement?
 
   bids MarketplaceBid[]
 
@@ -575,12 +623,90 @@ model MarketplaceBid {
 
   request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   transporter User               @relation("MarketplaceBids", fields: [transporterId], references: [id], onDelete: Cascade)
+  negotiationAgreement NegotiationAgreement?
   vehicle     Vehicle            @relation(fields: [vehicleId], references: [id])
 
   @@unique([requestId, transporterId])
   @@index([requestId, status])
   @@index([transporterId, status])
   @@index([vehicleId])
+}
+
+model NegotiationAgreement {
+  id String @id @default(uuid())
+
+  marketplaceRequestId String @unique
+  marketplaceBidId     String @unique
+  customerId           String
+  transporterId        String
+
+  estimatedFare Decimal @db.Decimal(14, 2)
+  agreedFare    Decimal @db.Decimal(14, 2)
+
+  commissionRuleId String?
+  commissionAmount Decimal @db.Decimal(14, 2)
+  currency         String @default("NGN")
+
+  status NegotiationStatus @default(NEGOTIATING)
+
+  commissionStatus CommissionObligationStatus @default(DUE)
+  commissionReference String?
+  commissionVerifiedAt DateTime?
+  commissionVerifiedBy String?
+
+  refusalStrikeCount Int @default(0)
+
+  agreedAt DateTime?
+  confirmedAt DateTime?
+  cancelledAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  marketplaceRequest MarketplaceRequest @relation(fields: [marketplaceRequestId], references: [id], onDelete: Cascade)
+  marketplaceBid MarketplaceBid @relation(fields: [marketplaceBidId], references: [id], onDelete: Cascade)
+  customer User @relation("NegotiationCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+  transporter User @relation("NegotiationTransporter", fields: [transporterId], references: [id], onDelete: Cascade)
+  commissionRule CommissionRule? @relation(fields: [commissionRuleId], references: [id])
+  commissionPayment CommissionPayment?
+
+  @@index([customerId, status])
+  @@index([transporterId, status])
+  @@index([commissionStatus])
+  @@index([createdAt])
+}
+
+model CommissionPayment {
+  id String @id @default(uuid())
+
+  negotiationAgreementId String @unique
+  transporterId          String
+
+  amount   Decimal @db.Decimal(14, 2)
+  currency String  @default("NGN")
+
+  provider              CommissionPaymentProvider
+  transactionReference  String  @unique
+  checkoutUrl           String?
+  idempotencyKey        String?
+
+  status CommissionPaymentStatus @default(PENDING)
+
+  submittedAt       DateTime @default(now())
+  verifiedAt        DateTime?
+  verifiedBy        String?
+  rejectionReason   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  negotiationAgreement NegotiationAgreement @relation(fields: [negotiationAgreementId], references: [id], onDelete: Cascade)
+  transporter          User @relation("TransporterCommissionPayments", fields: [transporterId], references: [id], onDelete: Cascade)
+  verifier             User? @relation("CommissionPaymentVerifiers", fields: [verifiedBy], references: [id])
+  webhookEvents        CommissionPaymentWebhookEvent[]
+
+  @@index([transporterId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model TrackingPoint {
@@ -633,6 +759,37 @@ model Payment {
   @@index([customerId])
 }
 
+enum BankTransferStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  CANCELLED
+}
+
+model BankTransferPayment {
+  id                    String   @id @default(uuid())
+  bookingId             String   @unique
+  customerId            String
+  amount                Decimal  @db.Decimal(14, 2)
+  currency              String   @default("NGN")
+  transferReference     String   @unique
+  status                BankTransferStatus @default(PENDING)
+  verifiedAt            DateTime?
+  verifiedBy            String?
+  rejectionReason       String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customer  User    @relation("CustomerBankTransfers", fields: [customerId], references: [id], onDelete: Cascade)
+  verifier  User?   @relation("BankTransferVerifiers", fields: [verifiedBy], references: [id])
+
+  @@index([bookingId])
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
 model PaymentWebhookEvent {
   id                    String    @id @default(uuid())
   provider              String
@@ -651,6 +808,25 @@ model PaymentWebhookEvent {
   @@unique([provider, providerEventId])
   @@index([paymentId])
   @@index([subscriptionInvoiceId])
+  @@index([provider, eventType])
+  @@index([createdAt])
+}
+
+model CommissionPaymentWebhookEvent {
+  id                   String    @id @default(uuid())
+  provider             String
+  providerEventId      String
+  eventType            String
+  commissionPaymentId  String?
+  payload              Json
+  processed             Boolean   @default(false)
+  processedAt           DateTime?
+  createdAt             DateTime  @default(now())
+
+  commissionPayment CommissionPayment? @relation(fields: [commissionPaymentId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, providerEventId])
+  @@index([commissionPaymentId])
   @@index([provider, eventType])
   @@index([createdAt])
 }
@@ -1147,6 +1323,7 @@ model CommissionRule {
   updater User? @relation("CommissionRuleUpdater", fields: [updatedBy], references: [id])
 
   settlements Settlement[]
+  negotiationAgreements NegotiationAgreement[]
 
   @@index([status])
   @@index([effectiveFrom])

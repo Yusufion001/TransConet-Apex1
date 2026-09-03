@@ -1,6 +1,7 @@
 import { prisma } from "../config/prisma.js";
 import { publishEvent } from "../realtime/event-bus.js";
 import { estimateFare } from "../pricing/pricing.service.js";
+import { calculateCommission } from "../settlements/commission.service.js";
 
 
 async function expireMarketplaceLifecycle() {
@@ -750,6 +751,7 @@ export async function selectMarketplaceBid(
 
         status: "ASSIGNED",
         paymentStatus: "PENDING",
+        paymentMethod: "NEGOTIATE",
       },
     });
 
@@ -768,6 +770,38 @@ export async function selectMarketplaceBid(
     });
 
     /*
+     * Negotiated fares are outside the customer payment session.
+     * The transporter owes the platform commission after the customer
+     * accepts the negotiated bid. The commission rule is resolved from
+     * the Administration Management Platform's active rules.
+     *
+     * Use the same transaction client so the agreement and booking
+     * cannot become inconsistent.
+     */
+    const commission = await calculateCommission(
+      Number(bid.amount),
+      transporter.transporterTier,
+      tx,
+    );
+
+    const agreement = await tx.negotiationAgreement.create({
+      data: {
+        marketplaceRequestId: requestId,
+        marketplaceBidId: bid.id,
+        customerId,
+        transporterId: bid.transporterId,
+        estimatedFare: request.estimatedFare ?? bid.amount,
+        agreedFare: bid.amount,
+        commissionRuleId: commission.rule?.id ?? null,
+        commissionAmount: commission.commissionAmount,
+        currency: commission.rule?.currency ?? "NGN",
+        status: "COMMISSION_DUE",
+        commissionStatus: "DUE",
+        agreedAt: selectedAt,
+      },
+    });
+
+    /*
      * Return all identifiers needed by realtime/admin consumers.
      */
     return {
@@ -778,6 +812,7 @@ export async function selectMarketplaceBid(
         selectedAt,
       },
       booking,
+      agreement,
       vehicleId: vehicle.id,
       transporterId: bid.transporterId,
     };

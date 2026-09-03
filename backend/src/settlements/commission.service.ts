@@ -3,6 +3,7 @@ import { prisma } from "../config/prisma.js";
 export async function calculateCommission(
   amount: number,
   transporterTier?: "TIER_1" | "TIER_2" | null,
+  db: Pick<typeof prisma, "commissionRule"> = prisma,
 ) {
   if (amount <= 0) {
     throw new Error("Commission amount must be greater than zero");
@@ -10,7 +11,7 @@ export async function calculateCommission(
 
   const now = new Date();
 
-  const rules = await prisma.commissionRule.findMany({
+  const rules = await db.commissionRule.findMany({
     where: {
       status: "ACTIVE",
       effectiveFrom: { lte: now },

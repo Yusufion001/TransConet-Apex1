@@ -414,4 +414,142 @@ router.patch(
   },
 );
 
+
+router.get("/commission-payments", async (req, res) => {
+  try {
+    const status =
+      typeof req.query.status === "string"
+        ? req.query.status.trim()
+        : undefined;
+
+    const { listCommissionPayments } = await import(
+      "./commission-payment.service.js"
+    );
+
+    const payments = await listCommissionPayments(status);
+
+    return res.json({
+      success: true,
+      data: payments,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Server error",
+    });
+  }
+});
+
+router.get("/commission-payments/:id", async (req, res) => {
+  try {
+    const { getCommissionPaymentById } = await import(
+      "./commission-payment.service.js"
+    );
+
+    const payment = await getCommissionPaymentById(String(req.params.id));
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        error: "Commission payment not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Server error",
+    });
+  }
+});
+
+router.post("/commission-payments/:id/verify", async (req: AuthenticatedRequest, res) => {
+  try {
+    emptyBodySchema.parse(req.body);
+
+    const { verifyCommissionPayment } = await import(
+      "./commission-payment.service.js"
+    );
+
+    const payment = await verifyCommissionPayment(
+      String(req.params.id),
+      req.user!.id,
+    );
+
+    return res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Commission payment verification failed";
+
+    return res.status(400).json({
+      success: false,
+      error: message,
+    });
+  }
+});
+
+router.post("/commission-payments/:id/reject", async (req: AuthenticatedRequest, res) => {
+  try {
+    const rejectionSchema = z.object({
+      rejectionReason: z.string().trim().min(3).max(1000),
+    });
+
+    const input = rejectionSchema.parse(req.body);
+
+    const { rejectCommissionPayment } = await import(
+      "./commission-payment.service.js"
+    );
+
+    const payment = await rejectCommissionPayment(
+      String(req.params.id),
+      req.user!.id,
+      input.rejectionReason,
+    );
+
+    return res.json({
+      success: true,
+      data: payment,
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Commission payment rejection failed";
+
+    return res.status(400).json({
+      success: false,
+      error: message,
+    });
+  }
+});
+
 export default router;

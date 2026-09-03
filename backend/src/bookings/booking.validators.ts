@@ -50,6 +50,12 @@ export const createBookingSchema = z.object({
     .number()
     .finite()
     .positive("Cargo weight must be greater than zero"),
+
+  paymentMethod: z.enum([
+    "FLUTTERWAVE",
+    "BANK_TRANSFER",
+    "NEGOTIATE",
+  ]),
 }).strict()
 
 export const assignBookingSchema = z.object({
