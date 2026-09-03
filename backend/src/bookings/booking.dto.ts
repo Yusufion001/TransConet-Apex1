@@ -66,6 +66,7 @@ export function toBookingDto(booking: BookingModel) {
     fare: decimal(booking.fare),
 
     paymentStatus: booking.paymentStatus,
+    paymentMethod: booking.paymentMethod,
 
     acceptedAt: date(booking.acceptedAt),
     arrivedAt: date(booking.arrivedAt),

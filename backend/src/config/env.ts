@@ -14,6 +14,7 @@ const envSchema = z.object({
   FLW_SECRET_HASH: z.string().min(1),
   FLW_BASE_URL: z.string().url(),
   FLW_REDIRECT_URL: z.string().url(),
+  FLW_COMMISSION_REDIRECT_URL: z.string().url(),
   YOUVERIFY_API_KEY: z.string().min(1),
   YOUVERIFY_BASE_URL: z.string().url(),
   YOUVERIFY_WEBHOOK_SECRET: z.string().min(32),

@@ -238,7 +238,11 @@ export function applySecurityFoundation(app: Express) {
     limit: "1mb",
     strict: true,
     verify(req, _res, buf) {
-      if (req.url === "/api/payments/webhook" || req.url === "/api/verification/youverify/webhook") {
+      if (
+        req.url === "/api/payments/webhook" ||
+        req.url === "/api/commission-payments/webhook" ||
+        req.url === "/api/verification/youverify/webhook"
+      ) {
         (req as typeof req & { rawBody?: Buffer }).rawBody = Buffer.from(buf);
       }
     },

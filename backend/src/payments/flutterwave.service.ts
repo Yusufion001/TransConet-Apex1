@@ -11,6 +11,7 @@ type FlutterwaveInitializeInput = {
   amount: string;
   currency: string;
   customer: FlutterwaveCustomer;
+  redirectUrl?: string;
 };
 
 type FlutterwaveInitializeResponse = {
@@ -70,7 +71,7 @@ export async function initializeFlutterwavePayment(
         tx_ref: input.txRef,
         amount: input.amount,
         currency: input.currency,
-        redirect_url: env.FLW_REDIRECT_URL,
+        redirect_url: input.redirectUrl ?? env.FLW_REDIRECT_URL,
         customer: {
           email: input.customer.email ?? undefined,
           name: input.customer.name,

@@ -19,6 +19,7 @@ import eventRoutes from "./events/event.routes.js";
 import verificationRoutes from "./verification/verification.routes.js";
 import youverifyWebhookRoutes from "./verification/youverify/youverify.webhook.routes.js";
 import paymentRoutes from "./payments/payment.routes.js";
+import commissionPaymentRoutes from "./payments/commission-payment.routes.js";
 import subscriptionRoutes from "./subscriptions/subscription.routes.js";
 import adminRoutes from "./admin/admin.routes.js";
 import adminCustomerManagementRoutes from "./admin/customer-management.routes.js";
@@ -162,6 +163,10 @@ app.use(
 app.use(
   "/api/payments",
   paymentRoutes,
+);
+app.use(
+  "/api/commission-payments",
+  commissionPaymentRoutes,
 );
 app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/transporters", transporterRoutes);

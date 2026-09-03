@@ -6,6 +6,7 @@ import { publishAdminEvent, publishBookingEvent } from "../realtime/realtime.ser
 import { createSettlement } from "../settlements/settlement.service.js";
 import { toBookingDto } from "./booking.dto.js";
 import { estimateFare } from "../pricing/pricing.service.js";
+import { createBankTransferPayment } from "../payments/bank-transfer.service.js";
 
 export async function createBooking(data: {
   customerId: string;
@@ -34,6 +35,7 @@ export async function createBooking(data: {
     | "HAZARDOUS"
     | "REFRIGERATED";
   cargoWeight: number;
+  paymentMethod?: "FLUTTERWAVE" | "BANK_TRANSFER" | "NEGOTIATE";
 }) {
   const pricing = await estimateFare({
     weight: data.cargoWeight,
@@ -46,23 +48,60 @@ export async function createBooking(data: {
 
   const deliveryConfirmationCode = String(randomInt(0, 100_000_000)).padStart(8, "0");
 
-  const booking = await prisma.booking.create({
-    data: {
-      customerId: data.customerId,
-      pickupLocation: data.pickupLocation,
-      destination: data.destination,
-      pickupLatitude: data.pickupLatitude,
-      pickupLongitude: data.pickupLongitude,
-      destinationLatitude: data.destinationLatitude,
-      destinationLongitude: data.destinationLongitude,
-      cargoDescription: data.cargoDescription,
-      truckCategory: data.truckCategory,
-      cargoCategory: data.cargoCategory,
-      cargoWeight: data.cargoWeight,
-      estimatedFare: pricing.fare,
-      fare: pricing.fare,
-      deliveryConfirmationCode,
-    },
+  const paymentMethod = data.paymentMethod ?? "FLUTTERWAVE";
+
+  const booking = await prisma.$transaction(async (tx) => {
+    const createdBooking = await tx.booking.create({
+      data: {
+        customerId: data.customerId,
+        pickupLocation: data.pickupLocation,
+        destination: data.destination,
+        pickupLatitude: data.pickupLatitude,
+        pickupLongitude: data.pickupLongitude,
+        destinationLatitude: data.destinationLatitude,
+        destinationLongitude: data.destinationLongitude,
+        cargoDescription: data.cargoDescription,
+        truckCategory: data.truckCategory,
+        cargoCategory: data.cargoCategory,
+        cargoWeight: data.cargoWeight,
+        estimatedFare: pricing.fare,
+        fare: pricing.fare,
+        paymentMethod,
+        deliveryConfirmationCode,
+      },
+    });
+
+    if (paymentMethod === "BANK_TRANSFER") {
+      await createBankTransferPayment(tx, {
+        id: createdBooking.id,
+        customerId: createdBooking.customerId,
+        fare: createdBooking.fare,
+      });
+    }
+
+    if (paymentMethod === "NEGOTIATE") {
+      await tx.marketplaceRequest.create({
+        data: {
+          customerId: data.customerId,
+          bookingId: createdBooking.id,
+          cargoDescription: data.cargoDescription,
+          truckCategory: data.truckCategory,
+          cargoCategory: data.cargoCategory,
+          cargoWeight: data.cargoWeight,
+          pickupLocation: data.pickupLocation,
+          destination: data.destination,
+          pickupLatitude: data.pickupLatitude,
+          pickupLongitude: data.pickupLongitude,
+          destinationLatitude: data.destinationLatitude,
+          destinationLongitude: data.destinationLongitude,
+          scheduledDate: null,
+          estimatedFare: pricing.fare,
+          status: "OPEN",
+        },
+      });
+    }
+
+    return createdBooking;
   });
 
   const bookingDto = toBookingDto(booking);

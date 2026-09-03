@@ -1,3 +1,4 @@
+import { estimateFare } from "../pricing/pricing.service.js";
 import { Router, type Response } from "express";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { z } from "zod";
@@ -115,6 +116,37 @@ const deliveryConfirmationLimiter = rateLimit({
 
 const router = Router();
 router.use(authenticate);
+
+router.post(
+  "/estimate-fare",
+  authorize("CUSTOMER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const input = createBookingSchema.omit({
+        paymentMethod: true,
+      }).parse(req.body);
+
+      const pricing = await estimateFare({
+        weight: input.cargoWeight,
+        truck: input.truckCategory,
+        pickupLatitude: input.pickupLatitude,
+        pickupLongitude: input.pickupLongitude,
+        destinationLatitude: input.destinationLatitude,
+        destinationLongitude: input.destinationLongitude,
+      });
+
+      res.json({
+        success: true,
+        data: {
+          estimatedFare: pricing.fare,
+          distanceKm: pricing.distanceKm,
+        },
+      });
+    } catch (error) {
+      handleBookingRouteError(error, res);
+    }
+  },
+);
 
 router.post(
   "/",

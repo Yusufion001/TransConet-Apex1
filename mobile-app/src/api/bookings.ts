@@ -77,12 +77,29 @@ export type CreateBookingInput = {
   truckCategory: TruckCategory;
   cargoCategory?: CargoCategory;
   cargoWeight: number;
+  paymentMethod: "FLUTTERWAVE" | "BANK_TRANSFER" | "NEGOTIATE";
 };
 
 type ApiResponse<T> = {
   success: boolean;
   data: T;
 };
+
+export type FareEstimate = {
+  estimatedFare: number;
+  distanceKm: number;
+};
+
+export async function estimateBookingFare(
+  input: Omit<CreateBookingInput, "paymentMethod">,
+): Promise<FareEstimate> {
+  const response = await apiClient.post<ApiResponse<FareEstimate>>(
+    "/bookings/estimate-fare",
+    input,
+  );
+
+  return response.data.data;
+}
 
 export async function createBooking(
   input: CreateBookingInput,
