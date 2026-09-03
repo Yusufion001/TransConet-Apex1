@@ -174,7 +174,9 @@ export async function getBookingById(id: string) {
     },
   });
 
-  return booking ? toBookingDto(booking) : null;
+  return booking
+    ? enrichNegotiatedBookingDto(toBookingDto(booking))
+    : null;
 }
 
 export async function assignBooking(
@@ -462,6 +464,48 @@ export async function updateBookingStatus(
 }
 
 
+async function enrichNegotiatedBookingDto(
+  bookingDto: ReturnType<typeof toBookingDto>,
+) {
+  if (bookingDto.paymentMethod !== "NEGOTIATE") {
+    return bookingDto;
+  }
+
+  const marketplaceRequest = await prisma.marketplaceRequest.findUnique({
+    where: {
+      bookingId: bookingDto.id,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!marketplaceRequest) {
+    return bookingDto;
+  }
+
+  const agreement = await prisma.negotiationAgreement.findUnique({
+    where: {
+      marketplaceRequestId: marketplaceRequest.id,
+    },
+    select: {
+      id: true,
+      commissionAmount: true,
+      currency: true,
+      commissionStatus: true,
+    },
+  });
+
+  return {
+    ...bookingDto,
+    marketplaceRequestId: marketplaceRequest.id,
+    negotiationAgreementId: agreement?.id ?? null,
+    commissionAmount: agreement?.commissionAmount?.toString() ?? null,
+    commissionCurrency: agreement?.currency ?? null,
+    commissionStatus: agreement?.commissionStatus ?? null,
+  };
+}
+
 export async function getCustomerBookings(
   customerId: string,
 ) {
@@ -474,7 +518,11 @@ export async function getCustomerBookings(
     },
   });
 
-  return bookings.map(toBookingDto);
+  return Promise.all(
+    bookings.map((booking) =>
+      enrichNegotiatedBookingDto(toBookingDto(booking)),
+    ),
+  );
 }
 
 export async function getTransporterBookings(
@@ -489,7 +537,11 @@ export async function getTransporterBookings(
     },
   });
 
-  return bookings.map(toBookingDto);
+  return Promise.all(
+    bookings.map((booking) =>
+      enrichNegotiatedBookingDto(toBookingDto(booking)),
+    ),
+  );
 }
 
 export async function uploadProofOfDelivery(

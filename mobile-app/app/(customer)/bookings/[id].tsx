@@ -234,6 +234,22 @@ export default function BookingDetails() {
               TransConet customer payment is required for this negotiated
               fare.
             </Text>
+
+            {booking.marketplaceRequestId &&
+              !booking.transporterId && (
+                <Pressable
+                  onPress={() =>
+                    router.push(
+                      `/(customer)/marketplace/${booking.marketplaceRequestId}`,
+                    )
+                  }
+                  style={styles.negotiatedButton}
+                >
+                  <Text style={styles.negotiatedButtonText}>
+                    Review Transporter Bids
+                  </Text>
+                </Pressable>
+              )}
           </View>
         )}
 
@@ -434,6 +450,19 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 1.1,
     color: "#667085",
+  },
+  negotiatedButton: {
+    marginTop: 14,
+    backgroundColor: "#111827",
+    borderRadius: 12,
+    minHeight: 46,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  negotiatedButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "800",
   },
   negotiatedTitle: {
     fontSize: 15,
