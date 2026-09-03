@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { prisma } from "../config/prisma.js";
 import { publishEvent } from "../realtime/event-bus.js";
+import { initializeFlutterwavePayment } from "../payments/flutterwave.service.js";
 
 function transactionReference() {
   return `SUB-${Date.now()}-${crypto.randomUUID()}`;
@@ -106,7 +107,7 @@ export async function createSubscription(
         data: {
           transporterId,
           planId,
-          status: "ACTIVE",
+          status: "PENDING",
           startedAt: now,
           currentPeriodStart: now,
           currentPeriodEnd: periodEnd,
@@ -137,6 +138,78 @@ export async function createSubscription(
     };
   });
 
+  let checkoutUrl: string | null = null;
+
+  if (result.invoice.amount.gt(0)) {
+    const transporter = await prisma.user.findUnique({
+      where: { id: transporterId },
+      select: {
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+      },
+    });
+
+    if (!transporter) {
+      throw new Error("Transporter not found");
+    }
+
+    try {
+      const flutterwavePayment = await initializeFlutterwavePayment({
+        txRef: result.invoice.transactionReference!,
+        amount: result.invoice.amount.toString(),
+        currency: result.invoice.currency,
+        customer: {
+          email: transporter.email,
+          name:
+            `${transporter.firstName ?? ""} ${transporter.lastName ?? ""}`.trim(),
+          phonenumber: transporter.phone,
+        },
+        title: "TransConet Subscription",
+        description: "Payment for TransConet marketplace visibility subscription",
+      });
+
+      checkoutUrl = flutterwavePayment.link;
+
+      await prisma.subscriptionInvoice.update({
+        where: { id: result.invoice.id },
+        data: {
+          checkoutUrl,
+          provider: "FLUTTERWAVE",
+        },
+      });
+    } catch (error) {
+      await prisma.subscriptionInvoice.update({
+        where: { id: result.invoice.id },
+        data: {
+          status: "FAILED",
+        },
+      });
+
+      await prisma.transporterSubscription.update({
+        where: { id: result.subscription.id },
+        data: {
+          status: "CANCELLED",
+          cancelledAt: new Date(),
+        },
+      });
+
+      throw error;
+    }
+  } else {
+    await markSubscriptionInvoicePaid(result.invoice.id);
+  }
+
+  const updatedInvoice = await prisma.subscriptionInvoice.findUnique({
+    where: { id: result.invoice.id },
+  });
+
+  const updatedSubscription = await prisma.transporterSubscription.findUnique({
+    where: { id: result.subscription.id },
+    include: { plan: true },
+  });
+
   publishEvent("admin", {
     eventType: "SUBSCRIPTION_CREATED",
     module: "SUBSCRIPTION_BILLING",
@@ -152,7 +225,11 @@ export async function createSubscription(
     },
   });
 
-  return result;
+  return {
+    subscription: updatedSubscription ?? result.subscription,
+    invoice: updatedInvoice ?? result.invoice,
+    checkoutUrl,
+  };
 }
 
 export async function cancelSubscription(
@@ -200,7 +277,10 @@ export async function cancelSubscription(
   return updated;
 }
 
-export async function markSubscriptionInvoicePaid(invoiceId: string) {
+export async function markSubscriptionInvoicePaid(
+  invoiceId: string,
+  providerTransactionId?: string,
+) {
   const result = await prisma.$transaction(async (tx) => {
     const invoice = await tx.subscriptionInvoice.findUnique({
       where: { id: invoiceId },
@@ -225,6 +305,9 @@ export async function markSubscriptionInvoicePaid(invoiceId: string) {
       data: {
         status: "SUCCESS",
         paidAt: new Date(),
+        ...(providerTransactionId
+          ? { providerTransactionId }
+          : {}),
       },
     });
 
@@ -234,6 +317,7 @@ export async function markSubscriptionInvoicePaid(invoiceId: string) {
       },
       data: {
         status: "ACTIVE",
+        startedAt: invoice.periodStart,
         currentPeriodStart: invoice.periodStart,
         currentPeriodEnd: invoice.periodEnd,
       },

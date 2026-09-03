@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { env } from "../config/env.js";
 import { prisma } from "../config/prisma.js";
 import { completePayment } from "./payment.service.js";
+import { markSubscriptionInvoicePaid } from "../subscriptions/subscription.service.js";
 import { verifyFlutterwaveTransaction } from "./flutterwave.service.js";
 
 export type PaymentWebhookInput = {
@@ -164,6 +165,95 @@ export async function processPaymentWebhook(
   }
 
   let validatedPaymentId = paymentId;
+  let validatedSubscriptionInvoiceId: string | undefined;
+
+  if (transactionReference) {
+    const subscriptionInvoice =
+      await prisma.subscriptionInvoice.findUnique({
+        where: { transactionReference },
+        select: {
+          id: true,
+          provider: true,
+          transactionReference: true,
+          amount: true,
+          currency: true,
+        },
+      });
+
+    if (subscriptionInvoice) {
+      if (
+        subscriptionInvoice.provider.toUpperCase() !==
+        provider.toUpperCase()
+      ) {
+        throw new Error(
+          "Webhook provider does not match subscription invoice",
+        );
+      }
+
+      if (
+        verifiedTransaction &&
+        verifiedTransaction.tx_ref !==
+          subscriptionInvoice.transactionReference
+      ) {
+        throw new Error(
+          "Flutterwave transaction reference does not match subscription invoice",
+        );
+      }
+
+      if (
+        amount !== undefined &&
+        !amountsMatch(
+          amount,
+          subscriptionInvoice.amount.toString(),
+        )
+      ) {
+        throw new Error(
+          "Webhook amount does not match subscription invoice",
+        );
+      }
+
+      if (
+        currency !== undefined &&
+        currency.toUpperCase() !==
+          subscriptionInvoice.currency.toUpperCase()
+      ) {
+        throw new Error(
+          "Webhook currency does not match subscription invoice",
+        );
+      }
+
+      if (
+        verifiedTransaction &&
+        !amountsMatch(
+          verifiedTransaction.amount,
+          subscriptionInvoice.amount.toString(),
+        )
+      ) {
+        throw new Error(
+          "Flutterwave verified amount does not match subscription invoice",
+        );
+      }
+
+      if (
+        verifiedTransaction &&
+        verifiedTransaction.currency.toUpperCase() !==
+          subscriptionInvoice.currency.toUpperCase()
+      ) {
+        throw new Error(
+          "Flutterwave verified currency does not match subscription invoice",
+        );
+      }
+
+      validatedSubscriptionInvoiceId = subscriptionInvoice.id;
+      validatedPaymentId = undefined;
+    }
+  }
+
+  if (paymentId && validatedSubscriptionInvoiceId) {
+    throw new Error(
+      "Webhook cannot target both a payment and subscription invoice",
+    );
+  }
 
   if (paymentId) {
     const payment = await prisma.payment.findUnique({
@@ -333,6 +423,7 @@ export async function processPaymentWebhook(
         providerEventId,
         eventType,
         paymentId: validatedPaymentId,
+        subscriptionInvoiceId: validatedSubscriptionInvoiceId,
         payload: payload as object,
       },
     });
@@ -366,18 +457,29 @@ export async function processPaymentWebhook(
   }
 
   try {
+    const successfulEvent =
+      provider.toUpperCase() !== "FLUTTERWAVE" ||
+      [
+        "charge.completed",
+        "payment.success",
+        "payment.completed",
+        "charge.success",
+        "SUCCESS",
+      ].includes(eventType);
+
     if (
-      validatedPaymentId &&
-      (
-        provider.toUpperCase() !== "FLUTTERWAVE" ||
-        [
-          "charge.completed",
-          "payment.success",
-          "payment.completed",
-          "charge.success",
-          "SUCCESS",
-        ].includes(eventType)
-      )
+      successfulEvent &&
+      validatedSubscriptionInvoiceId
+    ) {
+      await markSubscriptionInvoicePaid(
+        validatedSubscriptionInvoiceId,
+        verifiedTransaction?.id?.toString(),
+      );
+    }
+
+    if (
+      successfulEvent &&
+      validatedPaymentId
     ) {
       try {
         await completePayment(validatedPaymentId);
