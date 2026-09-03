@@ -224,3 +224,93 @@ export async function updateMarketplacePricing(
 
   return response.data.data;
 }
+
+export type MarketplaceCommissionRuleType = "PERCENTAGE" | "FIXED";
+
+export type MarketplaceCommissionRuleStatus = "ACTIVE" | "INACTIVE";
+
+export type MarketplaceCommissionRule = {
+  id: string;
+  name: string;
+  description: string | null;
+  type: MarketplaceCommissionRuleType;
+  rate: number | string;
+  currency: string | null;
+  minAmount: number | string | null;
+  maxAmount: number | string | null;
+  transporterTier: "TIER_1" | "TIER_2" | null;
+  status: MarketplaceCommissionRuleStatus;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  createdBy: string;
+  updatedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MarketplaceCommissionRuleInput = {
+  name: string;
+  description?: string | null;
+  type: MarketplaceCommissionRuleType;
+  rate: number;
+  currency?: string | null;
+  minAmount?: number | null;
+  maxAmount?: number | null;
+  transporterTier?: "TIER_1" | "TIER_2" | null;
+  effectiveFrom?: string;
+  effectiveTo?: string | null;
+};
+
+export async function getMarketplaceCommissionRules(): Promise<
+  MarketplaceCommissionRule[]
+> {
+  const response = await apiClient.get<
+    ApiResponse<MarketplaceCommissionRule[]>
+  >("/admin/commission-rules");
+
+  return response.data.data;
+}
+
+export async function getMarketplaceCommissionRule(
+  id: string,
+): Promise<MarketplaceCommissionRule> {
+  const response = await apiClient.get<
+    ApiResponse<MarketplaceCommissionRule>
+  >(`/admin/commission-rules/${id}`);
+
+  return response.data.data;
+}
+
+export async function createMarketplaceCommissionRule(
+  value: MarketplaceCommissionRuleInput,
+): Promise<MarketplaceCommissionRule> {
+  const response = await apiClient.post<
+    ApiResponse<MarketplaceCommissionRule>
+  >("/admin/commission-rules", value);
+
+  return response.data.data;
+}
+
+export async function updateMarketplaceCommissionRule(
+  id: string,
+  value: MarketplaceCommissionRuleInput,
+): Promise<MarketplaceCommissionRule> {
+  const response = await apiClient.patch<
+    ApiResponse<MarketplaceCommissionRule>
+  >(`/admin/commission-rules/${id}`, value);
+
+  return response.data.data;
+}
+
+export async function updateMarketplaceCommissionRuleStatus(
+  id: string,
+  status: MarketplaceCommissionRuleStatus,
+): Promise<MarketplaceCommissionRule> {
+  const response = await apiClient.patch<
+    ApiResponse<MarketplaceCommissionRule>
+  >(`/admin/commission-rules/${id}/status`, {
+    status,
+  });
+
+  return response.data.data;
+}
