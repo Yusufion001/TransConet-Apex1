@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   getAdminBooking, getBookingAssignmentOptions, assignAdminBooking,
@@ -140,11 +141,20 @@ export default function BookingsShipments() {
       setTotal(result.total);
       setTotalPages(result.totalPages);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to load bookings and shipments.",
-      );
+      if (axios.isAxiosError(err)) {
+        const serverError = err.response?.data?.error;
+        setError(
+          typeof serverError === "string"
+            ? serverError
+            : err.message || "Unable to load bookings and shipments.",
+        );
+      } else {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Unable to load bookings and shipments.",
+        );
+      }
     } finally {
       setLoading(false);
     }

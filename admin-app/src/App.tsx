@@ -22,6 +22,7 @@ import ContentManagement from "./modules/ContentManagement";
 import ApiManagement from "./modules/ApiManagement";
 import AIAutomation from "./modules/AIAutomation";
 import ActivityTimeline from "./modules/ActivityTimeline";
+import AuditLogs from "./modules/AuditLogs";
 import BackupRecovery from "./modules/BackupRecovery";
 import DatabaseHealth from "./modules/DatabaseHealth";
 import Settings from "./modules/Settings";
@@ -440,6 +441,8 @@ function App() {
           <NotificationCenter />
         ) : active === "Content Management" ? (
           <ContentManagement />
+        ) : active === "Audit Logs" ? (
+          <AuditLogs />
         ) : active === "Activity Timeline" ? (
           <ActivityTimeline />
         ) : active === "AI Automation" ? (
