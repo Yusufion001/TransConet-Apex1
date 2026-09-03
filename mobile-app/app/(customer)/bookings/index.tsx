@@ -58,7 +58,16 @@ export default function CustomerBookings() {
           >
             <Pressable style={styles.card}>
               <View style={styles.row}>
-                <Text style={styles.status}>{booking.status}</Text>
+                <View style={styles.badgeRow}>
+                  <Text style={styles.status}>{booking.status}</Text>
+                  {booking.paymentMethod === "NEGOTIATE" && (
+                    <View style={styles.negotiatedBadge}>
+                      <Text style={styles.negotiatedBadgeText}>
+                        NEGOTIATED
+                      </Text>
+                    </View>
+                  )}
+                </View>
                 <Text style={styles.id}>#{booking.id.slice(0, 8)}</Text>
               </View>
 
@@ -96,6 +105,26 @@ const styles = StyleSheet.create({
     borderColor: "#EAECF0",
   },
   row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 16 },
+  badgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 7,
+  },
+  negotiatedBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: "#FFF7E8",
+    borderWidth: 1,
+    borderColor: "#F2C94C",
+  },
+  negotiatedBadgeText: {
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 0.7,
+    color: "#7A4E00",
+  },
   status: { fontSize: 12, fontWeight: "800", color: "#175CD3" },
   id: { fontSize: 12, color: "#98A2B3" },
   location: { fontSize: 16, fontWeight: "700", color: "#1D2939" },

@@ -173,7 +173,9 @@ export default function BookingDetails() {
 
   const booking = bookingQuery.data;
   const paymentStatus = booking.paymentStatus;
+  const isNegotiatedBooking = booking.paymentMethod === "NEGOTIATE";
   const canPay =
+    !isNegotiatedBooking &&
     paymentStatus !== "SUCCESS" &&
     paymentStatus !== "PROCESSING" &&
     paymentStatus !== "REFUNDED" &&
@@ -217,8 +219,23 @@ export default function BookingDetails() {
           Fare: {booking.fare ?? booking.estimatedFare ?? "Pending"}
         </Text>
         <Text style={styles.detail}>
-          Payment: {paymentStatus}
+          Payment: {isNegotiatedBooking ? "NEGOTIATED" : paymentStatus}
         </Text>
+
+        {isNegotiatedBooking && (
+          <View style={styles.negotiatedBox}>
+            <Text style={styles.negotiatedLabel}>NEGOTIATED FARE</Text>
+            <Text style={styles.negotiatedTitle}>
+              Fare arranged directly with the transporter
+            </Text>
+            <Text style={styles.negotiatedText}>
+              You and the transporter agree the transport fare directly.
+              The agreed fare is paid directly to the transporter. No
+              TransConet customer payment is required for this negotiated
+              fare.
+            </Text>
+          </View>
+        )}
 
         {latestPayment?.transactionReference && (
           <Text style={styles.reference}>
@@ -403,6 +420,32 @@ const styles = StyleSheet.create({
     color: "#92400E",
     fontSize: 13,
     lineHeight: 19,
+  },
+  negotiatedBox: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+  },
+  negotiatedLabel: {
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.1,
+    color: "#667085",
+  },
+  negotiatedTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#101828",
+    marginTop: 5,
+  },
+  negotiatedText: {
+    fontSize: 12,
+    lineHeight: 19,
+    color: "#475467",
+    marginTop: 6,
   },
   successBox: {
     backgroundColor: "#ECFDF3",

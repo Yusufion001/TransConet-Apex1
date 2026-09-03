@@ -201,6 +201,25 @@ export default function MarketplaceOpportunity() {
           Submit a bid
         </Text>
 
+        <View style={styles.negotiatedCard}>
+          <Text style={styles.negotiatedLabel}>NEGOTIATED FARE</Text>
+          <Text style={styles.negotiatedTitle}>
+            Customer and transporter agree the fare directly
+          </Text>
+          <Text style={styles.negotiatedText}>
+            Your bid is the transport fare you are proposing to the customer.
+            If your bid is accepted, the customer pays the agreed fare directly
+            to you. TransConet does not collect the negotiated fare from the
+            customer.
+          </Text>
+          <View style={styles.commissionNotice}>
+            <Text style={styles.commissionNoticeText}>
+              A separate TransConet platform commission will become payable by
+              you when your bid is selected.
+            </Text>
+          </View>
+        </View>
+
         <Text style={styles.inputLabel}>YOUR BID AMOUNT</Text>
 
         <TextInput
@@ -430,6 +449,45 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: "#0B63CE",
+  },
+  negotiatedCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
+    padding: 16,
+    marginTop: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+  },
+  negotiatedLabel: {
+    color: "#667085",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.2,
+  },
+  negotiatedTitle: {
+    color: "#101828",
+    fontSize: 15,
+    fontWeight: "800",
+    marginTop: 7,
+  },
+  negotiatedText: {
+    color: "#475467",
+    fontSize: 12,
+    lineHeight: 19,
+    marginTop: 7,
+  },
+  commissionNotice: {
+    backgroundColor: "#FFF7E8",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 12,
+  },
+  commissionNoticeText: {
+    color: "#7A4E00",
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: "600",
   },
   bidSectionTitle: {
     marginTop: 10,

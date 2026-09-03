@@ -383,9 +383,45 @@ export default function TransporterBookingDetails() {
         />
 
         <InfoRow
-          label="Payment"
-          value={booking.paymentStatus}
+          label="Payment method"
+          value={
+            booking.paymentMethod === "NEGOTIATE"
+              ? "Negotiated"
+              : booking.paymentMethod.replace(/_/g, " ")
+          }
         />
+
+        {booking.paymentMethod === "NEGOTIATE" ? (
+          <View style={styles.commissionCard}>
+            <Text style={styles.commissionTitle}>
+              TRANSCONET COMMISSION
+            </Text>
+
+            <Text style={styles.commissionHeadline}>
+              Separate from your earnings
+            </Text>
+
+            <Text style={styles.commissionText}>
+              This assignment came from a negotiated marketplace bid.
+              The customer pays the agreed transport fare directly to you.
+              TransConet does not collect that negotiated fare.
+            </Text>
+
+            <View style={styles.commissionNotice}>
+              <Text style={styles.commissionNoticeText}>
+                A separate TransConet platform commission becomes your
+                responsibility when this negotiated assignment is selected.
+                Commission payments are separate from your Wallet earnings
+                and withdrawals.
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <InfoRow
+            label="Payment"
+            value={booking.paymentStatus}
+          />
+        )}
 
         <InfoRow
           label="Shipment ID"
@@ -750,6 +786,45 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "700",
     textAlign: "right",
+  },
+  commissionCard: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 14,
+    padding: 16,
+    marginTop: 14,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+  },
+  commissionTitle: {
+    color: "#667085",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.2,
+  },
+  commissionHeadline: {
+    color: "#101828",
+    fontSize: 17,
+    fontWeight: "800",
+    marginTop: 7,
+  },
+  commissionText: {
+    color: "#475467",
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: 7,
+  },
+  commissionNotice: {
+    backgroundColor: "#FFF7E8",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 12,
+  },
+  commissionNoticeText: {
+    color: "#7A4E00",
+    fontSize: 12,
+    lineHeight: 18,
+    fontWeight: "600",
   },
   liveCard: {
     backgroundColor: "#EEF6FF",
