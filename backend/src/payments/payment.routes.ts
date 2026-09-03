@@ -1,5 +1,7 @@
 import { Router } from "express";
+import { prisma } from "../config/prisma.js";
 import { processPaymentWebhook } from "./payment-webhook.service.js";
+import { verifyFlutterwaveTransaction } from "./flutterwave.service.js";
 import {
   initializePaymentSchema,
   paymentWebhookSchema,
@@ -12,12 +14,105 @@ import {
 import { assertBookingAccess } from "../bookings/booking.service.js";
 
 import {
+  completePayment,
   getBookingPayments,
   getPaymentById,
   initializePayment,
 } from "./payment.service.js";
 
 const router = Router();
+
+router.get("/callback", async (req, res) => {
+  const txRef =
+    typeof req.query.tx_ref === "string" ? req.query.tx_ref.trim() : "";
+  const transactionId =
+    typeof req.query.transaction_id === "string"
+      ? req.query.transaction_id.trim()
+      : "";
+  const status =
+    typeof req.query.status === "string" ? req.query.status.trim() : "";
+
+  const appReturn = (paymentStatus: string, bookingId?: string) => {
+    const params = new URLSearchParams({
+      status: paymentStatus,
+      ...(bookingId ? { bookingId } : {}),
+    });
+
+    return res.redirect(`transconet://payment-return?${params.toString()}`);
+  };
+
+  if (!txRef || !transactionId) {
+    return appReturn("failed");
+  }
+
+  try {
+    const payment = await prisma.payment.findUnique({
+      where: { transactionReference: txRef },
+      select: {
+        id: true,
+        bookingId: true,
+        provider: true,
+        amount: true,
+        currency: true,
+      },
+    });
+
+    if (!payment || payment.provider !== "FLUTTERWAVE") {
+      return appReturn("failed");
+    }
+
+    if (status.toLowerCase() !== "successful") {
+      return appReturn("failed", payment.bookingId);
+    }
+
+    const verified = await verifyFlutterwaveTransaction(transactionId);
+
+    if (
+      verified.status.toLowerCase() !== "successful" ||
+      verified.tx_ref !== txRef
+    ) {
+      return appReturn("failed", payment.bookingId);
+    }
+
+    /*
+     * Never complete a payment from provider status alone.
+     * The verified transaction must exactly match the Payment record created
+     * from the authoritative booking fare.
+     */
+    const verifiedAmount = String(verified.amount).trim();
+    const expectedAmount = payment.amount.toFixed(2);
+    const verifiedCurrency = String(verified.currency).trim().toUpperCase();
+    const expectedCurrency = payment.currency.trim().toUpperCase();
+
+    if (!payment.amount.equals(verifiedAmount)) {
+      console.error("Flutterwave callback amount mismatch", {
+        paymentId: payment.id,
+        transactionReference: txRef,
+        expectedAmount,
+        verifiedAmount,
+      });
+      return appReturn("failed", payment.bookingId);
+    }
+
+    if (verifiedCurrency !== expectedCurrency) {
+      console.error("Flutterwave callback currency mismatch", {
+        paymentId: payment.id,
+        transactionReference: txRef,
+        expectedCurrency,
+        verifiedCurrency,
+      });
+      return appReturn("failed", payment.bookingId);
+    }
+
+    await completePayment(payment.id);
+
+    return appReturn("success", payment.bookingId);
+  } catch (error) {
+    console.error("Flutterwave payment callback error:", error);
+    return appReturn("failed");
+  }
+});
+
 
 router.post(
   "/webhook",

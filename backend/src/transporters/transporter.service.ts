@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { publishAdminEvent } from "../realtime/realtime.service.js";
 
 export async function getTransporterVehicles(
   transporterId: string,
@@ -27,8 +28,17 @@ export async function createTransporterProfile(data: {
   state?: string;
   country?: string;
 }) {
-  return prisma.transporterProfile.create({
-    data,
+  const { userId, ...profileData } = data;
+
+  return prisma.transporterProfile.upsert({
+    where: {
+      userId,
+    },
+    update: profileData,
+    create: {
+      userId,
+      ...profileData,
+    },
   });
 }
 export async function updateTransporterVerification(
@@ -152,4 +162,40 @@ export async function updateTransporterVerification(
       verificationStatus: "APPROVED",
     },
   });
+}
+
+export async function updateTransporterProfile(
+  transporterId: string,
+  data: {
+    companyName?: string;
+    businessRegistrationNumber?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+  },
+) {
+  const profile = await prisma.transporterProfile.findUnique({
+    where: { userId: transporterId },
+  });
+
+  if (!profile) {
+    throw new Error("Transporter profile not found");
+  }
+
+  const updatedProfile = await prisma.transporterProfile.update({
+    where: { userId: transporterId },
+    data,
+  });
+
+  await publishAdminEvent({
+    eventType: "TRANSPORTER_PROFILE_UPDATED",
+    module: "ACTIVITY_TIMELINE",
+    actorId: transporterId,
+    entityType: "TRANSPORTER_PROFILE",
+    entityId: transporterId,
+    data: updatedProfile,
+  });
+
+  return updatedProfile;
 }

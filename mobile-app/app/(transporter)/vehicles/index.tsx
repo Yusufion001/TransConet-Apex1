@@ -14,6 +14,7 @@ import {
   createVehicle,
   getTransporterVehicles,
   updateVehicle,
+  updateVehicleAvailability,
 } from "../../../src/api/transporter";
 import { useAuthStore } from "../../../src/auth/auth.store";
 
@@ -125,6 +126,21 @@ export default function TransporterFleet() {
       }),
     onSuccess: () => {
       resetForm();
+      refreshVehicles();
+    },
+  });
+
+  const availabilityMutation = useMutation({
+    mutationFn: async ({
+      vehicleId,
+      availabilityStatus,
+    }: {
+      vehicleId: string;
+      availabilityStatus: "AVAILABLE" | "UNAVAILABLE";
+    }) => {
+      return updateVehicleAvailability(vehicleId, availabilityStatus);
+    },
+    onSuccess: () => {
       refreshVehicles();
     },
   });
@@ -463,7 +479,56 @@ export default function TransporterFleet() {
               }
             />
 
-            {vehicle.availabilityStatus !== "AVAILABLE" ? (
+            {vehicle.verificationStatus === "APPROVED" &&
+            vehicle.availabilityStatus !== "ON_TRIP" ? (
+              <Pressable
+                disabled={availabilityMutation.isPending}
+                onPress={() =>
+                  availabilityMutation.mutate({
+                    vehicleId: vehicle.id,
+                    availabilityStatus:
+                      vehicle.availabilityStatus === "AVAILABLE"
+                        ? "UNAVAILABLE"
+                        : "AVAILABLE",
+                  })
+                }
+                style={[
+                  styles.availabilityButton,
+                  vehicle.availabilityStatus === "AVAILABLE"
+                    ? styles.availabilityButtonUnavailable
+                    : styles.availabilityButtonAvailable,
+                  availabilityMutation.isPending &&
+                    styles.disabledButton,
+                ]}
+              >
+                {availabilityMutation.isPending ? (
+                  <ActivityIndicator />
+                ) : (
+                  <Text
+                    style={[
+                      styles.availabilityButtonText,
+                      vehicle.availabilityStatus === "AVAILABLE"
+                        ? styles.availabilityButtonTextUnavailable
+                        : styles.availabilityButtonTextAvailable,
+                    ]}
+                  >
+                    {vehicle.availabilityStatus === "AVAILABLE"
+                      ? "Set Unavailable"
+                      : "Set Available"}
+                  </Text>
+                )}
+              </Pressable>
+            ) : null}
+
+            {vehicle.availabilityStatus === "ON_TRIP" ? (
+              <View style={styles.infoBox}>
+                <Text style={styles.infoTitle}>Vehicle currently on trip</Text>
+                <Text style={styles.infoText}>
+                  Availability is controlled automatically while this vehicle
+                  is assigned to an active trip.
+                </Text>
+              </View>
+            ) : vehicle.availabilityStatus !== "AVAILABLE" ? (
               <View style={styles.infoBox}>
                 <Text style={styles.infoTitle}>Vehicle not available for bids</Text>
                 <Text style={styles.infoText}>
@@ -471,6 +536,12 @@ export default function TransporterFleet() {
                   selected for Capacity Exchange bids.
                 </Text>
               </View>
+            ) : null}
+
+            {availabilityMutation.isError ? (
+              <Text style={styles.formError}>
+                Unable to change vehicle availability. Please try again.
+              </Text>
             ) : null}
           </View>
         ))
@@ -749,6 +820,32 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     fontSize: 13,
     lineHeight: 19,
+    color: "#B42318",
+  },
+  availabilityButton: {
+    minHeight: 46,
+    marginTop: 16,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+  },
+  availabilityButtonAvailable: {
+    borderColor: "#0B63CE",
+    backgroundColor: "#EAF2FF",
+  },
+  availabilityButtonUnavailable: {
+    borderColor: "#D92D20",
+    backgroundColor: "#FEF3F2",
+  },
+  availabilityButtonText: {
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  availabilityButtonTextAvailable: {
+    color: "#0B63CE",
+  },
+  availabilityButtonTextUnavailable: {
     color: "#B42318",
   },
   vehicleCard: {

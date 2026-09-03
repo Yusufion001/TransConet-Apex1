@@ -37,6 +37,13 @@ module.exports = {
       "expo-router",
       "expo-secure-store",
       [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "TransConet uses your location to provide live trip tracking while you are on an active assignment.",
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ],
+      [
         "react-native-maps",
         process.env.GOOGLE_MAP_PLATFORM_KEY
           ? {

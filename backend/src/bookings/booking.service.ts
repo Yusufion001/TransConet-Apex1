@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { prisma } from "../config/prisma.js";
 import { createShipmentEvent } from "../events/event.service.js";
 import { publishEvent } from "../realtime/event-bus.js";
@@ -43,6 +44,8 @@ export async function createBooking(data: {
     destinationLongitude: data.destinationLongitude,
   });
 
+  const deliveryConfirmationCode = String(randomInt(0, 100_000_000)).padStart(8, "0");
+
   const booking = await prisma.booking.create({
     data: {
       customerId: data.customerId,
@@ -58,6 +61,7 @@ export async function createBooking(data: {
       cargoWeight: data.cargoWeight,
       estimatedFare: pricing.fare,
       fare: pricing.fare,
+      deliveryConfirmationCode,
     },
   });
 
@@ -452,7 +456,6 @@ export async function getTransporterBookings(
 export async function uploadProofOfDelivery(
   bookingId: string,
   proofOfDelivery: string,
-  deliveryConfirmationCode: string,
 ) {
   return prisma.$transaction(async (tx) => {
     const booking = await tx.booking.findUnique({
@@ -474,12 +477,53 @@ export async function uploadProofOfDelivery(
       },
       data: {
         proofOfDelivery,
-        deliveryConfirmationCode,
       },
     });
 
     return toBookingDto(updatedBooking);
   });
+}
+
+
+export async function getDeliveryConfirmationCode(
+  bookingId: string,
+  customerId: string,
+): Promise<string> {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: {
+      customerId: true,
+      status: true,
+      proofOfDelivery: true,
+      deliveryConfirmationCode: true,
+    },
+  });
+
+  if (!booking) {
+    throw new Error("Booking not found");
+  }
+
+  if (booking.customerId !== customerId) {
+    throw new Error("Access denied");
+  }
+
+  if (booking.status !== "ARRIVED") {
+    throw new Error(
+      "Delivery confirmation code is only available after arrival",
+    );
+  }
+
+  if (!booking.proofOfDelivery) {
+    throw new Error(
+      "Delivery confirmation code is only available after proof of delivery",
+    );
+  }
+
+  if (!booking.deliveryConfirmationCode) {
+    throw new Error("Delivery confirmation code is unavailable");
+  }
+
+  return booking.deliveryConfirmationCode;
 }
 
 export async function confirmDelivery(

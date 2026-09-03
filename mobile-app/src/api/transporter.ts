@@ -134,6 +134,50 @@ export async function getTransporterBookings(
   return response.data.data;
 }
 
+export type TransporterProfile = {
+  userId: string;
+  companyName: string | null;
+  businessRegistrationNumber: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  verificationStatus: string;
+  tier2Approved: boolean;
+  rating: number;
+  totalTrips: number;
+  totalEarnings: string;
+};
+
+export async function getTransporterProfile(
+  transporterId: string,
+): Promise<TransporterProfile> {
+  const response = await apiClient.get<ApiResponse<TransporterProfile>>(
+    `/transporters/${transporterId}`,
+  );
+
+  return response.data.data;
+}
+
+export async function updateTransporterProfile(
+  transporterId: string,
+  input: {
+    companyName?: string;
+    businessRegistrationNumber?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+  },
+): Promise<TransporterProfile> {
+  const response = await apiClient.patch<ApiResponse<TransporterProfile>>(
+    `/transporters/${transporterId}/profile`,
+    input,
+  );
+
+  return response.data.data;
+}
+
 export async function createTransporterProfile(input: {
   companyName?: string;
   businessRegistrationNumber?: string;
@@ -172,6 +216,19 @@ export async function createVehicle(input: {
 
   return response.data.data;
 }
+
+export async function updateVehicleAvailability(
+  vehicleId: string,
+  availabilityStatus: "AVAILABLE" | "UNAVAILABLE",
+): Promise<Vehicle> {
+  const response = await apiClient.patch<ApiResponse<Vehicle>>(
+    `/vehicles/${vehicleId}/availability`,
+    { availabilityStatus },
+  );
+
+  return response.data.data;
+}
+
 
 export async function updateVehicle(
   vehicleId: string,
@@ -380,6 +437,82 @@ export async function startTransporterVerification(input: {
   const response = await apiClient.post<ApiResponse<TransporterDocument>>(
     "/verification/start",
     input,
+  );
+
+  return response.data.data;
+}
+
+export type SupportTicket = {
+  id: string;
+  requesterId: string;
+  bookingId?: string | null;
+  category: string;
+  subject: string;
+  description: string;
+  priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  status: "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED";
+  assignedAdminId?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  booking?: {
+    id: string;
+    status: string;
+  } | null;
+};
+
+export type TransporterDispute = {
+  id: string;
+  bookingId: string;
+  customerId: string;
+  transporterId?: string | null;
+  reason: string;
+  status: "OPEN" | "INVESTIGATING" | "RESOLVED";
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export async function createSupportTicket(input: {
+  bookingId?: string;
+  category: string;
+  subject: string;
+  description: string;
+  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+}): Promise<SupportTicket> {
+  const response = await apiClient.post<ApiResponse<SupportTicket>>(
+    "/support",
+    input,
+  );
+
+  return response.data.data;
+}
+
+export async function getTransporterSupportTickets(
+  transporterId: string,
+): Promise<SupportTicket[]> {
+  const response = await apiClient.get<ApiResponse<SupportTicket[]>>(
+    `/support/user/${transporterId}`,
+  );
+
+  return response.data.data;
+}
+
+export async function createTransporterDispute(input: {
+  bookingId: string;
+  reason: string;
+}): Promise<TransporterDispute> {
+  const response = await apiClient.post<ApiResponse<TransporterDispute>>(
+    "/disputes",
+    input,
+  );
+
+  return response.data.data;
+}
+
+export async function getTransporterDisputes(
+  transporterId: string,
+): Promise<TransporterDispute[]> {
+  const response = await apiClient.get<ApiResponse<TransporterDispute[]>>(
+    `/disputes/transporter/${transporterId}`,
   );
 
   return response.data.data;

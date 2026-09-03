@@ -145,17 +145,25 @@ export async function updateBookingStatus(
 export async function uploadProofOfDelivery(
   bookingId: string,
   proofOfDelivery: string,
-  deliveryConfirmationCode: string,
 ): Promise<Booking> {
   const response = await apiClient.patch<ApiResponse<Booking>>(
     `/bookings/${bookingId}/proof-of-delivery`,
     {
       proofOfDelivery,
-      deliveryConfirmationCode,
     },
   );
 
   return response.data.data;
+}
+
+export async function getDeliveryConfirmationCode(
+  bookingId: string,
+): Promise<string> {
+  const response = await apiClient.get<ApiResponse<{ code: string }>>(
+    `/bookings/${bookingId}/delivery-confirmation-code`,
+  );
+
+  return response.data.data.code;
 }
 
 export async function confirmDelivery(

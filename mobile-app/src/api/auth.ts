@@ -134,3 +134,20 @@ export async function resetPassword(
 
   return response.data.data;
 }
+
+export async function updateCurrentUser(
+  userId: string,
+  input: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    profilePhoto?: string;
+  },
+): Promise<AuthUser> {
+  const response = await apiClient.patch<ApiResponse<AuthUser>>(
+    `/users/${userId}`,
+    input,
+  );
+
+  return response.data.data;
+}

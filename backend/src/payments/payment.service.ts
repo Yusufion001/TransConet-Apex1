@@ -76,6 +76,32 @@ export async function initializePayment(
     return existingPayment;
   }
 
+  /*
+   * A booking may have many historical FAILED/REFUNDED attempts, but it
+   * must never have more than one active payment attempt. The database
+   * partial unique indexes are the final race-condition protection; this
+   * lookup gives callers a safe, friendly response before reaching them.
+   */
+  const existingActivePayment = await prisma.payment.findFirst({
+    where: {
+      bookingId,
+      status: {
+        in: ["PENDING", "PROCESSING", "SUCCESS"],
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  if (existingActivePayment) {
+    if (!existingActivePayment.amount.equals(amount)) {
+      throw new Error("Existing payment amount does not match booking fare");
+    }
+
+    return existingActivePayment;
+  }
+
   let payment;
 
   try {
@@ -129,16 +155,38 @@ export async function initializePayment(
     throw error;
   }
 
-  const flutterwavePayment = await initializeFlutterwavePayment({
-    txRef: payment.transactionReference,
-    amount: payment.amount.toString(),
-    currency: payment.currency,
-    customer: {
-      email: booking.customer.email,
-      name: `${booking.customer.firstName} ${booking.customer.lastName}`.trim(),
-      phonenumber: booking.customer.phone,
-    },
-  });
+  let flutterwavePayment;
+
+  try {
+    flutterwavePayment = await initializeFlutterwavePayment({
+      txRef: payment.transactionReference,
+      amount: payment.amount.toString(),
+      currency: payment.currency,
+      customer: {
+        email: booking.customer.email,
+        name: `${booking.customer.firstName} ${booking.customer.lastName}`.trim(),
+        phonenumber: booking.customer.phone,
+      },
+    });
+  } catch (error) {
+    /*
+     * The local Payment row was created before the provider call so that
+     * database uniqueness can protect against concurrent initialization.
+     * If the provider rejects initialization, release that active slot by
+     * marking this attempt FAILED so the customer can safely retry.
+     */
+    await prisma.payment.updateMany({
+      where: {
+        id: payment.id,
+        status: "PENDING",
+      },
+      data: {
+        status: "FAILED",
+      },
+    });
+
+    throw error;
+  }
 
   const paymentWithCheckout = await prisma.payment.update({
     where: {

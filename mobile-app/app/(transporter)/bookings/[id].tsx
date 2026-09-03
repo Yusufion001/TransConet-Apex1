@@ -27,6 +27,11 @@ import {
   type BookingRealtimeEvent,
   type VehicleLocation,
 } from "../../../src/realtime/booking-realtime";
+import {
+  startTransporterLocationTracking,
+  stopTransporterLocationTracking,
+} from "../../../src/realtime/location-publisher";
+import BookingReviewForm from "../../../src/components/BookingReviewForm";
 
 function formatStatus(status: string) {
   return status.replace(/_/g, " ");
@@ -90,7 +95,6 @@ export default function TransporterBookingDetails() {
     useState<VehicleLocation | null>(null);
 
   const [proof, setProof] = useState("");
-  const [confirmationCode, setConfirmationCode] = useState("");
 
   const query = useQuery({
     queryKey: ["transporter-booking", id],
@@ -152,8 +156,21 @@ export default function TransporterBookingDetails() {
   });
 
   const statusMutation = useMutation({
-    mutationFn: (status: Parameters<typeof updateBookingStatus>[1]) =>
-      updateBookingStatus(id!, status),
+    mutationFn: async (
+      status: Parameters<typeof updateBookingStatus>[1],
+    ) => {
+      const updatedBooking = await updateBookingStatus(id!, status);
+
+      if (status === "IN_TRANSIT") {
+        await startTransporterLocationTracking(id!);
+      }
+
+      if (status === "CANCELLED") {
+        await stopTransporterLocationTracking();
+      }
+
+      return updatedBooking;
+    },
     onSuccess: async () => {
       await query.refetch();
     },
@@ -172,15 +189,22 @@ export default function TransporterBookingDetails() {
       uploadProofOfDelivery(
         id!,
         proof.trim(),
-        confirmationCode.trim(),
       ),
-    onSuccess: async () => {
+    onSuccess: async (updatedBooking) => {
       setProof("");
-      setConfirmationCode("");
+
+      if (
+        updatedBooking.status === "COMPLETED" ||
+        updatedBooking.status === "CANCELLED"
+      ) {
+        await stopTransporterLocationTracking();
+      }
+
       await query.refetch();
+
       Alert.alert(
         "Proof submitted",
-        "Proof of delivery has been recorded successfully.",
+        "Proof of delivery has been recorded successfully. The customer must confirm the delivery to complete the shipment.",
       );
     },
     onError: (error: unknown) => {
@@ -251,14 +275,6 @@ export default function TransporterBookingDetails() {
   const submitProof = () => {
     if (!proof.trim()) {
       Alert.alert("Proof required", "Enter the proof of delivery.");
-      return;
-    }
-
-    if (!confirmationCode.trim()) {
-      Alert.alert(
-        "Confirmation code required",
-        "Enter the delivery confirmation code.",
-      );
       return;
     }
 
@@ -517,16 +533,6 @@ export default function TransporterBookingDetails() {
             style={[styles.input, styles.multiline]}
           />
 
-          <Text style={styles.formLabel}>Delivery confirmation code</Text>
-          <TextInput
-            value={confirmationCode}
-            onChangeText={setConfirmationCode}
-            placeholder="Enter confirmation code"
-            placeholderTextColor="#98A2B3"
-            autoCapitalize="characters"
-            style={styles.input}
-          />
-
           <Pressable
             disabled={proofMutation.isPending}
             onPress={submitProof}
@@ -556,6 +562,14 @@ export default function TransporterBookingDetails() {
         >
           <Text style={styles.cancelText}>Cancel Assignment</Text>
         </Pressable>
+      )}
+
+      {booking.status === "COMPLETED" && (
+        <BookingReviewForm
+          bookingId={booking.id}
+          title="RATE CUSTOMER"
+          revieweeLabel="customer"
+        />
       )}
 
       <View style={styles.footer}>

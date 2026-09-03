@@ -1,4 +1,5 @@
 import { Router, type Response } from "express";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { z } from "zod";
 import {
   createBookingSchema,
@@ -13,6 +14,7 @@ import {
   createBooking,
   getBookingById,
   getCustomerBookings,
+  getDeliveryConfirmationCode,
   getTransporterBookings,
   assertBookingAccess,
   updateBookingStatus,
@@ -94,6 +96,22 @@ function handleBookingRouteError(
     error: message,
   });
 }
+
+const deliveryConfirmationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator(req) {
+    return ipKeyGenerator(req.ip ?? "unknown");
+  },
+  handler(_req, res) {
+    return res.status(429).json({
+      success: false,
+      error: "Too many delivery confirmation attempts. Please try again later.",
+    });
+  },
+});
 
 const router = Router();
 router.use(authenticate);
@@ -268,7 +286,6 @@ router.patch(
         await uploadProofOfDelivery(
           String(req.params.id),
           input.proofOfDelivery,
-          input.deliveryConfirmationCode,
         );
 
       res.json({
@@ -280,8 +297,38 @@ router.patch(
     }
   },
 );
+router.get(
+  "/:id/delivery-confirmation-code",
+  authorize("CUSTOMER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const bookingId = String(req.params.id);
+
+      await assertBookingAccess(
+        bookingId,
+        req.user!.id,
+        req.user!.role,
+        "confirm",
+      );
+
+      const code = await getDeliveryConfirmationCode(
+        bookingId,
+        req.user!.id,
+      );
+
+      res.json({
+        success: true,
+        data: { code },
+      });
+    } catch (error) {
+      handleBookingRouteError(error, res);
+    }
+  },
+);
+
 router.patch(
   "/:id/confirm-delivery",
+  deliveryConfirmationLimiter,
   async (req: AuthenticatedRequest, res) => {
     try {
       await assertBookingAccess(

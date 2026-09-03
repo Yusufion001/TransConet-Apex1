@@ -75,3 +75,54 @@ export async function updateVehicle(
 
   return vehicle;
 }
+
+
+export async function updateVehicleAvailability(
+  id: string,
+  transporterId: string,
+  availabilityStatus: "AVAILABLE" | "UNAVAILABLE",
+) {
+  const vehicle = await prisma.vehicle.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      transporterId: true,
+      availabilityStatus: true,
+      verificationStatus: true,
+    },
+  });
+
+  if (!vehicle) {
+    throw new Error("Vehicle not found");
+  }
+
+  if (vehicle.transporterId !== transporterId) {
+    throw new Error("Access denied");
+  }
+
+  if (vehicle.verificationStatus !== "APPROVED") {
+    throw new Error("Vehicle must be approved before its availability can be changed");
+  }
+
+  if (vehicle.availabilityStatus === "ON_TRIP") {
+    throw new Error("Vehicle availability cannot be changed while the vehicle is on a trip");
+  }
+
+  const updatedVehicle = await prisma.vehicle.update({
+    where: { id },
+    data: {
+      availabilityStatus,
+    },
+  });
+
+  publishAdminEvent({
+    eventType: "vehicle.updated",
+    module: "FLEET_MARKETPLACE",
+    actorId: transporterId,
+    entityType: "VEHICLE",
+    entityId: id,
+    data: updatedVehicle,
+  });
+
+  return updatedVehicle;
+}
