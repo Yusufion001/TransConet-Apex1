@@ -53,6 +53,12 @@ export default function TransporterSettings() {
         />
 
         <SettingsItem
+          title="Subscription & Visibility"
+          description="Manage your marketplace subscription and transporter visibility."
+          onPress={() => router.push("/(transporter)/subscription")}
+        />
+
+        <SettingsItem
           title="About TransConet"
           description="Learn about the TransConet transporter platform."
           onPress={() =>

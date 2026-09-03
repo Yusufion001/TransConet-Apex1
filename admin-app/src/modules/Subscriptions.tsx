@@ -1,7 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   getAdminSubscriptions,
+  getAdminSubscriptionPlans,
+  createAdminSubscriptionPlan,
+  updateAdminSubscriptionPlan,
+  updateAdminSubscriptionPlanStatus,
+  getSubscriptionVisibilityConfig,
+  updateSubscriptionVisibilityConfig,
   type AdminSubscription,
+  type SubscriptionPlan,
+  type AdminSubscriptionPlanName,
+  type MarketplaceVisibilityConfig,
   type SubscriptionStatus,
 } from "../api/subscriptions";
 
@@ -70,6 +79,30 @@ export default function Subscriptions() {
   >("ALL");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [visibilityConfig, setVisibilityConfig] =
+    useState<MarketplaceVisibilityConfig | null>(null);
+  const [visibilityLoading, setVisibilityLoading] =
+    useState(true);
+  const [visibilitySaving, setVisibilitySaving] =
+    useState(false);
+  const [visibilityError, setVisibilityError] =
+    useState("");
+  const [visibilitySaved, setVisibilitySaved] =
+    useState(false);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [plansLoading, setPlansLoading] = useState(true);
+  const [plansSaving, setPlansSaving] = useState(false);
+  const [plansError, setPlansError] = useState("");
+  const [newPlanName, setNewPlanName] =
+    useState<AdminSubscriptionPlanName>("FREE");
+  const [newPlanDescription, setNewPlanDescription] = useState("");
+  const [newPlanPrice, setNewPlanPrice] = useState("");
+  const [newPlanCurrency, setNewPlanCurrency] = useState("NGN");
+  const [newPlanInterval, setNewPlanInterval] =
+    useState<SubscriptionPlan["interval"]>("MONTHLY");
+  const [newPlanBenefits, setNewPlanBenefits] = useState("");
+  const [newPlanActive, setNewPlanActive] = useState(true);
+  const [planSaved, setPlanSaved] = useState(false);
 
   async function loadSubscriptions() {
     try {
@@ -101,6 +134,212 @@ export default function Subscriptions() {
   useEffect(() => {
     void loadSubscriptions();
   }, []);
+
+  useEffect(() => {
+    async function loadPlans() {
+      try {
+        setPlansLoading(true);
+        setPlansError("");
+
+        const data = await getAdminSubscriptionPlans();
+        setPlans(data);
+      } catch (requestError) {
+        setPlansError(
+          requestError instanceof Error
+            ? requestError.message
+            : "Unable to load subscription plans.",
+        );
+      } finally {
+        setPlansLoading(false);
+      }
+    }
+
+    void loadPlans();
+  }, []);
+
+  useEffect(() => {
+    async function loadVisibilityConfig() {
+      try {
+        setVisibilityLoading(true);
+        setVisibilityError("");
+
+        const config =
+          await getSubscriptionVisibilityConfig();
+
+        setVisibilityConfig(config.value);
+      } catch (requestError) {
+        setVisibilityError(
+          requestError instanceof Error
+            ? requestError.message
+            : "Unable to load marketplace visibility configuration.",
+        );
+      } finally {
+        setVisibilityLoading(false);
+      }
+    }
+
+    void loadVisibilityConfig();
+  }, []);
+
+  async function saveVisibilityConfig() {
+    if (!visibilityConfig) {
+      return;
+    }
+
+    try {
+      setVisibilitySaving(true);
+      setVisibilityError("");
+      setVisibilitySaved(false);
+
+      const updated =
+        await updateSubscriptionVisibilityConfig(
+          visibilityConfig,
+        );
+
+      setVisibilityConfig(updated.value);
+      setVisibilitySaved(true);
+    } catch (requestError) {
+      setVisibilityError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to save marketplace visibility configuration.",
+      );
+    } finally {
+      setVisibilitySaving(false);
+    }
+  }
+
+  async function createPlan() {
+    const price = Number(newPlanPrice);
+
+    if (!Number.isFinite(price) || price < 0) {
+      setPlansError("Enter a valid non-negative subscription price.");
+      return;
+    }
+
+    if (newPlanName === "FREE" && price !== 0) {
+      setPlansError("FREE plan must have a zero price.");
+      return;
+    }
+
+    if (newPlanName !== "FREE" && price <= 0) {
+      setPlansError("Paid subscription plans must have a positive price.");
+      return;
+    }
+
+    try {
+      setPlansSaving(true);
+      setPlansError("");
+      setPlanSaved(false);
+
+      const created = await createAdminSubscriptionPlan({
+        name: newPlanName,
+        description: newPlanDescription.trim() || null,
+        price,
+        currency: newPlanCurrency.trim().toUpperCase(),
+        interval: newPlanInterval,
+        features: {
+          benefits: newPlanBenefits
+            .split("\n")
+            .map((value) => value.trim())
+            .filter(Boolean),
+        },
+        active: newPlanActive,
+      });
+
+      setPlans((current) =>
+        [...current, created].sort(
+          (a, b) => Number(a.price) - Number(b.price),
+        ),
+      );
+
+      setNewPlanDescription("");
+      setNewPlanPrice("");
+      setNewPlanBenefits("");
+      setPlanSaved(true);
+    } catch (requestError) {
+      setPlansError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to create subscription plan.",
+      );
+    } finally {
+      setPlansSaving(false);
+    }
+  }
+
+  async function savePlan(plan: SubscriptionPlan) {
+    try {
+      setPlansSaving(true);
+      setPlansError("");
+      setPlanSaved(false);
+
+      const updated = await updateAdminSubscriptionPlan(
+        plan.id,
+        {
+          description: plan.description ?? null,
+          price: Number(plan.price),
+          currency: plan.currency,
+          interval: plan.interval,
+          features:
+            plan.features &&
+            typeof plan.features === "object" &&
+            "benefits" in plan.features &&
+            Array.isArray(
+              (plan.features as { benefits?: unknown }).benefits,
+            )
+              ? {
+                  benefits: (
+                    plan.features as { benefits: string[] }
+                  ).benefits,
+                }
+              : { benefits: [] },
+          active: plan.active,
+        },
+      );
+
+      setPlans((current) =>
+        current.map((item) =>
+          item.id === updated.id ? updated : item,
+        ),
+      );
+      setPlanSaved(true);
+    } catch (requestError) {
+      setPlansError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to save subscription plan.",
+      );
+    } finally {
+      setPlansSaving(false);
+    }
+  }
+
+  async function togglePlan(plan: SubscriptionPlan) {
+    try {
+      setPlansSaving(true);
+      setPlansError("");
+
+      const updated = await updateAdminSubscriptionPlanStatus(
+        plan.id,
+        !plan.active,
+      );
+
+      setPlans((current) =>
+        current.map((item) =>
+          item.id === updated.id ? updated : item,
+        ),
+      );
+    } catch (requestError) {
+      setPlansError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to update subscription plan status.",
+      );
+    } finally {
+      setPlansSaving(false);
+    }
+  }
 
   const filteredSubscriptions = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -519,6 +758,656 @@ export default function Subscriptions() {
             </small>
           </div>
         </div>
+      </div>
+
+      <div className="subscription-plan-management">
+        <div className="subscription-plan-management-header">
+          <div>
+            <span className="module-eyebrow">
+              SUBSCRIPTION / PLAN CONFIGURATION
+            </span>
+            <h2>Transporter Subscription Plans</h2>
+            <p>
+              Configure the plans, prices, billing intervals, and
+              benefits available to transporters. Prices are stored
+              in the subscription plan records and are never
+              hardcoded in the transporter app.
+            </p>
+          </div>
+        </div>
+
+        {!plansLoading && (
+          <div className="subscription-plan-create">
+            <div className="subscription-plan-create-header">
+              <div>
+                <span className="module-eyebrow">
+                  ADMIN ACTION
+                </span>
+                <h3>Configure a New Plan</h3>
+                <p>
+                  Create a missing transporter subscription plan.
+                  Set the actual price and benefits here; nothing is
+                  hardcoded in the transporter app.
+                </p>
+              </div>
+            </div>
+
+            <div className="subscription-plan-form">
+              <label>
+                Plan
+                <select
+                  value={newPlanName}
+                  onChange={(event) =>
+                    setNewPlanName(
+                      event.target.value as AdminSubscriptionPlanName,
+                    )
+                  }
+                >
+                  {(
+                    [
+                      "FREE",
+                      "SILVER",
+                      "GOLD",
+                      "PLATINUM",
+                      "ENTERPRISE",
+                    ] as const
+                  )
+                    .filter(
+                      (name) =>
+                        !plans.some((plan) => plan.name === name),
+                    )
+                    .map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                </select>
+              </label>
+
+              <label>
+                Description
+                <textarea
+                  value={newPlanDescription}
+                  rows={3}
+                  placeholder="Describe this subscription plan"
+                  onChange={(event) =>
+                    setNewPlanDescription(event.target.value)
+                  }
+                />
+              </label>
+
+              <div className="subscription-plan-form-row">
+                <label>
+                  Price
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={newPlanPrice}
+                    placeholder="Enter price"
+                    onChange={(event) =>
+                      setNewPlanPrice(event.target.value)
+                    }
+                  />
+                </label>
+
+                <label>
+                  Currency
+                  <input
+                    type="text"
+                    maxLength={10}
+                    value={newPlanCurrency}
+                    onChange={(event) =>
+                      setNewPlanCurrency(event.target.value)
+                    }
+                  />
+                </label>
+
+                <label>
+                  Billing interval
+                  <select
+                    value={newPlanInterval}
+                    onChange={(event) =>
+                      setNewPlanInterval(
+                        event.target.value as SubscriptionPlan["interval"],
+                      )
+                    }
+                  >
+                    <option value="MONTHLY">MONTHLY</option>
+                    <option value="YEARLY">YEARLY</option>
+                  </select>
+                </label>
+              </div>
+
+              <label>
+                Benefits
+                <textarea
+                  value={newPlanBenefits}
+                  rows={4}
+                  placeholder="One benefit per line"
+                  onChange={(event) =>
+                    setNewPlanBenefits(event.target.value)
+                  }
+                />
+              </label>
+
+              <label className="subscription-plan-checkbox">
+                <input
+                  type="checkbox"
+                  checked={newPlanActive}
+                  onChange={(event) =>
+                    setNewPlanActive(event.target.checked)
+                  }
+                />
+                Active immediately
+              </label>
+
+              <div className="subscription-plan-actions">
+                <button
+                  type="button"
+                  className="module-refresh"
+                  disabled={
+                    plansSaving ||
+                    plans.some((plan) => plan.name === newPlanName)
+                  }
+                  onClick={() => void createPlan()}
+                >
+                  {plansSaving ? "Creating..." : "Create Plan"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {plansLoading ? (
+          <div className="subscription-empty">
+            Loading subscription plans...
+          </div>
+        ) : plansError && plans.length === 0 ? (
+          <div className="module-error">
+            <strong>Unable to load subscription plans</strong>
+            <span>{plansError}</span>
+          </div>
+        ) : (
+          <>
+            <div className="subscription-plan-grid">
+              {(
+                [
+                  "FREE",
+                  "SILVER",
+                  "GOLD",
+                  "PLATINUM",
+                  "ENTERPRISE",
+                ] as const
+              ).map((planName) => {
+                const plan = plans.find(
+                  (item) => item.name === planName,
+                );
+
+                if (!plan) {
+                  return (
+                    <div
+                      key={planName}
+                      className="subscription-plan-card subscription-plan-missing"
+                    >
+                      <strong>{planName}</strong>
+                      <span>
+                        This plan has not been configured yet.
+                      </span>
+                    </div>
+                  );
+                }
+
+                const benefits =
+                  plan.features &&
+                  typeof plan.features === "object" &&
+                  "benefits" in plan.features &&
+                  Array.isArray(
+                    (plan.features as { benefits?: unknown }).benefits,
+                  )
+                    ? (
+                        plan.features as {
+                          benefits: string[];
+                        }
+                      ).benefits
+                    : [];
+
+                return (
+                  <div
+                    key={plan.id}
+                    className="subscription-plan-card"
+                  >
+                    <div className="subscription-plan-card-header">
+                      <div>
+                        <span className="module-eyebrow">
+                          {planName}
+                        </span>
+                        <h3>{plan.name}</h3>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="subscription-plan-status"
+                        onClick={() => void togglePlan(plan)}
+                        disabled={plansSaving}
+                      >
+                        {plan.active
+                          ? "ACTIVE"
+                          : "INACTIVE"}
+                      </button>
+                    </div>
+
+                    <label>
+                      Description
+                      <textarea
+                        value={plan.description ?? ""}
+                        onChange={(event) =>
+                          setPlans((current) =>
+                            current.map((item) =>
+                              item.id === plan.id
+                                ? {
+                                    ...item,
+                                    description:
+                                      event.target.value,
+                                  }
+                                : item,
+                            ),
+                          )
+                        }
+                        rows={2}
+                      />
+                    </label>
+
+                    <div className="subscription-plan-fields">
+                      <label>
+                        Price
+                        <input
+                          type="number"
+                          min={plan.name === "FREE" ? 0 : 0.01}
+                          step="0.01"
+                          value={plan.price}
+                          onChange={(event) =>
+                            setPlans((current) =>
+                              current.map((item) =>
+                                item.id === plan.id
+                                  ? {
+                                      ...item,
+                                      price:
+                                        event.target.value,
+                                    }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                      </label>
+
+                      <label>
+                        Currency
+                        <input
+                          value={plan.currency}
+                          onChange={(event) =>
+                            setPlans((current) =>
+                              current.map((item) =>
+                                item.id === plan.id
+                                  ? {
+                                      ...item,
+                                      currency:
+                                        event.target.value.toUpperCase(),
+                                    }
+                                  : item,
+                              ),
+                            )
+                          }
+                        />
+                      </label>
+
+                      <label>
+                        Billing interval
+                        <select
+                          value={plan.interval}
+                          onChange={(event) =>
+                            setPlans((current) =>
+                              current.map((item) =>
+                                item.id === plan.id
+                                  ? {
+                                      ...item,
+                                      interval:
+                                        event.target
+                                          .value as
+                                          | "MONTHLY"
+                                          | "YEARLY",
+                                    }
+                                  : item,
+                              ),
+                            )
+                          }
+                        >
+                          <option value="MONTHLY">
+                            Monthly
+                          </option>
+                          <option value="YEARLY">
+                            Yearly
+                          </option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <label>
+                      Benefits
+                      <textarea
+                        value={benefits.join("\n")}
+                        placeholder="One benefit per line"
+                        rows={4}
+                        onChange={(event) => {
+                          const nextBenefits =
+                            event.target.value
+                              .split("\n")
+                              .map((value) => value.trim())
+                              .filter(Boolean);
+
+                          setPlans((current) =>
+                            current.map((item) =>
+                              item.id === plan.id
+                                ? {
+                                    ...item,
+                                    features: {
+                                      benefits:
+                                        nextBenefits,
+                                    },
+                                  }
+                                : item,
+                            ),
+                          );
+                        }}
+                      />
+                    </label>
+
+                    <div className="subscription-plan-actions">
+                      <button
+                        type="button"
+                        className="module-refresh"
+                        disabled={plansSaving}
+                        onClick={() => void savePlan(plan)}
+                      >
+                        {plansSaving
+                          ? "Saving..."
+                          : "Save Plan"}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {plansError && (
+              <div className="module-error">
+                <span>{plansError}</span>
+              </div>
+            )}
+
+            {planSaved && (
+              <div className="subscription-plan-saved">
+                Subscription plan configuration saved.
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="subscription-visibility">
+        <div className="subscription-visibility-header">
+          <div>
+            <span className="module-eyebrow">
+              MARKETPLACE / LOAD VISIBILITY
+            </span>
+            <h2>Load Visibility Algorithm Controls</h2>
+            <p>
+              Control how subscription level, transporter tier,
+              distance, and eligibility affect the loads a
+              transporter can discover.
+            </p>
+          </div>
+        </div>
+
+        {visibilityLoading ? (
+          <div className="subscription-empty">
+            Loading visibility configuration...
+          </div>
+        ) : visibilityError && !visibilityConfig ? (
+          <div className="module-error">
+            <strong>Unable to load visibility configuration</strong>
+            <span>{visibilityError}</span>
+          </div>
+        ) : visibilityConfig ? (
+          <>
+            <div className="subscription-visibility-grid">
+              <div className="subscription-visibility-card">
+                <span>Discovery Radius</span>
+
+                <label>
+                  Default radius (km)
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={visibilityConfig.defaultRadiusKm}
+                    onChange={(event) =>
+                      setVisibilityConfig({
+                        ...visibilityConfig,
+                        defaultRadiusKm: Number(
+                          event.target.value,
+                        ),
+                      })
+                    }
+                  />
+                </label>
+
+                <label>
+                  Maximum radius (km)
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={visibilityConfig.maxRadiusKm}
+                    onChange={(event) =>
+                      setVisibilityConfig({
+                        ...visibilityConfig,
+                        maxRadiusKm: Number(
+                          event.target.value,
+                        ),
+                      })
+                    }
+                  />
+                </label>
+              </div>
+
+              <div className="subscription-visibility-card">
+                <span>Subscription Visibility Boost</span>
+
+                {(
+                  [
+                    "FREE",
+                    "SILVER",
+                    "GOLD",
+                    "PLATINUM",
+                    "ENTERPRISE",
+                  ] as const
+                ).map((plan) => (
+                  <label key={plan}>
+                    {plan}
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={
+                        visibilityConfig.subscriptionBoosts[
+                          plan
+                        ]
+                      }
+                      onChange={(event) =>
+                        setVisibilityConfig({
+                          ...visibilityConfig,
+                          subscriptionBoosts: {
+                            ...visibilityConfig.subscriptionBoosts,
+                            [plan]: Number(
+                              event.target.value,
+                            ),
+                          },
+                        })
+                      }
+                    />
+                  </label>
+                ))}
+              </div>
+
+              <div className="subscription-visibility-card">
+                <span>Transporter Ranking Scores</span>
+
+                <label>
+                  TIER_1
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={
+                      visibilityConfig.tierScores.TIER_1
+                    }
+                    onChange={(event) =>
+                      setVisibilityConfig({
+                        ...visibilityConfig,
+                        tierScores: {
+                          ...visibilityConfig.tierScores,
+                          TIER_1: Number(
+                            event.target.value,
+                          ),
+                        },
+                      })
+                    }
+                  />
+                </label>
+
+                <label>
+                  TIER_2
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={
+                      visibilityConfig.tierScores.TIER_2
+                    }
+                    onChange={(event) =>
+                      setVisibilityConfig({
+                        ...visibilityConfig,
+                        tierScores: {
+                          ...visibilityConfig.tierScores,
+                          TIER_2: Number(
+                            event.target.value,
+                          ),
+                        },
+                      })
+                    }
+                  />
+                </label>
+              </div>
+
+              <div className="subscription-visibility-card">
+                <span>Eligibility Requirements</span>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={
+                      visibilityConfig.requireApprovedTransporter
+                    }
+                    onChange={(event) =>
+                      setVisibilityConfig({
+                        ...visibilityConfig,
+                        requireApprovedTransporter:
+                          event.target.checked,
+                      })
+                    }
+                  />
+                  Approved transporter
+                </label>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={
+                      visibilityConfig.requireApprovedVehicle
+                    }
+                    onChange={(event) =>
+                      setVisibilityConfig({
+                        ...visibilityConfig,
+                        requireApprovedVehicle:
+                          event.target.checked,
+                      })
+                    }
+                  />
+                  Approved vehicle
+                </label>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={
+                      visibilityConfig.requireAvailableVehicle
+                    }
+                    onChange={(event) =>
+                      setVisibilityConfig({
+                        ...visibilityConfig,
+                        requireAvailableVehicle:
+                          event.target.checked,
+                      })
+                    }
+                  />
+                  Available vehicle
+                </label>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={
+                      visibilityConfig.requireVehicleLocation
+                    }
+                    onChange={(event) =>
+                      setVisibilityConfig({
+                        ...visibilityConfig,
+                        requireVehicleLocation:
+                          event.target.checked,
+                      })
+                    }
+                  />
+                  Vehicle location required
+                </label>
+              </div>
+            </div>
+
+            {visibilityError && (
+              <div className="module-error">
+                <span>{visibilityError}</span>
+              </div>
+            )}
+
+            <div className="subscription-visibility-actions">
+              <button
+                type="button"
+                className="module-refresh"
+                onClick={() => void saveVisibilityConfig()}
+                disabled={visibilitySaving}
+              >
+                {visibilitySaving
+                  ? "Saving..."
+                  : "Save Visibility Controls"}
+              </button>
+
+              {visibilitySaved && (
+                <span>Visibility configuration saved.</span>
+              )}
+            </div>
+          </>
+        ) : null}
       </div>
 
       <div className="subscription-workspace">
