@@ -28,8 +28,17 @@ export async function createTransporterProfile(data: {
   state?: string;
   country?: string;
 }) {
-  return prisma.transporterProfile.create({
-    data,
+  const { userId, ...profileData } = data;
+
+  return prisma.transporterProfile.upsert({
+    where: {
+      userId,
+    },
+    update: profileData,
+    create: {
+      userId,
+      ...profileData,
+    },
   });
 }
 export async function updateTransporterVerification(
