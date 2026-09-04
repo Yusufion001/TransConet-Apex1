@@ -12,7 +12,7 @@ router.post(
       (req as typeof req & { rawBody?: Buffer }).rawBody;
 
     const signature =
-      req.header("X-Webhook-Signature")?.trim();
+      req.header("x-youverify-signature")?.trim();
 
     if (!rawBody || !signature) {
       return res.status(401).json({
