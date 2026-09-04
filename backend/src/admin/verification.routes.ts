@@ -10,6 +10,8 @@ import {
   approveDocument,
   rejectDocument,
 } from "../documents/document.service.js";
+import { prisma } from "../config/prisma.js";
+import { supabaseStorageService } from "../storage/supabase-storage.service.js";
 
 const router = Router();
 
@@ -44,6 +46,68 @@ router.get("/verified", async (_req, res) => {
   try {
     const documents = await getVerifiedDocuments();
     return res.json({ success: true, data: documents });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Server error",
+    });
+  }
+});
+
+router.get("/:id/document-url", async (req, res) => {
+  try {
+    const params = documentIdParamsSchema.parse(req.params);
+
+    const document = await prisma.document.findUnique({
+      where: { id: params.id },
+      select: {
+        id: true,
+        fileUrl: true,
+        storagePath: true,
+      },
+    });
+
+    if (!document) {
+      return res.status(404).json({
+        success: false,
+        error: "Document not found",
+      });
+    }
+
+    // Prefer the explicit storagePath used by Supabase Storage.
+    // Fall back to fileUrl for older records.
+    const storagePath = document.storagePath ?? document.fileUrl;
+
+    // Legacy records may already contain a usable absolute URL.
+    if (/^https?:\/\//i.test(storagePath)) {
+      return res.json({
+        success: true,
+        data: {
+          url: storagePath,
+          expiresIn: null,
+        },
+      });
+    }
+
+    const signed = await supabaseStorageService.createSignedDownloadUrl(
+      storagePath,
+      600,
+    );
+
+    return res.json({
+      success: true,
+      data: {
+        url: signed.signedUrl,
+        expiresIn: 600,
+      },
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({

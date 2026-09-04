@@ -3,6 +3,7 @@ import {
   approveVerificationDocument,
   getPendingVerificationDocuments,
   getVerifiedVerificationDocuments,
+  getVerificationDocumentUrl,
   rejectVerificationDocument,
   type DocumentStatus,
   type DocumentType,
@@ -69,6 +70,7 @@ export default function VerificationCenter() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectForm, setShowRejectForm] = useState(false);
   const [actionError, setActionError] = useState("");
+  const [documentLoading, setDocumentLoading] = useState(false);
 
   const loadVerificationData = useCallback(async () => {
     try {
@@ -164,6 +166,43 @@ export default function VerificationCenter() {
       ).length,
     };
   }, [pending, verified]);
+
+  async function handleOpenDocument() {
+    if (!selectedDocument) return;
+
+    // Open a blank tab synchronously so browser popup blockers do not
+    // prevent the document from opening after the async API request.
+    const documentWindow = window.open("about:blank", "_blank");
+
+    try {
+      setDocumentLoading(true);
+      setActionError("");
+
+      const result = await getVerificationDocumentUrl(selectedDocument.id);
+
+      if (!result.url) {
+        throw new Error("Document URL was not returned by the server.");
+      }
+
+      if (documentWindow) {
+        documentWindow.location.href = result.url;
+      } else {
+        window.location.href = result.url;
+      }
+    } catch (requestError) {
+      if (documentWindow) {
+        documentWindow.close();
+      }
+
+      setActionError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Unable to open the submitted document.",
+      );
+    } finally {
+      setDocumentLoading(false);
+    }
+  }
 
   async function handleApprove() {
     if (!selectedDocument) return;
@@ -585,14 +624,14 @@ export default function VerificationCenter() {
                   </strong>
                 </div>
 
-                <a
-                  href={selectedDocument.fileUrl}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  type="button"
+                  onClick={() => void handleOpenDocument()}
+                  disabled={documentLoading}
                   className="verification-document-link"
                 >
-                  Open document
-                </a>
+                  {documentLoading ? "Opening document…" : "Open document"}
+                </button>
               </div>
 
               {selectedDocument.rejectionReason && (

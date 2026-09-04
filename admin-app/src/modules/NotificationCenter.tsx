@@ -73,8 +73,30 @@ function NotificationCenter() {
 
       setSummary(summaryData);
       setNotifications(notificationData);
-    } catch {
-      setError("Unable to load Notification Center.");
+    } catch (error: unknown) {
+      const axiosError = error as {
+        response?: {
+          status?: number;
+          data?: {
+            error?: string;
+            message?: string;
+          };
+        };
+        message?: string;
+      };
+
+      const status = axiosError.response?.status;
+      const backendError =
+        axiosError.response?.data?.error ??
+        axiosError.response?.data?.message ??
+        axiosError.message ??
+        "Unknown error";
+
+      setError(
+        status
+          ? `Notification Center request failed (${status}): ${backendError}`
+          : `Notification Center request failed: ${backendError}`,
+      );
     } finally {
       setLoading(false);
     }
