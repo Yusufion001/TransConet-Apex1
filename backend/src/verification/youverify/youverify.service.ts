@@ -35,7 +35,7 @@ const endpointMap: Record<
   YouverifyVerificationType,
   string
 > = {
-  nin: "/v2/api/entities/identity",
+  nin: "/v2/api/identity/ng/nin",
   vnin: "/v2/api/identity/ng/vnin",
   bvn: "/v2/api/identity/ng/bvn",
   drivers_license: "/v2/api/identity/ng/drivers-license",
@@ -46,13 +46,8 @@ function buildBody(
   input: YouverifyVerificationInput,
 ): Record<string, unknown> {
   const body: Record<string, unknown> = {
-    entityType: "individual",
+    id: input.id,
     isSubjectConsent: input.subjectConsent,
-    identity: {
-      id: input.id,
-      countryCode: "NG",
-      idType: input.type,
-    },
   };
 
   if (
@@ -60,7 +55,7 @@ function buildBody(
     input.lastName ||
     input.dateOfBirth
   ) {
-    body.validation = {
+    body.validations = {
       data: {
         ...(input.firstName
           ? { firstName: input.firstName }
@@ -76,9 +71,11 @@ function buildBody(
   }
 
   if (input.selfieImage) {
-    body.selfie = {
+    const validations = (body.validations ?? {}) as Record<string, unknown>;
+    validations.selfie = {
       image: input.selfieImage,
     };
+    body.validations = validations;
   }
 
   return body;
@@ -116,16 +113,10 @@ export function extractYouverifyVerificationId(
     return undefined;
   }
 
-  const identityCheck = data.identityCheck;
-
   const id =
-    typeof identityCheck === "object" &&
-    identityCheck !== null &&
-    typeof (identityCheck as Record<string, unknown>).verificationId === "string"
-      ? (identityCheck as Record<string, unknown>).verificationId
-      : data.id ??
-        data.referenceId ??
-        data.reference_id;
+    data.id ??
+    data.referenceId ??
+    data.reference_id;
 
   return typeof id === "string" && id.length > 0
     ? id

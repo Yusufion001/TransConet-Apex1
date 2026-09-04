@@ -28,6 +28,7 @@ import DatabaseHealth from "./modules/DatabaseHealth";
 import Settings from "./modules/Settings";
 import VerificationCenter from "./modules/VerificationCenter";
 import { useAuthStore } from "./auth/auth.store";
+import type { AdminModule } from "./api/administrators";
 import { getPlatformOverview, type PlatformOverview } from "./api/admin";
 import {
   getLiveTripSummary,
@@ -44,6 +45,7 @@ type NavItem = {
   label: string;
   section?: string;
   description: string;
+  requiredModule?: AdminModule;
 };
 
 const primaryNav: NavItem[] = [
@@ -103,6 +105,12 @@ const primaryNav: NavItem[] = [
     label: "Verification",
     section: "GOVERNANCE",
     description: "Verification and compliance",
+  },
+  {
+    label: "Partner Management",
+    section: "GOVERNANCE",
+    description: "Manage transporter partners, tiers, approvals, and partner fleets",
+    requiredModule: "PARTNER_MANAGEMENT",
   },
   {
     label: "Content Management",
@@ -228,6 +236,15 @@ function App() {
       user?.adminProfile?.isSuperAdministrator,
     );
 
+  const visibleNav = primaryNav.filter(
+    (item) =>
+      !item.requiredModule ||
+      isSuperAdministrator ||
+      (user?.adminProfile?.assignedModules ?? []).includes(
+        item.requiredModule,
+      ),
+  );
+
   useEffect(() => {
     let mounted = true;
 
@@ -278,7 +295,7 @@ function App() {
         </div>
 
         <nav className="navigation">
-          {primaryNav.map((item) => (
+          {visibleNav.map((item) => (
             <div key={item.label}>
               {item.section && sidebarOpen && (
                 <div className="nav-section">
