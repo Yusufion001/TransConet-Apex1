@@ -57,6 +57,14 @@ export async function getVerifiedVerificationDocuments() {
   return response.data.data;
 }
 
+export async function getVerificationDocumentUrl(id: string) {
+  const response = await apiClient.get<
+    ApiResponse<{ url: string; expiresIn: number | null }>
+  >(`/admin/verification/${id}/document-url`);
+
+  return response.data.data;
+}
+
 export async function approveVerificationDocument(id: string) {
   const response = await apiClient.patch<ApiResponse<VerificationDocument>>(
     `/admin/verification/${id}/approve`,
