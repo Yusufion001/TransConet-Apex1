@@ -35,7 +35,7 @@ const endpointMap: Record<
   YouverifyVerificationType,
   string
 > = {
-  nin: "/v2/api/identity/ng/nin",
+  nin: "/v2/api/entities/identity",
   vnin: "/v2/api/identity/ng/vnin",
   bvn: "/v2/api/identity/ng/bvn",
   drivers_license: "/v2/api/identity/ng/drivers-license",
@@ -46,8 +46,13 @@ function buildBody(
   input: YouverifyVerificationInput,
 ): Record<string, unknown> {
   const body: Record<string, unknown> = {
-    id: input.id,
+    entityType: "individual",
     isSubjectConsent: input.subjectConsent,
+    identity: {
+      id: input.id,
+      countryCode: "NG",
+      idType: input.type,
+    },
   };
 
   if (
@@ -111,10 +116,16 @@ export function extractYouverifyVerificationId(
     return undefined;
   }
 
+  const identityCheck = data.identityCheck;
+
   const id =
-    data.id ??
-    data.referenceId ??
-    data.reference_id;
+    typeof identityCheck === "object" &&
+    identityCheck !== null &&
+    typeof (identityCheck as Record<string, unknown>).verificationId === "string"
+      ? (identityCheck as Record<string, unknown>).verificationId
+      : data.id ??
+        data.referenceId ??
+        data.reference_id;
 
   return typeof id === "string" && id.length > 0
     ? id
