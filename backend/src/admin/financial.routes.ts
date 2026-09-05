@@ -55,6 +55,8 @@ router.get("/overview", async (_req, res) => {
       data: overview,
     });
   } catch (error) {
+    console.error("[Admin Financial Payments] FAILED:", error);
+
     res.status(500).json({
       success: false,
       error:
