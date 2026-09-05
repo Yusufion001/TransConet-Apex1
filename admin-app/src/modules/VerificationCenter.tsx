@@ -1,3 +1,4 @@
+import axios from "axios";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   approveVerificationDocument,
@@ -218,11 +219,21 @@ export default function VerificationCenter() {
       setView("VERIFIED");
       setShowRejectForm(false);
     } catch (requestError) {
-      setActionError(
-        requestError instanceof Error
-          ? requestError.message
-          : "Unable to approve this document.",
-      );
+      if (axios.isAxiosError(requestError)) {
+        const backendError = requestError.response?.data?.error;
+
+        setActionError(
+          typeof backendError === "string"
+            ? backendError
+            : "Unable to approve this document.",
+        );
+      } else {
+        setActionError(
+          requestError instanceof Error
+            ? requestError.message
+            : "Unable to approve this document.",
+        );
+      }
     } finally {
       setActionLoading(false);
     }
