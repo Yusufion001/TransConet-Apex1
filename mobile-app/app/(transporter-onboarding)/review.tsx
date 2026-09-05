@@ -190,7 +190,7 @@ export default function TransporterReviewScreen() {
         <View style={styles.statusCard}>
           <View style={styles.statusIcon}>
             <Text style={styles.statusIconText}>
-              {status.marketplaceReady ? "✓" : "•"}
+              {status.marketplaceReady || status.adminApproved ? "✓" : "•"}
             </Text>
           </View>
 
@@ -198,11 +198,17 @@ export default function TransporterReviewScreen() {
             <Text style={styles.statusTitle}>
               {status.marketplaceReady
                 ? "Onboarding complete"
-                : "Verification in progress"}
+                : status.adminApproved
+                  ? "Application approved"
+                  : "Verification in progress"}
             </Text>
 
             <Text style={styles.statusDescription}>
-              {getStatusText(status)}
+              {status.marketplaceReady
+                ? "Your transporter account is ready for the marketplace."
+                : status.adminApproved
+                  ? "Your transporter account has been approved. Complete any remaining marketplace requirements."
+                  : getStatusText(status)}
             </Text>
           </View>
         </View>
@@ -271,7 +277,9 @@ export default function TransporterReviewScreen() {
           <Text style={styles.primaryButtonText}>
             {status.marketplaceReady
               ? "Enter transporter dashboard"
-              : "Awaiting approval"}
+              : status.adminApproved
+                ? "Complete requirements"
+                : "Awaiting approval"}
           </Text>
         </Pressable>
 
