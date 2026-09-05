@@ -9,6 +9,7 @@ import {
   updateTransporterProfile,
   updateTransporterVerification,
 } from "./transporter.service.js";
+import { startTransporterVerification } from "./transporter-verification.service.js";
 import {
   authenticate,
   authorize,
@@ -18,6 +19,7 @@ import {
   createTransporterProfileSchema,
   updateTransporterProfileSchema,
   updateTransporterVerificationSchema,
+  startTransporterVerificationSchema,
 } from "./transporter.validators.js";
 
 const router = Router();
@@ -170,6 +172,49 @@ router.get("/:id/vehicles", async (req: AuthenticatedRequest, res) => {
     });
   }
 });
+
+router.post(
+  "/:id/verifications",
+  authorize("TRANSPORTER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (req.params.id !== req.user!.id) {
+        return res.status(403).json({
+          success: false,
+          error: "Access denied",
+        });
+      }
+
+      const parsed = startTransporterVerificationSchema.safeParse(req.body);
+
+      if (!parsed.success) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid transporter verification request",
+          details: parsed.error.flatten(),
+        });
+      }
+
+      const verification = await startTransporterVerification({
+        userId: req.user!.id,
+        ...parsed.data,
+      });
+
+      return res.status(201).json({
+        success: true,
+        data: verification,
+      });
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to start transporter verification",
+      });
+    }
+  },
+);
 
 router.patch(
   "/:id/verification",

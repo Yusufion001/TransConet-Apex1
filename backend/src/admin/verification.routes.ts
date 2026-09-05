@@ -10,6 +10,12 @@ import {
   approveDocument,
   rejectDocument,
 } from "../documents/document.service.js";
+import {
+  getPendingTransporterVerifications,
+  getApprovedTransporterVerifications,
+  approveTransporterVerification,
+  rejectTransporterVerification,
+} from "./verification.service.js";
 import { prisma } from "../config/prisma.js";
 import { supabaseStorageService } from "../storage/supabase-storage.service.js";
 
@@ -122,6 +128,155 @@ router.get("/:id/document-url", async (req, res) => {
     });
   }
 });
+
+router.get("/transporter-verifications/pending", async (_req, res) => {
+  try {
+    const verifications = await getPendingTransporterVerifications();
+    return res.json({ success: true, data: verifications });
+  } catch (error) {
+    console.error("ADMIN_TRANSPORTER_VERIFICATIONS_PENDING_ERROR", error);
+    return res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to load transporter verifications",
+    });
+  }
+});
+
+router.get("/transporter-verifications/approved", async (_req, res) => {
+  try {
+    const verifications = await getApprovedTransporterVerifications();
+    return res.json({ success: true, data: verifications });
+  } catch (error) {
+    console.error("ADMIN_TRANSPORTER_VERIFICATIONS_APPROVED_ERROR", error);
+    return res.status(500).json({
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to load approved transporter verifications",
+    });
+  }
+});
+
+const transporterVerificationIdParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
+router.patch(
+  "/transporter-verifications/:id/approve",
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const params = transporterVerificationIdParamsSchema.parse(req.params);
+
+      const verification = await approveTransporterVerification(
+        params.id,
+        req.user!.id,
+      );
+
+      return res.json({
+        success: true,
+        data: verification,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to approve transporter verification";
+
+      if (
+        message === "Verification not found" ||
+        message === "Transporter profile not found"
+      ) {
+        return res.status(404).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      if (
+        message === "Verification is already approved" ||
+        message ===
+          "This verification must have a successful Youverify result before admin approval"
+      ) {
+        return res.status(409).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      console.error("Admin transporter verification approval error:", error);
+
+      return res.status(500).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
+
+router.patch(
+  "/transporter-verifications/:id/reject",
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const params = transporterVerificationIdParamsSchema.parse(req.params);
+      const input = documentRejectionSchema.parse(req.body);
+
+      const verification = await rejectTransporterVerification(
+        params.id,
+        req.user!.id,
+        input.rejectionReason,
+      );
+
+      return res.json({
+        success: true,
+        data: verification,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to reject transporter verification";
+
+      if (message === "Verification not found") {
+        return res.status(404).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      if (message === "Verification is already rejected") {
+        return res.status(409).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      console.error("Admin transporter verification rejection error:", error);
+
+      return res.status(500).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
 
 router.patch("/:id/approve", async (req: AuthenticatedRequest, res) => {
   try {

@@ -1,18 +1,14 @@
 import { prisma } from "../config/prisma.js";
 import { publishAdminEvent } from "../realtime/realtime.service.js";
 
-export async function getTransporterVehicles(
-  transporterId: string,
-) {
+export async function getTransporterVehicles(transporterId: string) {
   return prisma.vehicle.findMany({
     where: {
       transporterId,
     },
   });
 }
-export async function getTransporterProfile(
-  transporterId: string,
-) {
+export async function getTransporterProfile(transporterId: string) {
   return prisma.transporterProfile.findUnique({
     where: {
       userId: transporterId,
@@ -22,6 +18,7 @@ export async function getTransporterProfile(
 export async function createTransporterProfile(data: {
   userId: string;
   companyName?: string;
+  transporterType?: "INDIVIDUAL" | "BUSINESS";
   businessRegistrationNumber?: string;
   address?: string;
   city?: string;
@@ -29,6 +26,15 @@ export async function createTransporterProfile(data: {
   country?: string;
 }) {
   const { userId, ...profileData } = data;
+
+  if (
+    profileData.transporterType === "BUSINESS" &&
+    !profileData.businessRegistrationNumber?.trim()
+  ) {
+    throw new Error(
+      "Business registration number is required for BUSINESS transporters",
+    );
+  }
 
   return prisma.transporterProfile.upsert({
     where: {
@@ -168,6 +174,7 @@ export async function updateTransporterProfile(
   transporterId: string,
   data: {
     companyName?: string;
+    transporterType?: "INDIVIDUAL" | "BUSINESS";
     businessRegistrationNumber?: string;
     address?: string;
     city?: string;
@@ -181,6 +188,21 @@ export async function updateTransporterProfile(
 
   if (!profile) {
     throw new Error("Transporter profile not found");
+  }
+
+  const resultingTransporterType =
+    data.transporterType ?? profile.transporterType;
+
+  const resultingBusinessRegistrationNumber =
+    data.businessRegistrationNumber ?? profile.businessRegistrationNumber;
+
+  if (
+    resultingTransporterType === "BUSINESS" &&
+    !resultingBusinessRegistrationNumber?.trim()
+  ) {
+    throw new Error(
+      "Business registration number is required for BUSINESS transporters",
+    );
   }
 
   const updatedProfile = await prisma.transporterProfile.update({

@@ -31,10 +31,12 @@ export interface YouverifyResponse {
   [key: string]: unknown;
 }
 
-const endpointMap: Record<
-  YouverifyVerificationType,
-  string
-> = {
+export interface YouverifyBusinessVerificationInput {
+  registrationNumber: string;
+  subjectConsent: boolean;
+}
+
+const endpointMap: Record<YouverifyVerificationType, string> = {
   nin: "/v2/api/identity/ng/nin",
   vnin: "/v2/api/identity/ng/vnin",
   bvn: "/v2/api/identity/ng/bvn",
@@ -50,31 +52,23 @@ function buildBody(
     isSubjectConsent: input.subjectConsent,
   };
 
-  if (
-    input.firstName ||
-    input.lastName ||
-    input.dateOfBirth
-  ) {
+  if (input.firstName || input.lastName || input.dateOfBirth) {
     body.validations = {
       data: {
-        ...(input.firstName
-          ? { firstName: input.firstName }
-          : {}),
-        ...(input.lastName
-          ? { lastName: input.lastName }
-          : {}),
-        ...(input.dateOfBirth
-          ? { dateOfBirth: input.dateOfBirth }
-          : {}),
+        ...(input.firstName ? { firstName: input.firstName } : {}),
+        ...(input.lastName ? { lastName: input.lastName } : {}),
+        ...(input.dateOfBirth ? { dateOfBirth: input.dateOfBirth } : {}),
       },
     };
   }
 
   if (input.selfieImage) {
     const validations = (body.validations ?? {}) as Record<string, unknown>;
+
     validations.selfie = {
       image: input.selfieImage,
     };
+
     body.validations = validations;
   }
 
@@ -101,6 +95,35 @@ export async function verifyIdentity(
   return youverifyClient.post<YouverifyResponse>(
     endpoint,
     buildBody(input),
+  );
+}
+
+export async function verifyBusinessRegistration(
+  input: YouverifyBusinessVerificationInput,
+): Promise<YouverifyResponse> {
+  if (!input.subjectConsent) {
+    throw new Error(
+      "Subject consent is required for Youverify business verification",
+    );
+  }
+
+  const registrationNumber = input.registrationNumber
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "");
+
+  if (!/^(RC|BN|IT|LP|LLP)[A-Z0-9]+$/.test(registrationNumber)) {
+    throw new Error(
+      "Invalid business registration number. Use a valid CAC prefix such as RC, BN, IT, LP, or LLP followed by the registration number",
+    );
+  }
+
+  return youverifyClient.post<YouverifyResponse>(
+    "/v2/api/verifications/ng/company/basic",
+    {
+      registrationNumber,
+      isConsent: true,
+    },
   );
 }
 

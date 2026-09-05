@@ -84,3 +84,80 @@ export async function rejectVerificationDocument(
 
   return response.data.data;
 }
+
+export type TransporterVerificationType =
+  | "NIN"
+  | "DRIVERS_LICENSE"
+  | "BUSINESS_REGISTRATION";
+
+export type VerificationProviderStatus = "PENDING" | "SUCCESS" | "FAILED";
+export type VerificationAdminStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export type TransporterVerification = {
+  id: string;
+  userId: string;
+  type: TransporterVerificationType;
+  verificationNumber: string;
+  verificationProvider: string;
+  externalVerificationId?: string | null;
+  providerStatus: VerificationProviderStatus;
+  providerResponse?: unknown;
+  verifiedAt?: string | null;
+  adminStatus: VerificationAdminStatus;
+  adminApproved: boolean;
+  adminApprovedAt?: string | null;
+  reviewedBy?: string | null;
+  rejectionReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    role?: string | null;
+    transporterProfile?: {
+      transporterType?: "INDIVIDUAL" | "BUSINESS" | null;
+      companyName?: string | null;
+      businessRegistrationNumber?: string | null;
+    } | null;
+  };
+};
+
+export async function getPendingTransporterVerifications() {
+  const response = await apiClient.get<
+    ApiResponse<TransporterVerification[]>
+  >("/admin/verification/transporter-verifications/pending");
+
+  return response.data.data;
+}
+
+export async function getApprovedTransporterVerifications() {
+  const response = await apiClient.get<
+    ApiResponse<TransporterVerification[]>
+  >("/admin/verification/transporter-verifications/approved");
+
+  return response.data.data;
+}
+
+export async function approveTransporterVerification(id: string) {
+  const response = await apiClient.patch<
+    ApiResponse<TransporterVerification>
+  >(`/admin/verification/transporter-verifications/${id}/approve`);
+
+  return response.data.data;
+}
+
+export async function rejectTransporterVerification(
+  id: string,
+  rejectionReason: string,
+) {
+  const response = await apiClient.patch<
+    ApiResponse<TransporterVerification>
+  >(`/admin/verification/transporter-verifications/${id}/reject`, {
+    rejectionReason,
+  });
+
+  return response.data.data;
+}

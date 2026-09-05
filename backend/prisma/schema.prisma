@@ -87,6 +87,29 @@ enum VerificationStatus {
   REJECTED
 }
 
+enum TransporterType {
+  INDIVIDUAL
+  BUSINESS
+}
+
+enum VerificationType {
+  NIN
+  DRIVERS_LICENSE
+  BUSINESS_REGISTRATION
+}
+
+enum VerificationProviderStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum VerificationAdminStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum VehicleVerificationStatus {
   PENDING
   APPROVED
@@ -347,6 +370,7 @@ model User {
   customerProfile    CustomerProfile?
   transporterProfile TransporterProfile?
   adminProfile       AdminProfile?
+  verifications      Verification[]
 
   adminInvitations AdminInvitation[] @relation("AdminInvitationUser")
 
@@ -416,6 +440,7 @@ model CustomerProfile {
 model TransporterProfile {
   userId                     String             @id
   companyName                String?
+  transporterType            TransporterType?
   businessRegistrationNumber String?
   address                    String?
   city                       String?
@@ -837,16 +862,47 @@ model YouverifyWebhookEvent {
   providerEventId String
   eventType       String
   documentId      String?
+  verificationId   String?
   payload         Json
   processed       Boolean   @default(false)
   processedAt     DateTime?
   createdAt       DateTime  @default(now())
 
-  document Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  document     Document?     @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  verification Verification? @relation(fields: [verificationId], references: [id], onDelete: SetNull)
 
   @@unique([provider, providerEventId])
   @@index([documentId])
+  @@index([verificationId])
   @@index([provider, eventType])
+  @@index([createdAt])
+}
+
+model Verification {
+  id                      String                   @id @default(uuid())
+  userId                  String
+  type                    VerificationType
+  verificationNumber     String
+  verificationProvider   String                   @default("YOUVERIFY")
+  externalVerificationId String?
+  providerStatus         VerificationProviderStatus @default(PENDING)
+  providerResponse       Json?
+  verifiedAt             DateTime?
+  adminStatus             VerificationAdminStatus @default(PENDING)
+  adminApproved           Boolean                  @default(false)
+  adminApprovedAt         DateTime?
+  reviewedBy              String?
+  rejectionReason         String?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+
+  user                  User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  youverifyWebhookEvents YouverifyWebhookEvent[]
+
+  @@index([userId, type, createdAt])
+  @@index([userId, adminStatus])
+  @@index([verificationProvider, externalVerificationId])
+  @@index([type, adminStatus])
   @@index([createdAt])
 }
 

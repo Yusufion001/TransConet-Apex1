@@ -12,6 +12,14 @@ export type TransporterOnboardingStatus = {
   identityDocumentSubmitted: boolean;
   identityVerificationStatus: "NOT_STARTED" | "PENDING" | "VERIFIED" | "REJECTED";
   identityDocumentApproved: boolean;
+  ninSubmitted: boolean;
+  ninApproved: boolean;
+  driversLicenseSubmitted: boolean;
+  driversLicenseApproved: boolean;
+  businessRegistrationSubmitted: boolean;
+  businessRegistrationApproved: boolean;
+  businessRegistrationRequired: boolean;
+  legacyIdentityDocumentsSubmitted: boolean;
   vehicleRegistered: boolean;
   vehicleApproved: boolean;
   vehicleAvailable: boolean;
@@ -134,8 +142,11 @@ export async function getTransporterBookings(
   return response.data.data;
 }
 
+export type TransporterType = "INDIVIDUAL" | "BUSINESS";
+
 export type TransporterProfile = {
   userId: string;
+  transporterType: TransporterType | null;
   companyName: string | null;
   businessRegistrationNumber: string | null;
   address: string | null;
@@ -162,6 +173,7 @@ export async function getTransporterProfile(
 export async function updateTransporterProfile(
   transporterId: string,
   input: {
+    transporterType?: TransporterType;
     companyName?: string;
     businessRegistrationNumber?: string;
     address?: string;
@@ -179,6 +191,7 @@ export async function updateTransporterProfile(
 }
 
 export async function createTransporterProfile(input: {
+  transporterType: TransporterType;
   companyName?: string;
   businessRegistrationNumber?: string;
   address?: string;
@@ -259,9 +272,17 @@ type TransporterOnboardingApiResponse = {
   };
   identity: {
     submitted: boolean;
+    ninSubmitted: boolean;
+    ninApproved: boolean;
+    driversLicenseSubmitted: boolean;
+    driversLicenseApproved: boolean;
+    businessRegistrationSubmitted: boolean;
+    businessRegistrationApproved: boolean;
+    businessRegistrationRequired: boolean;
     youverifyVerified: boolean;
     verificationPending: boolean;
     rejected: boolean;
+    legacyIdentityDocumentsSubmitted: boolean;
   };
   vehicle: {
     registered: boolean;
@@ -310,6 +331,7 @@ export async function getTransporterOnboardingStatus(
     EMAIL_VERIFICATION: "EMAIL_VERIFICATION",
     PROFILE_SETUP: "PROFILE_SETUP",
     DOCUMENTS: "DOCUMENTS",
+    VERIFICATION: "IDENTITY_VERIFICATION",
     YOUVERIFY: "IDENTITY_VERIFICATION",
     VEHICLE: "VEHICLE",
     ADMIN_REVIEW: "ADMIN_REVIEW",
@@ -325,6 +347,18 @@ export async function getTransporterOnboardingStatus(
     identityDocumentSubmitted: data.identity.submitted,
     identityVerificationStatus,
     identityDocumentApproved: data.identity.youverifyVerified,
+    ninSubmitted: data.identity.ninSubmitted,
+    ninApproved: data.identity.ninApproved,
+    driversLicenseSubmitted: data.identity.driversLicenseSubmitted,
+    driversLicenseApproved: data.identity.driversLicenseApproved,
+    businessRegistrationSubmitted:
+      data.identity.businessRegistrationSubmitted,
+    businessRegistrationApproved:
+      data.identity.businessRegistrationApproved,
+    businessRegistrationRequired:
+      data.identity.businessRegistrationRequired,
+    legacyIdentityDocumentsSubmitted:
+      data.identity.legacyIdentityDocumentsSubmitted,
     vehicleRegistered: data.vehicle.registered,
     vehicleApproved: data.vehicle.approved,
     vehicleAvailable: data.vehicle.available,
@@ -418,26 +452,58 @@ export async function createTransporterDocument(input: {
 
 
 export type TransporterVerificationType =
-  | "nin"
-  | "vnin"
-  | "bvn"
-  | "drivers_license"
-  | "passport";
+  | "NIN"
+  | "DRIVERS_LICENSE"
+  | "BUSINESS_REGISTRATION";
+
+export type TransporterVerificationProviderStatus =
+  | "PENDING"
+  | "SUCCESS"
+  | "FAILED";
+
+export type TransporterVerificationAdminStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED";
+
+export type TransporterVerification = {
+  id: string;
+  userId: string;
+  type: TransporterVerificationType;
+  verificationNumber: string;
+  verificationProvider: string;
+  externalVerificationId?: string | null;
+  providerStatus: TransporterVerificationProviderStatus;
+  providerResponse?: unknown;
+  verifiedAt?: string | null;
+  adminStatus: TransporterVerificationAdminStatus;
+  adminApproved: boolean;
+  adminApprovedAt?: string | null;
+  reviewedBy?: string | null;
+  rejectionReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
 
 export async function startTransporterVerification(input: {
-  documentId: string;
-  verificationType?: TransporterVerificationType;
-  verificationId: string;
+  transporterId: string;
+  type: TransporterVerificationType;
+  verificationNumber: string;
   firstName?: string;
   lastName?: string;
   dateOfBirth?: string;
-  subjectConsent: boolean;
-  selfieImage?: string;
-}): Promise<TransporterDocument> {
-  const response = await apiClient.post<ApiResponse<TransporterDocument>>(
-    "/verification/start",
-    input,
-  );
+  subjectConsent: true;
+}): Promise<TransporterVerification> {
+  const response = await apiClient.post<
+    ApiResponse<TransporterVerification>
+  >(`/transporters/${input.transporterId}/verifications`, {
+    type: input.type,
+    verificationNumber: input.verificationNumber,
+    firstName: input.firstName,
+    lastName: input.lastName,
+    dateOfBirth: input.dateOfBirth,
+    subjectConsent: input.subjectConsent,
+  });
 
   return response.data.data;
 }

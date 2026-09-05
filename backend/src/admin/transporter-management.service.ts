@@ -238,7 +238,14 @@ export async function changeTransporterVerification(
         id: true,
         transporterProfile: {
           select: {
+            transporterType: true,
             verificationStatus: true,
+            companyName: true,
+            businessRegistrationNumber: true,
+            address: true,
+            city: true,
+            state: true,
+            country: true,
           },
         },
       },
@@ -246,6 +253,86 @@ export async function changeTransporterVerification(
 
     if (!transporter?.transporterProfile) {
       throw new Error("Transporter profile not found");
+    }
+
+    if (verificationStatus === "APPROVED") {
+      const profile = transporter.transporterProfile;
+
+      const profileComplete =
+        Boolean(profile.transporterType) &&
+        Boolean(profile.address) &&
+        Boolean(profile.city) &&
+        Boolean(profile.state) &&
+        Boolean(profile.country) &&
+        (profile.transporterType === "INDIVIDUAL" ||
+          (Boolean(profile.companyName) &&
+            Boolean(profile.businessRegistrationNumber)));
+
+      if (!profileComplete) {
+        throw new Error("Transporter profile is incomplete");
+      }
+
+      const verifications = await tx.verification.findMany({
+        where: {
+          userId: transporterId,
+          verificationProvider: "YOUVERIFY",
+          type: {
+            in: ["NIN", "DRIVERS_LICENSE", "BUSINESS_REGISTRATION"],
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+
+      const hasApprovedVerification = (type: string) =>
+        verifications.some(
+          (verification) =>
+            verification.type === type &&
+            verification.providerStatus === "SUCCESS" &&
+            verification.adminStatus === "APPROVED" &&
+            verification.adminApproved === true,
+        );
+
+      if (!hasApprovedVerification("NIN")) {
+        throw new Error(
+          "Transporter requires an admin-approved Youverify NIN verification",
+        );
+      }
+
+      if (!hasApprovedVerification("DRIVERS_LICENSE")) {
+        throw new Error(
+          "Transporter requires an admin-approved Youverify driver's license verification",
+        );
+      }
+
+      if (
+        profile.transporterType === "BUSINESS" &&
+        !hasApprovedVerification("BUSINESS_REGISTRATION")
+      ) {
+        throw new Error(
+          "BUSINESS transporter requires an admin-approved Youverify business registration verification",
+        );
+      }
+
+      const vehicles = await tx.vehicle.findMany({
+        where: {
+          transporterId,
+        },
+        select: {
+          verificationStatus: true,
+        },
+      });
+
+      const approvedVehicle = vehicles.some(
+        (vehicle) => vehicle.verificationStatus === "APPROVED",
+      );
+
+      if (!approvedVehicle) {
+        throw new Error(
+          "Transporter requires at least one admin-approved vehicle",
+        );
+      }
     }
 
     const updated = await tx.transporterProfile.update({
