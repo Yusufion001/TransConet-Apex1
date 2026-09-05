@@ -83,7 +83,7 @@ function normalizeNin(value: string) {
 }
 
 function normalizeDriversLicense(value: string) {
-  return value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 30);
+  return value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
 }
 
 function normalizeBusinessNumber(value: string) {
@@ -95,7 +95,7 @@ function validNin(value: string) {
 }
 
 function validDriversLicense(value: string) {
-  return /^[A-Z0-9]+$/.test(value);
+  return /^[A-Z0-9]{1,12}$/.test(value);
 }
 
 function validBusinessNumber(value: string) {
@@ -537,7 +537,7 @@ export default function TransporterDocumentsScreen() {
                 setDriversLicense(normalizeDriversLicense(value))
               }
               placeholder="Driver's License number"
-              maxLength={30}
+              maxLength={12}
               autoCapitalize="characters"
               autoCorrect={false}
               editable={

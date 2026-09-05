@@ -61,7 +61,7 @@ export const startTransporterVerificationSchema = z.discriminatedUnion("type", [
       .trim()
       .toUpperCase()
       .min(1)
-      .max(30)
+      .max(12)
       .regex(/^[A-Z0-9]+$/, {
         error:
           "Driver's License number must contain only letters A-Z and numbers 0-9",
