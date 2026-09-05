@@ -2,12 +2,11 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Modal,
   Pressable,
   ScrollView,
-  TextInput,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
@@ -17,39 +16,43 @@ import { useAuthStore } from "../../src/auth/auth.store";
 import {
   createTransporterDocument,
   getTransporterDocuments,
+  getTransporterOnboardingStatus,
+  getTransporterProfile,
   requestDocumentUploadUrl,
   startTransporterVerification,
   type TransporterDocument,
   type TransporterDocumentType,
-  type TransporterVerificationType,
+  type TransporterVerification,
 } from "../../src/api/transporter";
 
-type RequiredDocument = {
-  type: TransporterDocumentType;
-  title: string;
-  description: string;
-};
+const VEHICLE_REGISTRATION: TransporterDocumentType =
+  "VEHICLE_REGISTRATION";
 
-const REQUIRED_DOCUMENTS: RequiredDocument[] = [
-  {
-    type: "IDENTITY_DOCUMENT",
-    title: "Identity Document",
-    description: "Upload your valid identity document.",
-  },
-  {
-    type: "DRIVERS_LICENSE",
-    title: "Driver's License",
-    description: "Upload your valid driver's license.",
-  },
-  {
-    type: "VEHICLE_REGISTRATION",
-    title: "Vehicle Registration",
-    description: "Upload the registration document for your vehicle.",
-  },
-];
+type VerificationStatus = "NOT_SUBMITTED" | "PENDING" | "APPROVED" | "REJECTED";
 
-function getStatusLabel(document?: TransporterDocument) {
-  if (!document) return "NOT SUBMITTED";
+function verificationStatus(
+  verification?: TransporterVerification | null,
+): VerificationStatus {
+  if (!verification) return "NOT_SUBMITTED";
+
+  if (
+    verification.adminStatus === "APPROVED" &&
+    verification.adminApproved === true
+  ) {
+    return "APPROVED";
+  }
+
+  if (verification.adminStatus === "REJECTED") {
+    return "REJECTED";
+  }
+
+  return "PENDING";
+}
+
+function documentStatus(
+  document?: TransporterDocument | null,
+): VerificationStatus {
+  if (!document) return "NOT_SUBMITTED";
 
   if (document.status === "APPROVED" || document.adminApproved) {
     return "APPROVED";
@@ -62,84 +65,281 @@ function getStatusLabel(document?: TransporterDocument) {
   return "PENDING";
 }
 
-function getVerificationLabel(document?: TransporterDocument) {
-  if (!document) return "NOT STARTED";
-
-  if (document.verifiedAt) {
-    return "VERIFIED";
+function statusText(status: VerificationStatus) {
+  switch (status) {
+    case "APPROVED":
+      return "APPROVED";
+    case "PENDING":
+      return "PENDING REVIEW";
+    case "REJECTED":
+      return "REJECTED";
+    default:
+      return "NOT SUBMITTED";
   }
+}
 
-  if (document.verificationProvider === "YOUVERIFY") {
-    return "PENDING";
-  }
+function normalizeNin(value: string) {
+  return value.replace(/\D/g, "").slice(0, 11);
+}
 
-  return "NOT STARTED";
+function normalizeDriversLicense(value: string) {
+  return value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 30);
+}
+
+function normalizeBusinessNumber(value: string) {
+  return value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 30);
+}
+
+function validNin(value: string) {
+  return /^\d{11}$/.test(value);
+}
+
+function validDriversLicense(value: string) {
+  return /^[A-Z0-9]+$/.test(value);
+}
+
+function validBusinessNumber(value: string) {
+  return /^(RC|BN|IT|LP|LLP)[A-Z0-9]+$/.test(value);
 }
 
 export default function TransporterDocumentsScreen() {
   const user = useAuthStore((state) => state.user);
 
-  const [documents, setDocuments] = useState<TransporterDocument[]>([]);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [uploadingType, setUploadingType] =
-    useState<TransporterDocumentType | null>(null);
-  const [verificationType, setVerificationType] =
-    useState<TransporterVerificationType>("nin");
-  const [verificationId, setVerificationId] = useState("");
-  const [verificationDocumentId, setVerificationDocumentId] =
-    useState<string | null>(null);
-  const [startingVerification, setStartingVerification] = useState(false);
 
+  const [transporterType, setTransporterType] = useState<
+    "INDIVIDUAL" | "BUSINESS"
+  >("INDIVIDUAL");
 
-  const loadDocuments = useCallback(async () => {
+  const [nin, setNin] = useState("");
+  const [driversLicense, setDriversLicense] = useState("");
+  const [businessNumber, setBusinessNumber] = useState("");
+
+  const [ninVerification, setNinVerification] =
+    useState<TransporterVerification | null>(null);
+  const [driversLicenseVerification, setDriversLicenseVerification] =
+    useState<TransporterVerification | null>(null);
+  const [businessVerification, setBusinessVerification] =
+    useState<TransporterVerification | null>(null);
+
+  const [documents, setDocuments] = useState<TransporterDocument[]>([]);
+
+  const [submittingType, setSubmittingType] = useState<
+    "NIN" | "DRIVERS_LICENSE" | "BUSINESS_REGISTRATION" | null
+  >(null);
+
+  const [uploading, setUploading] = useState(false);
+
+  const loadData = useCallback(async () => {
     if (!user?.id) {
       setLoading(false);
+      setProfileLoading(false);
       return;
     }
 
     try {
-      const result = await getTransporterDocuments(user.id);
-      setDocuments(result);
+      const [profile, onboarding, transporterDocuments] = await Promise.all([
+        getTransporterProfile(user.id),
+        getTransporterOnboardingStatus(user.id),
+        getTransporterDocuments(user.id),
+      ]);
+
+      setTransporterType(profile.transporterType ?? "INDIVIDUAL");
+
+      if (profile.businessRegistrationNumber) {
+        setBusinessNumber(
+          normalizeBusinessNumber(profile.businessRegistrationNumber),
+        );
+      }
+
+      setDocuments(transporterDocuments);
+
+      /*
+       * The onboarding endpoint is the authoritative persisted verification
+       * summary. There is intentionally no GET /verifications endpoint.
+       *
+       * Rebuild the local verification state from the persisted per-check
+       * submitted/approved flags so the status survives app reloads.
+       */
+      setNinVerification(
+        onboarding.ninSubmitted
+          ? ({
+              type: "NIN",
+              adminStatus: onboarding.ninApproved ? "APPROVED" : "PENDING",
+              adminApproved: onboarding.ninApproved,
+            } as TransporterVerification)
+          : null,
+      );
+
+      setDriversLicenseVerification(
+        onboarding.driversLicenseSubmitted
+          ? ({
+              type: "DRIVERS_LICENSE",
+              adminStatus: onboarding.driversLicenseApproved
+                ? "APPROVED"
+                : "PENDING",
+              adminApproved: onboarding.driversLicenseApproved,
+            } as TransporterVerification)
+          : null,
+      );
+
+      setBusinessVerification(
+        onboarding.businessRegistrationSubmitted
+          ? ({
+              type: "BUSINESS_REGISTRATION",
+              adminStatus: onboarding.businessRegistrationApproved
+                ? "APPROVED"
+                : "PENDING",
+              adminApproved: onboarding.businessRegistrationApproved,
+            } as TransporterVerification)
+          : null,
+      );
     } catch (error) {
-      console.error("Failed to load transporter documents:", error);
+      console.error("Failed to load transporter verification data:", error);
+
       Alert.alert(
-        "Unable to load documents",
-        "We could not load your submitted documents. Please try again.",
+        "Unable to load",
+        "We could not load your transporter verification information. Please try again.",
       );
     } finally {
       setLoading(false);
+      setProfileLoading(false);
     }
   }, [user?.id]);
 
   useEffect(() => {
-    void loadDocuments();
-  }, [loadDocuments]);
+    void loadData();
+  }, [loadData]);
 
-  const documentsByType = useMemo(() => {
-    const map = new Map<TransporterDocumentType, TransporterDocument>();
+  const vehicleRegistrationDocument = useMemo(
+    () =>
+      documents
+        .filter((document) => document.type === VEHICLE_REGISTRATION)
+        .sort((a, b) => {
+          const aDate = a.createdAt ? Date.parse(a.createdAt) : 0;
+          const bDate = b.createdAt ? Date.parse(b.createdAt) : 0;
+          return bDate - aDate;
+        })[0],
+    [documents],
+  );
 
-    for (const document of documents) {
-      map.set(document.type, document);
-    }
+  const ninStatus = verificationStatus(ninVerification);
+  const driversLicenseStatus = verificationStatus(
+    driversLicenseVerification,
+  );
+  const businessStatus = verificationStatus(businessVerification);
+  const vehicleStatus = documentStatus(vehicleRegistrationDocument);
 
-    return map;
-  }, [documents]);
+  const businessRequired = transporterType === "BUSINESS";
 
-  const approvedCount = REQUIRED_DOCUMENTS.filter((item) => {
-    const document = documentsByType.get(item.type);
-    return document?.status === "APPROVED" || document?.adminApproved;
-  }).length;
+  const requiredChecksApproved =
+    ninStatus === "APPROVED" &&
+    driversLicenseStatus === "APPROVED" &&
+    (!businessRequired || businessStatus === "APPROVED");
 
-  const handleUpload = async (requiredDocument: RequiredDocument) => {
+  const handleSubmitVerification = async (
+    type: "NIN" | "DRIVERS_LICENSE" | "BUSINESS_REGISTRATION",
+  ) => {
     if (!user?.id) {
-      Alert.alert("Session required", "Please sign in again and continue setup.");
+      Alert.alert(
+        "Session required",
+        "Please sign in again before continuing.",
+      );
       return;
     }
 
-    if (uploadingType) return;
+    let verificationNumber = "";
+
+    if (type === "NIN") {
+      verificationNumber = nin;
+
+      if (!validNin(verificationNumber)) {
+        Alert.alert(
+          "Invalid NIN",
+          "NIN must contain exactly 11 digits.",
+        );
+        return;
+      }
+    }
+
+    if (type === "DRIVERS_LICENSE") {
+      verificationNumber = driversLicense;
+
+      if (!validDriversLicense(verificationNumber)) {
+        Alert.alert(
+          "Invalid Driver's License",
+          "Enter the Driver's License number using letters and numbers only. Do not enter spaces or special characters.",
+        );
+        return;
+      }
+    }
+
+    if (type === "BUSINESS_REGISTRATION") {
+      verificationNumber = businessNumber;
+
+      if (!validBusinessNumber(verificationNumber)) {
+        Alert.alert(
+          "Invalid Business Registration Number",
+          "Use the registration prefix RC, BN, IT, LP, or LLP followed by the registration number, with no spaces or special characters.",
+        );
+        return;
+      }
+    }
+
+    if (submittingType) return;
 
     try {
-      setUploadingType(requiredDocument.type);
+      setSubmittingType(type);
+
+      const verification = await startTransporterVerification({
+        transporterId: user.id,
+        type,
+        verificationNumber,
+        subjectConsent: true,
+      });
+
+      if (type === "NIN") {
+        setNinVerification(verification);
+      } else if (type === "DRIVERS_LICENSE") {
+        setDriversLicenseVerification(verification);
+      } else {
+        setBusinessVerification(verification);
+      }
+
+      await loadData();
+
+      Alert.alert(
+        "Verification submitted",
+        "Your details have been sent for Youverify verification. Youverify success does not automatically approve your transporter account. An Administrator must make the final decision.",
+      );
+    } catch (error) {
+      console.error("Transporter verification failed:", error);
+
+      Alert.alert(
+        "Verification failed",
+        error instanceof Error
+          ? error.message
+          : "The verification request could not be submitted.",
+      );
+    } finally {
+      setSubmittingType(null);
+    }
+  };
+
+  const handleVehicleRegistrationUpload = async () => {
+    if (!user?.id) {
+      Alert.alert(
+        "Session required",
+        "Please sign in again before uploading your document.",
+      );
+      return;
+    }
+
+    if (uploading) return;
+
+    try {
+      setUploading(true);
 
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
@@ -154,7 +354,7 @@ export default function TransporterDocumentsScreen() {
       const asset = result.assets[0];
 
       const upload = await requestDocumentUploadUrl({
-        type: requiredDocument.type,
+        type: VEHICLE_REGISTRATION,
         fileName: asset.name,
       });
 
@@ -178,98 +378,67 @@ export default function TransporterDocumentsScreen() {
       if (!uploadResponse.ok) {
         const uploadError = await uploadResponse.text().catch(() => "");
         throw new Error(
-          uploadError || "The file could not be uploaded.",
+          uploadError || "The vehicle registration file could not be uploaded.",
         );
       }
 
       await createTransporterDocument({
-        type: requiredDocument.type,
+        type: VEHICLE_REGISTRATION,
         storagePath: upload.storagePath,
       });
 
-      await loadDocuments();
+      await loadData();
 
       Alert.alert(
-        "Document submitted",
-        `${requiredDocument.title} has been uploaded and is now pending review.`,
+        "Vehicle registration submitted",
+        "Your vehicle registration document has been uploaded and is now pending Administrator review.",
       );
     } catch (error) {
-      console.error("Document upload failed:", error);
+      console.error("Vehicle registration upload failed:", error);
 
-      const message =
+      Alert.alert(
+        "Upload failed",
         error instanceof Error
           ? error.message
-          : "The document could not be uploaded.";
-
-      Alert.alert("Upload failed", message);
+          : "The vehicle registration document could not be uploaded.",
+      );
     } finally {
-      setUploadingType(null);
+      setUploading(false);
     }
   };
 
-  const handleStartVerification = async () => {
-    if (!verificationDocumentId) {
+  const handleContinue = async () => {
+    if (!requiredChecksApproved) {
       Alert.alert(
-        "Identity document required",
-        "Upload your identity document before starting verification.",
+        "Verification pending",
+        "NIN, Driver's License, and Business Registration where required must all be approved by an Administrator before you continue.",
       );
       return;
     }
 
-    if (!verificationId.trim()) {
+    if (vehicleStatus !== "APPROVED") {
       Alert.alert(
-        "Verification ID required",
-        "Enter the identification number required for the selected verification method.",
+        "Vehicle registration pending",
+        "Your vehicle registration document must be uploaded and approved by an Administrator before continuing.",
       );
       return;
     }
 
-    if (startingVerification) return;
-
-    try {
-      setStartingVerification(true);
-
-      await startTransporterVerification({
-        documentId: verificationDocumentId,
-        verificationType,
-        verificationId: verificationId.trim(),
-        subjectConsent: true,
-      });
-
-      setVerificationDocumentId(null);
-      setVerificationId("");
-
-      await loadDocuments();
-
-      Alert.alert(
-        "Verification started",
-        "Your identity verification has been submitted. Please wait for the verification result before continuing.",
-      );
-    } catch (error) {
-      console.error("Identity verification failed:", error);
-
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Identity verification could not be started.";
-
-      Alert.alert("Verification failed", message);
-    } finally {
-      setStartingVerification(false);
-    }
+    router.replace(" /(transporter-onboarding)/vehicle".trim());
   };
 
-  const handleContinue = () => {
-    if (approvedCount < REQUIRED_DOCUMENTS.length) {
-      Alert.alert(
-        "Documents pending",
-        "Your submitted documents must be approved before continuing to the next onboarding step.",
-      );
-      return;
-    }
-
-    router.replace("/(transporter-onboarding)/vehicle");
-  };
+  const renderStatus = (status: VerificationStatus) => (
+    <View
+      style={[
+        styles.statusBadge,
+        status === "APPROVED" && styles.statusApproved,
+        status === "PENDING" && styles.statusPending,
+        status === "REJECTED" && styles.statusRejected,
+      ]}
+    >
+      <Text style={styles.statusText}>{statusText(status)}</Text>
+    </View>
+  );
 
   return (
     <View style={styles.screen}>
@@ -279,224 +448,274 @@ export default function TransporterDocumentsScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.eyebrow}>TRANSCONET</Text>
-          <Text style={styles.title}>Your documents</Text>
+          <Text style={styles.title}>Verification & Documents</Text>
           <Text style={styles.subtitle}>
-            Submit the documents required to complete your transporter
-            verification.
+            Enter your verification numbers and upload your vehicle
+            registration document. Identity documents are verified by number;
+            they are not uploaded here.
           </Text>
         </View>
 
         <View style={styles.progressRow}>
-          <View style={styles.progressStepActive} />
-          <View style={styles.progressStepActive} />
-          <View style={styles.progressStep} />
-          <View style={styles.progressStep} />
+          <View style={styles.progressActive} />
+          <View style={styles.progressActive} />
+          <View style={styles.progressInactive} />
+          <View style={styles.progressInactive} />
         </View>
 
         <Text style={styles.progressText}>STEP 2 OF 4</Text>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Tier 1 documents</Text>
-          <Text style={styles.cardDescription}>
-            Each document will be reviewed before your transporter account can
-            proceed to the next stage.
+        <View style={styles.notice}>
+          <Text style={styles.noticeTitle}>Important</Text>
+          <Text style={styles.noticeText}>
+            Youverify performs the verification check. A successful Youverify
+            result does not automatically approve you. Final approval is made
+            by a TransConet Administrator.
           </Text>
-
-          {loading ? (
-            <View style={styles.loading}>
-              <ActivityIndicator />
-              <Text style={styles.loadingText}>Loading documents...</Text>
-            </View>
-          ) : (
-            REQUIRED_DOCUMENTS.map((requiredDocument) => {
-              const document = documentsByType.get(requiredDocument.type);
-              const status = getStatusLabel(document);
-              const isUploading = uploadingType === requiredDocument.type;
-
-              return (
-                <View key={requiredDocument.type} style={styles.documentRow}>
-                  <View style={styles.documentInfo}>
-                    <Text style={styles.documentTitle}>
-                      {requiredDocument.title}
-                    </Text>
-                    <Text style={styles.documentDescription}>
-                      {requiredDocument.description}
-                    </Text>
-
-                    <View
-                      style={[
-                        styles.statusBadge,
-                        status === "APPROVED" && styles.statusApproved,
-                        status === "REJECTED" && styles.statusRejected,
-                        status === "PENDING" && styles.statusPending,
-                      ]}
-                    >
-                      <Text style={styles.statusText}>{status}</Text>
-                    </View>
-
-                    {document?.status === "REJECTED" &&
-                      document.rejectionReason ? (
-                      <Text style={styles.rejectionText}>
-                        {document.rejectionReason}
-                      </Text>
-                    ) : null}
-
-                    {requiredDocument.type === "IDENTITY_DOCUMENT" &&
-                    document ? (
-                      <Text style={styles.verificationText}>
-                        Identity verification: {getVerificationLabel(document)}
-                      </Text>
-                    ) : null}
-
-                    {requiredDocument.type === "IDENTITY_DOCUMENT" &&
-                    document &&
-                    !document.verifiedAt &&
-                    document.status !== "APPROVED" ? (
-                      <Pressable
-                        style={styles.verifyButton}
-                        onPress={() => {
-                          setVerificationDocumentId(document.id);
-                          setVerificationType("nin");
-                        }}
-                        disabled={startingVerification}
-                      >
-                        <Text style={styles.verifyButtonText}>
-                          {document.verificationProvider === "YOUVERIFY"
-                            ? "RETRY VERIFICATION"
-                            : "VERIFY IDENTITY"}
-                        </Text>
-                      </Pressable>
-                    ) : null}
-                  </View>
-
-                  <Pressable
-                    style={[
-                      styles.uploadButton,
-                      isUploading && styles.buttonDisabled,
-                    ]}
-                    onPress={() => void handleUpload(requiredDocument)}
-                    disabled={Boolean(uploadingType)}
-                  >
-                    {isUploading ? (
-                      <ActivityIndicator color="#FFFFFF" size="small" />
-                    ) : (
-                      <Text style={styles.uploadButtonText}>
-                        {status === "REJECTED" ? "RETRY" : "UPLOAD"}
-                      </Text>
-                    )}
-                  </Pressable>
-                </View>
-              );
-            })
-          )}
         </View>
 
-        <Modal
-          visible={Boolean(verificationDocumentId)}
-          transparent
-          animationType="slide"
-          onRequestClose={() => {
-            if (!startingVerification) {
-              setVerificationDocumentId(null);
-            }
-          }}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalCard}>
-              <Text style={styles.modalTitle}>Verify your identity</Text>
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Identity verification</Text>
+          <Text style={styles.cardDescription}>
+            Enter the identification number exactly as issued. Do not upload
+            identity documents for these checks.
+          </Text>
 
-              <Text style={styles.modalDescription}>
-                Enter your identification number and give consent to submit
-                it for Youverify verification.
-              </Text>
+          <View style={styles.fieldBlock}>
+            <View style={styles.labelRow}>
+              <Text style={styles.inputLabel}>NIN</Text>
+              {renderStatus(ninStatus)}
+            </View>
 
-              <Text style={styles.inputLabel}>Verification method</Text>
+            <TextInput
+              value={nin}
+              onChangeText={(value) => setNin(normalizeNin(value))}
+              placeholder="11-digit NIN"
+              keyboardType="number-pad"
+              maxLength={11}
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={ninStatus !== "APPROVED" && !Boolean(submittingType)}
+              style={styles.input}
+            />
 
-              <View style={styles.methodRow}>
-                {(["nin", "vnin", "bvn", "passport"] as TransporterVerificationType[]).map(
-                  (type) => (
-                    <Pressable
-                      key={type}
-                      style={[
-                        styles.methodButton,
-                        verificationType === type &&
-                          styles.methodButtonActive,
-                      ]}
-                      onPress={() => setVerificationType(type)}
-                      disabled={startingVerification}
-                    >
-                      <Text
-                        style={[
-                          styles.methodButtonText,
-                          verificationType === type &&
-                            styles.methodButtonTextActive,
-                        ]}
-                      >
-                        {type.toUpperCase()}
-                      </Text>
-                    </Pressable>
-                  ),
-                )}
-              </View>
+            <Text style={styles.helper}>
+              Exactly 11 digits. Numbers only.
+            </Text>
 
-              <Text style={styles.inputLabel}>Identification number</Text>
-
-              <TextInput
-                value={verificationId}
-                onChangeText={setVerificationId}
-                placeholder="Enter your ID number"
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!startingVerification}
-                style={styles.textInput}
-              />
-
-              <Text style={styles.consentText}>
-                By continuing, you consent to identity verification through
-                Youverify.
-              </Text>
-
+            {ninStatus !== "APPROVED" ? (
               <Pressable
                 style={[
-                  styles.verifySubmitButton,
-                  startingVerification && styles.buttonDisabled,
+                  styles.actionButton,
+                  submittingType === "NIN" && styles.disabledButton,
                 ]}
-                onPress={() => void handleStartVerification()}
-                disabled={startingVerification}
+                onPress={() => void handleSubmitVerification("NIN")}
+                disabled={Boolean(submittingType) || profileLoading}
               >
-                {startingVerification ? (
+                {submittingType === "NIN" ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.verifySubmitButtonText}>
-                    START VERIFICATION
+                  <Text style={styles.actionButtonText}>
+                    {ninStatus === "REJECTED"
+                      ? "RETRY NIN VERIFICATION"
+                      : "VERIFY NIN"}
                   </Text>
                 )}
               </Pressable>
-
-              <Pressable
-                style={styles.cancelButton}
-                onPress={() => setVerificationDocumentId(null)}
-                disabled={startingVerification}
-              >
-                <Text style={styles.cancelButtonText}>CANCEL</Text>
-              </Pressable>
-            </View>
+            ) : null}
           </View>
-        </Modal>
+
+          <View style={styles.fieldBlock}>
+            <View style={styles.labelRow}>
+              <Text style={styles.inputLabel}>DRIVER'S LICENSE</Text>
+              {renderStatus(driversLicenseStatus)}
+            </View>
+
+            <TextInput
+              value={driversLicense}
+              onChangeText={(value) =>
+                setDriversLicense(normalizeDriversLicense(value))
+              }
+              placeholder="Driver's License number"
+              maxLength={30}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              editable={
+                driversLicenseStatus !== "APPROVED" &&
+                !Boolean(submittingType)
+              }
+              style={styles.input}
+            />
+
+            <Text style={styles.helper}>
+              Letters and numbers only. No spaces or special characters.
+            </Text>
+
+            {driversLicenseStatus !== "APPROVED" ? (
+              <Pressable
+                style={[
+                  styles.actionButton,
+                  submittingType === "DRIVERS_LICENSE" &&
+                    styles.disabledButton,
+                ]}
+                onPress={() =>
+                  void handleSubmitVerification("DRIVERS_LICENSE")
+                }
+                disabled={Boolean(submittingType) || profileLoading}
+              >
+                {submittingType === "DRIVERS_LICENSE" ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.actionButtonText}>
+                    {driversLicenseStatus === "REJECTED"
+                      ? "RETRY LICENSE VERIFICATION"
+                      : "VERIFY DRIVER'S LICENSE"}
+                  </Text>
+                )}
+              </Pressable>
+            ) : null}
+          </View>
+
+          {businessRequired ? (
+            <View style={styles.fieldBlock}>
+              <View style={styles.labelRow}>
+                <Text style={styles.inputLabel}>
+                  BUSINESS REGISTRATION NUMBER
+                </Text>
+                {renderStatus(businessStatus)}
+              </View>
+
+              <TextInput
+                value={businessNumber}
+                onChangeText={(value) =>
+                  setBusinessNumber(normalizeBusinessNumber(value))
+                }
+                placeholder="RC / BN / IT / LP / LLP number"
+                maxLength={30}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                editable={
+                  businessStatus !== "APPROVED" &&
+                  !Boolean(submittingType)
+                }
+                style={styles.input}
+              />
+
+              <Text style={styles.helper}>
+                Use RC, BN, IT, LP, or LLP followed by the registration number.
+                No spaces or special characters.
+              </Text>
+
+              {businessStatus !== "APPROVED" ? (
+                <Pressable
+                  style={[
+                    styles.actionButton,
+                    submittingType === "BUSINESS_REGISTRATION" &&
+                      styles.disabledButton,
+                  ]}
+                  onPress={() =>
+                    void handleSubmitVerification("BUSINESS_REGISTRATION")
+                  }
+                  disabled={Boolean(submittingType) || profileLoading}
+                >
+                  {submittingType === "BUSINESS_REGISTRATION" ? (
+                    <ActivityIndicator color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.actionButtonText}>
+                      {businessStatus === "REJECTED"
+                        ? "RETRY BUSINESS VERIFICATION"
+                        : "VERIFY BUSINESS"}
+                    </Text>
+                  )}
+                </Pressable>
+              ) : null}
+            </View>
+          ) : null}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Vehicle registration</Text>
+          <Text style={styles.cardDescription}>
+            Vehicle registration is the only required document on this screen.
+            Upload the actual registration file for Administrator review.
+          </Text>
+
+          <View style={styles.vehicleStatusRow}>
+            <Text style={styles.documentName}>
+              Vehicle Registration
+            </Text>
+            {renderStatus(vehicleStatus)}
+          </View>
+
+          {vehicleRegistrationDocument?.rejectionReason ? (
+            <Text style={styles.rejectionText}>
+              Rejection reason:{" "}
+              {vehicleRegistrationDocument.rejectionReason}
+            </Text>
+          ) : null}
+
+          {vehicleStatus !== "APPROVED" ? (
+            <Pressable
+              style={[
+                styles.uploadButton,
+                uploading && styles.disabledButton,
+              ]}
+              onPress={() => void handleVehicleRegistrationUpload()}
+              disabled={uploading || loading}
+            >
+              {uploading ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.actionButtonText}>
+                  {vehicleStatus === "REJECTED"
+                    ? "REUPLOAD VEHICLE REGISTRATION"
+                    : "UPLOAD VEHICLE REGISTRATION"}
+                </Text>
+              )}
+            </Pressable>
+          ) : null}
+        </View>
+
+        <View style={styles.requirementCard}>
+          <Text style={styles.requirementTitle}>Before continuing</Text>
+
+          <Text style={styles.requirementItem}>
+            {ninStatus === "APPROVED" ? "✓" : "○"} NIN approved
+          </Text>
+
+          <Text style={styles.requirementItem}>
+            {driversLicenseStatus === "APPROVED" ? "✓" : "○"} Driver's
+            License approved
+          </Text>
+
+          {businessRequired ? (
+            <Text style={styles.requirementItem}>
+              {businessStatus === "APPROVED" ? "✓" : "○"} Business
+              Registration approved
+            </Text>
+          ) : null}
+
+          <Text style={styles.requirementItem}>
+            {vehicleStatus === "APPROVED" ? "✓" : "○"} Vehicle Registration
+            approved
+          </Text>
+        </View>
 
         <Pressable
           style={[
             styles.continueButton,
-            (loading || approvedCount < REQUIRED_DOCUMENTS.length) &&
-              styles.buttonDisabled,
+            (!requiredChecksApproved || vehicleStatus !== "APPROVED") &&
+              styles.disabledButton,
           ]}
-          onPress={handleContinue}
+          onPress={() => void handleContinue()}
           disabled={
-            loading || approvedCount < REQUIRED_DOCUMENTS.length
+            loading ||
+            !requiredChecksApproved ||
+            vehicleStatus !== "APPROVED"
           }
         >
           <Text style={styles.continueButtonText}>
-            Continue to vehicle
+            CONTINUE TO VEHICLE
           </Text>
         </Pressable>
 
@@ -504,7 +723,7 @@ export default function TransporterDocumentsScreen() {
           style={styles.exitButton}
           onPress={() => router.replace("/(transporter)")}
         >
-          <Text style={styles.exitButtonText}>Exit setup</Text>
+          <Text style={styles.exitButtonText}>EXIT SETUP</Text>
         </Pressable>
       </ScrollView>
     </View>
@@ -550,17 +769,17 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
-  progressStep: {
-    flex: 1,
-    height: 5,
-    borderRadius: 999,
-    backgroundColor: "#E5E5E5",
-  },
-  progressStepActive: {
+  progressActive: {
     flex: 1,
     height: 5,
     borderRadius: 999,
     backgroundColor: "#111111",
+  },
+  progressInactive: {
+    flex: 1,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "#E5E5E5",
   },
   progressText: {
     fontSize: 11,
@@ -569,96 +788,165 @@ const styles = StyleSheet.create({
     color: "#777777",
     marginBottom: 24,
   },
+  notice: {
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 18,
+    backgroundColor: "#FAFAFA",
+  },
+  noticeTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#111111",
+    marginBottom: 6,
+  },
+  noticeText: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: "#555555",
+  },
   card: {
     borderWidth: 1,
-    borderColor: "#E7E7E7",
+    borderColor: "#E5E5E5",
     borderRadius: 16,
     padding: 18,
-    backgroundColor: "#FFFFFF",
+    marginBottom: 18,
   },
   cardTitle: {
     fontSize: 19,
     fontWeight: "800",
     color: "#111111",
-    marginBottom: 6,
+    marginBottom: 7,
   },
   cardDescription: {
-    fontSize: 14,
+    fontSize: 13,
     lineHeight: 20,
     color: "#666666",
     marginBottom: 18,
   },
-  loading: {
-    paddingVertical: 30,
-    alignItems: "center",
-    gap: 10,
-  },
-  loadingText: {
-    fontSize: 13,
-    color: "#777777",
-  },
-  documentRow: {
+  fieldBlock: {
     borderTopWidth: 1,
     borderTopColor: "#EEEEEE",
-    paddingVertical: 18,
-    gap: 14,
+    paddingTop: 17,
+    marginTop: 4,
+    marginBottom: 20,
   },
-  documentInfo: {
+  labelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    marginBottom: 9,
+  },
+  inputLabel: {
     flex: 1,
-  },
-  documentTitle: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: "800",
-    color: "#111111",
-    marginBottom: 5,
+    letterSpacing: 0.6,
+    color: "#222222",
   },
-  documentDescription: {
-    fontSize: 13,
-    lineHeight: 19,
-    color: "#707070",
-    marginBottom: 10,
+  input: {
+    borderWidth: 1,
+    borderColor: "#D9D9D9",
+    borderRadius: 11,
+    height: 50,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    color: "#111111",
+    backgroundColor: "#FFFFFF",
+  },
+  helper: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#777777",
+    marginTop: 7,
+    marginBottom: 12,
   },
   statusBadge: {
-    alignSelf: "flex-start",
-    borderRadius: 999,
     paddingHorizontal: 9,
     paddingVertical: 5,
-    backgroundColor: "#F1F1F1",
+    borderRadius: 999,
+    backgroundColor: "#EEEEEE",
   },
   statusApproved: {
     backgroundColor: "#E8F5E9",
   },
+  statusPending: {
+    backgroundColor: "#FFF4D6",
+  },
   statusRejected: {
     backgroundColor: "#FDECEC",
   },
-  statusPending: {
-    backgroundColor: "#FFF5D6",
-  },
   statusText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "800",
-    letterSpacing: 0.7,
+    letterSpacing: 0.5,
     color: "#333333",
   },
-  rejectionText: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: "#B42318",
-    marginTop: 8,
-  },
-  uploadButton: {
-    minHeight: 44,
-    borderRadius: 10,
+  actionButton: {
+    minHeight: 46,
+    borderRadius: 11,
     backgroundColor: "#111111",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
-  uploadButtonText: {
+  uploadButton: {
+    minHeight: 48,
+    borderRadius: 11,
+    backgroundColor: "#111111",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    marginTop: 14,
+  },
+  actionButtonText: {
     color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "800",
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
+    textAlign: "center",
+  },
+  disabledButton: {
+    opacity: 0.45,
+  },
+  vehicleStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  documentName: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#222222",
+  },
+  rejectionText: {
+    color: "#B42318",
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 10,
+  },
+  requirementCard: {
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 18,
+  },
+  requirementTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#111111",
+    marginBottom: 12,
+  },
+  requirementItem: {
+    fontSize: 14,
+    color: "#444444",
+    marginBottom: 9,
   },
   continueButton: {
     minHeight: 52,
@@ -666,140 +954,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#111111",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 22,
+    marginTop: 2,
   },
   continueButtonText: {
     color: "#FFFFFF",
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "800",
+    letterSpacing: 0.7,
   },
   exitButton: {
+    minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 48,
     marginTop: 8,
   },
   exitButtonText: {
     color: "#666666",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  verificationText: {
-    marginTop: 8,
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#555555",
-  },
-  verifyButton: {
-    marginTop: 10,
-    alignSelf: "flex-start",
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 8,
-    backgroundColor: "#111111",
-  },
-  verifyButtonText: {
-    color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "700",
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0, 0, 0, 0.45)",
-  },
-  modalCard: {
-    width: "100%",
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 24,
-    paddingBottom: 32,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#111111",
-    marginBottom: 8,
-  },
-  modalDescription: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: "#666666",
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#333333",
-    marginBottom: 8,
-  },
-  methodRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 18,
-  },
-  methodButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#CCCCCC",
-    backgroundColor: "#FFFFFF",
-  },
-  methodButtonActive: {
-    backgroundColor: "#111111",
-    borderColor: "#111111",
-  },
-  methodButtonText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#444444",
-  },
-  methodButtonTextActive: {
-    color: "#FFFFFF",
-  },
-  textInput: {
-    height: 48,
-    borderWidth: 1,
-    borderColor: "#CCCCCC",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    fontSize: 16,
-    color: "#111111",
-    marginBottom: 12,
-  },
-  consentText: {
-    fontSize: 12,
-    lineHeight: 18,
-    color: "#666666",
-    marginBottom: 18,
-  },
-  verifySubmitButton: {
-    height: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: 10,
-    backgroundColor: "#111111",
-  },
-  verifySubmitButtonText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  cancelButton: {
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 8,
-  },
-  cancelButtonText: {
-    color: "#666666",
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  buttonDisabled: {
-    opacity: 0.45,
+    letterSpacing: 0.5,
   },
 });

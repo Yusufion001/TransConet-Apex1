@@ -20,10 +20,11 @@ export async function getTransporterOnboardingStatus(transporterId: string) {
     throw new Error("User is not a transporter");
   }
 
-  const [profile, documents, vehicles] = await Promise.all([
+  const [profile, documents, verifications, vehicles] = await Promise.all([
     prisma.transporterProfile.findUnique({
       where: { userId: transporterId },
       select: {
+        transporterType: true,
         companyName: true,
         businessRegistrationNumber: true,
         address: true,
@@ -50,6 +51,26 @@ export async function getTransporterOnboardingStatus(transporterId: string) {
       orderBy: { createdAt: "desc" },
     }),
 
+    prisma.verification.findMany({
+      where: {
+        userId: transporterId,
+        verificationProvider: "YOUVERIFY",
+        type: {
+          in: ["NIN", "DRIVERS_LICENSE", "BUSINESS_REGISTRATION"],
+        },
+      },
+      select: {
+        id: true,
+        type: true,
+        providerStatus: true,
+        adminStatus: true,
+        adminApproved: true,
+        rejectionReason: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    }),
+
     prisma.vehicle.findMany({
       where: { transporterId },
       select: {
@@ -68,37 +89,63 @@ export async function getTransporterOnboardingStatus(transporterId: string) {
 
   const emailVerified = Boolean(user.emailVerifiedAt);
 
-  const profileCompleted = profile !== null && (
-    Boolean(profile.companyName) &&
+  const profileCompleted =
+    profile !== null &&
+    Boolean(profile.transporterType) &&
     Boolean(profile.address) &&
     Boolean(profile.city) &&
     Boolean(profile.state) &&
-    Boolean(profile.country)
+    Boolean(profile.country) &&
+    (profile.transporterType === "INDIVIDUAL" ||
+      (Boolean(profile.companyName) &&
+        Boolean(profile.businessRegistrationNumber)));
+
+  const latestVerification = (type: string) =>
+    verifications.find((verification) => verification.type === type);
+
+  const ninVerification = latestVerification("NIN");
+  const driversLicenseVerification = latestVerification("DRIVERS_LICENSE");
+  const businessRegistrationVerification = latestVerification(
+    "BUSINESS_REGISTRATION",
   );
 
-  const identityDocuments = documents.filter(
+  const approvedNinVerification =
+    ninVerification?.providerStatus === "SUCCESS" &&
+    ninVerification.adminStatus === "APPROVED" &&
+    ninVerification.adminApproved === true;
+
+  const approvedDriversLicenseVerification =
+    driversLicenseVerification?.providerStatus === "SUCCESS" &&
+    driversLicenseVerification.adminStatus === "APPROVED" &&
+    driversLicenseVerification.adminApproved === true;
+
+  const businessRegistrationRequired =
+    profile?.transporterType === "BUSINESS";
+
+  const approvedBusinessRegistrationVerification =
+    businessRegistrationVerification?.providerStatus === "SUCCESS" &&
+    businessRegistrationVerification.adminStatus === "APPROVED" &&
+    businessRegistrationVerification.adminApproved === true;
+
+  const transporterVerificationsApproved =
+    approvedNinVerification &&
+    approvedDriversLicenseVerification &&
+    (!businessRegistrationRequired ||
+      approvedBusinessRegistrationVerification);
+
+  const verificationPending =
+    verifications.some(
+      (verification) =>
+        verification.providerStatus === "PENDING" &&
+        verification.adminStatus === "PENDING",
+    );
+
+  const verificationRejected = verifications.some(
+    (verification) => verification.adminStatus === "REJECTED",
+  );
+
+  const legacyIdentityDocuments = documents.filter(
     (document) => document.type === "IDENTITY_DOCUMENT",
-  );
-
-  const approvedIdentityDocument = identityDocuments.some(
-    (document) =>
-      document.status === "APPROVED" &&
-      document.adminApproved &&
-      document.verificationProvider === "YOUVERIFY" &&
-      Boolean(document.externalVerificationId) &&
-      Boolean(document.verifiedAt),
-  );
-
-  const pendingIdentityVerification = identityDocuments.some(
-    (document) =>
-      document.verificationProvider === "YOUVERIFY" &&
-      Boolean(document.externalVerificationId) &&
-      !document.verifiedAt &&
-      document.status === "PENDING",
-  );
-
-  const identityRejected = identityDocuments.some(
-    (document) => document.status === "REJECTED",
   );
 
   const insuranceDocuments = documents.filter(
@@ -175,7 +222,7 @@ export async function getTransporterOnboardingStatus(transporterId: string) {
     user.status === "ACTIVE" &&
     emailVerified &&
     profileCompleted &&
-    approvedIdentityDocument &&
+    transporterVerificationsApproved &&
     registeredVehicle &&
     approvedVehicle &&
     availableVehicle &&
@@ -185,8 +232,7 @@ export async function getTransporterOnboardingStatus(transporterId: string) {
   let currentStep:
     | "EMAIL_VERIFICATION"
     | "PROFILE_SETUP"
-    | "DOCUMENTS"
-    | "YOUVERIFY"
+    | "VERIFICATION"
     | "VEHICLE"
     | "ADMIN_REVIEW"
     | "APPROVED"
@@ -197,13 +243,8 @@ export async function getTransporterOnboardingStatus(transporterId: string) {
     currentStep = "EMAIL_VERIFICATION";
   } else if (!profileCompleted) {
     currentStep = "PROFILE_SETUP";
-  } else if (!identityDocuments.length) {
-    currentStep = "DOCUMENTS";
-  } else if (
-    identityRejected ||
-    (!approvedIdentityDocument && !pendingIdentityVerification)
-  ) {
-    currentStep = "YOUVERIFY";
+  } else if (!transporterVerificationsApproved) {
+    currentStep = "VERIFICATION";
   } else if (!registeredVehicle || !approvedVehicle) {
     currentStep = "VEHICLE";
   } else if (!adminApproved) {
@@ -231,10 +272,19 @@ export async function getTransporterOnboardingStatus(transporterId: string) {
     },
 
     identity: {
-      submitted: identityDocuments.length > 0,
-      youverifyVerified: approvedIdentityDocument,
-      verificationPending: pendingIdentityVerification,
-      rejected: identityRejected,
+      submitted: verifications.length > 0,
+      ninSubmitted: Boolean(ninVerification),
+      ninApproved: approvedNinVerification,
+      driversLicenseSubmitted: Boolean(driversLicenseVerification),
+      driversLicenseApproved: approvedDriversLicenseVerification,
+      businessRegistrationSubmitted: Boolean(businessRegistrationVerification),
+      businessRegistrationApproved:
+        approvedBusinessRegistrationVerification,
+      businessRegistrationRequired,
+      youverifyVerified: transporterVerificationsApproved,
+      verificationPending,
+      rejected: verificationRejected,
+      legacyIdentityDocumentsSubmitted: legacyIdentityDocuments.length > 0,
     },
 
     vehicle: {

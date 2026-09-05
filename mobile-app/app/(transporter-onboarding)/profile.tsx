@@ -19,6 +19,9 @@ import { useAuthStore } from "../../src/auth/auth.store";
 export default function TransporterProfileSetupScreen() {
   const user = useAuthStore((state) => state.user);
 
+  const [transporterType, setTransporterType] = useState<
+    "INDIVIDUAL" | "BUSINESS"
+  >("INDIVIDUAL");
   const [companyName, setCompanyName] = useState("");
   const [businessRegistrationNumber, setBusinessRegistrationNumber] =
     useState("");
@@ -30,6 +33,7 @@ export default function TransporterProfileSetupScreen() {
 
   const handleContinue = async () => {
     const values = {
+      transporterType,
       companyName: companyName.trim(),
       businessRegistrationNumber: businessRegistrationNumber.trim(),
       address: address.trim(),
@@ -38,12 +42,28 @@ export default function TransporterProfileSetupScreen() {
       country: country.trim(),
     };
 
-    const missing = Object.entries(values).some(([, value]) => !value);
+    const requiredValues = [
+      values.address,
+      values.city,
+      values.state,
+      values.country,
+    ];
+
+    if (transporterType === "BUSINESS") {
+      requiredValues.push(
+        values.companyName,
+        values.businessRegistrationNumber,
+      );
+    }
+
+    const missing = requiredValues.some((value) => !value);
 
     if (missing) {
       Alert.alert(
         "Profile incomplete",
-        "Please complete all profile fields before continuing.",
+        transporterType === "BUSINESS"
+          ? "Please complete all business and profile fields before continuing."
+          : "Please complete all profile fields before continuing.",
       );
       return;
     }
@@ -101,7 +121,7 @@ export default function TransporterProfileSetupScreen() {
             <Text style={styles.brand}>TRANSCONET</Text>
             <Text style={styles.title}>Set up your transporter profile.</Text>
             <Text style={styles.subtitle}>
-              Tell us about the business or transport operation you represent.
+              Tell us how you are registering and where you operate.
             </Text>
 
             <View style={styles.notice}>
@@ -113,27 +133,78 @@ export default function TransporterProfileSetupScreen() {
             </View>
 
             <View style={styles.form}>
-              <Text style={styles.label}>COMPANY NAME</Text>
-              <TextInput
-                value={companyName}
-                onChangeText={setCompanyName}
-                placeholder="Company or business name"
-                placeholderTextColor="#999999"
-                autoCapitalize="words"
-                style={styles.input}
-                editable={!loading}
-              />
+              <Text style={styles.label}>HOW ARE YOU REGISTERING?</Text>
+              <View style={styles.typeRow}>
+                <Pressable
+                  onPress={() => setTransporterType("INDIVIDUAL")}
+                  disabled={loading}
+                  style={[
+                    styles.typeOption,
+                    transporterType === "INDIVIDUAL" && styles.typeOptionActive,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.radio,
+                      transporterType === "INDIVIDUAL" && styles.radioActive,
+                    ]}
+                  />
+                  <Text style={styles.typeText}>Individual Transporter</Text>
+                </Pressable>
 
-              <Text style={styles.label}>BUSINESS REGISTRATION NUMBER</Text>
-              <TextInput
-                value={businessRegistrationNumber}
-                onChangeText={setBusinessRegistrationNumber}
-                placeholder="Registration number"
-                placeholderTextColor="#999999"
-                autoCapitalize="characters"
-                style={styles.input}
-                editable={!loading}
-              />
+                <Pressable
+                  onPress={() => setTransporterType("BUSINESS")}
+                  disabled={loading}
+                  style={[
+                    styles.typeOption,
+                    transporterType === "BUSINESS" && styles.typeOptionActive,
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.radio,
+                      transporterType === "BUSINESS" && styles.radioActive,
+                    ]}
+                  />
+                  <Text style={styles.typeText}>Registered Business</Text>
+                </Pressable>
+              </View>
+
+              {transporterType === "BUSINESS" && (
+                <>
+                  <Text style={styles.label}>COMPANY NAME</Text>
+                  <TextInput
+                    value={companyName}
+                    onChangeText={setCompanyName}
+                    placeholder="Company or business name"
+                    placeholderTextColor="#999999"
+                    autoCapitalize="words"
+                    style={styles.input}
+                    editable={!loading}
+                  />
+
+                  <TextInput
+                    value={companyName}
+                    onChangeText={setCompanyName}
+                    placeholder="Company or business name"
+                    placeholderTextColor="#999999"
+                    autoCapitalize="words"
+                    style={styles.input}
+                    editable={!loading}
+                  />
+
+                  <Text style={styles.label}>BUSINESS REGISTRATION NUMBER</Text>
+                  <TextInput
+                    value={businessRegistrationNumber}
+                    onChangeText={setBusinessRegistrationNumber}
+                    placeholder="Registration number"
+                    placeholderTextColor="#999999"
+                    autoCapitalize="characters"
+                    style={styles.input}
+                    editable={!loading}
+                  />
+                </>
+              )}
 
               <Text style={styles.label}>ADDRESS</Text>
               <TextInput
@@ -187,7 +258,7 @@ export default function TransporterProfileSetupScreen() {
                 {loading ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={styles.buttonText}>CONTINUE TO DOCUMENTS</Text>
+                  <Text style={styles.buttonText}>CONTINUE</Text>
                 )}
               </Pressable>
 
@@ -292,6 +363,40 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: 8,
+  },
+  typeRow: {
+    gap: 10,
+    marginBottom: 6,
+  },
+  typeOption: {
+    minHeight: 54,
+    borderWidth: 1,
+    borderColor: "#D8D8D8",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
+  },
+  typeOptionActive: {
+    borderColor: "#111111",
+  },
+  radio: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#999999",
+    marginRight: 12,
+  },
+  radioActive: {
+    borderWidth: 6,
+    borderColor: "#111111",
+  },
+  typeText: {
+    fontSize: 15,
+    color: "#111111",
+    fontWeight: "600",
   },
   label: {
     fontSize: 11,

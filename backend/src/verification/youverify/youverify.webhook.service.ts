@@ -282,6 +282,17 @@ export async function processYouverifyWebhook(
       },
     });
 
+  const verification =
+    await prisma.verification.findFirst({
+      where: {
+        externalVerificationId: verificationId,
+        verificationProvider: PROVIDER,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
   let webhookEvent;
 
   try {
@@ -293,6 +304,7 @@ export async function processYouverifyWebhook(
           providerEventId,
           eventType,
           documentId: document?.id,
+          verificationId: verification?.id,
           payload: payload as InputJsonValue,
         },
       });
@@ -325,14 +337,15 @@ export async function processYouverifyWebhook(
   }
 
   /*
-   * An authenticated event with no matching document is retained
-   * for administrative investigation, but must not modify anything.
+   * An authenticated event with no matching TransConet verification
+   * record is retained for administrative investigation, but must
+   * not modify any business record.
    */
-  if (!document) {
+  if (!document && !verification) {
     return {
       handled: false,
       duplicate: false,
-      reason: "Document not found",
+      reason: "Verification record not found",
       verificationId,
       webhookEventId: webhookEvent.id,
     };
@@ -340,12 +353,84 @@ export async function processYouverifyWebhook(
 
   try {
     /*
-     * Provider verification success does NOT approve the document.
+     * New number-based transporter verification records are handled
+     * separately from legacy Document verification.
      *
-     * It only records that external verification succeeded.
+     * Youverify success/failure updates only provider state.
+     * Administrative approval/rejection remains a separate decision.
+     */
+    if (verification) {
+      const verificationUpdate: {
+        providerResponse: InputJsonValue;
+        providerStatus?: "SUCCESS" | "FAILED" | "PENDING";
+        verifiedAt?: Date | null;
+      } = {
+        providerResponse: payload as InputJsonValue,
+      };
+
+      if (isVerificationSuccess(status)) {
+        verificationUpdate.providerStatus = "SUCCESS";
+        verificationUpdate.verifiedAt =
+          verification.verifiedAt ?? new Date();
+      } else if (isVerificationFailure(status)) {
+        verificationUpdate.providerStatus = "FAILED";
+      } else {
+        verificationUpdate.providerStatus = "PENDING";
+      }
+
+      const updatedVerification =
+        await prisma.verification.update({
+          where: {
+            id: verification.id,
+          },
+          data: verificationUpdate,
+        });
+
+      publishEvent("admin", {
+        eventType: isVerificationSuccess(status)
+          ? "VERIFICATION_COMPLETED"
+          : isVerificationFailure(status)
+            ? "VERIFICATION_FAILED"
+            : "VERIFICATION_UPDATED",
+        module: "VERIFICATION_CENTER",
+        entityType: "VERIFICATION",
+        entityId: updatedVerification.id,
+        data: updatedVerification,
+      });
+
+      const processedEvent =
+        await prisma.youverifyWebhookEvent.update({
+          where: {
+            id: webhookEvent.id,
+          },
+          data: {
+            processed: true,
+            processedAt: new Date(),
+          },
+        });
+
+      return {
+        handled: true,
+        duplicate: false,
+        processed: processedEvent.processed,
+        webhookEventId: processedEvent.id,
+        verificationId,
+        status,
+        verification: updatedVerification,
+      };
+    }
+
+    /*
+     * Legacy document-based verification flow.
+     * Provider success does NOT approve the document.
      * Administrative approval remains a separate operation.
      */
+    if (!document) {
+      throw new Error("Document verification record not found");
+    }
+
     let updatedDocument = document;
+
 
     if (isVerificationSuccess(status)) {
       updatedDocument =

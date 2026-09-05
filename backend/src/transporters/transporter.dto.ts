@@ -17,8 +17,8 @@ export function toTransporterDto(transporter: any) {
     userId: transporter.userId,
 
     companyName: transporter.companyName,
-    businessRegistrationNumber:
-      transporter.businessRegistrationNumber,
+    transporterType: transporter.transporterType,
+    businessRegistrationNumber: transporter.businessRegistrationNumber,
 
     address: transporter.address,
     city: transporter.city,
