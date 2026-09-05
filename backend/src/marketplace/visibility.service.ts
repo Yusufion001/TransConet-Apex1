@@ -338,11 +338,9 @@ export async function getVisibleMarketplaceLoads(
        */
       if (
         visibilityPolicy.requireVehicleLocation &&
-        (
-          !nearestVehicle ||
-          nearestVehicle.distanceKm >
-            effectiveRadiusKm
-        )
+        nearestVehicle &&
+        nearestVehicle.distanceKm >
+          effectiveRadiusKm
       ) {
         return null;
       }
