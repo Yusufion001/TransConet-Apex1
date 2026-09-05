@@ -112,7 +112,7 @@ export default function TransporterReviewScreen() {
   const handleContinue = () => {
     if (!status) return;
 
-    if (status.marketplaceReady) {
+    if (status.marketplaceReady || status.adminApproved) {
       router.replace("/(transporter)");
       return;
     }
@@ -269,17 +269,15 @@ export default function TransporterReviewScreen() {
         <Pressable
           style={[
             styles.primaryButton,
-            !status.marketplaceReady && styles.buttonDisabled,
+            !status.adminApproved && styles.buttonDisabled,
           ]}
           onPress={handleContinue}
-          disabled={!status.marketplaceReady}
+          disabled={!status.adminApproved}
         >
           <Text style={styles.primaryButtonText}>
-            {status.marketplaceReady
+            {status.adminApproved
               ? "Enter transporter dashboard"
-              : status.adminApproved
-                ? "Complete requirements"
-                : "Awaiting approval"}
+              : "Awaiting approval"}
           </Text>
         </Pressable>
 

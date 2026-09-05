@@ -107,7 +107,7 @@ export default function TransporterLayout() {
 
         if (cancelled) return;
 
-        if (onboarding.marketplaceReady) {
+        if (onboarding.marketplaceReady || onboarding.currentStep === "APPROVED") {
           setRoute("READY");
           return;
         }
@@ -126,7 +126,6 @@ export default function TransporterLayout() {
           case "ADMIN_REVIEW":
           case "TIER_2_DOCUMENTS":
           case "TIER_2_REVIEW":
-          case "APPROVED":
             setRoute("/(transporter-onboarding)/review");
             break;
           case "EMAIL_VERIFICATION":

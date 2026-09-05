@@ -249,14 +249,12 @@ export async function getTransporterOnboardingStatus(transporterId: string) {
     currentStep = "VEHICLE";
   } else if (!adminApproved) {
     currentStep = "ADMIN_REVIEW";
-  } else if (
-    user.transporterTier === "TIER_2" &&
-    (!tier2RequirementsMet || !profile?.tier2Approved)
-  ) {
-    currentStep = tier2DocumentsSubmitted
-      ? "TIER_2_APPROVAL"
-      : "TIER_2_DOCUMENTS";
   } else {
+    /*
+     * Tier 2 is an optional upgrade.
+     * It must never block completion of Tier 1
+     * transporter registration or dashboard access.
+     */
     currentStep = "APPROVED";
   }
 
