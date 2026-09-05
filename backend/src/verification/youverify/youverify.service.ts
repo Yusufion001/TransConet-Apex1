@@ -119,9 +119,10 @@ export async function verifyBusinessRegistration(
   }
 
   return youverifyClient.post<YouverifyResponse>(
-    "/v2/api/verifications/ng/company/basic",
+    "/v2/api/verifications/global/company-advance-check",
     {
       registrationNumber,
+      countryCode: "NG",
       isConsent: true,
     },
   );
