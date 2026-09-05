@@ -205,6 +205,11 @@ router.post(
         data: verification,
       });
     } catch (error) {
+      console.error(
+        "[Transporter Verification] Provider request failed:",
+        error instanceof Error ? error.message : error,
+      );
+
       return res.status(400).json({
         success: false,
         error:
