@@ -131,11 +131,51 @@ router.patch("/:id/approve", async (req: AuthenticatedRequest, res) => {
       params.id,
       req.user!.id,
     );
-    return res.json({ success: true, data: document });
+
+    return res.json({
+      success: true,
+      data: document,
+    });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
+    if (error instanceof Error) {
+      if (error.message === "Document not found") {
+        return res.status(404).json({
+          success: false,
+          error: error.message,
+        });
+      }
+
+      if (
+        error.message === "Document is already approved" ||
+        error.message ===
+          "This document must have a successful Youverify verification before admin approval"
+      ) {
+        return res.status(409).json({
+          success: false,
+          error: error.message,
+        });
+      }
+
+      console.error("Admin document approval error:", error);
+
+      return res.status(500).json({
+        success: false,
+        error: "Unable to approve document",
+      });
+    }
+
+    console.error("Admin document approval error:", error);
+
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Unable to approve document",
     });
   }
 });
