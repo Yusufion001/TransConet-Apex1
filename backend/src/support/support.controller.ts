@@ -41,6 +41,7 @@ export async function listAdminSupportTickets(
       data: tickets,
     });
   } catch (error) {
+    console.error("[Admin Support Tickets] FAILED:", error);
     const message = getErrorMessage(error);
 
     return res.status(getErrorStatus(message)).json({
