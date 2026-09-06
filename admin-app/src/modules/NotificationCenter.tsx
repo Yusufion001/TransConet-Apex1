@@ -2,9 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createNotification,
   getAdminNotifications,
+  getNotificationCustomers,
   getNotificationSummary,
   markNotificationAsRead,
   type AdminNotification,
+  type NotificationCustomer,
   type NotificationSummary,
 } from "../api/notifications";
 
@@ -38,9 +40,15 @@ function NotificationCenter() {
   const [typeFilter, setTypeFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [recipientId, setRecipientId] = useState("");
+  const [selectedCustomer, setSelectedCustomer] =
+    useState<NotificationCustomer | null>(null);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [customerResults, setCustomerResults] = useState<
+    NotificationCustomer[]
+  >([]);
+  const [loadingCustomers, setLoadingCustomers] = useState(false);
   const [notificationType, setNotificationType] = useState("SYSTEM_TEST");
   const [notificationTitle, setNotificationTitle] = useState("");
   const [notificationMessage, setNotificationMessage] = useState("");
@@ -63,7 +71,7 @@ function NotificationCenter() {
             ? true
             : undefined;
 
-      const [summaryData, notificationData] = await Promise.all([
+      const [summaryResult, notificationResult] = await Promise.allSettled([
         getNotificationSummary(),
         getAdminNotifications({
           read,
@@ -71,31 +79,26 @@ function NotificationCenter() {
         }),
       ]);
 
-      setSummary(summaryData);
-      setNotifications(notificationData);
+      const errors: string[] = [];
+
+      if (summaryResult.status === "fulfilled") {
+        setSummary(summaryResult.value);
+      } else {
+        errors.push("Summary could not be loaded.");
+      }
+
+      if (notificationResult.status === "fulfilled") {
+        setNotifications(notificationResult.value);
+      } else {
+        errors.push("Notification list could not be loaded.");
+      }
+
+      setError(errors.length ? errors.join(" ") : null);
     } catch (error: unknown) {
-      const axiosError = error as {
-        response?: {
-          status?: number;
-          data?: {
-            error?: string;
-            message?: string;
-          };
-        };
-        message?: string;
-      };
-
-      const status = axiosError.response?.status;
-      const backendError =
-        axiosError.response?.data?.error ??
-        axiosError.response?.data?.message ??
-        axiosError.message ??
-        "Unknown error";
-
       setError(
-        status
-          ? `Notification Center request failed (${status}): ${backendError}`
-          : `Notification Center request failed: ${backendError}`,
+        error instanceof Error
+          ? error.message
+          : "Notification Center could not be loaded.",
       );
     } finally {
       setLoading(false);
@@ -132,8 +135,8 @@ function NotificationCenter() {
   }
 
 async function handleCreateNotification() {
-  if (!recipientId || !notificationTitle || !notificationMessage) {
-    setError("Recipient, title, and message are required.");
+  if (!selectedCustomer || !notificationTitle || !notificationMessage) {
+    setError("Customer, title, and message are required.");
     return;
   }
 
@@ -142,13 +145,15 @@ async function handleCreateNotification() {
     setError("");
 
     await createNotification({
-      recipientId,
+      recipientId: selectedCustomer.id,
       type: notificationType,
       title: notificationTitle,
       message: notificationMessage,
     });
 
-    setRecipientId("");
+    setSelectedCustomer(null);
+    setCustomerSearch("");
+    setCustomerResults([]);
     setNotificationTitle("");
     setNotificationMessage("");
     setShowCreateForm(false);
@@ -164,6 +169,27 @@ async function handleCreateNotification() {
     setCreating(false);
   }
 }
+
+  useEffect(() => {
+    if (!showCreateForm) {
+      setCustomerResults([]);
+      return;
+    }
+
+    const timer = window.setTimeout(async () => {
+      try {
+        setLoadingCustomers(true);
+        const results = await getNotificationCustomers(customerSearch);
+        setCustomerResults(results);
+      } catch {
+        setCustomerResults([]);
+      } finally {
+        setLoadingCustomers(false);
+      }
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [customerSearch, showCreateForm]);
 
   useEffect(() => {
     // Intentional: synchronize component state with the backend API.
@@ -241,13 +267,72 @@ async function handleCreateNotification() {
     <h3>Create platform notification</h3>
 
     <label>
-      <span>Recipient User ID</span>
+      <span>Customer</span>
       <input
-        value={recipientId}
-        onChange={(event) => setRecipientId(event.target.value)}
-        placeholder="Customer user ID"
+        value={customerSearch}
+        onChange={(event) => {
+          setCustomerSearch(event.target.value);
+          setSelectedCustomer(null);
+        }}
+        placeholder="Search customer by name or email"
+        disabled={!!selectedCustomer}
       />
     </label>
+
+    {selectedCustomer ? (
+      <div className="module-card">
+        <strong>
+          {[selectedCustomer.firstName, selectedCustomer.lastName]
+            .filter(Boolean)
+            .join(" ") || "Unnamed customer"}
+        </strong>
+        <span>
+          {selectedCustomer.email || "No email"} · Customer ·{" "}
+          {selectedCustomer.status}
+        </span>
+        <button
+          type="button"
+          className="text-button"
+          onClick={() => {
+            setSelectedCustomer(null);
+            setCustomerSearch("");
+          }}
+        >
+          Change customer
+        </button>
+      </div>
+    ) : (
+      <div>
+        {loadingCustomers ? (
+          <span>Searching customers…</span>
+        ) : customerSearch.trim() && customerResults.length === 0 ? (
+          <span>No customers found.</span>
+        ) : (
+          customerResults.map((customer) => (
+            <button
+              key={customer.id}
+              type="button"
+              className="text-button"
+              onClick={() => {
+                setSelectedCustomer(customer);
+                setCustomerSearch(
+                  [customer.firstName, customer.lastName]
+                    .filter(Boolean)
+                    .join(" "),
+                );
+                setCustomerResults([]);
+              }}
+            >
+              {[customer.firstName, customer.lastName]
+                .filter(Boolean)
+                .join(" ") || "Unnamed customer"}
+              {" — "}
+              {customer.email || "No email"}
+            </button>
+          ))
+        )}
+      </div>
+    )}
 
     <label>
       <span>Type</span>
@@ -387,6 +472,12 @@ async function handleCreateNotification() {
                   <div className="notification-meta">
                     <span>
                       Recipient: <strong>{recipientName(notification)}</strong>
+                      {notification.recipient?.email
+                        ? ` — ${notification.recipient.email}`
+                        : ""}
+                      {notification.recipient?.role
+                        ? ` · ${notification.recipient.role}`
+                        : ""}
                     </span>
 
                     {notification.relatedType && (

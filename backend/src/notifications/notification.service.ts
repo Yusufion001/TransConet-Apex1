@@ -91,6 +91,38 @@ export async function markNotificationAsRead(
 
 
 
+export async function getNotificationCustomers(search?: string) {
+  const value = search?.trim();
+
+  return prisma.user.findMany({
+    where: {
+      role: "CUSTOMER",
+      ...(value
+        ? {
+            OR: [
+              { firstName: { contains: value, mode: "insensitive" } },
+              { lastName: { contains: value, mode: "insensitive" } },
+              { email: { contains: value, mode: "insensitive" } },
+            ],
+          }
+        : {}),
+    },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      role: true,
+      status: true,
+    },
+    orderBy: [
+      { firstName: "asc" },
+      { lastName: "asc" },
+    ],
+    take: 20,
+  });
+}
+
 export async function getAdminNotifications(filters?: {
   read?: boolean;
   type?: string;

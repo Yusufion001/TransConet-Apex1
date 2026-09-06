@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { z } from "zod";
 import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
@@ -11,6 +12,7 @@ import {
 import {
   getAdminNotifications,
   getAdminNotificationSummary,
+  getNotificationCustomers,
   markNotificationAsRead,
 } from "../notifications/notification.service.js";
 
@@ -19,6 +21,23 @@ const router = Router();
 router.use(authenticate);
 router.use(requireAdmin);
 router.use(requireAdminModule("NOTIFICATION_CENTER"));
+
+router.get("/customers", async (req, res) => {
+  try {
+    const search = z.string().trim().max(100).optional().parse(req.query.search);
+    const customers = await getNotificationCustomers(search);
+
+    res.json({
+      success: true,
+      data: customers,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Server error",
+    });
+  }
+});
 
 router.get(
   "/",

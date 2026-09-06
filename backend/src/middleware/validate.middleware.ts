@@ -25,8 +25,12 @@ export function validate(
       });
     }
 
-    (req as Request & Record<ValidationTarget, unknown>)[target] =
-      result.data;
+    if (target === "query") {
+      Object.assign(req.query, result.data);
+    } else {
+      (req as Request & Record<ValidationTarget, unknown>)[target] =
+        result.data;
+    }
 
     return next();
   };
