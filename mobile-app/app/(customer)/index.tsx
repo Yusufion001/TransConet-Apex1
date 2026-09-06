@@ -8,8 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { Link, router } from "expo-router";
-import { useNavigation } from "@react-navigation/native";
+import { Link, router, useNavigation } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { useAuthStore } from "../../src/auth/auth.store";
