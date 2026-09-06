@@ -35,6 +35,20 @@ export default function CustomerLayout() {
         }}
       />
       <Drawer.Screen
+        name="notifications/index"
+        options={{
+          drawerLabel: "Notifications",
+          title: "Notifications",
+        }}
+      />
+      <Drawer.Screen
+        name="account"
+        options={{
+          drawerLabel: "Account",
+          title: "Account",
+        }}
+      />
+      <Drawer.Screen
         name="bookings/index"
         options={{
           drawerLabel: "My Shipments",
