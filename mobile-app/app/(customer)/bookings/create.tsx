@@ -11,7 +11,26 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { createBooking, estimateBookingFare } from "../../../src/api/bookings";
+import {
+  createBooking,
+  estimateBookingFare,
+  type TruckCategory,
+} from "../../../src/api/bookings";
+
+const TRUCK_CATEGORIES: TruckCategory[] = [
+  "MINI_TRUCK",
+  "LIGHT_TRUCK",
+  "MEDIUM_TRUCK",
+  "HEAVY_TRUCK",
+  "CONTAINER_TRUCK",
+  "REFRIGERATED_TRUCK",
+  "TANKER",
+  "SPECIALIZED",
+];
+
+function formatTruckCategory(value: TruckCategory) {
+  return value.replace(/_/g, " ");
+}
 
 type Coordinates = {
   latitude: number;
@@ -23,6 +42,8 @@ export default function CreateBooking() {
   const [destination, setDestination] = useState("");
   const [cargoDescription, setCargoDescription] = useState("");
   const [cargoWeight, setCargoWeight] = useState("");
+  const [truckCategory, setTruckCategory] =
+    useState<TruckCategory | null>(null);
   const [pickupCoordinates, setPickupCoordinates] =
     useState<Coordinates | null>(null);
   const [loading, setLoading] = useState(false);
@@ -114,10 +135,15 @@ export default function CreateBooking() {
   }
 
   async function submit() {
-    if (!pickupLocation.trim() || !destination.trim() || !cargoWeight.trim()) {
+    if (
+      !pickupLocation.trim() ||
+      !destination.trim() ||
+      !cargoWeight.trim() ||
+      !truckCategory
+    ) {
       Alert.alert(
         "Missing information",
-        "Please enter pickup, destination, and cargo weight.",
+        "Please enter pickup, destination, vehicle class, and cargo weight.",
       );
       return;
     }
@@ -168,7 +194,7 @@ export default function CreateBooking() {
           destinationLatitude: resolvedDestination.latitude,
           destinationLongitude: resolvedDestination.longitude,
           cargoDescription: cargoDescription.trim() || undefined,
-          truckCategory: "LIGHT_TRUCK",
+          truckCategory,
           cargoWeight: numericWeight,
         });
 
@@ -193,7 +219,7 @@ export default function CreateBooking() {
         destinationLatitude: resolvedDestination.latitude,
         destinationLongitude: resolvedDestination.longitude,
         cargoDescription: cargoDescription.trim() || undefined,
-        truckCategory: "LIGHT_TRUCK",
+        truckCategory,
         cargoWeight: numericWeight,
         paymentMethod,
       });
@@ -264,6 +290,51 @@ export default function CreateBooking() {
         placeholder="Where should we deliver it?"
         style={styles.input}
       />
+
+      <Text style={styles.label}>Vehicle class required</Text>
+      <Text style={styles.fieldHint}>
+        Select the class of vehicle required for this shipment.
+      </Text>
+
+      <View style={styles.categoryList}>
+        {TRUCK_CATEGORIES.map((category) => (
+          <Pressable
+            key={category}
+            disabled={loading}
+            onPress={() => {
+              setTruckCategory(category);
+              setFareEstimate(null);
+              setDistanceKm(null);
+              setPaymentMethod(null);
+            }}
+            style={[
+              styles.categoryOption,
+              truckCategory === category && styles.categoryOptionSelected,
+            ]}
+          >
+            <Text
+              style={[
+                styles.categoryOptionText,
+                truckCategory === category &&
+                  styles.categoryOptionTextSelected,
+              ]}
+            >
+              {formatTruckCategory(category)}
+            </Text>
+
+            <View
+              style={[
+                styles.categoryRadio,
+                truckCategory === category && styles.categoryRadioSelected,
+              ]}
+            >
+              {truckCategory === category && (
+                <View style={styles.categoryRadioDot} />
+              )}
+            </View>
+          </Pressable>
+        ))}
+      </View>
 
       <Text style={styles.label}>Cargo weight</Text>
 
@@ -422,6 +493,59 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 16,
     marginBottom: 18,
+  },
+  fieldHint: {
+    fontSize: 13,
+    color: "#667085",
+    lineHeight: 19,
+    marginTop: -2,
+    marginBottom: 12,
+  },
+  categoryList: {
+    marginBottom: 18,
+  },
+  categoryOption: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  categoryOptionSelected: {
+    borderColor: "#175CD3",
+    borderWidth: 2,
+  },
+  categoryOptionText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#344054",
+    textTransform: "capitalize",
+  },
+  categoryOptionTextSelected: {
+    color: "#175CD3",
+  },
+  categoryRadio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: "#98A2B3",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  categoryRadioSelected: {
+    borderColor: "#175CD3",
+  },
+  categoryRadioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#175CD3",
   },
   locationButton: {
     borderWidth: 1,

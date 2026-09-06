@@ -83,6 +83,7 @@ export type Vehicle = {
   registrationNumber: string;
   vehicleType: string;
   vehicleClass: string;
+  vehicleBodyType?: string | null;
   make?: string | null;
   model?: string | null;
   year?: number | null;
@@ -221,6 +222,7 @@ export async function createVehicle(input: {
   registrationNumber: string;
   vehicleType: string;
   vehicleClass: string;
+  vehicleBodyType?: string;
 }) {
   const response = await apiClient.post<ApiResponse<Vehicle>>(
     "/vehicles",

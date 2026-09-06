@@ -27,16 +27,22 @@ const VEHICLE_TYPES = [
 ];
 
 const VEHICLE_CLASSES = [
-  "Light",
-  "Medium",
-  "Heavy",
-];
+  "MINI_TRUCK",
+  "LIGHT_TRUCK",
+  "MEDIUM_TRUCK",
+  "HEAVY_TRUCK",
+  "CONTAINER_TRUCK",
+  "REFRIGERATED_TRUCK",
+  "TANKER",
+  "SPECIALIZED",
+] as const;
 
 export default function TransporterVehicleScreen() {
   const user = useAuthStore((state) => state.user);
 
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [vehicleType, setVehicleType] = useState("");
+  const [vehicleBodyType, setVehicleBodyType] = useState("");
   const [vehicleClass, setVehicleClass] = useState("");
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,6 +62,7 @@ export default function TransporterVehicleScreen() {
           setVehicle(vehicles[0]);
           setRegistrationNumber(vehicles[0].registrationNumber);
           setVehicleType(vehicles[0].vehicleType);
+          setVehicleBodyType(vehicles[0].vehicleBodyType ?? "");
           setVehicleClass(vehicles[0].vehicleClass);
         }
       } catch (error) {
@@ -79,10 +86,15 @@ export default function TransporterVehicleScreen() {
 
     const registration = registrationNumber.trim();
 
-    if (!registration || !vehicleType || !vehicleClass) {
+    if (
+      !registration ||
+      !vehicleType ||
+      !vehicleBodyType ||
+      !vehicleClass
+    ) {
       Alert.alert(
         "Incomplete vehicle details",
-        "Please provide the registration number, vehicle type, and vehicle class.",
+        "Please provide the registration number, vehicle type, vehicle body type, and vehicle class.",
       );
       return;
     }
@@ -93,6 +105,7 @@ export default function TransporterVehicleScreen() {
       const createdVehicle = await createVehicle({
         registrationNumber: registration,
         vehicleType,
+        vehicleBodyType,
         vehicleClass,
       });
 
@@ -186,6 +199,18 @@ export default function TransporterVehicleScreen() {
             ))}
           </View>
 
+          <Text style={styles.label}>Vehicle body type</Text>
+          <TextInput
+            value={vehicleBodyType}
+            onChangeText={setVehicleBodyType}
+            placeholder="e.g. Flatbed or Tarpaulin"
+            placeholderTextColor="#999999"
+            autoCapitalize="words"
+            autoCorrect={false}
+            style={styles.input}
+            editable={!saving}
+          />
+
           <Text style={styles.label}>Vehicle class</Text>
           <View style={styles.options}>
             {VEHICLE_CLASSES.map((vehicleClassOption) => (
@@ -206,7 +231,7 @@ export default function TransporterVehicleScreen() {
                       styles.optionTextSelected,
                   ]}
                 >
-                  {vehicleClassOption}
+                  {vehicleClassOption.replace(/_/g, " ")}
                 </Text>
               </Pressable>
             ))}

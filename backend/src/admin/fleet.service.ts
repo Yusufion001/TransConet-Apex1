@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import type { VehicleClass } from "../../generated/prisma/enums.js";
 import { publishEvent } from "../realtime/event-bus.js";
 
 export async function getAdminVehicles() {
@@ -41,7 +42,8 @@ export async function updateAdminVehicle(
   data: {
     registrationNumber?: string;
     vehicleType?: string;
-    vehicleClass?: any;
+    vehicleClass?: VehicleClass;
+    vehicleBodyType?: string;
     make?: string;
     model?: string;
     year?: number;

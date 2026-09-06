@@ -373,7 +373,6 @@ export async function createMarketplaceBid(data: {
 
   if (
     request.truckCategory &&
-    vehicle.vehicleType !== request.truckCategory &&
     vehicle.vehicleClass !== request.truckCategory
   ) {
     throw new Error("Vehicle does not match requested truck category");
@@ -632,8 +631,7 @@ export async function selectMarketplaceBid(
 
     if (
       request.truckCategory &&
-      vehicle.vehicleType !== request.truckCategory &&
-      vehicle.vehicleClass !== request.truckCategory
+    vehicle.vehicleClass !== request.truckCategory
     ) {
       throw new Error("Selected vehicle no longer matches truck category");
     }
