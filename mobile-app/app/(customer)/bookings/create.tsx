@@ -32,6 +32,58 @@ function formatTruckCategory(value: TruckCategory) {
   return value.replace(/_/g, " ");
 }
 
+const VEHICLE_CLASS_SPEC: Record<
+  TruckCategory,
+  {
+    capacityRange: string;
+    profiles: string;
+    capacityNote?: string;
+  }
+> = {
+  MINI_TRUCK: {
+    capacityRange: "500–1,500 kg",
+    profiles:
+      "Last-mile delivery, small parcels, retail distribution (e.g. Suzuki mini-vans, light pickups)",
+  },
+  LIGHT_TRUCK: {
+    capacityRange: "1,500–4,000 kg",
+    profiles:
+      "Urban FMCG distribution, light construction materials, furniture (e.g. Mitsubishi Canter, Toyota Dyna)",
+  },
+  MEDIUM_TRUCK: {
+    capacityRange: "4,000–15,000 kg",
+    profiles:
+      "Regional inter-state haulage, mid-sized agricultural yields, commercial electronics",
+  },
+  HEAVY_TRUCK: {
+    capacityRange: "15,000–30,000 kg",
+    profiles:
+      "Long-haul bulk freight, heavy industrial goods, large-scale agricultural transport",
+  },
+  CONTAINER_TRUCK: {
+    capacityRange: "20,000–35,000 kg",
+    profiles:
+      "Port clearance and imported goods, standard 20ft/40ft shipping containers",
+  },
+  REFRIGERATED_TRUCK: {
+    capacityRange: "1,500–25,000 kg",
+    profiles:
+      "Highly variable by chassis; temperature-sensitive perishables or pharmaceuticals",
+  },
+  TANKER: {
+    capacityRange: "10,000–45,000 kg",
+    capacityNote:
+      "Approximately 10,000–45,000 liters depending on tanker configuration",
+    profiles:
+      "Liquid bulk: petroleum products, vegetable oils, chemicals",
+  },
+  SPECIALIZED: {
+    capacityRange: "30,000–100,000+ kg",
+    profiles:
+      "Lowbeds/multi-axle trailers, oversized cargo, industrial plants/heavy construction equipment",
+  },
+};
+
 type Coordinates = {
   latitude: number;
   longitude: number;
@@ -336,6 +388,22 @@ export default function CreateBooking() {
         ))}
       </View>
 
+      {truckCategory ? (
+        <View style={styles.classInfoBox}>
+          <Text style={styles.classInfoTitle}>
+            Recommended capacity: {VEHICLE_CLASS_SPEC[truckCategory].capacityRange}
+          </Text>
+          <Text style={styles.classInfoText}>
+            {VEHICLE_CLASS_SPEC[truckCategory].profiles}
+          </Text>
+          {VEHICLE_CLASS_SPEC[truckCategory].capacityNote ? (
+            <Text style={styles.classInfoNote}>
+              {VEHICLE_CLASS_SPEC[truckCategory].capacityNote}
+            </Text>
+          ) : null}
+        </View>
+      ) : null}
+
       <Text style={styles.label}>Cargo weight</Text>
 
       <TextInput
@@ -503,6 +571,33 @@ const styles = StyleSheet.create({
   },
   categoryList: {
     marginBottom: 18,
+  },
+  classInfoBox: {
+    marginTop: -4,
+    marginBottom: 18,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    backgroundColor: "#F9FAFB",
+  },
+  classInfoTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#101828",
+    marginBottom: 6,
+  },
+  classInfoText: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: "#475467",
+  },
+  classInfoNote: {
+    marginTop: 6,
+    fontSize: 12,
+    lineHeight: 17,
+    fontStyle: "italic",
+    color: "#667085",
   },
   categoryOption: {
     backgroundColor: "#FFFFFF",

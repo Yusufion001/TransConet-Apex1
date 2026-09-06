@@ -61,6 +61,18 @@ router.patch("/:id", authenticate, async (req: AuthenticatedRequest, res) => {
 
     const data = updateUserSchema.parse(req.body);
 
+    if (
+      req.user!.role === "CUSTOMER" &&
+      req.user!.id === id &&
+      (data.firstName !== undefined || data.lastName !== undefined)
+    ) {
+      return res.status(403).json({
+        success: false,
+        error:
+          "Your verified legal name cannot be changed after customer registration.",
+      });
+    }
+
     const user = await updateUser(id, data);
 
     return res.json({

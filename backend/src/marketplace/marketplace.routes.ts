@@ -15,6 +15,8 @@ import {
 import {
   createMarketplaceRequest,
   getMarketplaceRequest,
+  getCustomerMarketplaceRequests,
+  cancelMarketplaceRequest,
   createMarketplaceBid,
   withdrawMarketplaceBid,
   selectMarketplaceBid,
@@ -124,6 +126,73 @@ router.post(
       return res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : "Server error",
+      });
+    }
+  },
+);
+
+
+router.get(
+  "/requests",
+  authorize("CUSTOMER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const requests = await getCustomerMarketplaceRequests(req.user!.id);
+
+      return res.json({
+        success: true,
+        data: requests,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : "Server error",
+      });
+    }
+  },
+);
+
+router.post(
+  "/requests/:id/cancel",
+  authorize("CUSTOMER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const request = await cancelMarketplaceRequest(
+        String(req.params.id),
+        req.user!.id,
+      );
+
+      return res.json({
+        success: true,
+        data: request,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Server error";
+
+      if (
+        message === "Marketplace request not found"
+      ) {
+        return res.status(404).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      if (
+        message ===
+          "Marketplace request can only be cancelled while pending" ||
+        message === "Marketplace request cannot be cancelled after agreement"
+      ) {
+        return res.status(409).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: message,
       });
     }
   },

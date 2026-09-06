@@ -2,6 +2,7 @@ import { prisma } from "../config/prisma.js";
 import { createShipmentEvent } from "../events/event.service.js";
 import { publishEvent } from "../realtime/event-bus.js";
 import { toSupportTicketDto } from "./support.dto.js";
+import { createNotification } from "../notifications/notification.service.js";
 
 export type SupportStatus =
   | "OPEN"
@@ -308,6 +309,16 @@ export async function updateAdminTicketStatus(
   });
 
   const ticketDto = toSupportTicketDto(ticket);
+
+  await createNotification({
+    recipientId: ticket.requesterId,
+    type: "SUPPORT_TICKET_STATUS_UPDATED",
+    title: "Support ticket updated",
+    message: `Your support ticket "${ticket.subject}" is now ${ticket.status.replace("_", " ").toLowerCase()}.`,
+    relatedType: "SUPPORT_TICKET",
+    relatedId: ticket.id,
+    actorId: actorAdministratorId,
+  });
 
   publishEvent("admin", {
     eventType: "SUPPORT_TICKET_STATUS_UPDATED",

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -16,6 +16,7 @@ import {
   type Notification,
 } from "../../../src/api/notifications";
 import { useAuthStore } from "../../../src/auth/auth.store";
+import { getRealtimeSocket } from "../../../src/realtime/socket";
 
 function formatDate(value: string | null) {
   if (!value) return "";
@@ -45,6 +46,42 @@ export default function CustomerNotifications() {
       });
     },
   });
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    let cleanup: (() => void) | undefined;
+    let cancelled = false;
+
+    void getRealtimeSocket()
+      .then((socket) => {
+        if (cancelled) return;
+
+        const handleNotificationCreated = (event: {
+          recipientId?: string;
+        }) => {
+          if (event.recipientId === user.id) {
+            void queryClient.invalidateQueries({
+              queryKey: ["customer-notifications", user.id],
+            });
+          }
+        };
+
+        socket.on("notification:created", handleNotificationCreated);
+
+        cleanup = () => {
+          socket.off("notification:created", handleNotificationCreated);
+        };
+      })
+      .catch(() => {
+        // Notification polling/fetching remains available if realtime is unavailable.
+      });
+
+    return () => {
+      cancelled = true;
+      cleanup?.();
+    };
+  }, [user?.id, queryClient]);
 
   const notifications = query.data ?? [];
 
@@ -106,6 +143,8 @@ export default function CustomerNotifications() {
                   router.push(
                     `/(customer)/bookings/${notification.relatedId}`,
                   );
+                } else if (notification.relatedType === "SUPPORT_TICKET") {
+                  router.push("/(customer)/support");
                 }
               }}
               style={[

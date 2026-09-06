@@ -281,6 +281,157 @@ export async function getMarketplaceRequest(
   };
 }
 
+
+export async function getCustomerMarketplaceRequests(customerId: string) {
+  await expireMarketplaceLifecycle();
+
+  const requests = await prisma.marketplaceRequest.findMany({
+    where: {
+      customerId,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    select: {
+      id: true,
+      customerId: true,
+      bookingId: true,
+      cargoDescription: true,
+      truckCategory: true,
+      cargoCategory: true,
+      cargoWeight: true,
+      pickupLocation: true,
+      destination: true,
+      pickupLatitude: true,
+      pickupLongitude: true,
+      destinationLatitude: true,
+      destinationLongitude: true,
+      scheduledDate: true,
+      estimatedFare: true,
+      status: true,
+      agreedBidId: true,
+      createdAt: true,
+      updatedAt: true,
+      closedAt: true,
+      booking: {
+        select: {
+          status: true,
+        },
+      },
+      bids: {
+        orderBy: {
+          createdAt: "asc",
+        },
+        select: {
+          id: true,
+          requestId: true,
+          transporterId: true,
+          vehicleId: true,
+          amount: true,
+          message: true,
+          status: true,
+          expiresAt: true,
+          selectedAt: true,
+          createdAt: true,
+          vehicle: {
+            select: {
+              id: true,
+              vehicleType: true,
+              vehicleClass: true,
+            },
+          },
+          transporter: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              transporterTier: true,
+              transporterProfile: {
+                select: {
+                  rating: true,
+                  totalTrips: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  return requests.map((request) => ({
+    ...request,
+    bookingStatus: request.booking?.status ?? null,
+    booking: undefined,
+    bids: request.bids.map(serializeMarketplaceBid),
+  }));
+}
+
+export async function cancelMarketplaceRequest(
+  requestId: string,
+  customerId: string,
+) {
+  await expireMarketplaceLifecycle();
+
+  const request = await prisma.marketplaceRequest.findFirst({
+    where: {
+      id: requestId,
+      customerId,
+    },
+    select: {
+      id: true,
+      customerId: true,
+      status: true,
+      bookingId: true,
+    },
+  });
+
+  if (!request) {
+    throw new Error("Marketplace request not found");
+  }
+
+  const pendingStatuses = ["OPEN", "BIDDING_CLOSED"];
+
+  if (!pendingStatuses.includes(request.status)) {
+    throw new Error("Marketplace request can only be cancelled while pending");
+  }
+
+  if (request.bookingId) {
+    throw new Error("Marketplace request cannot be cancelled after agreement");
+  }
+
+  const cancelledRequest = await prisma.marketplaceRequest.update({
+    where: {
+      id: request.id,
+    },
+    data: {
+      status: "CANCELLED",
+      closedAt: new Date(),
+    },
+    select: {
+      id: true,
+      customerId: true,
+      status: true,
+      closedAt: true,
+    },
+  });
+
+  publishEvent("marketplace", {
+    eventType: "MARKETPLACE_REQUEST_CANCELLED",
+    module: "FLEET_MARKETPLACE",
+    entityType: "MARKETPLACE_REQUEST",
+    entityId: cancelledRequest.id,
+    actorId: customerId,
+    data: {
+      requestId: cancelledRequest.id,
+      status: cancelledRequest.status,
+      closedAt: cancelledRequest.closedAt,
+    },
+  });
+
+  return cancelledRequest;
+}
+
 export async function createMarketplaceBid(data: {
   requestId: string;
   transporterId: string;

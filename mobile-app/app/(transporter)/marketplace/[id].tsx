@@ -95,8 +95,7 @@ export default function MarketplaceOpportunity() {
     (vehicle) =>
       vehicle.verificationStatus === "APPROVED" &&
       vehicle.availabilityStatus === "AVAILABLE" &&
-      (vehicle.vehicleType === load.truckCategory ||
-        vehicle.vehicleClass === load.truckCategory),
+      vehicle.vehicleClass === load.truckCategory,
   );
 
   const canSubmit =

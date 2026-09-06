@@ -31,17 +31,67 @@ function formatDate(value: string) {
 }
 
 const vehicleClasses: VehicleClass[] = [
-  "MOTORCYCLE",
-  "MINI_VAN",
-  "CARGO_VAN",
-  "PICKUP",
+  "MINI_TRUCK",
   "LIGHT_TRUCK",
   "MEDIUM_TRUCK",
   "HEAVY_TRUCK",
-  "CONTAINER",
-  "FLATBED",
+  "CONTAINER_TRUCK",
   "REFRIGERATED_TRUCK",
+  "TANKER",
+  "SPECIALIZED",
 ];
+
+const VEHICLE_CLASS_SPEC: Record<
+  VehicleClass,
+  {
+    capacityRange: string;
+    profiles: string;
+    capacityNote?: string;
+  }
+> = {
+  MINI_TRUCK: {
+    capacityRange: "500–1,500 kg",
+    profiles:
+      "Last-mile delivery, small parcels, retail distribution (e.g. Suzuki mini-vans, light pickups)",
+  },
+  LIGHT_TRUCK: {
+    capacityRange: "1,500–4,000 kg",
+    profiles:
+      "Urban FMCG distribution, light construction materials, furniture (e.g. Mitsubishi Canter, Toyota Dyna)",
+  },
+  MEDIUM_TRUCK: {
+    capacityRange: "4,000–15,000 kg",
+    profiles:
+      "Regional inter-state haulage, mid-sized agricultural yields, commercial electronics",
+  },
+  HEAVY_TRUCK: {
+    capacityRange: "15,000–30,000 kg",
+    profiles:
+      "Long-haul bulk freight, heavy industrial goods, large-scale agricultural transport",
+  },
+  CONTAINER_TRUCK: {
+    capacityRange: "20,000–35,000 kg",
+    profiles:
+      "Port clearance and imported goods, standard 20ft/40ft shipping containers",
+  },
+  REFRIGERATED_TRUCK: {
+    capacityRange: "1,500–25,000 kg",
+    profiles:
+      "Highly variable by chassis; temperature-sensitive perishables or pharmaceuticals",
+  },
+  TANKER: {
+    capacityRange: "10,000–45,000 kg",
+    capacityNote:
+      "Approximately 10,000–45,000 liters depending on tanker configuration",
+    profiles:
+      "Liquid bulk: petroleum products, vegetable oils, chemicals",
+  },
+  SPECIALIZED: {
+    capacityRange: "30,000–100,000+ kg",
+    profiles:
+      "Lowbeds/multi-axle trailers, oversized cargo, industrial plants/heavy construction equipment",
+  },
+};
 
 const availabilityStatuses: VehicleAvailabilityStatus[] = [
   "AVAILABLE",
@@ -369,6 +419,32 @@ export default function Fleet() {
                     <strong>
                       {labelize(selectedVehicle.vehicleClass)}
                     </strong>
+                  </div>
+
+                  <div className="vehicle-class-guidance">
+                    <span>Class Guidance</span>
+                    <strong>
+                      {VEHICLE_CLASS_SPEC[selectedVehicle.vehicleClass].capacityRange}
+                    </strong>
+                    <small>
+                      {VEHICLE_CLASS_SPEC[selectedVehicle.vehicleClass].profiles}
+                    </small>
+                    {VEHICLE_CLASS_SPEC[selectedVehicle.vehicleClass].capacityNote ? (
+                      <small>
+                        {VEHICLE_CLASS_SPEC[selectedVehicle.vehicleClass].capacityNote}
+                      </small>
+                    ) : null}
+                  </div>
+
+                  <div>
+                    <span>Vehicle Body Type</span>
+                    <input
+                      value={form.vehicleBodyType ?? ""}
+                      onChange={(event) =>
+                        updateForm("vehicleBodyType", event.target.value)
+                      }
+                      placeholder="e.g. Flatbed, Tarpaulin, Lowbed"
+                    />
                   </div>
 
                   <div>

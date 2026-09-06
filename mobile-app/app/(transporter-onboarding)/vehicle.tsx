@@ -37,6 +37,49 @@ const VEHICLE_CLASSES = [
   "SPECIALIZED",
 ] as const;
 
+const VEHICLE_CLASS_SPEC: Record<
+  (typeof VEHICLE_CLASSES)[number],
+  {
+    capacityRange: string;
+    profiles: string;
+    capacityNote?: string;
+  }
+> = {
+  MINI_TRUCK: {
+    capacityRange: "500–1,500 kg",
+    profiles: "Last-mile delivery, small parcels, retail distribution.",
+  },
+  LIGHT_TRUCK: {
+    capacityRange: "1,500–4,000 kg",
+    profiles: "Urban FMCG distribution, light construction materials, furniture.",
+  },
+  MEDIUM_TRUCK: {
+    capacityRange: "4,000–15,000 kg",
+    profiles: "Regional inter-state haulage, agricultural yields, commercial electronics.",
+  },
+  HEAVY_TRUCK: {
+    capacityRange: "15,000–30,000 kg",
+    profiles: "Long-haul bulk freight, heavy industrial goods, large-scale agriculture.",
+  },
+  CONTAINER_TRUCK: {
+    capacityRange: "20,000–35,000 kg",
+    profiles: "Port clearance, imported goods, standard 20ft/40ft shipping containers.",
+  },
+  REFRIGERATED_TRUCK: {
+    capacityRange: "1,500–25,000 kg",
+    profiles: "Temperature-sensitive perishables or pharmaceuticals; capacity varies by chassis.",
+  },
+  TANKER: {
+    capacityRange: "10,000–45,000 kg",
+    profiles: "Liquid bulk such as petroleum products, vegetable oils, and chemicals.",
+    capacityNote: "Approximately 10,000–45,000 liters depending on tanker configuration.",
+  },
+  SPECIALIZED: {
+    capacityRange: "30,000–100,000+ kg",
+    profiles: "Lowbeds/multi-axle trailers, oversized cargo, industrial plants and heavy construction equipment.",
+  },
+} as const;
+
 export default function TransporterVehicleScreen() {
   const user = useAuthStore((state) => state.user);
 
@@ -237,6 +280,30 @@ export default function TransporterVehicleScreen() {
             ))}
           </View>
 
+          {vehicleClass ? (
+            <View style={styles.classInfoBox}>
+              <Text style={styles.classInfoTitle}>
+                Recommended capacity:{" "}
+                {VEHICLE_CLASS_SPEC[vehicleClass as keyof typeof VEHICLE_CLASS_SPEC]
+                  .capacityRange}
+              </Text>
+              <Text style={styles.classInfoText}>
+                {VEHICLE_CLASS_SPEC[vehicleClass as keyof typeof VEHICLE_CLASS_SPEC]
+                  .profiles}
+              </Text>
+              {VEHICLE_CLASS_SPEC[vehicleClass as keyof typeof VEHICLE_CLASS_SPEC]
+                .capacityNote ? (
+                <Text style={styles.classInfoNote}>
+                  {
+                    VEHICLE_CLASS_SPEC[
+                      vehicleClass as keyof typeof VEHICLE_CLASS_SPEC
+                    ].capacityNote
+                  }
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
+
           {vehicle ? (
             <View style={styles.statusBox}>
               <Text style={styles.statusTitle}>Vehicle registered</Text>
@@ -407,6 +474,33 @@ const styles = StyleSheet.create({
   },
   optionTextSelected: {
     color: "#FFFFFF",
+  },
+  classInfoBox: {
+    marginTop: 12,
+    marginBottom: 8,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#DCDCDC",
+    backgroundColor: "#F9F9F9",
+  },
+  classInfoTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#111111",
+    marginBottom: 6,
+  },
+  classInfoText: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: "#555555",
+  },
+  classInfoNote: {
+    marginTop: 6,
+    fontSize: 12,
+    lineHeight: 17,
+    fontStyle: "italic",
+    color: "#666666",
   },
   statusBox: {
     marginTop: 22,

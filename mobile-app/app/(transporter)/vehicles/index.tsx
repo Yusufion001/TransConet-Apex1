@@ -31,6 +31,58 @@ const VEHICLE_CLASSES = [
 
 type VehicleClass = (typeof VEHICLE_CLASSES)[number];
 
+const VEHICLE_CLASS_SPEC: Record<
+  VehicleClass,
+  {
+    capacityRange: string;
+    profiles: string;
+    capacityNote?: string;
+  }
+> = {
+  MINI_TRUCK: {
+    capacityRange: "500–1,500 kg",
+    profiles:
+      "Last-mile delivery, small parcels, retail distribution (e.g. Suzuki mini-vans, light pickups)",
+  },
+  LIGHT_TRUCK: {
+    capacityRange: "1,500–4,000 kg",
+    profiles:
+      "Urban FMCG distribution, light construction materials, furniture (e.g. Mitsubishi Canter, Toyota Dyna)",
+  },
+  MEDIUM_TRUCK: {
+    capacityRange: "4,000–15,000 kg",
+    profiles:
+      "Regional inter-state haulage, mid-sized agricultural yields, commercial electronics",
+  },
+  HEAVY_TRUCK: {
+    capacityRange: "15,000–30,000 kg",
+    profiles:
+      "Long-haul bulk freight, heavy industrial goods, large-scale agricultural transport",
+  },
+  CONTAINER_TRUCK: {
+    capacityRange: "20,000–35,000 kg",
+    profiles:
+      "Port clearance and imported goods, standard 20ft/40ft shipping containers",
+  },
+  REFRIGERATED_TRUCK: {
+    capacityRange: "1,500–25,000 kg",
+    profiles:
+      "Highly variable by chassis; temperature-sensitive perishables or pharmaceuticals",
+  },
+  TANKER: {
+    capacityRange: "10,000–45,000 kg",
+    capacityNote:
+      "Approximately 10,000–45,000 liters depending on tanker configuration",
+    profiles:
+      "Liquid bulk: petroleum products, vegetable oils, chemicals",
+  },
+  SPECIALIZED: {
+    capacityRange: "30,000–100,000+ kg",
+    profiles:
+      "Lowbeds/multi-axle trailers, oversized cargo, industrial plants/heavy construction equipment",
+  },
+};
+
 function formatVehicleClass(value: string) {
   return value.replace(/_/g, " ");
 }
@@ -299,6 +351,22 @@ export default function TransporterFleet() {
               );
             })}
           </View>
+
+          {vehicleClass ? (
+            <View style={styles.classInfoCard}>
+              <Text style={styles.classInfoTitle}>
+                {VEHICLE_CLASS_SPEC[vehicleClass].capacityRange}
+              </Text>
+              <Text style={styles.classInfoText}>
+                {VEHICLE_CLASS_SPEC[vehicleClass].profiles}
+              </Text>
+              {VEHICLE_CLASS_SPEC[vehicleClass].capacityNote ? (
+                <Text style={styles.classInfoNote}>
+                  {VEHICLE_CLASS_SPEC[vehicleClass].capacityNote}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
 
           {createMutation.isError ? (
             <Text style={styles.formError}>
@@ -825,6 +893,33 @@ const styles = StyleSheet.create({
   },
   classOptionTextSelected: {
     color: "#0B63CE",
+  },
+  classInfoCard: {
+    marginTop: 12,
+    marginBottom: 14,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    backgroundColor: "#F9FAFB",
+  },
+  classInfoTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 6,
+    color: "#101828",
+  },
+  classInfoText: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: "#475467",
+  },
+  classInfoNote: {
+    marginTop: 6,
+    fontSize: 12,
+    lineHeight: 17,
+    fontStyle: "italic",
+    color: "#667085",
   },
   formError: {
     marginBottom: 12,

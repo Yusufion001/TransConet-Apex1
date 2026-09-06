@@ -1,16 +1,14 @@
 import { apiClient } from "./client";
 
 export type VehicleClass =
-  | "MOTORCYCLE"
-  | "MINI_VAN"
-  | "CARGO_VAN"
-  | "PICKUP"
+  | "MINI_TRUCK"
   | "LIGHT_TRUCK"
   | "MEDIUM_TRUCK"
   | "HEAVY_TRUCK"
-  | "CONTAINER"
-  | "FLATBED"
-  | "REFRIGERATED_TRUCK";
+  | "CONTAINER_TRUCK"
+  | "REFRIGERATED_TRUCK"
+  | "TANKER"
+  | "SPECIALIZED";
 
 export type VehicleAvailabilityStatus =
   | "AVAILABLE"
@@ -37,6 +35,7 @@ export type FleetVehicle = {
   registrationNumber: string;
   vehicleType: string;
   vehicleClass: VehicleClass;
+  vehicleBodyType: string | null;
   make: string | null;
   model: string | null;
   year: number | null;
@@ -56,6 +55,7 @@ export type FleetVehicleUpdate = {
   registrationNumber?: string;
   vehicleType?: string;
   vehicleClass?: VehicleClass;
+  vehicleBodyType?: string;
   make?: string;
   model?: string;
   year?: number;

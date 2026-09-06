@@ -21,6 +21,20 @@ export default function CustomerLayout() {
         }}
       />
       <Drawer.Screen
+        name="requests"
+        options={{
+          drawerLabel: "My Requests",
+          title: "My Requests",
+        }}
+      />
+      <Drawer.Screen
+        name="support"
+        options={{
+          drawerLabel: "Support",
+          title: "Support",
+        }}
+      />
+      <Drawer.Screen
         name="bookings/index"
         options={{
           drawerLabel: "My Shipments",
