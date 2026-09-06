@@ -4,19 +4,16 @@ export const createVehicleSchema = z.object({
   registrationNumber: z.string().trim().min(1).max(50),
   vehicleType: z.string().trim().min(1).max(100),
   vehicleClass: z.enum([
-    "MOTORCYCLE",
-    "MINI_VAN",
-    "CARGO_VAN",
-    "PICKUP",
+    "MINI_TRUCK",
     "LIGHT_TRUCK",
     "MEDIUM_TRUCK",
     "HEAVY_TRUCK",
-    "CONTAINER",
-    "FLATBED",
+    "CONTAINER_TRUCK",
     "REFRIGERATED_TRUCK",
     "TANKER",
-    "LOWBED",
+    "SPECIALIZED",
   ]),
+  vehicleBodyType: z.string().trim().min(1).max(100).optional(),
 });
 
 export const updateVehicleSchema = z.object({

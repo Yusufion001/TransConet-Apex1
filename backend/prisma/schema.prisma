@@ -304,18 +304,14 @@ enum CargoCategory {
 }
 
 enum VehicleClass {
-  MOTORCYCLE
-  MINI_VAN
-  CARGO_VAN
-  PICKUP
+  MINI_TRUCK
   LIGHT_TRUCK
   MEDIUM_TRUCK
   HEAVY_TRUCK
-  CONTAINER
-  FLATBED
+  CONTAINER_TRUCK
   REFRIGERATED_TRUCK
   TANKER
-  LOWBED
+  SPECIALIZED
 }
 
 enum TransporterTier {
@@ -494,8 +490,9 @@ model Vehicle {
   transporterId      String
   registrationNumber String @unique
 
-  vehicleType  String
-  vehicleClass VehicleClass
+  vehicleType    String
+  vehicleClass   VehicleClass
+  vehicleBodyType String?
 
   make               String?
   model              String?

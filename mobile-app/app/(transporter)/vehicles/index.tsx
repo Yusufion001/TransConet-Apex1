@@ -19,18 +19,14 @@ import {
 import { useAuthStore } from "../../../src/auth/auth.store";
 
 const VEHICLE_CLASSES = [
-  "MOTORCYCLE",
-  "MINI_VAN",
-  "CARGO_VAN",
-  "PICKUP",
+  "MINI_TRUCK",
   "LIGHT_TRUCK",
   "MEDIUM_TRUCK",
   "HEAVY_TRUCK",
-  "CONTAINER",
-  "FLATBED",
+  "CONTAINER_TRUCK",
   "REFRIGERATED_TRUCK",
   "TANKER",
-  "LOWBED",
+  "SPECIALIZED",
 ] as const;
 
 type VehicleClass = (typeof VEHICLE_CLASSES)[number];
@@ -52,6 +48,7 @@ export default function TransporterFleet() {
 
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [vehicleType, setVehicleType] = useState("");
+  const [vehicleBodyType, setVehicleBodyType] = useState("");
   const [vehicleClass, setVehicleClass] = useState<VehicleClass | "">("");
 
   const [make, setMake] = useState("");
@@ -86,6 +83,7 @@ export default function TransporterFleet() {
   const resetForm = () => {
     setRegistrationNumber("");
     setVehicleType("");
+    setVehicleBodyType("");
     setVehicleClass("");
     setMake("");
     setModel("");
@@ -107,6 +105,7 @@ export default function TransporterFleet() {
       createVehicle({
         registrationNumber: registrationNumber.trim(),
         vehicleType: vehicleType.trim(),
+        vehicleBodyType: vehicleBodyType.trim() || undefined,
         vehicleClass: vehicleClass as VehicleClass,
       }),
     onSuccess: () => {
@@ -152,6 +151,7 @@ export default function TransporterFleet() {
   const addFormValid =
     registrationNumber.trim().length > 0 &&
     vehicleType.trim().length > 0 &&
+    vehicleBodyType.trim().length > 0 &&
     vehicleClass.length > 0 &&
     !createMutation.isPending;
 
@@ -262,7 +262,14 @@ export default function TransporterFleet() {
             label="VEHICLE TYPE"
             value={vehicleType}
             onChangeText={setVehicleType}
-            placeholder="e.g. Isuzu Truck"
+            placeholder="e.g. Truck"
+          />
+
+          <Field
+            label="VEHICLE BODY TYPE"
+            value={vehicleBodyType}
+            onChangeText={setVehicleBodyType}
+            placeholder="e.g. Flatbed or Tarpaulin"
           />
 
           <Text style={styles.fieldLabel}>VEHICLE CLASS</Text>
@@ -423,7 +430,10 @@ export default function TransporterFleet() {
                   {vehicle.registrationNumber}
                 </Text>
                 <Text style={styles.vehicleType}>
-                  {vehicle.vehicleType} · {formatVehicleClass(vehicle.vehicleClass)}
+                  {formatVehicleClass(vehicle.vehicleClass)}
+                  {vehicle.vehicleBodyType
+                    ? ` · ${vehicle.vehicleBodyType}`
+                    : ""}
                 </Text>
               </View>
 

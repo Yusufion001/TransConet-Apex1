@@ -7,6 +7,7 @@ export async function createVehicle(data: {
   registrationNumber: string;
   vehicleType: string;
   vehicleClass: VehicleClass;
+  vehicleBodyType?: string;
 }) {
   const vehicle = await prisma.vehicle.create({ data });
 
