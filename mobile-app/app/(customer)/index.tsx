@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { Link, router } from "expo-router";
+import { Link, router, useNavigation } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 
 import { useAuthStore } from "../../src/auth/auth.store";
@@ -17,6 +17,7 @@ import { getAdvertisements } from "../../src/api/marketing";
 
 export default function CustomerHome() {
   const user = useAuthStore((state) => state.user);
+  const navigation = useNavigation<any>();
   const firstName = user?.firstName?.trim() || "Customer";
 
   const bookingsQuery = useQuery({
@@ -94,14 +95,25 @@ export default function CustomerHome() {
       >
         {/* HEADER */}
         <View style={styles.header}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Notifications"
-            style={styles.notificationButton}
-            onPress={() => router.push("/(customer)/notifications")}
-          >
-            <Text style={styles.notificationIcon}>🔔</Text>
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open navigation menu"
+              style={styles.menuButton}
+              onPress={() => navigation.openDrawer()}
+            >
+              <Text style={styles.menuIcon}>☰</Text>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Notifications"
+              style={styles.notificationButton}
+              onPress={() => router.push("/(customer)/notifications")}
+            >
+              <Text style={styles.notificationIcon}>🔔</Text>
+            </Pressable>
+          </View>
 
           <Text style={styles.brand}>TRANSCONET</Text>
 
@@ -251,38 +263,6 @@ export default function CustomerHome() {
         </View>
       </ScrollView>
 
-      {/* APPROVED BOTTOM NAVIGATION */}
-      <View style={styles.bottomNav}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Home"
-          style={styles.navItem}
-          onPress={() => router.replace("/(customer)")}
-        >
-          <Text style={styles.navIcon}>⌂</Text>
-          <Text style={styles.navActive}>Home</Text>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Bookings"
-          style={styles.navItem}
-          onPress={() => router.push("/(customer)/bookings")}
-        >
-          <Text style={styles.navIcon}>▣</Text>
-          <Text style={styles.navText}>Bookings</Text>
-        </Pressable>
-
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Account"
-          style={styles.navItem}
-          onPress={() => router.push("/(customer)/account")}
-        >
-          <Text style={styles.navIcon}>◉</Text>
-          <Text style={styles.navText}>Account</Text>
-        </Pressable>
-      </View>
     </View>
   );
 }
@@ -295,7 +275,7 @@ const styles = StyleSheet.create({
 
   container: {
     padding: 20,
-    paddingBottom: 110,
+    paddingBottom: 24,
     gap: 20,
   },
 
@@ -304,8 +284,27 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
 
+  headerActions: {
+    alignSelf: "stretch",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  menuButton: {
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  menuIcon: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#111827",
+  },
+
   notificationButton: {
-    alignSelf: "flex-start",
     width: 44,
     height: 44,
     alignItems: "center",
