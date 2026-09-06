@@ -8,10 +8,18 @@ import {
   StyleSheet,
   Text,
   View,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { getBooking } from "../../../src/api/bookings";
+import {
+  getBookingMessages,
+  sendBookingMessage,
+  type Message,
+} from "../../../src/api/messages";
 import {
   getBookingPayments,
   initializePayment,
@@ -30,6 +38,8 @@ export default function BookingDetails() {
   const [vehicleLocation, setVehicleLocation] =
     useState<VehicleLocation | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [messageText, setMessageText] = useState("");
+  const [messageLoading, setMessageLoading] = useState(false);
 
   const bookingQuery = useQuery({
     queryKey: ["booking", id],
@@ -43,12 +53,23 @@ export default function BookingDetails() {
     enabled: Boolean(id),
   });
 
+  const messagesQuery = useQuery({
+    queryKey: ["booking-messages", id],
+    queryFn: () => getBookingMessages(id),
+    enabled: Boolean(id),
+  });
+
   const refreshBooking = useCallback(async () => {
     await Promise.all([
       bookingQuery.refetch(),
       paymentsQuery.refetch(),
+      messagesQuery.refetch(),
     ]);
-  }, [bookingQuery.refetch, paymentsQuery.refetch]);
+  }, [
+    bookingQuery.refetch,
+    paymentsQuery.refetch,
+    messagesQuery.refetch,
+  ]);
 
   useEffect(() => {
     if (!id) return;
@@ -92,6 +113,41 @@ export default function BookingDetails() {
 
     return payments.length > 0 ? payments[0] : null;
   }, [paymentsQuery.data]);
+
+  const handleSendMessage = useCallback(async () => {
+    const content = messageText.trim();
+
+    if (!id || !bookingQuery.data?.transporterId || !content || messageLoading) {
+      return;
+    }
+
+    setMessageLoading(true);
+
+    try {
+      await sendBookingMessage({
+        bookingId: id,
+        recipientId: bookingQuery.data.transporterId,
+        content,
+      });
+      setMessageText("");
+      await messagesQuery.refetch();
+    } catch (error) {
+      Alert.alert(
+        "Message error",
+        error instanceof Error
+          ? error.message
+          : "Unable to send your message. Please try again.",
+      );
+    } finally {
+      setMessageLoading(false);
+    }
+  }, [
+    id,
+    messageText,
+    messageLoading,
+    bookingQuery.data?.transporterId,
+    messagesQuery.refetch,
+  ]);
 
   const handlePayNow = useCallback(async () => {
     if (!id || paymentLoading) return;
@@ -296,6 +352,86 @@ export default function BookingDetails() {
         )}
       </View>
 
+      {booking.transporterId && (
+        <View style={styles.card}>
+          <Text style={styles.label}>MESSAGES</Text>
+
+          <View style={styles.messagesBox}>
+            {messagesQuery.isLoading ? (
+              <ActivityIndicator />
+            ) : messagesQuery.data && messagesQuery.data.length > 0 ? (
+              messagesQuery.data.map((message: Message) => {
+                const isCustomerMessage = message.senderId === booking.customerId;
+
+                return (
+                  <View
+                    key={message.id}
+                    style={[
+                      styles.messageBubble,
+                      isCustomerMessage
+                        ? styles.customerMessage
+                        : styles.transporterMessage,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.messageText,
+                        isCustomerMessage && styles.customerMessageText,
+                      ]}
+                    >
+                      {message.content}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.messageTime,
+                        isCustomerMessage && styles.customerMessageTime,
+                      ]}
+                    >
+                      {new Date(message.createdAt).toLocaleString()}
+                    </Text>
+                  </View>
+                );
+              })
+            ) : (
+              <Text style={styles.emptyMessages}>
+                No messages yet. You can contact the transporter about this shipment.
+              </Text>
+            )}
+          </View>
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+          >
+            <View style={styles.messageComposer}>
+              <TextInput
+                value={messageText}
+                onChangeText={setMessageText}
+                placeholder="Type a message..."
+                placeholderTextColor="#98A2B3"
+                multiline
+                editable={!messageLoading}
+                style={styles.messageInput}
+              />
+              <Pressable
+                onPress={() => void handleSendMessage()}
+                disabled={messageLoading || !messageText.trim()}
+                style={[
+                  styles.sendMessageButton,
+                  (messageLoading || !messageText.trim()) &&
+                    styles.disabledButton,
+                ]}
+              >
+                {messageLoading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.sendMessageText}>Send</Text>
+                )}
+              </Pressable>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      )}
+
       {booking.status === "COMPLETED" && (
         <BookingReviewForm
           bookingId={booking.id}
@@ -484,6 +620,77 @@ const styles = StyleSheet.create({
   },
   successText: {
     color: "#067647",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  messagesBox: {
+    gap: 10,
+    marginTop: 6,
+  },
+  messageBubble: {
+    maxWidth: "86%",
+    borderRadius: 14,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+  },
+  customerMessage: {
+    alignSelf: "flex-end",
+    backgroundColor: "#175CD3",
+  },
+  transporterMessage: {
+    alignSelf: "flex-start",
+    backgroundColor: "#F2F4F7",
+  },
+  messageText: {
+    color: "#1D2939",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  customerMessageText: {
+    color: "#FFFFFF",
+  },
+  messageTime: {
+    color: "#667085",
+    fontSize: 10,
+    marginTop: 5,
+  },
+  customerMessageTime: {
+    color: "#D1E0FF",
+  },
+  emptyMessages: {
+    color: "#667085",
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  messageComposer: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+    marginTop: 14,
+  },
+  messageInput: {
+    flex: 1,
+    minHeight: 46,
+    maxHeight: 110,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: "#101828",
+    backgroundColor: "#FFFFFF",
+  },
+  sendMessageButton: {
+    minHeight: 46,
+    minWidth: 72,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#175CD3",
+    paddingHorizontal: 14,
+  },
+  sendMessageText: {
+    color: "#FFFFFF",
     fontSize: 14,
     fontWeight: "800",
   },

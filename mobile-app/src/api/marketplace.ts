@@ -32,6 +32,7 @@ export type MarketplaceRequest = {
   id: string;
   customerId: string;
   bookingId: string | null;
+  bookingStatus?: string | null;
   cargoDescription: string | null;
   truckCategory: string;
   cargoCategory: string | null;
@@ -80,6 +81,27 @@ export type SelectMarketplaceBidResult = {
   vehicleId: string;
   transporterId: string;
 };
+
+export async function getCustomerMarketplaceRequests(): Promise<
+  MarketplaceRequest[]
+> {
+  const response = await apiClient.get<ApiResponse<MarketplaceRequest[]>>(
+    "/marketplace/requests",
+  );
+
+  return response.data.data;
+}
+
+export async function cancelMarketplaceRequest(
+  requestId: string,
+): Promise<MarketplaceRequest> {
+  const response = await apiClient.post<ApiResponse<MarketplaceRequest>>(
+    `/marketplace/requests/${requestId}/cancel`,
+    {},
+  );
+
+  return response.data.data;
+}
 
 export async function getMarketplaceRequest(
   requestId: string,

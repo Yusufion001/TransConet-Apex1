@@ -6,6 +6,7 @@ import {
   register,
   verifyEmail,
   verifyPhoneVerificationOtp,
+  updateCurrentUser,
   type LoginInput,
   type RegisterInput,
 } from "../api/auth";
@@ -36,6 +37,12 @@ type AuthState = {
     phoneVerificationToken: string,
     pin: string,
   ) => Promise<AuthSession>;
+  updateProfile: (input: {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    profilePhoto?: string;
+  }) => Promise<AuthUser>;
   signOut: () => Promise<void>;
 };
 
@@ -224,6 +231,26 @@ export const useAuthStore = create<AuthState>((set) => ({
       });
 
       return session;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
+  updateProfile: async (input) => {
+    const currentUser = useAuthStore.getState().user;
+
+    if (!currentUser) {
+      throw new Error("You must be signed in to update your profile.");
+    }
+
+    set({ loading: true });
+
+    try {
+      const user = await updateCurrentUser(currentUser.id, input);
+
+      set({ user });
+
+      return user;
     } finally {
       set({ loading: false });
     }

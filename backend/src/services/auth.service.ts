@@ -20,6 +20,7 @@ import {
   sendVerificationFailureSms,
 } from "./communication.service.js";
 import { toUserDto } from "../users/user.dto.js";
+import { startCustomerVerification } from "../customers/customer-verification.service.js";
 
 type UserRole = "CUSTOMER" | "TRANSPORTER" | "ADMIN";
 
@@ -183,6 +184,14 @@ export async function registerUser(input: {
   phone?: string;
   password: string;
   role: UserRole;
+  customerType?: "INDIVIDUAL" | "BUSINESS";
+  dateOfBirth?: string;
+  governmentIdType?: "NIN" | "DRIVERS_LICENSE";
+  governmentIdNumber?: string;
+  subjectConsent?: boolean;
+  businessName?: string;
+  businessAddress?: string;
+  businessRegistrationNumber?: string;
 }) {
   try {
     const passwordHash =
@@ -220,7 +229,20 @@ export async function registerUser(input: {
         ...(input.role === "CUSTOMER"
           ? {
               customerProfile: {
-                create: {},
+                create: {
+                  customerType: input.customerType!,
+                  dateOfBirth: input.dateOfBirth
+                    ? new Date(input.dateOfBirth)
+                    : undefined,
+                  ...(input.customerType === "BUSINESS"
+                    ? {
+                        businessName: input.businessName,
+                        businessAddress: input.businessAddress,
+                        businessRegistrationNumber:
+                          input.businessRegistrationNumber,
+                      }
+                    : {}),
+                },
               },
             }
           : {}),
@@ -237,6 +259,18 @@ export async function registerUser(input: {
         transporterProfile: true,
       },
     });
+
+  if (user.role === "CUSTOMER") {
+    await startCustomerVerification({
+      userId: user.id,
+      type: input.governmentIdType!,
+      verificationNumber: input.governmentIdNumber!,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      dateOfBirth: input.dateOfBirth!,
+      subjectConsent: input.subjectConsent === true,
+    });
+  }
 
   if (user.phone) {
     try {

@@ -1,10 +1,6 @@
 import { apiClient } from "./client";
 
-export type MessageType =
-  | "TEXT"
-  | "SYSTEM"
-  | "LOCATION"
-  | "DOCUMENT";
+export type MessageType = "TEXT";
 
 export type Message = {
   id: string;

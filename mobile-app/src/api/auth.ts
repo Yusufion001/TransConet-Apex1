@@ -24,6 +24,15 @@ export type RegisterInput = {
   phone?: string;
   password: string;
   role: Exclude<UserRole, "ADMIN">;
+
+  customerType?: "INDIVIDUAL" | "BUSINESS";
+  dateOfBirth?: string;
+  governmentIdType?: "NIN" | "DRIVERS_LICENSE";
+  governmentIdNumber?: string;
+  subjectConsent?: boolean;
+  businessName?: string;
+  businessAddress?: string;
+  businessRegistrationNumber?: string;
 };
 
 export type LoginInput = {

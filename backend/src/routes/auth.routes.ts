@@ -52,14 +52,89 @@ const passwordResetLimiter = rateLimit({
   },
 });
 
-const registerSchema = z.object({
-  firstName: z.string().min(2).max(50),
-  lastName: z.string().min(2).max(50),
-  email: z.string().email(),
-  phone: z.string().min(7).max(20).optional(),
-  password: z.string().min(8).max(128),
-  role: z.enum(["CUSTOMER", "TRANSPORTER"]),
-});
+const registerSchema = z
+  .object({
+    firstName: z.string().min(2).max(50),
+    lastName: z.string().min(2).max(50),
+    email: z.string().email(),
+    phone: z.string().min(7).max(20).optional(),
+    password: z.string().min(8).max(128),
+    role: z.enum(["CUSTOMER", "TRANSPORTER"]),
+
+    customerType: z.enum(["INDIVIDUAL", "BUSINESS"]).optional(),
+    dateOfBirth: z.string().min(1).max(30).optional(),
+    governmentIdType: z.enum(["NIN", "DRIVERS_LICENSE"]).optional(),
+    governmentIdNumber: z.string().trim().min(1).max(100).optional(),
+    subjectConsent: z.boolean().optional(),
+
+    businessName: z.string().trim().min(2).max(200).optional(),
+    businessAddress: z.string().trim().min(5).max(500).optional(),
+    businessRegistrationNumber: z.string().trim().min(1).max(100).optional(),
+  })
+  .superRefine((input, ctx) => {
+    if (input.role !== "CUSTOMER") {
+      return;
+    }
+
+    if (!input.customerType) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["customerType"],
+        message: "Customer type is required",
+      });
+      return;
+    }
+
+    if (!input.dateOfBirth) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["dateOfBirth"],
+        message: "Date of birth is required",
+      });
+    }
+
+    if (!input.governmentIdType) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["governmentIdType"],
+        message: "Government ID type is required",
+      });
+    }
+
+    if (!input.governmentIdNumber) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["governmentIdNumber"],
+        message: "Government ID number is required",
+      });
+    }
+
+    if (input.subjectConsent !== true) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["subjectConsent"],
+        message: "Government ID verification consent is required",
+      });
+    }
+
+    if (input.customerType === "BUSINESS") {
+      if (!input.businessName) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["businessName"],
+          message: "Business name is required",
+        });
+      }
+
+      if (!input.businessAddress) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["businessAddress"],
+          message: "Business address is required",
+        });
+      }
+    }
+  });
 
 const loginSchema = z.object({
   identifier: z.string().min(1),
