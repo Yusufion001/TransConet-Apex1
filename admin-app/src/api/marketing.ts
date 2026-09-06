@@ -78,12 +78,18 @@ function toBackendPayload(data: MarketingCampaignCreate | MarketingCampaignUpdat
   const payload: Record<string, unknown> = { ...data };
 
   if ("startDate" in payload) {
-    payload.startsAt = payload.startDate || undefined;
+    const value = payload.startDate;
+    payload.startsAt = value
+      ? new Date(String(value)).toISOString()
+      : undefined;
     delete payload.startDate;
   }
 
   if ("endDate" in payload) {
-    payload.endsAt = payload.endDate || undefined;
+    const value = payload.endDate;
+    payload.endsAt = value
+      ? new Date(String(value)).toISOString()
+      : undefined;
     delete payload.endDate;
   }
 

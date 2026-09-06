@@ -21,6 +21,28 @@ export type AdminNotification = {
   recipient: AdminNotificationRecipient;
 };
 
+export type NotificationCustomer = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  role: string;
+  status: string;
+};
+
+export async function getNotificationCustomers(
+  search?: string,
+): Promise<NotificationCustomer[]> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data: NotificationCustomer[];
+  }>("/admin/notifications/customers", {
+    params: search?.trim() ? { search: search.trim() } : undefined,
+  });
+
+  return response.data.data;
+}
+
 export type NotificationSummary = {
   total: number;
   unread: number;

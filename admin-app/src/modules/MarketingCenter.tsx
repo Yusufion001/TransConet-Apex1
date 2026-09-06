@@ -523,25 +523,102 @@ export default function MarketingCenter() {
                   </span>
                 </div>
 
-                <textarea
-                  rows={8}
-                  value={JSON.stringify(
-                    form.content ?? {},
-                    null,
-                    2,
-                  )}
-                  onChange={(event) => {
-                    try {
-                      updateForm(
-                        "content",
-                        JSON.parse(event.target.value),
-                      );
-                    } catch {
-                      // Preserve the editor until valid JSON is entered.
-                    }
-                  }}
-                  className="code-editor"
-                />
+                <div className="form-grid">
+                  <label>
+                    <span>Image URL</span>
+                    <input
+                      type="url"
+                      value={
+                        typeof form.content === "object" &&
+                        form.content !== null &&
+                        !Array.isArray(form.content) &&
+                        typeof (form.content as Record<string, unknown>).imageUrl === "string"
+                          ? String((form.content as Record<string, unknown>).imageUrl)
+                          : ""
+                      }
+                      onChange={(event) => {
+                        const current =
+                          form.content &&
+                          typeof form.content === "object" &&
+                          !Array.isArray(form.content)
+                            ? (form.content as Record<string, unknown>)
+                            : {};
+
+                        updateForm("content", {
+                          ...current,
+                          imageUrl: event.target.value,
+                        });
+                      }}
+                      placeholder="https://example.com/banner.jpg"
+                    />
+                    <small>
+                      Optional image displayed with the campaign.
+                    </small>
+                  </label>
+
+                  <label>
+                    <span>CTA Label</span>
+                    <input
+                      value={
+                        typeof form.content === "object" &&
+                        form.content !== null &&
+                        !Array.isArray(form.content) &&
+                        typeof (form.content as Record<string, unknown>).ctaLabel === "string"
+                          ? String((form.content as Record<string, unknown>).ctaLabel)
+                          : ""
+                      }
+                      onChange={(event) => {
+                        const current =
+                          form.content &&
+                          typeof form.content === "object" &&
+                          !Array.isArray(form.content)
+                            ? (form.content as Record<string, unknown>)
+                            : {};
+
+                        updateForm("content", {
+                          ...current,
+                          ctaLabel: event.target.value,
+                        });
+                      }}
+                      placeholder="Tap to view"
+                    />
+                    <small>
+                      Button text shown to the recipient.
+                    </small>
+                  </label>
+
+                  <label className="form-grid-wide">
+                    <span>CTA URL</span>
+                    <input
+                      type="url"
+                      value={
+                        typeof form.content === "object" &&
+                        form.content !== null &&
+                        !Array.isArray(form.content) &&
+                        typeof (form.content as Record<string, unknown>).ctaUrl === "string"
+                          ? String((form.content as Record<string, unknown>).ctaUrl)
+                          : ""
+                      }
+                      onChange={(event) => {
+                        const current =
+                          form.content &&
+                          typeof form.content === "object" &&
+                          !Array.isArray(form.content)
+                            ? (form.content as Record<string, unknown>)
+                            : {};
+
+                        updateForm("content", {
+                          ...current,
+                          ctaUrl: event.target.value,
+                        });
+                      }}
+                      placeholder="https://transconet.com/promotion"
+                    />
+                    <small>
+                      Optional destination opened when the recipient taps the campaign.
+                    </small>
+                  </label>
+                </div>
 
                 <div className="customer-actions">
                   <button
