@@ -32,14 +32,22 @@ router.get(
       data: notifications,
     });
   } catch (error) {
+    const requestId = req.get("X-Request-ID") ?? null;
+
+    console.error("[NotificationCenter] GET /admin/notifications failed", {
+      requestId,
+      error,
+    });
+
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Server error",
+      requestId,
     });
   }
 });
 
-router.get("/summary", async (_req, res) => {
+router.get("/summary", async (req, res) => {
   try {
     const summary = await getAdminNotificationSummary();
 
@@ -48,9 +56,17 @@ router.get("/summary", async (_req, res) => {
       data: summary,
     });
   } catch (error) {
+    const requestId = req.get("X-Request-ID") ?? null;
+
+    console.error("[NotificationCenter] GET /admin/notifications/summary failed", {
+      requestId,
+      error,
+    });
+
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : "Server error",
+      requestId,
     });
   }
 });
