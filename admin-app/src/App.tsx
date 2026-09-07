@@ -1113,7 +1113,7 @@ function LiveOperations() {
                       selectedTrip.vehicle?.currentLatitude !== undefined &&
                       selectedTrip.vehicle?.currentLongitude !== null &&
                       selectedTrip.vehicle?.currentLongitude !== undefined
-                        ? `${selectedTrip.vehicle.currentLatitude.toFixed(5)}, ${selectedTrip.vehicle.currentLongitude.toFixed(5)}`
+                        ? `${Number(selectedTrip.vehicle.currentLatitude).toFixed(5)}, ${Number(selectedTrip.vehicle.currentLongitude).toFixed(5)}`
                         : "No location available"}
                     </strong>
                   </div>
