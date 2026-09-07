@@ -55,6 +55,12 @@ export async function calculateRoute(
   origin: RouteCoordinate,
   destination: RouteCoordinate,
 ): Promise<RouteResult> {
+  if (env.ROUTING_PROVIDER !== "google") {
+    throw new Error(
+      `Routing provider "${env.ROUTING_PROVIDER}" is not configured`,
+    );
+  }
+
   if (!env.GOOGLE_MAP_PLATFORM_KEY) {
     throw new Error("Google Maps routing is not configured");
   }
