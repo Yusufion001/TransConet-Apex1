@@ -532,12 +532,17 @@ test("uploadProofOfDelivery accepts proof after arrival", async () => {
     async () => ({
       id: "booking-1",
       status: "ARRIVED",
+      transporterId: "transporter-1",
     }),
   );
 
   const updatedBooking = makeBooking({
     status: "ARRIVED",
     proofOfDelivery: "https://example.com/proof.jpg",
+    cargoPhotoPath:
+      "transporter-1/DELIVERY_PROOF/booking-1/CARGO_PHOTO/photo.jpg",
+    receiverSignaturePath:
+      "transporter-1/DELIVERY_PROOF/booking-1/RECEIVER_SIGNATURE/signature.png",
   });
 
   prismaMock.booking.update.mock.mockImplementation(
@@ -546,7 +551,10 @@ test("uploadProofOfDelivery accepts proof after arrival", async () => {
 
   const result = await uploadProofOfDelivery(
     "booking-1",
+    "transporter-1",
     "https://example.com/proof.jpg",
+    "transporter-1/DELIVERY_PROOF/booking-1/CARGO_PHOTO/photo.jpg",
+    "transporter-1/DELIVERY_PROOF/booking-1/RECEIVER_SIGNATURE/signature.png",
   );
 
   assert.deepEqual(result, toBookingDto(updatedBooking));
@@ -570,14 +578,17 @@ test("uploadProofOfDelivery rejects proof before arrival", async () => {
     async () => ({
       id: "booking-1",
       status: "IN_TRANSIT",
+      transporterId: "transporter-1",
     }),
   );
 
   await assert.rejects(
     uploadProofOfDelivery(
       "booking-1",
+      "transporter-1",
       "https://example.com/proof.jpg",
-      "123456",
+      "transporter-1/DELIVERY_PROOF/booking-1/CARGO_PHOTO/photo.jpg",
+      "transporter-1/DELIVERY_PROOF/booking-1/RECEIVER_SIGNATURE/signature.png",
     ),
     {
       message:

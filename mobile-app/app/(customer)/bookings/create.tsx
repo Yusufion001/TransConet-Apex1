@@ -3,6 +3,11 @@ import { router } from "expo-router";
 import * as Location from "expo-location";
 import TransConetMap from "../../../src/components/maps/TransConetMap";
 import {
+  autocompletePlaces,
+  type PlaceSuggestion,
+} from "../../../src/api/places";
+import { calculateRoute, type RouteResult } from "../../../src/api/routing";
+import {
   ActivityIndicator,
   Modal,
   Alert,
@@ -93,23 +98,79 @@ type Coordinates = {
 
 export default function CreateBooking() {
   const [pickupLocation, setPickupLocation] = useState("");
+const [pickupLandmark, setPickupLandmark] = useState("");
+const [destinationLandmark, setDestinationLandmark] = useState("");
   const [destination, setDestination] = useState("");
+  const [pickupSuggestions, setPickupSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [destinationSuggestions, setDestinationSuggestions] =
+    useState<PlaceSuggestion[]>([]);
+  const [placesLoading, setPlacesLoading] = useState<"pickup" | "destination" | null>(
+    null,
+  );
   const [cargoDescription, setCargoDescription] = useState("");
   const [cargoWeight, setCargoWeight] = useState("");
   const [truckCategory, setTruckCategory] =
     useState<TruckCategory | null>(null);
   const [pickupCoordinates, setPickupCoordinates] =
     useState<Coordinates | null>(null);
+  const [destinationCoordinates, setDestinationCoordinates] =
+    useState<Coordinates | null>(null);
   const [loading, setLoading] = useState(false);
   const [fareEstimate, setFareEstimate] = useState<number | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  const [route, setRoute] = useState<RouteResult | null>(null);
+  const [routeLoading, setRouteLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<
     "FLUTTERWAVE" | "BANK_TRANSFER" | "NEGOTIATE" | null
   >(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationPickerVisible, setLocationPickerVisible] = useState(false);
+  const [locationPickerType, setLocationPickerType] = useState<"pickup" | "destination">("pickup");
   const [locationPickerCoordinate, setLocationPickerCoordinate] =
     useState<Coordinates | null>(null);
+
+  async function openDestinationLocationPicker() {
+    if (destinationCoordinates) {
+      setLocationPickerCoordinate(destinationCoordinates);
+      setLocationPickerType("destination");
+      setLocationPickerVisible(true);
+      return;
+    }
+
+    if (!destination.trim()) {
+      Alert.alert(
+        "Destination required",
+        "Enter a destination first so TransConet can identify it on the map.",
+      );
+      return;
+    }
+
+    setLocationLoading(true);
+
+    try {
+      const coordinates = await resolveAddress(destination.trim());
+
+      if (!coordinates) {
+        Alert.alert(
+          "Location not found",
+          "We could not identify that destination. Please check the address and try again.",
+        );
+        return;
+      }
+
+      setDestinationCoordinates(coordinates);
+      setLocationPickerCoordinate(coordinates);
+      setLocationPickerType("destination");
+      setLocationPickerVisible(true);
+    } catch {
+      Alert.alert(
+        "Location unavailable",
+        "We could not identify that destination right now. Please try again.",
+      );
+    } finally {
+      setLocationLoading(false);
+    }
+  }
 
   async function openPickupLocationPicker() {
     if (pickupCoordinates) {
@@ -232,6 +293,83 @@ export default function CreateBooking() {
     };
   }
 
+  async function searchPlaceSuggestions(
+    value: string,
+    type: "pickup" | "destination",
+  ) {
+    const query = value.trim();
+
+    if (query.length < 2) {
+      if (type === "pickup") {
+        setPickupSuggestions([]);
+      } else {
+        setDestinationSuggestions([]);
+      }
+      return;
+    }
+
+    setPlacesLoading(type);
+
+    try {
+      const suggestions = await autocompletePlaces(query);
+
+      if (type === "pickup") {
+        setPickupSuggestions(suggestions);
+      } else {
+        setDestinationSuggestions(suggestions);
+      }
+    } catch {
+      if (type === "pickup") {
+        setPickupSuggestions([]);
+      } else {
+        setDestinationSuggestions([]);
+      }
+    } finally {
+      setPlacesLoading((current) =>
+        current === type ? null : current,
+      );
+    }
+  }
+
+  function selectPlaceSuggestion(
+    suggestion: PlaceSuggestion,
+    type: "pickup" | "destination",
+  ) {
+    if (type === "pickup") {
+      setPickupLocation(suggestion.text);
+      setPickupSuggestions([]);
+      setPickupCoordinates(null);
+      setRoute(null);
+      setFareEstimate(null);
+      setDistanceKm(null);
+    } else {
+      setDestination(suggestion.text);
+      setDestinationSuggestions([]);
+      setDestinationCoordinates(null);
+      setRoute(null);
+      setFareEstimate(null);
+      setDistanceKm(null);
+    }
+  }
+
+  async function calculateBookingRoute(
+    origin: Coordinates,
+    destinationPoint: Coordinates,
+  ) {
+    setRouteLoading(true);
+
+    try {
+      const result = await calculateRoute(origin, destinationPoint);
+      setRoute(result);
+      return result;
+    } catch {
+      setRoute(null);
+      return null;
+    } finally {
+      setRouteLoading(false);
+    }
+  }
+
   async function submit() {
     if (
       !pickupLocation.trim() ||
@@ -273,7 +411,10 @@ export default function CreateBooking() {
         return;
       }
 
-      const resolvedDestination = await resolveAddress(destination.trim());
+      let resolvedDestination = destinationCoordinates;
+    if (!resolvedDestination) {
+      resolvedDestination = await resolveAddress(destination.trim());
+    }
 
       if (!resolvedDestination) {
         Alert.alert(
@@ -311,7 +452,9 @@ export default function CreateBooking() {
 
       const booking = await createBooking({
         pickupLocation: pickupLocation.trim(),
+        pickupLandmark: pickupLandmark.trim() || undefined,
         destination: destination.trim(),
+        destinationLandmark: destinationLandmark.trim() || undefined,
         pickupLatitude: resolvedPickup.latitude,
         pickupLongitude: resolvedPickup.longitude,
         destinationLatitude: resolvedDestination.latitude,
@@ -350,13 +493,36 @@ export default function CreateBooking() {
 
       <TextInput
         value={pickupLocation}
-        onChangeText={(value) => {
-          setPickupLocation(value);
-          setPickupCoordinates(null);
-        }}
-        placeholder="Where should we collect it?"
-        style={styles.input}
+onChangeText={(value) => {
+setPickupLocation(value);
+setPickupCoordinates(null);
+setRoute(null);
+setFareEstimate(null);
+setDistanceKm(null);
+void searchPlaceSuggestions(value, "pickup");
+}}
       />
+              {pickupSuggestions.length > 0 && (
+                <View style={styles.suggestionsCard}>
+                  {pickupSuggestions.map((suggestion) => (
+                    <Pressable
+                      key={suggestion.placeId}
+                      onPress={() => selectPlaceSuggestion(suggestion, "pickup")}
+                      style={styles.suggestionItem}
+                    >
+                      <Text style={styles.suggestionTitle}>
+                        {suggestion.text}
+                      </Text>
+                      {suggestion.secondaryText ? (
+                        <Text style={styles.suggestionSecondary}>
+                          {suggestion.secondaryText}
+                        </Text>
+                      ) : null}
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+
 
       <Pressable
         disabled={locationLoading || loading}
@@ -393,17 +559,145 @@ export default function CreateBooking() {
           Confirm pickup on map
         </Text>
       </Pressable>
+              <Text style={styles.label}>Pickup landmark (optional)</Text>
+              <TextInput
+                value={pickupLandmark}
+                onChangeText={setPickupLandmark}
+                placeholder="e.g. Opposite Access Bank, near the filling station"
+                style={styles.input}
+              />
 
       <Text style={styles.label}>Destination</Text>
 
       <TextInput
         value={destination}
-        onChangeText={setDestination}
-        placeholder="Where should we deliver it?"
-        style={styles.input}
+onChangeText={(value) => {
+setDestination(value);
+setDestinationCoordinates(null);
+setRoute(null);
+setFareEstimate(null);
+setDistanceKm(null);
+void searchPlaceSuggestions(value, "destination");
+}}
       />
+              {destinationSuggestions.length > 0 && (
+                <View style={styles.suggestionsCard}>
+                  {destinationSuggestions.map((suggestion) => (
+                    <Pressable
+                      key={suggestion.placeId}
+                      onPress={() =>
+                        selectPlaceSuggestion(suggestion, "destination")
+                      }
+                      style={styles.suggestionItem}
+                    >
+                      <Text style={styles.suggestionTitle}>
+                        {suggestion.text}
+                      </Text>
+                      {suggestion.secondaryText ? (
+                        <Text style={styles.suggestionSecondary}>
+                          {suggestion.secondaryText}
+                        </Text>
+                      ) : null}
+                    </Pressable>
+                  ))}
+                </View>
+              )}
 
-      <Text style={styles.label}>Vehicle class required</Text>
+
+      {destinationCoordinates && (
+          <Text style={styles.coordinateText}>
+            Destination location confirmed
+          </Text>
+        )}
+
+        <Pressable
+          disabled={loading || locationLoading}
+          onPress={openDestinationLocationPicker}
+          style={[
+            styles.mapConfirmButton,
+            (loading || locationLoading) && styles.buttonDisabled,
+          ]}
+        >
+          <Text style={styles.mapConfirmButtonText}>
+            Confirm destination on map
+          </Text>
+        </Pressable>
+              <Text style={styles.label}>Destination landmark (optional)</Text>
+              <TextInput
+                value={destinationLandmark}
+                onChangeText={setDestinationLandmark}
+                placeholder="e.g. Beside the hospital, opposite the market"
+                style={styles.input}
+              />
+
+        {routeLoading && (
+          <View style={styles.routeLoadingCard}>
+            <ActivityIndicator />
+            <Text style={styles.routeLoadingText}>
+              Calculating your road route…
+            </Text>
+          </View>
+        )}
+
+        {route && (
+          <View style={styles.routeSummaryCard}>
+            <Text style={styles.routeSummaryTitle}>Your route</Text>
+            <View style={styles.routeSummaryRow}>
+              <View>
+                <Text style={styles.routeSummaryLabel}>Road distance</Text>
+                <Text style={styles.routeSummaryValue}>
+                  {(route.distanceMeters / 1000).toFixed(1)} km
+                </Text>
+              </View>
+              <View>
+                <Text style={styles.routeSummaryLabel}>Estimated travel time</Text>
+                <Text style={styles.routeSummaryValue}>
+                  {Math.max(1, Math.round(route.durationSeconds / 60))} min
+                </Text>
+              </View>
+            </View>
+            <Text style={styles.routeSummaryHint}>
+              Route and travel time are based on current road conditions.
+            </Text>
+          </View>
+        )}
+
+        {route && pickupCoordinates && destinationCoordinates && (
+          <View style={styles.routePreviewMap}>
+            <TransConetMap
+              region={{
+                latitude: (pickupCoordinates.latitude + destinationCoordinates.latitude) / 2,
+                longitude: (pickupCoordinates.longitude + destinationCoordinates.longitude) / 2,
+                latitudeDelta: Math.max(
+                  Math.abs(pickupCoordinates.latitude - destinationCoordinates.latitude) * 1.8,
+                  0.08,
+                ),
+                longitudeDelta: Math.max(
+                  Math.abs(pickupCoordinates.longitude - destinationCoordinates.longitude) * 1.8,
+                  0.08,
+                ),
+              }}
+              markers={[
+                {
+                  id: "pickup-preview",
+                  coordinate: pickupCoordinates,
+                  title: "Pickup",
+                  description: pickupLocation,
+                },
+                {
+                  id: "destination-preview",
+                  coordinate: destinationCoordinates,
+                  title: "Destination",
+                  description: destination,
+                },
+              ]}
+              routeCoordinates={route.coordinates}
+              interactive={false}
+            />
+          </View>
+        )}
+
+        <Text style={styles.label}>Vehicle class required</Text>
       <Text style={styles.fieldHint}>
         Select the class of vehicle required for this shipment.
       </Text>
@@ -591,7 +885,7 @@ export default function CreateBooking() {
         onRequestClose={() => setLocationPickerVisible(false)}
       >
         <View style={styles.locationModal}>
-          <Text style={styles.locationModalTitle}>Confirm pickup location</Text>
+          <Text style={styles.locationModalTitle}>Confirm {locationPickerType === "pickup" ? "pickup" : "destination"} location</Text>
           <Text style={styles.locationModalHint}>
             Move the pin to the exact collection point, then confirm.
           </Text>
@@ -624,7 +918,23 @@ export default function CreateBooking() {
               disabled={!locationPickerCoordinate}
               onPress={() => {
                 if (!locationPickerCoordinate) return;
-                setPickupCoordinates(locationPickerCoordinate);
+                if (locationPickerType === "pickup") {
+                  setPickupCoordinates(locationPickerCoordinate);
+                  if (destinationCoordinates) {
+                    void calculateBookingRoute(
+                      locationPickerCoordinate,
+                      destinationCoordinates,
+                    );
+                  }
+                } else {
+                  setDestinationCoordinates(locationPickerCoordinate);
+                  if (pickupCoordinates) {
+                    void calculateBookingRoute(
+                      pickupCoordinates,
+                      locationPickerCoordinate,
+                    );
+                  }
+                }
                 setLocationPickerVisible(false);
               }}
               style={styles.locationModalConfirm}
@@ -682,6 +992,93 @@ const styles = StyleSheet.create({
     color: "#344054",
     fontSize: 14,
     fontWeight: "800",
+  },
+  suggestionsCard: {
+    marginTop: 6,
+    marginBottom: 12,
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D7E3EF",
+    overflow: "hidden",
+  },
+  suggestionItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E6EEF5",
+  },
+  suggestionTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#102A43",
+  },
+  suggestionSecondary: {
+    marginTop: 3,
+    fontSize: 12,
+    color: "#627D98",
+  },
+  routeLoadingCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 12,
+    marginBottom: 8,
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: "#F4F8FC",
+    borderWidth: 1,
+    borderColor: "#D7E3EF",
+  },
+  routeLoadingText: {
+    fontSize: 14,
+    color: "#486581",
+    fontWeight: "600",
+  },
+  routePreviewMap: {
+    height: 230,
+    marginTop: 8,
+    marginBottom: 16,
+    borderRadius: 18,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#D7E3EF",
+  },
+  routeSummaryCard: {
+    marginTop: 16,
+    marginBottom: 8,
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: "#F4F8FC",
+    borderWidth: 1,
+    borderColor: "#D7E3EF",
+  },
+  routeSummaryTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: "#102A43",
+    marginBottom: 12,
+  },
+  routeSummaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 20,
+  },
+  routeSummaryLabel: {
+    fontSize: 12,
+    color: "#627D98",
+    marginBottom: 4,
+  },
+  routeSummaryValue: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#102A43",
+  },
+  routeSummaryHint: {
+    marginTop: 12,
+    fontSize: 12,
+    lineHeight: 17,
+    color: "#627D98",
   },
   locationModalConfirm: {
     flex: 1,

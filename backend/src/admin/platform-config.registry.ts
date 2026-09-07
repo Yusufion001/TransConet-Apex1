@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   pricingConfigSchema,
+  tripTrackingConfigSchema,
 } from "./admin.validators.js";
 import {
   marketplaceVisibilityConfigSchema,
@@ -9,6 +10,7 @@ import {
 export const PLATFORM_CONFIG_KEYS = {
   PRICING_CONFIG: "PRICING_CONFIG",
   MARKETPLACE_VISIBILITY_CONFIG: "MARKETPLACE_VISIBILITY_CONFIG",
+  TRIP_TRACKING_CONFIG: "TRIP_TRACKING_CONFIG",
 } as const;
 
 export type PlatformConfigKey =
@@ -40,6 +42,14 @@ export const PLATFORM_CONFIG_REGISTRY: Record<
     editable: true,
     deletable: false,
     schema: marketplaceVisibilityConfigSchema,
+  },
+
+  TRIP_TRACKING_CONFIG: {
+    key: PLATFORM_CONFIG_KEYS.TRIP_TRACKING_CONFIG,
+    description: "Automatic trip arrival and pickup geofence configuration",
+    editable: true,
+    deletable: false,
+    schema: tripTrackingConfigSchema,
   },
 };
 

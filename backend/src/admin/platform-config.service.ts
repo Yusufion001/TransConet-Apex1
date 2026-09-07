@@ -6,6 +6,24 @@ import {
   getPlatformConfigDefinitions,
 } from "./platform-config.registry.js";
 
+const DEFAULT_TRIP_TRACKING_CONFIG = {
+  driverArrivingDistanceKm: 3,
+  arrivalGeofenceMeters: 100,
+};
+
+export async function ensureTripTrackingConfig() {
+  return prisma.platformConfig.upsert({
+    where: { key: "TRIP_TRACKING_CONFIG" },
+    create: {
+      key: "TRIP_TRACKING_CONFIG",
+      value: DEFAULT_TRIP_TRACKING_CONFIG,
+      description:
+        "Automatic trip arrival and pickup geofence configuration",
+    },
+    update: {},
+  });
+}
+
 export async function getPlatformConfig() {
   return prisma.platformConfig.findMany({
     orderBy: { key: "asc" },

@@ -551,7 +551,9 @@ model Booking {
   estimatedFare Decimal? @db.Decimal(14, 2)
 
   pickupLocation       String
+  pickupLandmark       String?
   destination          String
+  destinationLandmark  String?
   pickupLatitude       Decimal @db.Decimal(10, 7)
   pickupLongitude      Decimal @db.Decimal(10, 7)
   destinationLatitude  Decimal @db.Decimal(10, 7)
@@ -577,7 +579,10 @@ model Booking {
   completedAt DateTime?
 
   proofOfDelivery          String?
+  cargoPhotoPath           String?
+  receiverSignaturePath    String?
   deliveryConfirmationCode String?
+  trackingShareToken      String? @unique
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
 

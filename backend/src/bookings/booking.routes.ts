@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { estimateFare } from "../pricing/pricing.service.js";
 import { Router, type Response } from "express";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
@@ -15,12 +16,14 @@ import {
   createBooking,
   getBookingById,
   getCustomerBookings,
+  getBookingTrackingShareToken,
   getDeliveryConfirmationCode,
   getTransporterBookings,
   assertBookingAccess,
   updateBookingStatus,
   uploadProofOfDelivery,
 } from "./booking.service.js";
+import { supabaseStorageService } from "../storage/supabase-storage.service.js";
 import {
   authenticate,
   authorize,
@@ -217,6 +220,22 @@ router.get(
   },
 );
 
+router.get("/:id/tracking-share", authorize("CUSTOMER"), async (req: AuthenticatedRequest, res) => {
+  try {
+    const result = await getBookingTrackingShareToken(
+      String(req.params.id),
+      req.user!.id,
+    );
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    handleBookingRouteError(error, res);
+  }
+});
+
 router.get("/:id", async (req: AuthenticatedRequest, res) => {
   try {
     await assertBookingAccess(
@@ -301,6 +320,51 @@ router.patch("/:id/status", async (req: AuthenticatedRequest, res) => {
     handleBookingRouteError(error, res);
   }
 });
+router.post(
+  "/:id/delivery-proof/upload-url",
+  authorize("TRANSPORTER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const bookingId = String(req.params.id);
+
+      await assertBookingAccess(
+        bookingId,
+        req.user!.id,
+        req.user!.role,
+        "proof",
+      );
+
+      const input = z.object({
+        type: z.enum(["CARGO_PHOTO", "RECEIVER_SIGNATURE"]),
+        fileName: z.string().trim().min(1).max(255),
+      }).parse(req.body);
+
+      const extension = input.fileName.includes(".")
+        ? input.fileName.substring(input.fileName.lastIndexOf(".")).toLowerCase()
+        : "";
+
+      const safeExtension = extension.replace(/[^a-z0-9.]/g, "");
+
+      const storagePath =
+        `${req.user!.id}/DELIVERY_PROOF/${bookingId}/${input.type}/${randomUUID()}${safeExtension}`;
+
+      const upload =
+        await supabaseStorageService.createSignedUploadUrl(storagePath);
+
+      return res.json({
+        success: true,
+        data: {
+          storagePath,
+          signedUrl: upload.signedUrl,
+          token: upload.token,
+        },
+      });
+    } catch (error) {
+      handleBookingRouteError(error, res);
+    }
+  },
+);
+
 router.patch(
   "/:id/proof-of-delivery",
   async (req: AuthenticatedRequest, res) => {
@@ -317,7 +381,10 @@ router.patch(
       const booking =
         await uploadProofOfDelivery(
           String(req.params.id),
+          req.user!.id,
           input.proofOfDelivery,
+          input.cargoPhotoPath,
+          input.receiverSignaturePath,
         );
 
       res.json({

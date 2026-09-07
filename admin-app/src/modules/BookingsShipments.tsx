@@ -588,6 +588,107 @@ export default function BookingsShipments() {
                 <section className="panel">
                   <div className="panel-header">
                     <div>
+                      <h3>Delivery Proof</h3>
+                      <p>Proof submitted by the transporter</p>
+                    </div>
+                  </div>
+
+                  <div className="detail-grid">
+                    <DetailRow
+                      label="Proof Status"
+                      value={
+                        selected.proofOfDelivery &&
+                        selected.cargoPhotoPath &&
+                        selected.receiverSignaturePath
+                          ? "Complete"
+                          : "Pending"
+                      }
+                    />
+                    <DetailRow
+                      label="Proof Description"
+                      value={selected.proofOfDelivery ?? "—"}
+                    />
+                    <DetailRow
+                      label="Cargo Photo"
+                      value={
+                        selected.cargoPhotoUrl
+                          ? "Available"
+                          : "Not submitted"
+                      }
+                    />
+                    <DetailRow
+                      label="Receiver Signature"
+                      value={
+                        selected.receiverSignatureUrl
+                          ? "Available"
+                          : "Not submitted"
+                      }
+                    />
+                    <DetailRow
+                      label="Delivery Confirmation"
+                      value={
+                        selected.deliveryConfirmationCode
+                          ? "Code issued"
+                          : "Not issued"
+                      }
+                    />
+                  </div>
+
+                  {(selected.cargoPhotoUrl ||
+                    selected.receiverSignatureUrl) && (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(220px, 1fr))",
+                        gap: "16px",
+                        marginTop: "20px",
+                      }}
+                    >
+                      {selected.cargoPhotoUrl && (
+                        <div>
+                          <strong> Cargo Photo </strong>
+                          <img
+                            src={selected.cargoPhotoUrl}
+                            alt="Cargo delivery proof"
+                            style={{
+                              width: "100%",
+                              maxHeight: "320px",
+                              objectFit: "contain",
+                              borderRadius: "12px",
+                              border: "1px solid #E4E7EC",
+                              marginTop: "8px",
+                              background: "#F9FAFB",
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {selected.receiverSignatureUrl && (
+                        <div>
+                          <strong> Receiver Signature </strong>
+                          <img
+                            src={selected.receiverSignatureUrl}
+                            alt="Receiver signature proof"
+                            style={{
+                              width: "100%",
+                              maxHeight: "320px",
+                              objectFit: "contain",
+                              borderRadius: "12px",
+                              border: "1px solid #E4E7EC",
+                              marginTop: "8px",
+                              background: "#FFFFFF",
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </section>
+
+                <section className="panel">
+                  <div className="panel-header">
+                    <div>
                       <h3>Lifecycle Timeline</h3>
                       <p>Booking status timestamps</p>
                     </div>
