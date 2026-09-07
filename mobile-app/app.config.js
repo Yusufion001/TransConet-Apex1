@@ -38,6 +38,20 @@ module.exports = {
       "expo-secure-store",
       "expo-web-browser",
       [
+        "expo-camera",
+        {
+          cameraPermission: "TransConet uses your camera to capture pickup and dispute evidence.",
+          microphonePermission: "TransConet uses your microphone when recording a dispute video."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          photosPermission: "TransConet uses your photos to attach pickup and dispute evidence.",
+          videosPermission: "TransConet uses your videos to attach dispute evidence."
+        }
+      ],
+      [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "TransConet uses your location to provide live trip tracking while you are on an active assignment.",

@@ -19,6 +19,7 @@ export type AdminRealtimeModule =
   | "REPORTS_CENTER"
   | "ACTIVITY_TIMELINE"
   | "LIVE_TRIPS"
+  | "DISPUTES"
   | "ERROR_CENTER"
   | "API_MANAGEMENT"
   | "SECURITY_CENTER"

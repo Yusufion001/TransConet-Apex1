@@ -21,6 +21,7 @@ export type AdminModule =
   | "ROLE_PERMISSION"
   | "PLATFORM_CONFIG"
   | "LIVE_TRIPS"
+  | "DISPUTES"
   | "ERROR_CENTER"
   | "API_MANAGEMENT"
   | "SECURITY_CENTER"

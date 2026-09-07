@@ -1,4 +1,5 @@
 import { Router } from "express";
+import crypto from "node:crypto";
 import { toDisputeDto } from "./dispute.dto.js";
 import { z } from "zod";
 
@@ -14,6 +15,8 @@ import {
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
+import { prisma } from "../config/prisma.js";
+import { supabaseStorageService } from "../storage/supabase-storage.service.js";
 import {
   disputeCreateSchema,
   disputeStatusSchema,
@@ -36,9 +39,103 @@ const transporterIdParamsSchema = z.object({
 const transporterDisputeCreateSchema = z.object({
   bookingId: z.string().uuid(),
   reason: z.string().trim().min(1).max(2000),
+  evidence: z.object({
+    media: z.array(z.object({
+      type: z.enum(["IMAGE", "VIDEO"]),
+      storagePath: z.string().trim().min(1),
+      fileName: z.string().trim().min(1).max(255),
+      mimeType: z.string().trim().min(1).max(100),
+    })).max(10).optional(),
+  }).optional(),
 });
 
 router.use(authenticate);
+
+router.post("/evidence/upload-url", async (req: AuthenticatedRequest, res) => {
+  try {
+    const input = z.object({
+      bookingId: z.string().uuid(),
+      fileName: z.string().trim().min(1).max(255),
+      mimeType: z.enum([
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "video/mp4",
+        "video/quicktime",
+        "video/webm",
+      ]),
+    }).parse(req.body);
+
+    if (req.user!.role !== "CUSTOMER" && req.user!.role !== "TRANSPORTER") {
+      return res.status(403).json({
+        success: false,
+        error: "Only customers or transporters can upload dispute evidence",
+      });
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: input.bookingId },
+      select: {
+        id: true,
+        customerId: true,
+        transporterId: true,
+      },
+    });
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        error: "Booking not found",
+      });
+    }
+
+    const hasAccess =
+      req.user!.role === "CUSTOMER"
+        ? booking.customerId === req.user!.id
+        : booking.transporterId === req.user!.id;
+
+    if (!hasAccess) {
+      return res.status(403).json({
+        success: false,
+        error: "Access denied",
+      });
+    }
+
+    const extension = input.fileName.includes(".")
+      ? input.fileName.substring(input.fileName.lastIndexOf(".")).toLowerCase()
+      : "";
+
+    const safeExtension = extension.replace(/[^a-z0-9.]/g, "");
+
+    const storagePath =
+      `${req.user!.id}/DISPUTE_EVIDENCE/${booking.id}/${crypto.randomUUID()}${safeExtension}`;
+
+    const upload = await supabaseStorageService.createSignedUploadUrl(
+      storagePath,
+    );
+
+    return res.json({
+      success: true,
+      data: {
+        storagePath,
+        signedUrl: upload.signedUrl,
+        token: upload.token,
+      },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        success: false,
+        error: error.issues,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : "Server error",
+    });
+  }
+});
 
 router.post("/", async (req: AuthenticatedRequest, res) => {
   try {
@@ -49,6 +146,7 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
         bookingId: input.bookingId,
         transporterId: req.user!.id,
         reason: input.reason,
+        evidence: input.evidence,
       });
 
       return res.json({
@@ -56,8 +154,6 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
         data: toDisputeDto(dispute),
       });
     }
-
-    const input = disputeCreateSchema.parse(req.body);
 
     if (
       req.user!.role !== "CUSTOMER" &&
@@ -69,26 +165,33 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
       });
     }
 
-    if (
-      req.user!.role === "CUSTOMER" &&
-      input.customerId !== req.user!.id
-    ) {
-      return res.status(403).json({
-        success: false,
-        error: "You can only create disputes for your own account",
-      });
-    }
+    const input =
+      req.user!.role === "CUSTOMER"
+        ? z.object({
+            bookingId: z.string().uuid(),
+            reason: z.string().trim().min(1).max(2000),
+            evidence: z.object({
+              media: z.array(z.object({
+                type: z.enum(["IMAGE", "VIDEO"]),
+                storagePath: z.string().trim().min(1),
+                fileName: z.string().trim().min(1).max(255),
+                mimeType: z.string().trim().min(1).max(100),
+              })).max(10).optional(),
+            }).optional(),
+          }).parse(req.body)
+        : disputeCreateSchema.parse(req.body);
 
     const dispute = await createDispute({
       ...input,
       customerId:
         req.user!.role === "CUSTOMER"
           ? req.user!.id
-          : input.customerId,
+          : (input as z.infer<typeof disputeCreateSchema>).customerId,
       actorId: req.user!.id,
+      evidence: input.evidence,
     });
 
-    res.json({
+    return res.json({
       success: true,
       data: toDisputeDto(dispute),
     });

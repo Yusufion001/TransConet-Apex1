@@ -9,7 +9,10 @@ export function toDisputeDto(dispute: any) {
     customerId: dispute.customerId,
     transporterId: dispute.transporterId,
     reason: dispute.reason,
+    evidence: dispute.evidence ?? null,
     status: dispute.status,
+    administratorId: dispute.administratorId ?? null,
+    resolution: dispute.resolution ?? null,
     createdAt: date(dispute.createdAt),
     updatedAt: date(dispute.updatedAt),
   };

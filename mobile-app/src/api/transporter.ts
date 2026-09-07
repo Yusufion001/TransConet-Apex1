@@ -528,6 +528,25 @@ export type SupportTicket = {
   } | null;
 };
 
+export type DisputeEvidenceMedia = {
+  type: "IMAGE" | "VIDEO";
+  storagePath: string;
+  fileName: string;
+  mimeType: string;
+  signedUrl?: string | null;
+};
+
+export type DisputeEvidence = {
+  pickup?: {
+    location: string;
+    latitude: number;
+    longitude: number;
+    scheduledDate?: string | null;
+    pickedUpAt?: string | null;
+  };
+  media?: DisputeEvidenceMedia[];
+};
+
 export type TransporterDispute = {
   id: string;
   bookingId: string;
@@ -535,6 +554,7 @@ export type TransporterDispute = {
   transporterId?: string | null;
   reason: string;
   status: "OPEN" | "INVESTIGATING" | "RESOLVED";
+  evidence?: DisputeEvidence | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 };
@@ -564,9 +584,30 @@ export async function getTransporterSupportTickets(
   return response.data.data;
 }
 
+export async function createDisputeEvidenceUploadUrl(input: {
+  bookingId: string;
+  fileName: string;
+  mimeType: string;
+}): Promise<{
+  storagePath: string;
+  signedUrl: string;
+  token: string;
+}> {
+  const response = await apiClient.post<ApiResponse<{
+    storagePath: string;
+    signedUrl: string;
+    token: string;
+  }>>("/disputes/evidence/upload-url", input);
+
+  return response.data.data;
+}
+
 export async function createTransporterDispute(input: {
   bookingId: string;
   reason: string;
+  evidence?: {
+    media?: DisputeEvidenceMedia[];
+  };
 }): Promise<TransporterDispute> {
   const response = await apiClient.post<ApiResponse<TransporterDispute>>(
     "/disputes",

@@ -10,6 +10,7 @@ import BookingsShipments from "./modules/BookingsShipments";
 import Marketplace from "./modules/Marketplace";
 import Subscriptions from "./modules/Subscriptions";
 import SupportCare from "./modules/SupportCare";
+import Disputes from "./modules/Disputes";
 import Fleet from "./modules/Fleet";
 import SecurityCenter from "./modules/SecurityCenter";
 import NotificationCenter from "./modules/NotificationCenter";
@@ -123,6 +124,7 @@ const primaryNav: NavItem[] = [
   {
     label: "Disputes",
     description: "Dispute management and resolution",
+    requiredModule: "DISPUTES",
   },
   {
     label: "Risk & Fraud",
@@ -474,6 +476,8 @@ function App() {
           <Settings />
         ) : active === "Support" ? (
           <SupportCare />
+        ) : active === "Disputes" ? (
+          <Disputes />
         ) : (
           <ModuleWorkspace
             title={active}
