@@ -10,6 +10,7 @@ mock.module(new URL("../src/config/env.js", import.meta.url).href, {
   namedExports: {
     env: {
       GOOGLE_MAP_PLATFORM_KEY: "test-google-key",
+      ROUTING_PROVIDER: "google",
     },
   },
 });

@@ -38,6 +38,8 @@ const authorizeMock = mock.fn((role: string) => {
 
 const createMarketplaceRequestMock = mock.fn();
 const getMarketplaceRequestMock = mock.fn();
+const getCustomerMarketplaceRequestsMock = mock.fn();
+const cancelMarketplaceRequestMock = mock.fn();
 const createMarketplaceBidMock = mock.fn();
 const withdrawMarketplaceBidMock = mock.fn();
 const selectMarketplaceBidMock = mock.fn();
@@ -54,6 +56,8 @@ mock.module(new URL("../src/marketplace/marketplace.service.js", import.meta.url
   namedExports: {
     createMarketplaceRequest: createMarketplaceRequestMock,
     getMarketplaceRequest: getMarketplaceRequestMock,
+    getCustomerMarketplaceRequests: getCustomerMarketplaceRequestsMock,
+    cancelMarketplaceRequest: cancelMarketplaceRequestMock,
     createMarketplaceBid: createMarketplaceBidMock,
     withdrawMarketplaceBid: withdrawMarketplaceBidMock,
     selectMarketplaceBid: selectMarketplaceBidMock,
@@ -98,6 +102,8 @@ function getRoute(
 test.beforeEach(() => {
   createMarketplaceRequestMock.mock.resetCalls();
   getMarketplaceRequestMock.mock.resetCalls();
+  getCustomerMarketplaceRequestsMock.mock.resetCalls();
+  cancelMarketplaceRequestMock.mock.resetCalls();
   createMarketplaceBidMock.mock.resetCalls();
   withdrawMarketplaceBidMock.mock.resetCalls();
   selectMarketplaceBidMock.mock.resetCalls();
@@ -117,7 +123,7 @@ test("marketplace router registers all required endpoints", () => {
     routerGetMock.mock.calls.map(
       (call) => call.arguments[0],
     ),
-    ["/loads", "/requests/:id"],
+    ["/loads", "/requests", "/requests/:id"],
   );
 
   assert.deepEqual(
@@ -126,6 +132,7 @@ test("marketplace router registers all required endpoints", () => {
     ),
     [
       "/requests",
+      "/requests/:id/cancel",
       "/requests/:id/bids",
       "/requests/:id/bids/:bidId/select",
       "/bids/:id/withdraw",

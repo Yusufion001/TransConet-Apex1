@@ -538,7 +538,6 @@ test("uploadProofOfDelivery accepts proof after arrival", async () => {
   const updatedBooking = makeBooking({
     status: "ARRIVED",
     proofOfDelivery: "https://example.com/proof.jpg",
-    deliveryConfirmationCode: "123456",
   });
 
   prismaMock.booking.update.mock.mockImplementation(
@@ -548,7 +547,6 @@ test("uploadProofOfDelivery accepts proof after arrival", async () => {
   const result = await uploadProofOfDelivery(
     "booking-1",
     "https://example.com/proof.jpg",
-    "123456",
   );
 
   assert.deepEqual(result, toBookingDto(updatedBooking));
@@ -563,7 +561,7 @@ test("uploadProofOfDelivery accepts proof after arrival", async () => {
   );
   assert.equal(
     call.data.deliveryConfirmationCode,
-    "123456",
+    undefined,
   );
 });
 

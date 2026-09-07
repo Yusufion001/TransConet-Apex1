@@ -24,6 +24,12 @@ const prismaMock = {
     findUnique: mock.fn<(...args: any[]) => any>(),
     updateMany: mock.fn<(...args: any[]) => any>(),
   },
+  verification: {
+    create: mock.fn<(...args: any[]) => any>(),
+  },
+  adminActivity: {
+    create: mock.fn<(...args: any[]) => any>(),
+  },
   $transaction: mock.fn<(...args: any[]) => any>(),
 };
 
@@ -50,6 +56,27 @@ mock.module(new URL("../src/services/email.service.js", import.meta.url).href, {
   },
 });
 
+mock.module(
+  new URL(
+    "../src/verification/youverify/youverify.service.js",
+    import.meta.url,
+  ).href,
+  {
+    namedExports: {
+      verifyIdentity: mock.fn(async () => ({
+        success: true,
+        statusCode: 200,
+        data: {
+          id: "youverify-test-1",
+          status: "PENDING",
+        },
+      })),
+      extractYouverifyVerificationId: (response: any) =>
+        response.data?.id,
+    },
+  },
+);
+
 const {
   registerUser,
   loginUser,
@@ -73,6 +100,8 @@ function resetMocks() {
     prismaMock.emailVerification.upsert,
     prismaMock.emailVerification.findUnique,
     prismaMock.emailVerification.updateMany,
+    prismaMock.verification.create,
+    prismaMock.adminActivity.create,
     prismaMock.$transaction,
     sendPasswordResetEmailMock,
     sendEmailVerificationEmailMock,
@@ -155,12 +184,51 @@ test("registerUser creates a customer profile and requires email verification", 
     transporterProfile: null,
   }));
 
+  prismaMock.user.findUnique.mock.mockImplementation(async () => ({
+    id: "customer-1",
+    role: "CUSTOMER",
+    customerProfile: {
+      userId: "customer-1",
+      customerType: "INDIVIDUAL",
+    },
+  }));
+
+  prismaMock.adminActivity.create.mock.mockImplementation(async (args: any) => ({
+    id: args?.data?.id ?? "activity-1",
+    ...args?.data,
+  }));
+
+  prismaMock.verification.create.mock.mockImplementation(async () => ({
+    id: "verification-1",
+    userId: "customer-1",
+    type: "NIN",
+    verificationNumber: "11111111111",
+    verificationProvider: "YOUVERIFY",
+    externalVerificationId: "youverify-test-1",
+    providerStatus: "SUCCESS",
+    providerResponse: {
+      success: true,
+      data: {
+        id: "youverify-test-1",
+        status: "PENDING",
+      },
+    },
+    verifiedAt: null,
+    adminStatus: "PENDING",
+    adminApproved: false,
+  }));
+
   const result = await registerUser({
     firstName: "John",
     lastName: "Doe",
     email: "john@example.com",
     password: "Password123!",
     role: "CUSTOMER",
+    customerType: "INDIVIDUAL",
+    dateOfBirth: "1995-01-15",
+    governmentIdType: "NIN",
+    governmentIdNumber: "11111111111",
+    subjectConsent: true,
   });
 
   assert.equal(result.user.id, "customer-1");
@@ -176,7 +244,10 @@ test("registerUser creates a customer profile and requires email verification", 
   assert.deepEqual(
     createCall.data.customerProfile,
     {
-      create: {},
+      create: {
+        customerType: "INDIVIDUAL",
+        dateOfBirth: new Date("1995-01-15"),
+      },
     },
   );
 
