@@ -2,6 +2,10 @@ import test, { mock } from "node:test";
 import assert from "node:assert/strict";
 
 const prismaMock = {
+  commissionRule: {
+    findMany: mock.fn<(...args: any[]) => any>(),
+  },
+
   marketplaceRequest: {
     create: mock.fn<(...args: any[]) => any>(),
     findUnique: mock.fn<(...args: any[]) => any>(),
@@ -31,6 +35,10 @@ const prismaMock = {
   },
 
   booking: {
+    create: mock.fn<(...args: any[]) => any>(),
+  },
+
+  negotiationAgreement: {
     create: mock.fn<(...args: any[]) => any>(),
   },
 
@@ -70,6 +78,8 @@ const {
 
 function resetMocks() {
   for (const fn of [
+    prismaMock.commissionRule.findMany,
+
     prismaMock.marketplaceRequest.create,
     prismaMock.marketplaceRequest.findUnique,
     prismaMock.marketplaceRequest.findFirst,
@@ -115,6 +125,10 @@ test.beforeEach(() => {
   );
 
   prismaMock.marketplaceBid.findMany.mock.mockImplementation(
+    async () => [],
+  );
+
+  prismaMock.commissionRule.findMany.mock.mockImplementation(
     async () => [],
   );
 
