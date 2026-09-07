@@ -79,11 +79,21 @@ export const contentUpdateSchema = z.object({
   { message: "At least one content field must be provided" },
 );
 
+const disputeEvidenceMediaSchema = z.object({
+  type: z.enum(["IMAGE", "VIDEO"]),
+  storagePath: z.string().trim().min(1),
+  fileName: z.string().trim().min(1).max(255),
+  mimeType: z.string().trim().min(1).max(100),
+});
+
 export const disputeCreateSchema = z.object({
   bookingId: z.string().uuid(),
   customerId: z.string().uuid(),
   transporterId: z.string().uuid().optional(),
   reason: z.string().trim().min(1).max(2000),
+  evidence: z.object({
+    media: z.array(disputeEvidenceMediaSchema).max(10).optional(),
+  }).optional(),
 });
 
 export const disputeStatusSchema = z.object({

@@ -6,6 +6,14 @@ export async function createDispute(data: {
   customerId: string;
   transporterId?: string;
   reason: string;
+  evidence?: {
+    media?: Array<{
+      type: "IMAGE" | "VIDEO";
+      storagePath: string;
+      fileName: string;
+      mimeType: string;
+    }>;
+  };
   actorId?: string;
 }) {
   const booking = await prisma.booking.findUnique({
@@ -14,6 +22,11 @@ export async function createDispute(data: {
       id: true,
       customerId: true,
       transporterId: true,
+      pickupLocation: true,
+      pickupLatitude: true,
+      pickupLongitude: true,
+      scheduledDate: true,
+      pickedUpAt: true,
     },
   });
 
@@ -39,6 +52,16 @@ export async function createDispute(data: {
       transporterId:
         data.transporterId ?? booking.transporterId ?? undefined,
       reason: data.reason,
+      evidence: {
+        pickup: {
+          location: booking.pickupLocation,
+          latitude: Number(booking.pickupLatitude),
+          longitude: Number(booking.pickupLongitude),
+          scheduledDate: booking.scheduledDate?.toISOString() ?? null,
+          pickedUpAt: booking.pickedUpAt?.toISOString() ?? null,
+        },
+        media: data.evidence?.media ?? [],
+      },
     },
   });
 
@@ -57,6 +80,14 @@ export async function createTransporterDispute(data: {
   bookingId: string;
   transporterId: string;
   reason: string;
+  evidence?: {
+    media?: Array<{
+      type: "IMAGE" | "VIDEO";
+      storagePath: string;
+      fileName: string;
+      mimeType: string;
+    }>;
+  };
 }) {
   const booking = await prisma.booking.findUnique({
     where: { id: data.bookingId },
@@ -64,6 +95,11 @@ export async function createTransporterDispute(data: {
       id: true,
       customerId: true,
       transporterId: true,
+      pickupLocation: true,
+      pickupLatitude: true,
+      pickupLongitude: true,
+      scheduledDate: true,
+      pickedUpAt: true,
     },
   });
 
@@ -81,6 +117,16 @@ export async function createTransporterDispute(data: {
       customerId: booking.customerId,
       transporterId: data.transporterId,
       reason: data.reason,
+      evidence: {
+        pickup: {
+          location: booking.pickupLocation,
+          latitude: Number(booking.pickupLatitude),
+          longitude: Number(booking.pickupLongitude),
+          scheduledDate: booking.scheduledDate?.toISOString() ?? null,
+          pickedUpAt: booking.pickedUpAt?.toISOString() ?? null,
+        },
+        media: data.evidence?.media ?? [],
+      },
     },
   });
 

@@ -35,6 +35,13 @@ export default function CustomerLayout() {
         }}
       />
       <Drawer.Screen
+        name="disputes"
+        options={{
+          drawerLabel: "Disputes",
+          title: "Disputes",
+        }}
+      />
+      <Drawer.Screen
         name="notifications/index"
         options={{
           drawerLabel: "Notifications",
