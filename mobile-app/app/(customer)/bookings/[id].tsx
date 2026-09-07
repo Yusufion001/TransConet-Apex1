@@ -11,10 +11,15 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Share,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import { getBooking } from "../../../src/api/bookings";
+import {
+  getBooking,
+  getBookingTrackingShare,
+} from "../../../src/api/bookings";
+import { apiClient } from "../../../src/api/client";
 import {
   getBookingMessages,
   sendBookingMessage,
@@ -31,15 +36,62 @@ import {
   type VehicleLocation,
 } from "../../../src/realtime/booking-realtime";
 import BookingReviewForm from "../../../src/components/BookingReviewForm";
+import TransConetMap, {
+  type MapCoordinate,
+} from "../../../src/components/maps/TransConetMap";
 
 export default function BookingDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [liveStatus, setLiveStatus] = useState<string | null>(null);
   const [vehicleLocation, setVehicleLocation] =
     useState<VehicleLocation | null>(null);
+  const [trackingRegion, setTrackingRegion] = useState({
+    latitude: 6.5244,
+    longitude: 3.3792,
+    latitudeDelta: 0.08,
+    longitudeDelta: 0.08,
+  });
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [messageText, setMessageText] = useState("");
   const [messageLoading, setMessageLoading] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
+
+  const handleShareTracking = useCallback(async () => {
+    if (!id || shareLoading) {
+      return;
+    }
+
+    try {
+      setShareLoading(true);
+
+      const result = await getBookingTrackingShare(String(id));
+      const baseUrl = String(
+        apiClient.defaults.baseURL ?? "",
+      ).replace(/\/$/, "");
+
+      if (!baseUrl) {
+        throw new Error("Tracking link is not configured");
+      }
+
+      const trackingUrl = `${baseUrl}/tracking/${result.trackingShareToken}`;
+
+      await Share.share({
+        title: "TransConet Live Tracking",
+        message:
+          `Track this TransConet shipment live:\n${trackingUrl}`,
+        url: trackingUrl,
+      });
+    } catch (error) {
+      Alert.alert(
+        "Unable to share tracking",
+        error instanceof Error
+          ? error.message
+          : "Please try again later.",
+      );
+    } finally {
+      setShareLoading(false);
+    }
+  }, [id, shareLoading]);
 
   const bookingQuery = useQuery({
     queryKey: ["booking", id],
@@ -95,7 +147,14 @@ export default function BookingDetails() {
         setLiveStatus(event.eventType);
         void refreshBooking();
       },
-      onVehicleLocation: setVehicleLocation,
+      onVehicleLocation: (location) => {
+        setVehicleLocation(location);
+        setTrackingRegion((current) => ({
+          ...current,
+          latitude: location.latitude,
+          longitude: location.longitude,
+        }));
+      },
       onAccessDenied: (message) => Alert.alert("Realtime access", message),
     })
       .then((unsubscribe) => {
@@ -236,6 +295,13 @@ export default function BookingDetails() {
     paymentStatus !== "PROCESSING" &&
     paymentStatus !== "REFUNDED" &&
     Boolean(booking.fare);
+
+  const trackingCoordinate: MapCoordinate | null = vehicleLocation
+    ? {
+        latitude: vehicleLocation.latitude,
+        longitude: vehicleLocation.longitude,
+      }
+    : null;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -440,6 +506,49 @@ export default function BookingDetails() {
         />
       )}
 
+      {(booking.status === "ACCEPTED" ||
+        booking.status === "DRIVER_ARRIVING" ||
+        booking.status === "ARRIVED" ||
+        booking.status === "IN_TRANSIT") && (
+        <Pressable
+          style={styles.shareTrackingButton}
+          onPress={() => void handleShareTracking()}
+          disabled={shareLoading}
+        >
+          {shareLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.shareTrackingText}>
+              SHARE LIVE TRACKING
+            </Text>
+          )}
+        </Pressable>
+      )}
+
+      {trackingCoordinate && (
+        <View style={styles.liveMapCard}>
+          <Text style={styles.label}>LIVE TRANSPORTER LOCATION</Text>
+          <View style={styles.liveMap}>
+            <TransConetMap
+              region={trackingRegion}
+              markers={[
+                {
+                  id: "transporter",
+                  coordinate: trackingCoordinate,
+                  title: "Transporter",
+                  description: "Live transporter location",
+                },
+              ]}
+          animatedMarkerId="transporter"
+              interactive={false}
+            />
+          </View>
+          <Text style={styles.trackingHint}>
+            The map updates automatically while the transporter is in transit.
+          </Text>
+        </View>
+      )}
+
       {vehicleLocation && (
         <View style={styles.liveCard}>
           <Text style={styles.label}>LIVE VEHICLE LOCATION</Text>
@@ -513,6 +622,39 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderWidth: 1,
     borderColor: "#EAECF0",
+  },
+  liveMapCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#EAECF0",
+  },
+  liveMap: {
+    height: 260,
+    borderRadius: 14,
+    overflow: "hidden",
+    marginTop: 8,
+  },
+  shareTrackingButton: {
+    marginTop: 12,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#111827",
+  },
+  shareTrackingText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 14,
+  },
+  trackingHint: {
+    color: "#667085",
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 10,
   },
   liveCard: {
     backgroundColor: "#EEF6FF",

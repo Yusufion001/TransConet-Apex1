@@ -1,5 +1,6 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import MapView, {
+  AnimatedRegion,
   Marker,
   Polyline,
   type MapPressEvent,
@@ -26,6 +27,7 @@ type TransConetMapProps = {
   pinCoordinate?: MapCoordinate;
   onPinChange?: (coordinate: MapCoordinate) => void;
   interactive?: boolean;
+  animatedMarkerId?: string;
 };
 
 export default function TransConetMap({
@@ -35,11 +37,40 @@ export default function TransConetMap({
   pinCoordinate,
   onPinChange,
   interactive = true,
+  animatedMarkerId,
 }: TransConetMapProps) {
   const hasRoute = useMemo(
     () => routeCoordinates.length > 1,
     [routeCoordinates],
   );
+
+  const animatedCoordinate = useRef(
+    new AnimatedRegion({
+      latitude: markers.find((marker) => marker.id === animatedMarkerId)?.coordinate.latitude ?? region.latitude,
+      longitude: markers.find((marker) => marker.id === animatedMarkerId)?.coordinate.longitude ?? region.longitude,
+      latitudeDelta: 0,
+      longitudeDelta: 0,
+    }),
+  ).current;
+
+  useEffect(() => {
+    const animatedMarker = markers.find(
+      (marker) => marker.id === animatedMarkerId,
+    );
+
+    if (!animatedMarker) {
+      return;
+    }
+
+    animatedCoordinate.timing({
+      latitude: animatedMarker.coordinate.latitude,
+      longitude: animatedMarker.coordinate.longitude,
+      latitudeDelta: 0,
+      longitudeDelta: 0,
+      duration: 900,
+      useNativeDriver: false,
+    } as any).start();
+  }, [animatedCoordinate, animatedMarkerId, markers]);
 
   const handleMapPress = (event: MapPressEvent) => {
     if (!interactive || !onPinChange) {
@@ -53,7 +84,7 @@ export default function TransConetMap({
     <View style={styles.container}>
       <MapView
         style={StyleSheet.absoluteFill}
-        initialRegion={region}
+        region={region}
         onPress={handleMapPress}
         scrollEnabled={interactive}
         zoomEnabled={interactive}
@@ -71,14 +102,27 @@ export default function TransConetMap({
           />
         ) : null}
 
-        {markers.map((marker) => (
-          <Marker
-            key={marker.id}
-            coordinate={marker.coordinate}
-            title={marker.title}
-            description={marker.description}
-          />
-        ))}
+        {markers.map((marker) => {
+          if (marker.id === animatedMarkerId) {
+            return (
+              <Marker.Animated
+                key={marker.id}
+                coordinate={animatedCoordinate as any}
+                title={marker.title}
+                description={marker.description}
+              />
+            );
+          }
+
+          return (
+            <Marker
+              key={marker.id}
+              coordinate={marker.coordinate}
+              title={marker.title}
+              description={marker.description}
+            />
+          );
+        })}
 
         {hasRoute ? (
           <Polyline

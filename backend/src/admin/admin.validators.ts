@@ -47,6 +47,16 @@ export const pricingConfigSchema = z.object({
   distanceRatePerKm: positivePricingNumber,
 }).strict();
 
+const positiveTrackingNumber = z.coerce
+  .number()
+  .finite()
+  .positive();
+
+export const tripTrackingConfigSchema = z.object({
+  driverArrivingDistanceKm: positiveTrackingNumber,
+  arrivalGeofenceMeters: positiveTrackingNumber,
+}).strict();
+
 export const platformConfigSchema = z.object({
   value: z.unknown(),
   description: z.string().trim().max(1000).nullable().optional(),

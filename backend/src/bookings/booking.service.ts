@@ -1,4 +1,4 @@
-import { randomInt } from "node:crypto";
+import { randomBytes, randomInt } from "node:crypto";
 import { prisma } from "../config/prisma.js";
 import { createShipmentEvent } from "../events/event.service.js";
 import { publishEvent } from "../realtime/event-bus.js";
@@ -11,8 +11,10 @@ import { createBankTransferPayment } from "../payments/bank-transfer.service.js"
 export async function createBooking(data: {
   customerId: string;
   pickupLocation: string;
-  destination: string;
-  pickupLatitude: number;
+      pickupLandmark?: string;
+destination: string;
+      destinationLandmark?: string;
+pickupLatitude: number;
   pickupLongitude: number;
   destinationLatitude: number;
   destinationLongitude: number;
@@ -55,8 +57,10 @@ export async function createBooking(data: {
       data: {
         customerId: data.customerId,
         pickupLocation: data.pickupLocation,
-        destination: data.destination,
-        pickupLatitude: data.pickupLatitude,
+                pickupLandmark: data.pickupLandmark,
+destination: data.destination,
+                destinationLandmark: data.destinationLandmark,
+pickupLatitude: data.pickupLatitude,
         pickupLongitude: data.pickupLongitude,
         destinationLatitude: data.destinationLatitude,
         destinationLongitude: data.destinationLongitude,
@@ -165,6 +169,32 @@ export async function assertBookingAccess(
       role === "CUSTOMER" && booking.customerId === userId) return booking;
 
   throw new Error("Access denied");
+}
+
+export async function getBookingTrackingShareToken(
+  bookingId: string,
+  customerId: string,
+) {
+  await assertBookingAccess(bookingId, customerId, "CUSTOMER", "read");
+
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: {
+      trackingShareToken: true,
+      status: true,
+    },
+  });
+
+  if (!booking) throw new Error("Booking not found");
+
+  if (!booking.trackingShareToken) {
+    throw new Error("Live tracking is not available");
+  }
+
+  return {
+    trackingShareToken: booking.trackingShareToken,
+    status: booking.status,
+  };
 }
 
 export async function getBookingById(id: string) {
@@ -379,7 +409,14 @@ export async function updateBookingStatus(
 
     const updatedBooking = await tx.booking.update({
       where: { id: bookingId },
-      data: timestampData,
+      data: {
+        ...timestampData,
+        ...(status === "ACCEPTED"
+          ? {
+              trackingShareToken: randomBytes(32).toString("hex"),
+            }
+          : {}),
+      },
     });
 
     if (status === "CANCELLED" && booking.vehicleId) {
@@ -546,20 +583,45 @@ export async function getTransporterBookings(
 
 export async function uploadProofOfDelivery(
   bookingId: string,
+  transporterId: string,
   proofOfDelivery: string,
+  cargoPhotoPath: string,
+  receiverSignaturePath: string,
 ) {
   return prisma.$transaction(async (tx) => {
     const booking = await tx.booking.findUnique({
       where: { id: bookingId },
-      select: { id: true, status: true },
+      select: {
+        id: true,
+        status: true,
+        transporterId: true,
+      },
     });
 
     if (!booking) {
       throw new Error("Booking not found");
     }
 
+    if (booking.transporterId !== transporterId) {
+      throw new Error("Access denied");
+    }
+
     if (booking.status !== "ARRIVED") {
       throw new Error("Proof of delivery can only be submitted after arrival");
+    }
+
+    const cargoPrefix =
+      `${transporterId}/DELIVERY_PROOF/${bookingId}/CARGO_PHOTO/`;
+
+    const signaturePrefix =
+      `${transporterId}/DELIVERY_PROOF/${bookingId}/RECEIVER_SIGNATURE/`;
+
+    if (!cargoPhotoPath.startsWith(cargoPrefix)) {
+      throw new Error("Invalid cargo photo path");
+    }
+
+    if (!receiverSignaturePath.startsWith(signaturePrefix)) {
+      throw new Error("Invalid receiver signature path");
     }
 
     const updatedBooking = await tx.booking.update({
@@ -568,13 +630,14 @@ export async function uploadProofOfDelivery(
       },
       data: {
         proofOfDelivery,
+        cargoPhotoPath,
+        receiverSignaturePath,
       },
     });
 
     return toBookingDto(updatedBooking);
   });
 }
-
 
 export async function getDeliveryConfirmationCode(
   bookingId: string,
@@ -586,6 +649,8 @@ export async function getDeliveryConfirmationCode(
       customerId: true,
       status: true,
       proofOfDelivery: true,
+      cargoPhotoPath: true,
+      receiverSignaturePath: true,
       deliveryConfirmationCode: true,
     },
   });
@@ -604,9 +669,13 @@ export async function getDeliveryConfirmationCode(
     );
   }
 
-  if (!booking.proofOfDelivery) {
+  if (
+    !booking.proofOfDelivery ||
+    !booking.cargoPhotoPath ||
+    !booking.receiverSignaturePath
+  ) {
     throw new Error(
-      "Delivery confirmation code is only available after proof of delivery",
+      "Delivery confirmation code is only available after complete proof of delivery",
     );
   }
 

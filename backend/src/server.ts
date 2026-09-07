@@ -3,12 +3,14 @@ import { createServer } from "node:http";
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import { prisma } from "./config/prisma.js";
+import { ensureTripTrackingConfig } from "./admin/platform-config.service.js";
 import { AdminModule } from "../generated/prisma/enums.js";
 import documentRoutes from "./documents/document.routes.js";
 import vehicleRoutes from "./vehicles/vehicle.routes.js";
 import transporterRoutes from "./transporters/transporter.routes.js";
 import walletRoutes from "./wallet/wallet.routes.js";
 import bookingRoutes from "./bookings/booking.routes.js";
+import publicTrackingRoutes from "./realtime/public-tracking.routes.js";
 import marketplaceRoutes from "./marketplace/marketplace.routes.js";
 import messageRoutes from "./messages/message.routes.js";
 import notificationRoutes from "./notifications/notification.routes.js";
@@ -153,6 +155,7 @@ applySecurityFoundation(app);
 app.use("/", verificationWebRoutes);
 
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/tracking", publicTrackingRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/marketplace", marketplaceRoutes);
 app.use("/api/auth", authRoutes);
@@ -418,8 +421,18 @@ io.on("connection", (socket) => {
     },
   );
 });
-httpServer.listen(env.PORT, "0.0.0.0", () => {
-  console.log(
-    `TransConet API running on port ${env.PORT}`,
-  );
-});
+void ensureTripTrackingConfig()
+  .then(() => {
+    httpServer.listen(env.PORT, "0.0.0.0", () => {
+      console.log(
+        `TransConet API running on port ${env.PORT}`,
+      );
+    });
+  })
+  .catch((error) => {
+    console.error(
+      "Failed to initialize platform configuration",
+      error,
+    );
+    process.exit(1);
+  });

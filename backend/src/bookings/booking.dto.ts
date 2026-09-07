@@ -44,7 +44,9 @@ export function toBookingDto(booking: BookingModel) {
     estimatedFare: decimal(booking.estimatedFare),
 
     pickupLocation: booking.pickupLocation,
+    pickupLandmark: booking.pickupLandmark,
     destination: booking.destination,
+    destinationLandmark: booking.destinationLandmark,
 
     pickupLatitude: decimal(booking.pickupLatitude),
     pickupLongitude: decimal(booking.pickupLongitude),
@@ -81,6 +83,9 @@ export function toBookingDto(booking: BookingModel) {
     completedAt: date(booking.completedAt),
 
     proofOfDelivery: booking.proofOfDelivery,
+    cargoPhotoPath: booking.cargoPhotoPath,
+    receiverSignaturePath: booking.receiverSignaturePath,
+    deliveryConfirmationCode: booking.deliveryConfirmationCode,
 
     createdAt: booking.createdAt.toISOString(),
     updatedAt: booking.updatedAt.toISOString(),

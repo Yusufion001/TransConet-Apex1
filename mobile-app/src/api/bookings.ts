@@ -74,7 +74,9 @@ export type Booking = {
 
 export type CreateBookingInput = {
   pickupLocation: string;
+  pickupLandmark?: string;
   destination: string;
+  destinationLandmark?: string;
   pickupLatitude: number;
   pickupLongitude: number;
   destinationLatitude: number;
@@ -165,14 +167,43 @@ export async function updateBookingStatus(
   return response.data.data;
 }
 
+export type DeliveryProofUploadType =
+  | "CARGO_PHOTO"
+  | "RECEIVER_SIGNATURE";
+
+export type DeliveryProofUploadUrl = {
+  storagePath: string;
+  signedUrl: string;
+  token: string;
+};
+
+export async function getDeliveryProofUploadUrl(
+  bookingId: string,
+  type: DeliveryProofUploadType,
+  fileName: string,
+): Promise<DeliveryProofUploadUrl> {
+  const response = await apiClient.post<
+    ApiResponse<DeliveryProofUploadUrl>
+  >(`/bookings/${bookingId}/delivery-proof/upload-url`, {
+    type,
+    fileName,
+  });
+
+  return response.data.data;
+}
+
 export async function uploadProofOfDelivery(
   bookingId: string,
   proofOfDelivery: string,
+  cargoPhotoPath: string,
+  receiverSignaturePath: string,
 ): Promise<Booking> {
   const response = await apiClient.patch<ApiResponse<Booking>>(
     `/bookings/${bookingId}/proof-of-delivery`,
     {
       proofOfDelivery,
+      cargoPhotoPath,
+      receiverSignaturePath,
     },
   );
 
@@ -202,3 +233,13 @@ export async function confirmDelivery(
 }
 
 export type CustomerBookingEvent = BookingRealtimeEvent;
+
+export async function getBookingTrackingShare(
+  bookingId: string,
+): Promise<{ trackingShareToken: string; status: BookingStatus }> {
+  const response = await apiClient.get<
+    ApiResponse<{ trackingShareToken: string; status: BookingStatus }>
+  >(`/bookings/${bookingId}/tracking-share`);
+
+  return response.data.data;
+}

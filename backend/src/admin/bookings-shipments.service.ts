@@ -5,6 +5,7 @@ import {
   updateBookingStatus,
 } from "../bookings/booking.service.js";
 import { getBookingEvents } from "../events/event.service.js";
+import { supabaseStorageService } from "../storage/supabase-storage.service.js";
 
 const relatedInclude = {
   customer: {
@@ -208,8 +209,24 @@ export async function getAdminBooking(id: string) {
 
   const events = await getBookingEvents(id);
 
+  const cargoPhotoUrl = booking.cargoPhotoPath
+    ? (await supabaseStorageService.createSignedDownloadUrl(
+        booking.cargoPhotoPath,
+        600,
+      )).signedUrl
+    : null;
+
+  const receiverSignatureUrl = booking.receiverSignaturePath
+    ? (await supabaseStorageService.createSignedDownloadUrl(
+        booking.receiverSignaturePath,
+        600,
+      )).signedUrl
+    : null;
+
   return {
     ...toBookingDto(booking),
+    cargoPhotoUrl,
+    receiverSignatureUrl,
 
     customer: booking.customer,
     transporter: booking.transporter,

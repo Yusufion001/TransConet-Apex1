@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Alert,
   Linking,
   Pressable,
@@ -11,9 +12,13 @@ import {
   View,
 } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
+import { launchCameraAsync, requestCameraPermissionsAsync } from "expo-image-picker";
+import { File } from "expo-file-system";
+import SignatureView, { type SignatureViewRef } from "expo-signature-canvas";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   getBooking,
+  getDeliveryProofUploadUrl,
   updateBookingStatus,
   uploadProofOfDelivery,
 } from "../../../src/api/bookings";
@@ -71,16 +76,6 @@ function nextAction(status: string) {
         status: "ACCEPTED" as const,
         label: "Accept Assignment",
       };
-    case "ACCEPTED":
-      return {
-        status: "DRIVER_ARRIVING" as const,
-        label: "Start Journey",
-      };
-    case "DRIVER_ARRIVING":
-      return {
-        status: "ARRIVED" as const,
-        label: "Mark Arrived",
-      };
     case "ARRIVED":
       return {
         status: "IN_TRANSIT" as const,
@@ -101,6 +96,9 @@ export default function TransporterBookingDetails() {
     useState<VehicleLocation | null>(null);
 
   const [proof, setProof] = useState("");
+  const [cargoPhotoUri, setCargoPhotoUri] = useState<string | null>(null);
+  const [receiverSignature, setReceiverSignature] = useState<string | null>(null);
+  const signatureRef = useRef<SignatureViewRef | null>(null);
   const [bankTransferReference, setBankTransferReference] = useState("");
 
   const query = useQuery({
@@ -218,7 +216,7 @@ export default function TransporterBookingDetails() {
     ) => {
       const updatedBooking = await updateBookingStatus(id!, status);
 
-      if (status === "IN_TRANSIT") {
+      if (status === "ACCEPTED") {
         await startTransporterLocationTracking(id!);
       }
 
@@ -241,14 +239,105 @@ export default function TransporterBookingDetails() {
     },
   });
 
+  const takeCargoPhoto = async () => {
+    const permission = await requestCameraPermissionsAsync();
+
+    if (!permission.granted) {
+      Alert.alert(
+        "Camera permission required",
+        "Allow camera access to capture the cargo photo.",
+      );
+      return;
+    }
+
+    const result = await launchCameraAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]?.uri) {
+      setCargoPhotoUri(result.assets[0].uri);
+    }
+  };
+
+  const handleSignature = (signature: string) => {
+    setReceiverSignature(signature);
+  };
+
   const proofMutation = useMutation({
-    mutationFn: () =>
-      uploadProofOfDelivery(
+    mutationFn: async () => {
+      if (!cargoPhotoUri) {
+        throw new Error("Cargo photo is required.");
+      }
+
+      if (!receiverSignature) {
+        throw new Error("Receiver signature is required.");
+      }
+
+      const photoFile = new File(cargoPhotoUri);
+
+      const photoUpload = await getDeliveryProofUploadUrl(
+        id!,
+        "CARGO_PHOTO",
+        cargoPhotoUri.split("/").pop() || "cargo-photo.jpg",
+      );
+
+      const photoBytes = await photoFile.arrayBuffer();
+
+      const photoResponse = await fetch(photoUpload.signedUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": photoFile.type || "image/jpeg",
+        },
+        body: photoBytes,
+      });
+
+      if (!photoResponse.ok) {
+        throw new Error("Unable to upload cargo photo.");
+      }
+
+      const signatureBlob = await fetch(receiverSignature).then((response) =>
+        response.blob(),
+      );
+
+      const signatureUpload = await getDeliveryProofUploadUrl(
+        id!,
+        "RECEIVER_SIGNATURE",
+        "receiver-signature.png",
+      );
+
+      const signatureBytes = await signatureBlob.arrayBuffer();
+
+      const signatureResponse = await fetch(
+        signatureUpload.signedUrl,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "image/png",
+          },
+          body: signatureBytes,
+        },
+      );
+
+      if (!signatureResponse.ok) {
+        throw new Error("Unable to upload receiver signature.");
+      }
+
+      return uploadProofOfDelivery(
         id!,
         proof.trim(),
-      ),
+        photoUpload.storagePath,
+        signatureUpload.storagePath,
+      );
+    },
+
     onSuccess: async (updatedBooking) => {
       setProof("");
+      setCargoPhotoUri(null);
+      setReceiverSignature(null);
+      signatureRef.current?.clearSignature();
 
       if (
         updatedBooking.status === "COMPLETED" ||
@@ -264,6 +353,7 @@ export default function TransporterBookingDetails() {
         "Proof of delivery has been recorded successfully. The customer must confirm the delivery to complete the shipment.",
       );
     },
+
     onError: (error: unknown) => {
       const message =
         error instanceof Error
@@ -788,12 +878,89 @@ export default function TransporterBookingDetails() {
             style={[styles.input, styles.multiline]}
           />
 
+          <Text style={styles.formLabel}>Cargo Photo</Text>
+
+          {cargoPhotoUri ? (
+            <Image
+              source={{ uri: cargoPhotoUri }}
+              style={styles.proofImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text style={styles.messageMuted}>
+              Take a clear photo of the cargo at delivery.
+            </Text>
+          )}
+
           <Pressable
             disabled={proofMutation.isPending}
+            onPress={takeCargoPhoto}
+            style={[
+              styles.smallButton,
+              proofMutation.isPending && styles.disabled,
+            ]}
+          >
+            <Text style={styles.smallButtonText}>
+              {cargoPhotoUri ? "Retake Cargo Photo" : "Take Cargo Photo"}
+            </Text>
+          </Pressable>
+
+          <Text style={styles.formLabel}>Receiver Signature</Text>
+
+          <View style={styles.signatureBox}>
+            <SignatureView
+              ref={signatureRef}
+              onOK={handleSignature}
+              onEmpty={() =>
+                Alert.alert(
+                  "Signature required",
+                  "Please ask the receiver to sign before submitting.",
+                )
+              }
+              autoClear={false}
+              imageType="image/png"
+              webStyle={`
+                .m-signature-pad { box-shadow: none; border: none; }
+                .m-signature-pad--body { border: none; }
+                .m-signature-pad--footer { display: none; margin: 0; }
+                body, html { width: 100%; height: 100%; }
+              `}
+              style={styles.signature}
+            />
+          </View>
+
+          {receiverSignature && (
+            <Text style={styles.successText}>
+              Receiver signature captured.
+            </Text>
+          )}
+
+          <Pressable
+            disabled={proofMutation.isPending}
+            onPress={() => signatureRef.current?.readSignature()}
+            style={[
+              styles.smallButton,
+              proofMutation.isPending && styles.disabled,
+            ]}
+          >
+            <Text style={styles.smallButtonText}>Save Signature</Text>
+          </Pressable>
+
+          <Pressable
+            disabled={
+              proofMutation.isPending ||
+              !proof.trim() ||
+              !cargoPhotoUri ||
+              !receiverSignature
+            }
             onPress={submitProof}
             style={[
               styles.primaryButton,
-              proofMutation.isPending && styles.disabled,
+              (proofMutation.isPending ||
+                !proof.trim() ||
+                !cargoPhotoUri ||
+                !receiverSignature) &&
+                styles.disabled,
             ]}
           >
             {proofMutation.isPending ? (
@@ -1326,5 +1493,31 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: "#98A2B3",
     marginTop: 5,
+  },
+  proofImage: {
+    width: "100%",
+    height: 220,
+    borderRadius: 12,
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  signatureBox: {
+    height: 220,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#FFFFFF",
+  },
+  signature: {
+    flex: 1,
+    width: "100%",
+  },
+  successText: {
+    color: "#027A48",
+    fontSize: 13,
+    fontWeight: "700",
+    marginTop: 8,
   },
 });

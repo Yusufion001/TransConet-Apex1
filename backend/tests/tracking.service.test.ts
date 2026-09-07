@@ -12,6 +12,7 @@ const prismaMock = {
     create: mock.fn<(...args: any[]) => any>(),
   },
   $transaction: mock.fn<(...args: any[]) => any>(),
+  $queryRaw: mock.fn<(...args: any[]) => any>(),
 };
 
 const publishEventMock = mock.fn<(...args: any[]) => any>();
@@ -36,7 +37,17 @@ function resetMocks() {
   prismaMock.vehicle.update = mock.fn<(...args: any[]) => any>();
   prismaMock.trackingPoint.create = mock.fn<(...args: any[]) => any>();
   prismaMock.$transaction = mock.fn<(...args: any[]) => any>();
+  prismaMock.$queryRaw = mock.fn<(...args: any[]) => any>();
   publishEventMock.mock.resetCalls();
+
+  prismaMock.$queryRaw.mock.mockImplementation(async () => [
+    {
+      value: {
+        driverArrivingDistanceKm: 3,
+        arrivalGeofenceMeters: 100,
+      },
+    },
+  ]);
 
   prismaMock.$transaction.mock.mockImplementation(
     async (callback: any) => callback(prismaMock),
@@ -166,7 +177,7 @@ test("recordVehicleLocation rejects a booking that is not in transit", async () 
     }),
     {
       message:
-        "Vehicle tracking is only available for in-transit bookings",
+        "Vehicle tracking is only available for active trip statuses",
     },
   );
 

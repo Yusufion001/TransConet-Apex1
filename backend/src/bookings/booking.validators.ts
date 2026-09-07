@@ -14,7 +14,9 @@ const longitudeSchema = z.coerce
 
 export const createBookingSchema = z.object({
   pickupLocation: z.string().trim().min(1).max(500),
+  pickupLandmark: z.string().trim().max(500).optional(),
   destination: z.string().trim().min(1).max(500),
+  destinationLandmark: z.string().trim().max(500).optional(),
 
   pickupLatitude: latitudeSchema,
   pickupLongitude: longitudeSchema,
@@ -75,6 +77,8 @@ export const updateBookingStatusSchema = z.object({
 
 export const proofOfDeliverySchema = z.object({
   proofOfDelivery: z.string().trim().min(1).max(2000),
+  cargoPhotoPath: z.string().trim().min(1).max(500),
+  receiverSignaturePath: z.string().trim().min(1).max(500),
 });
 
 export const confirmDeliverySchema = z.object({

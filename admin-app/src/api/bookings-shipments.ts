@@ -66,6 +66,11 @@ export type Booking = {
   deliveredAt: string | null;
   completedAt: string | null;
   proofOfDelivery: string | null;
+  cargoPhotoPath: string | null;
+  receiverSignaturePath: string | null;
+  deliveryConfirmationCode: string | null;
+  cargoPhotoUrl?: string | null;
+  receiverSignatureUrl?: string | null;
   createdAt: string;
   updatedAt: string;
   customer?: Person | null;
