@@ -80,6 +80,62 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
+function getApiErrorMessage(error: AxiosError): string {
+  if (!error.response) {
+    if (error.code === "ECONNABORTED") {
+      return "The request timed out. Please check your connection and try again.";
+    }
+
+    return "Unable to connect to TransConet. Please check your internet connection and try again.";
+  }
+
+  const responseData = error.response.data as
+    | {
+        error?: unknown;
+        message?: unknown;
+      }
+    | undefined;
+
+  const apiError = responseData?.error;
+
+  if (typeof apiError === "string" && apiError.trim()) {
+    return apiError;
+  }
+
+  if (Array.isArray(apiError)) {
+    const messages = apiError
+      .map((issue) => {
+        if (
+          issue &&
+          typeof issue === "object" &&
+          "message" in issue &&
+          typeof issue.message === "string"
+        ) {
+          return issue.message;
+        }
+
+        return null;
+      })
+      .filter(
+        (message): message is string =>
+          Boolean(message),
+      );
+
+    if (messages.length > 0) {
+      return messages.join("\n");
+    }
+  }
+
+  if (
+    typeof responseData?.message === "string" &&
+    responseData.message.trim()
+  ) {
+    return responseData.message;
+  }
+
+  return `Request failed with status code ${error.response.status}`;
+}
+
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const token = await getAccessToken();
@@ -107,6 +163,7 @@ apiClient.interceptors.response.use(
       originalRequest._transconetRetry ||
       originalRequest.url?.includes("/auth/refresh")
     ) {
+      error.message = getApiErrorMessage(error);
       return Promise.reject(error);
     }
 
@@ -119,6 +176,7 @@ apiClient.interceptors.response.use(
     const newAccessToken = await refreshPromise;
 
     if (!newAccessToken) {
+      error.message = getApiErrorMessage(error);
       return Promise.reject(error);
     }
 
