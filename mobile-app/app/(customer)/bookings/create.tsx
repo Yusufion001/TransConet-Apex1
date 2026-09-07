@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { router } from "expo-router";
 import * as Location from "expo-location";
+import TransConetMap from "../../../src/components/maps/TransConetMap";
 import {
   ActivityIndicator,
+  Modal,
   Alert,
   Pressable,
   ScrollView,
@@ -105,6 +107,50 @@ export default function CreateBooking() {
     "FLUTTERWAVE" | "BANK_TRANSFER" | "NEGOTIATE" | null
   >(null);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [locationPickerVisible, setLocationPickerVisible] = useState(false);
+  const [locationPickerCoordinate, setLocationPickerCoordinate] =
+    useState<Coordinates | null>(null);
+
+  async function openPickupLocationPicker() {
+    if (pickupCoordinates) {
+      setLocationPickerCoordinate(pickupCoordinates);
+      setLocationPickerVisible(true);
+      return;
+    }
+
+    if (!pickupLocation.trim()) {
+      Alert.alert(
+        "Pickup location required",
+        "Enter a pickup location or use your current location first.",
+      );
+      return;
+    }
+
+    setLocationLoading(true);
+
+    try {
+      const coordinates = await resolveAddress(pickupLocation.trim());
+
+      if (!coordinates) {
+        Alert.alert(
+          "Location not found",
+          "We could not identify that pickup location. Please check the address and try again.",
+        );
+        return;
+      }
+
+      setPickupCoordinates(coordinates);
+      setLocationPickerCoordinate(coordinates);
+      setLocationPickerVisible(true);
+    } catch {
+      Alert.alert(
+        "Location unavailable",
+        "We could not identify that pickup location right now. Please try again.",
+      );
+    } finally {
+      setLocationLoading(false);
+    }
+  }
 
   async function useCurrentLocation() {
     setLocationLoading(true);
@@ -289,7 +335,8 @@ export default function CreateBooking() {
     }
   }
   return (
-    <ScrollView
+    <>
+      <ScrollView
       contentContainerStyle={styles.container}
       keyboardShouldPersistTaps="handled"
     >
@@ -333,6 +380,19 @@ export default function CreateBooking() {
           Pickup location confirmed
         </Text>
       )}
+
+      <Pressable
+        disabled={loading || locationLoading}
+        onPress={openPickupLocationPicker}
+        style={[
+          styles.mapConfirmButton,
+          (loading || locationLoading) && styles.buttonDisabled,
+        ]}
+      >
+        <Text style={styles.mapConfirmButtonText}>
+          Confirm pickup on map
+        </Text>
+      </Pressable>
 
       <Text style={styles.label}>Destination</Text>
 
@@ -524,10 +584,117 @@ export default function CreateBooking() {
         <Text style={styles.cancelText}>Cancel</Text>
       </Pressable>
     </ScrollView>
+
+    <Modal
+        visible={locationPickerVisible}
+        animationType="slide"
+        onRequestClose={() => setLocationPickerVisible(false)}
+      >
+        <View style={styles.locationModal}>
+          <Text style={styles.locationModalTitle}>Confirm pickup location</Text>
+          <Text style={styles.locationModalHint}>
+            Move the pin to the exact collection point, then confirm.
+          </Text>
+
+          <View style={styles.locationMapContainer}>
+            {locationPickerCoordinate ? (
+              <TransConetMap
+                region={{
+                  latitude: locationPickerCoordinate.latitude,
+                  longitude: locationPickerCoordinate.longitude,
+                  latitudeDelta: 0.01,
+                  longitudeDelta: 0.01,
+                }}
+                pinCoordinate={locationPickerCoordinate}
+                onPinChange={setLocationPickerCoordinate}
+                interactive
+              />
+            ) : null}
+          </View>
+
+          <View style={styles.locationModalActions}>
+            <Pressable
+              onPress={() => setLocationPickerVisible(false)}
+              style={styles.locationModalCancel}
+            >
+              <Text style={styles.locationModalCancelText}>Cancel</Text>
+            </Pressable>
+
+            <Pressable
+              disabled={!locationPickerCoordinate}
+              onPress={() => {
+                if (!locationPickerCoordinate) return;
+                setPickupCoordinates(locationPickerCoordinate);
+                setLocationPickerVisible(false);
+              }}
+              style={styles.locationModalConfirm}
+            >
+              <Text style={styles.locationModalConfirmText}>Confirm location</Text>
+            </Pressable>
+          </View>
+        </View>
+    </Modal>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
+  locationModal: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    paddingTop: 24,
+  },
+  locationModalTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#101828",
+    paddingHorizontal: 20,
+  },
+  locationModalHint: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#667085",
+    paddingHorizontal: 20,
+    marginTop: 6,
+    marginBottom: 16,
+  },
+  locationMapContainer: {
+    flex: 1,
+    minHeight: 320,
+    overflow: "hidden",
+  },
+  locationModalActions: {
+    flexDirection: "row",
+    gap: 12,
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#EAECF0",
+  },
+  locationModalCancel: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
+  },
+  locationModalCancelText: {
+    color: "#344054",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  locationModalConfirm: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
+    backgroundColor: "#101828",
+  },
+  locationModalConfirmText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "800",
+  },
   container: {
     flexGrow: 1,
     padding: 24,
@@ -656,6 +823,19 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "800",
   },
+    mapConfirmButton: {
+      borderWidth: 1,
+      borderColor: "#D0D5DD",
+      borderRadius: 12,
+      paddingVertical: 11,
+      alignItems: "center",
+      marginBottom: 18,
+    },
+    mapConfirmButtonText: {
+      color: "#344054",
+      fontSize: 14,
+      fontWeight: "800",
+    },
   coordinateText: {
     color: "#027A48",
     fontSize: 13,
