@@ -70,6 +70,29 @@ export async function updateUser(
     profilePhoto?: string;
   },
 ) {
+  if (data.firstName !== undefined || data.lastName !== undefined || data.phone !== undefined) {
+    const approvedIdentityVerification = await prisma.verification.findFirst({
+      where: {
+        userId: id,
+        type: {
+          in: ["NIN", "DRIVERS_LICENSE"],
+        },
+        providerStatus: "SUCCESS",
+        adminStatus: "APPROVED",
+        adminApproved: true,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (approvedIdentityVerification) {
+      throw new Error(
+        "Verified personal information cannot be changed after approval. Contact TransConet Admin Management for corrections.",
+      );
+    }
+  }
+
   const user = await prisma.user.update({
     where: { id },
     data,

@@ -14,6 +14,7 @@ import {
 import { router } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  getTransporterOnboardingStatus,
   getTransporterProfile,
   updateTransporterProfile,
 } from "../../src/api/transporter";
@@ -32,6 +33,13 @@ export default function TransporterAccountScreen() {
     queryFn: () => getTransporterProfile(transporterId),
     enabled: Boolean(transporterId),
   });
+
+  const onboardingQuery = useQuery({
+    queryKey: ["transporter-onboarding", transporterId],
+    queryFn: () => getTransporterOnboardingStatus(transporterId),
+    enabled: Boolean(transporterId),
+  });
+  const onboarding = onboardingQuery.data;
 
   const profile = profileQuery.data;
 
@@ -203,6 +211,12 @@ export default function TransporterAccountScreen() {
   const verificationApproved =
     profile.verificationStatus === "APPROVED";
 
+  const personalInformationLocked =
+    Boolean(onboarding?.ninApproved || onboarding?.driversLicenseApproved);
+
+  const businessInformationLocked =
+    Boolean(onboarding?.adminApproved);
+
   return (
     <KeyboardAvoidingView
       style={styles.safe}
@@ -280,12 +294,14 @@ export default function TransporterAccountScreen() {
         <View style={styles.card}>
           <Text style={styles.section}>PERSONAL INFORMATION</Text>
 
+
+
           <Text style={styles.label}>FIRST NAME</Text>
           <TextInput
             value={firstName}
             onChangeText={setFirstName}
             style={styles.input}
-            editable={!savingPersonal}
+            editable={!savingPersonal && !personalInformationLocked}
             autoCapitalize="words"
           />
 
@@ -294,7 +310,7 @@ export default function TransporterAccountScreen() {
             value={lastName}
             onChangeText={setLastName}
             style={styles.input}
-            editable={!savingPersonal}
+            editable={!savingPersonal && !personalInformationLocked}
             autoCapitalize="words"
           />
 
@@ -314,7 +330,7 @@ export default function TransporterAccountScreen() {
             value={phone}
             onChangeText={setPhone}
             style={styles.input}
-            editable={!savingPersonal}
+            editable={!savingPersonal && !personalInformationLocked}
             keyboardType="phone-pad"
           />
 
@@ -339,12 +355,14 @@ export default function TransporterAccountScreen() {
         <View style={styles.card}>
           <Text style={styles.section}>TRANSPORTER PROFILE</Text>
 
+
+
           <Text style={styles.label}>COMPANY NAME</Text>
           <TextInput
             value={companyName}
             onChangeText={setCompanyName}
             style={styles.input}
-            editable={!savingBusiness}
+            editable={!savingBusiness && !businessInformationLocked}
             autoCapitalize="words"
           />
 
@@ -355,7 +373,7 @@ export default function TransporterAccountScreen() {
             value={businessRegistrationNumber}
             onChangeText={setBusinessRegistrationNumber}
             style={styles.input}
-            editable={!savingBusiness}
+            editable={!savingBusiness && !businessInformationLocked}
             autoCapitalize="characters"
           />
 
@@ -565,6 +583,36 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 1.3,
     color: "#667085",
+  },
+  lockNotice: {
+    marginBottom: 16,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: "#F2F4F7",
+  },
+  lockTitle: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    color: "#344054",
+  },
+  lockText: {
+    marginTop: 4,
+    fontSize: 13,
+    lineHeight: 18,
+    color: "#667085",
+  },
+  inputWithLock: {
+    position: "relative",
+    justifyContent: "center",
+  },
+  inputLocked: {
+    paddingRight: 42,
+  },
+  lockIcon: {
+    position: "absolute",
+    right: 14,
+    fontSize: 16,
   },
   label: {
     marginTop: 12,
