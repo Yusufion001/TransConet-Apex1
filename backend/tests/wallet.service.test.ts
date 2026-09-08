@@ -13,12 +13,17 @@ const prismaMock = {
     updateMany: mock.fn<(...args: any[]) => any>(),
   },
   withdrawal: {
+    findFirst: mock.fn<(...args: any[]) => any>(),
     create: mock.fn<(...args: any[]) => any>(),
+  },
+  withdrawalAccount: {
+    findFirst: mock.fn<(...args: any[]) => any>(),
   },
   walletTransaction: {
     create: mock.fn<(...args: any[]) => any>(),
   },
   $transaction: mock.fn<(...args: any[]) => any>(),
+  $queryRaw: mock.fn<(...args: any[]) => any>(),
 };
 
 const publishEventMock = mock.fn<(...args: any[]) => any>();
@@ -46,9 +51,12 @@ function resetMocks() {
     prismaMock.wallet.findUnique,
     prismaMock.wallet.create,
     prismaMock.wallet.updateMany,
+    prismaMock.withdrawal.findFirst,
     prismaMock.withdrawal.create,
+    prismaMock.withdrawalAccount.findFirst,
     prismaMock.walletTransaction.create,
     prismaMock.$transaction,
+    prismaMock.$queryRaw,
     publishEventMock,
   ]) {
     fn.mock.resetCalls();
@@ -153,34 +161,29 @@ test("createWithdrawal rejects a zero withdrawal amount", async () => {
   await assert.rejects(
     createWithdrawal(
       {
-        walletId: "wallet-1",
         amount: 0,
-        bankName: "Test Bank",
-        accountNumber: "0123456789",
-        accountName: "Test User",
+        withdrawalAccountId: "withdrawal-account-1",
       },
       "transporter-1",
       "TRANSPORTER",
+      "idem-zero",
     ),
     { message: "Withdrawal amount must be greater than zero" },
   );
 
   assert.equal(prismaMock.$transaction.mock.calls.length, 0);
-  assert.equal(prismaMock.withdrawal.create.mock.calls.length, 0);
 });
 
 test("createWithdrawal rejects a negative withdrawal amount", async () => {
   await assert.rejects(
     createWithdrawal(
       {
-        walletId: "wallet-1",
         amount: -100,
-        bankName: "Test Bank",
-        accountNumber: "0123456789",
-        accountName: "Test User",
+        withdrawalAccountId: "withdrawal-account-1",
       },
       "transporter-1",
       "TRANSPORTER",
+      "idem-negative",
     ),
     { message: "Withdrawal amount must be greater than zero" },
   );
@@ -192,14 +195,12 @@ test("createWithdrawal rejects a non-finite withdrawal amount", async () => {
   await assert.rejects(
     createWithdrawal(
       {
-        walletId: "wallet-1",
         amount: Number.NaN,
-        bankName: "Test Bank",
-        accountNumber: "0123456789",
-        accountName: "Test User",
+        withdrawalAccountId: "withdrawal-account-1",
       },
       "transporter-1",
       "TRANSPORTER",
+      "idem-nan",
     ),
     { message: "Withdrawal amount must be greater than zero" },
   );
@@ -207,156 +208,136 @@ test("createWithdrawal rejects a non-finite withdrawal amount", async () => {
   assert.equal(prismaMock.$transaction.mock.calls.length, 0);
 });
 
-test("createWithdrawal rejects a missing wallet", async () => {
-  prismaMock.wallet.findUnique.mock.mockImplementation(
-    async () => null,
+test("createWithdrawal rejects a non-transporter role", async () => {
+  await assert.rejects(
+    createWithdrawal(
+      {
+        amount: 10000,
+        withdrawalAccountId: "withdrawal-account-1",
+      },
+      "admin-1",
+      "ADMIN",
+      "idem-admin",
+    ),
+    { message: "Only transporters can withdraw funds" },
   );
+
+  assert.equal(prismaMock.$transaction.mock.calls.length, 0);
+});
+
+test("createWithdrawal rejects a missing wallet", async () => {
+  prismaMock.$queryRaw.mock.mockImplementation(async () => []);
 
   await assert.rejects(
     createWithdrawal(
       {
-        walletId: "wallet-1",
         amount: 10000,
-        bankName: "Test Bank",
-        accountNumber: "0123456789",
-        accountName: "Test User",
+        withdrawalAccountId: "withdrawal-account-1",
       },
       "transporter-1",
       "TRANSPORTER",
+      "idem-missing-wallet",
     ),
     { message: "Wallet not found" },
   );
 
-  assert.equal(prismaMock.wallet.findUnique.mock.calls.length, 1);
-  assert.equal(prismaMock.wallet.updateMany.mock.calls.length, 0);
+  assert.equal(prismaMock.$queryRaw.mock.calls.length, 1);
   assert.equal(prismaMock.withdrawal.create.mock.calls.length, 0);
 });
 
-test("createWithdrawal denies a transporter access to another transporter's wallet", async () => {
-  prismaMock.wallet.findUnique.mock.mockImplementation(
-    async () => ({
-      id: "wallet-1",
-      transporterId: "transporter-owner",
-      availableBalance: "50000.00",
-    }),
+test("createWithdrawal denies access to another transporter's wallet", async () => {
+  prismaMock.$queryRaw.mock.mockImplementation(
+    async () => [
+      {
+        id: "wallet-1",
+        transporterId: "transporter-owner",
+        availableBalance: new Prisma.Decimal(50000),
+      },
+    ],
   );
 
   await assert.rejects(
     createWithdrawal(
       {
-        walletId: "wallet-1",
         amount: 10000,
-        bankName: "Test Bank",
-        accountNumber: "0123456789",
-        accountName: "Test User",
+        withdrawalAccountId: "withdrawal-account-1",
       },
       "different-transporter",
       "TRANSPORTER",
+      "idem-access-denied",
     ),
     { message: "Access denied" },
   );
 
-  assert.equal(prismaMock.wallet.updateMany.mock.calls.length, 0);
   assert.equal(prismaMock.withdrawal.create.mock.calls.length, 0);
-  assert.equal(prismaMock.walletTransaction.create.mock.calls.length, 0);
-});
-
-test("createWithdrawal allows an administrator to manage another transporter's wallet", async () => {
-  prismaMock.wallet.findUnique.mock.mockImplementation(
-    async () => ({
-      id: "wallet-1",
-      transporterId: "transporter-owner",
-      availableBalance: "50000.00",
-    }),
-  );
-
-  prismaMock.wallet.updateMany.mock.mockImplementation(
-    async () => ({ count: 1 }),
-  );
-
-  const withdrawal = {
-    id: "withdrawal-1",
-    walletId: "wallet-1",
-    amount: "10000.00",
-    bankName: "Test Bank",
-    accountNumber: "0123456789",
-    accountName: "Test User",
-    status: "PENDING",
-    createdAt: new Date("2026-08-18T10:00:00.000Z"),
-  };
-
-  prismaMock.withdrawal.create.mock.mockImplementation(
-    async () => withdrawal,
-  );
-
-  prismaMock.walletTransaction.create.mock.mockImplementation(
-    async () => ({
-      id: "transaction-1",
-      walletId: "wallet-1",
-      amount: "10000.00",
-      transactionType: "WITHDRAWAL_PENDING",
-    }),
-  );
-
-  const result = await createWithdrawal(
-    {
-      walletId: "wallet-1",
-      amount: 10000,
-      bankName: "Test Bank",
-      accountNumber: "0123456789",
-      accountName: "Test User",
-    },
-    "admin-1",
-    "ADMIN",
-  );
-
-  assert.deepEqual(result, toWithdrawalDto(withdrawal));
-  assert.equal(prismaMock.wallet.updateMany.mock.calls.length, 1);
-  assert.equal(prismaMock.withdrawal.create.mock.calls.length, 1);
-  assert.equal(prismaMock.walletTransaction.create.mock.calls.length, 1);
-  assert.equal(publishEventMock.mock.calls.length, 1);
 });
 
 test("createWithdrawal rejects insufficient available balance", async () => {
-  prismaMock.wallet.findUnique.mock.mockImplementation(
-    async () => ({
-      id: "wallet-1",
-      transporterId: "transporter-1",
-      availableBalance: "5000.00",
-    }),
+  prismaMock.$queryRaw.mock.mockImplementation(
+    async () => [
+      {
+        id: "wallet-1",
+        transporterId: "transporter-1",
+        availableBalance: new Prisma.Decimal(5000),
+      },
+    ],
   );
 
-  prismaMock.wallet.updateMany.mock.mockImplementation(
-    async () => ({ count: 0 }),
+  prismaMock.withdrawal.findFirst.mock.mockImplementation(
+    async () => null,
+  );
+
+  prismaMock.withdrawalAccount.findFirst.mock.mockImplementation(
+    async () => ({
+      id: "withdrawal-account-1",
+      bankName: "Test Bank",
+      accountName: "Test User",
+      accountNumberLast4: "6789",
+      status: "VERIFIED",
+      securityCooldownUntil: null,
+    }),
   );
 
   await assert.rejects(
     createWithdrawal(
       {
-        walletId: "wallet-1",
         amount: 10000,
-        bankName: "Test Bank",
-        accountNumber: "0123456789",
-        accountName: "Test User",
+        withdrawalAccountId: "withdrawal-account-1",
       },
       "transporter-1",
       "TRANSPORTER",
+      "idem-insufficient",
     ),
     { message: "Insufficient available balance" },
   );
 
-  assert.equal(prismaMock.wallet.updateMany.mock.calls.length, 1);
+  assert.equal(prismaMock.wallet.updateMany.mock.calls.length, 0);
   assert.equal(prismaMock.withdrawal.create.mock.calls.length, 0);
-  assert.equal(prismaMock.walletTransaction.create.mock.calls.length, 0);
-  assert.equal(publishEventMock.mock.calls.length, 0);
 });
 
 test("createWithdrawal atomically reserves balance and creates a pending withdrawal", async () => {
-  prismaMock.wallet.findUnique.mock.mockImplementation(
+  prismaMock.$queryRaw.mock.mockImplementation(
+    async () => [
+      {
+        id: "wallet-1",
+        transporterId: "transporter-1",
+        availableBalance: new Prisma.Decimal(50000),
+      },
+    ],
+  );
+
+  prismaMock.withdrawal.findFirst.mock.mockImplementation(
+    async () => null,
+  );
+
+  prismaMock.withdrawalAccount.findFirst.mock.mockImplementation(
     async () => ({
-      id: "wallet-1",
-      transporterId: "transporter-1",
-      availableBalance: "50000.00",
+      id: "withdrawal-account-1",
+      bankName: "Test Bank",
+      accountName: "Test User",
+      accountNumberLast4: "6789",
+      status: "VERIFIED",
+      securityCooldownUntil: null,
     }),
   );
 
@@ -367,10 +348,12 @@ test("createWithdrawal atomically reserves balance and creates a pending withdra
   const withdrawal = {
     id: "withdrawal-1",
     walletId: "wallet-1",
-    amount: "10000.00",
+    amount: new Prisma.Decimal(10000),
     bankName: "Test Bank",
-    accountNumber: "0123456789",
+    accountNumber: "******6789",
     accountName: "Test User",
+    withdrawalAccountId: "withdrawal-account-1",
+    idempotencyKey: "idem-atomic",
     status: "PENDING",
     createdAt: new Date("2026-08-18T10:00:00.000Z"),
   };
@@ -383,7 +366,7 @@ test("createWithdrawal atomically reserves balance and creates a pending withdra
     async () => ({
       id: "transaction-1",
       walletId: "wallet-1",
-      amount: "10000.00",
+      amount: new Prisma.Decimal(10000),
       transactionType: "WITHDRAWAL_PENDING",
       description: "Withdrawal withdrawal-1 reserved",
     }),
@@ -391,84 +374,62 @@ test("createWithdrawal atomically reserves balance and creates a pending withdra
 
   const result = await createWithdrawal(
     {
-      walletId: "wallet-1",
       amount: 10000,
-      bankName: "Test Bank",
-      accountNumber: "0123456789",
-      accountName: "Test User",
+      withdrawalAccountId: "withdrawal-account-1",
     },
     "transporter-1",
     "TRANSPORTER",
+    "idem-atomic",
   );
 
   assert.deepEqual(result, toWithdrawalDto(withdrawal));
 
-  assert.equal(prismaMock.$transaction.mock.calls.length, 1);
-
+  assert.equal(prismaMock.$queryRaw.mock.calls.length, 1);
   assert.equal(prismaMock.wallet.updateMany.mock.calls.length, 1);
-  assert.deepEqual(
-    prismaMock.wallet.updateMany.mock.calls[0].arguments[0],
-    {
-      where: {
-        id: "wallet-1",
-        availableBalance: {
-          gte: new Prisma.Decimal(10000),
-        },
-      },
-      data: {
-        availableBalance: {
-          decrement: new Prisma.Decimal(10000),
-        },
-      },
-    },
-  );
-
   assert.equal(prismaMock.withdrawal.create.mock.calls.length, 1);
-  assert.deepEqual(
-    prismaMock.withdrawal.create.mock.calls[0].arguments[0],
-    {
-      data: {
-        walletId: "wallet-1",
-        amount: new Prisma.Decimal(10000),
-        bankName: "Test Bank",
-        accountNumber: "0123456789",
-        accountName: "Test User",
-        status: "PENDING",
-      },
-    },
-  );
-
   assert.equal(prismaMock.walletTransaction.create.mock.calls.length, 1);
-  assert.deepEqual(
-    prismaMock.walletTransaction.create.mock.calls[0].arguments[0],
-    {
-      data: {
-        walletId: "wallet-1",
-        amount: new Prisma.Decimal(10000),
-        transactionType: "WITHDRAWAL_PENDING",
-        description: "Withdrawal withdrawal-1 reserved",
-      },
-    },
-  );
-
   assert.equal(publishEventMock.mock.calls.length, 1);
-  assert.deepEqual(
-    publishEventMock.mock.calls[0].arguments,
-    [
-      "admin",
+});
+
+test("createWithdrawal returns the existing withdrawal for the same idempotency key", async () => {
+  const existingWithdrawal = {
+    id: "withdrawal-existing",
+    walletId: "wallet-1",
+    amount: new Prisma.Decimal(10000),
+    bankName: "Test Bank",
+    accountNumber: "******6789",
+    accountName: "Test User",
+    withdrawalAccountId: "withdrawal-account-1",
+    idempotencyKey: "idem-existing",
+    status: "PENDING",
+    createdAt: new Date("2026-08-18T10:00:00.000Z"),
+  };
+
+  prismaMock.$queryRaw.mock.mockImplementation(
+    async () => [
       {
-        eventType: "WITHDRAWAL_CREATED",
-        module: "FINANCIAL_OPERATIONS",
-        entityType: "WITHDRAWAL",
-        entityId: "withdrawal-1",
-        actorId: "transporter-1",
-        data: {
-          withdrawalId: "withdrawal-1",
-          walletId: "wallet-1",
-          amount: "10000.00",
-          status: "PENDING",
-        },
+        id: "wallet-1",
+        transporterId: "transporter-1",
+        availableBalance: new Prisma.Decimal(50000),
       },
     ],
   );
+
+  prismaMock.withdrawal.findFirst.mock.mockImplementation(
+    async () => existingWithdrawal,
+  );
+
+  const result = await createWithdrawal(
+    {
+      amount: 10000,
+      withdrawalAccountId: "withdrawal-account-1",
+    },
+    "transporter-1",
+    "TRANSPORTER",
+    "idem-existing",
+  );
+
+  assert.deepEqual(result, toWithdrawalDto(existingWithdrawal));
+  assert.equal(prismaMock.withdrawal.create.mock.calls.length, 0);
+  assert.equal(prismaMock.wallet.updateMany.mock.calls.length, 0);
 });

@@ -12,6 +12,7 @@ const prismaMock = {
   user: {
     findUnique: mock.fn<(...args: any[]) => any>(),
     create: mock.fn<(...args: any[]) => any>(),
+    update: mock.fn<(...args: any[]) => any>(),
   },
   auditLog: {
     create: mock.fn<(...args: any[]) => any>(),
@@ -63,6 +64,7 @@ function resetMocks() {
     prismaMock.adminProfile.findMany,
     prismaMock.user.findUnique,
     prismaMock.user.create,
+    prismaMock.user.update,
     prismaMock.auditLog.create,
     prismaMock.$transaction,
   ]) {
