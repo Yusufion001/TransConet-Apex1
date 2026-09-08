@@ -160,13 +160,27 @@ export async function updateTransporterVerification(
     throw new Error("Transporter requires at least one admin-approved vehicle");
   }
 
-  return prisma.transporterProfile.update({
-    where: {
-      userId: transporterId,
-    },
-    data: {
-      verificationStatus: "APPROVED",
-    },
+  return prisma.$transaction(async (tx) => {
+    const transporter = await tx.transporterProfile.update({
+      where: {
+        userId: transporterId,
+      },
+      data: {
+        verificationStatus: "APPROVED",
+      },
+    });
+
+    await tx.wallet.upsert({
+      where: {
+        transporterId,
+      },
+      update: {},
+      create: {
+        transporterId,
+      },
+    });
+
+    return transporter;
   });
 }
 
