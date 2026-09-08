@@ -1,3 +1,5 @@
+import axios from "axios";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   approveSettlement,
@@ -152,11 +154,28 @@ export default function FinancialOperations() {
       setWithdrawals(withdrawalData);
       setCommissionPayments(commissionPaymentData);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Unable to load Financial Operations.",
-      );
+      if (axios.isAxiosError(err)) {
+        const serverError =
+          typeof err.response?.data?.error === "string"
+            ? err.response.data.error
+            : undefined;
+        const requestId =
+          typeof err.response?.data?.requestId === "string"
+            ? err.response.data.requestId
+            : err.response?.headers?.["x-request-id"];
+
+        setError(
+          serverError
+            ? `${serverError}${requestId ? ` (Request ID: ${requestId})` : ""}`
+            : err.message,
+        );
+      } else {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Unable to load Financial Operations.",
+        );
+      }
     } finally {
       setLoading(false);
     }
