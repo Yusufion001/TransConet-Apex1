@@ -5,6 +5,8 @@ const positiveNumber = z.coerce.number().finite().positive();
 
 export const marketplaceVisibilityConfigSchema = z
   .object({
+    geographicScope: z.enum(["RADIUS", "NATIONWIDE"]),
+
     defaultRadiusKm: positiveNumber,
 
     maxRadiusKm: positiveNumber,
@@ -52,6 +54,8 @@ export type MarketplaceVisibilityConfig = z.infer<
 
 const DEFAULT_MARKETPLACE_VISIBILITY_CONFIG: MarketplaceVisibilityConfig =
   {
+    geographicScope: "RADIUS",
+
     defaultRadiusKm: 100,
 
     maxRadiusKm: 500,

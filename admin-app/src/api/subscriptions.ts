@@ -91,6 +91,7 @@ export async function getAdminSubscriptions() {
 }
 
 export type MarketplaceVisibilityConfig = {
+  geographicScope: "RADIUS" | "NATIONWIDE";
   defaultRadiusKm: number;
   maxRadiusKm: number;
   subscriptionBoosts: {

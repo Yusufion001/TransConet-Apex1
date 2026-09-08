@@ -15,6 +15,8 @@ const router = Router();
 
 const visibilityConfigSchema = z
   .object({
+    geographicScope: z.enum(["RADIUS", "NATIONWIDE"]),
+
     defaultRadiusKm: z.coerce.number().finite().positive(),
     maxRadiusKm: z.coerce.number().finite().positive(),
 

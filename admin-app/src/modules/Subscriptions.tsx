@@ -1183,6 +1183,25 @@ export default function Subscriptions() {
           <>
             <div className="subscription-visibility-grid">
               <div className="subscription-visibility-card">
+                <span>Geographic Visibility</span>
+
+                <label>
+                  Geographic scope
+                  <select
+                    value={visibilityConfig.geographicScope}
+                    onChange={(event) =>
+                      setVisibilityConfig({
+                        ...visibilityConfig,
+                        geographicScope: event.target.value as
+                          "RADIUS" | "NATIONWIDE",
+                      })
+                    }
+                  >
+                    <option value="RADIUS">Radius</option>
+                    <option value="NATIONWIDE">Nationwide</option>
+                  </select>
+                </label>
+
                 <span>Discovery Radius</span>
 
                 <label>
