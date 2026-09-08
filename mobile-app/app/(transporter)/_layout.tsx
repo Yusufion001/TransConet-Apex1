@@ -36,7 +36,7 @@ function TransporterDrawerContent(props: any) {
   const signOut = useAuthStore((state) => state.signOut);
 
   const go = (path: string) => {
-    router.push(path as never);
+    router.navigate(path as never);
   };
 
   const logout = async () => {
