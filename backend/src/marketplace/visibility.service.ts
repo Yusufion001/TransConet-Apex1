@@ -338,6 +338,13 @@ export async function getVisibleMarketplaceLoads(
        */
       if (
         visibilityPolicy.requireVehicleLocation &&
+        !nearestVehicle
+      ) {
+        return null;
+      }
+
+      if (
+        visibilityPolicy.geographicScope === "RADIUS" &&
         nearestVehicle &&
         nearestVehicle.distanceKm >
           effectiveRadiusKm
