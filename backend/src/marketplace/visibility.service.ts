@@ -283,10 +283,7 @@ export async function getVisibleMarketplaceLoads(
       const matchingVehicles =
         transporter.vehicles.filter(
           (vehicle) =>
-            vehicle.vehicleType ===
-              load.truckCategory ||
-            vehicle.vehicleClass ===
-              load.truckCategory,
+            vehicle.vehicleClass === load.truckCategory,
         );
 
       if (matchingVehicles.length === 0) {
