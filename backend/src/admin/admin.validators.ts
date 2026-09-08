@@ -13,10 +13,46 @@ export const settlementRejectionSchema = z.object({
   rejectionReason: z.string().trim().min(1).max(1000),
 });
 
+export const adminPermissionKeys = [
+  "FINANCIAL_VIEW",
+  "PAYMENTS_VIEW",
+  "WITHDRAWALS_VIEW",
+  "WITHDRAWALS_PROCESS",
+  "WITHDRAWALS_COMPLETE",
+  "WITHDRAWALS_FAIL",
+  "FINANCIAL_WEBHOOK_VIEW",
+  "FINANCIAL_WEBHOOK_RETRY",
+  "SETTLEMENT_VIEW",
+  "SETTLEMENT_SUBMIT",
+  "SETTLEMENT_APPROVE",
+  "SETTLEMENT_REJECT",
+  "SETTLEMENT_RESUBMIT",
+  "SETTLEMENT_RELEASE",
+  "COMMISSION_PAYMENTS_VIEW",
+  "COMMISSION_PAYMENTS_VERIFY",
+  "COMMISSION_PAYMENTS_REJECT",
+] as const;
+
 export const adminPermissionsSchema = z.object({
   assignedModules: z
     .array(z.nativeEnum(AdminModule))
     .min(1),
+  permissions: z
+    .record(z.string(), z.boolean())
+    .default({})
+    .superRefine((permissions, ctx) => {
+      const allowed = new Set(adminPermissionKeys);
+
+      for (const key of Object.keys(permissions)) {
+        if (!allowed.has(key as (typeof adminPermissionKeys)[number])) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [key],
+            message: `Unknown administrator permission: ${key}`,
+          });
+        }
+      }
+    }),
 });
 
 const positivePricingNumber = z.coerce

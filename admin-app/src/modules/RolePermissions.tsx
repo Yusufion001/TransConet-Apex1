@@ -42,11 +42,33 @@ function labelize(value: string) {
     .join(" ");
 }
 
+const FINANCIAL_PERMISSIONS = [
+  "FINANCIAL_VIEW",
+  "PAYMENTS_VIEW",
+  "WITHDRAWALS_VIEW",
+  "WITHDRAWALS_PROCESS",
+  "WITHDRAWALS_COMPLETE",
+  "WITHDRAWALS_FAIL",
+  "FINANCIAL_WEBHOOK_VIEW",
+  "FINANCIAL_WEBHOOK_RETRY",
+  "SETTLEMENT_VIEW",
+  "SETTLEMENT_SUBMIT",
+  "SETTLEMENT_APPROVE",
+  "SETTLEMENT_REJECT",
+  "SETTLEMENT_RESUBMIT",
+  "SETTLEMENT_RELEASE",
+  "COMMISSION_PAYMENTS_VIEW",
+  "COMMISSION_PAYMENTS_VERIFY",
+  "COMMISSION_PAYMENTS_REJECT",
+] as const;
+
 export default function RolePermissions() {
   const [roles, setRoles] = useState<AdminRole[]>([]);
   const [selected, setSelected] = useState<AdminRole | null>(null);
   const [search, setSearch] = useState("");
   const [selectedModules, setSelectedModules] = useState<AdminModule[]>([]);
+  const [selectedPermissions, setSelectedPermissions] =
+    useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -70,6 +92,18 @@ export default function RolePermissions() {
         if (refreshed) {
           setSelected(refreshed);
           setSelectedModules(refreshed.assignedModules);
+          setSelectedPermissions(
+            refreshed.permissions
+              ? Object.fromEntries(
+                  Object.entries(refreshed.permissions).filter(
+                    ([key]) =>
+                      (FINANCIAL_PERMISSIONS as readonly string[]).includes(
+                        key,
+                      ),
+                  ),
+                ) as Record<string, boolean>
+              : {},
+          );
         }
       }
     } catch {
@@ -91,6 +125,18 @@ export default function RolePermissions() {
 
       setSelected(detail);
       setSelectedModules(detail.assignedModules);
+      setSelectedPermissions(
+        detail.permissions
+          ? Object.fromEntries(
+              Object.entries(detail.permissions).filter(
+                ([key]) =>
+                  (FINANCIAL_PERMISSIONS as readonly string[]).includes(
+                    key,
+                  ),
+              ),
+            ) as Record<string, boolean>
+          : {},
+      );
     } catch {
       setDetailError("Unable to load the selected administrator permissions.");
     } finally {
@@ -123,10 +169,23 @@ export default function RolePermissions() {
       const updated = await updateAdminPermissions(
         selected.userId,
         selectedModules,
+        selectedPermissions,
       );
 
       setSelected(updated);
       setSelectedModules(updated.assignedModules);
+      setSelectedPermissions(
+        updated.permissions
+          ? Object.fromEntries(
+              Object.entries(updated.permissions).filter(
+                ([key]) =>
+                  (FINANCIAL_PERMISSIONS as readonly string[]).includes(
+                    key,
+                  ),
+              ),
+            ) as Record<string, boolean>
+          : {},
+      );
 
       setRoles((current) =>
         current.map((role) =>
@@ -442,6 +501,42 @@ export default function RolePermissions() {
                           />
 
                           <span>{labelize(module)}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="administrator-edit-section">
+                    <div className="administrator-section-heading">
+                      <div>
+                        <strong>Financial Operations Permissions</strong>
+
+                        <span>
+                          Control the specific financial actions this
+                          administrator may perform. These permissions are
+                          enforced by the backend.
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="admin-module-grid">
+                      {FINANCIAL_PERMISSIONS.map((permission) => (
+                        <label
+                          key={permission}
+                          className="admin-module-option"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedPermissions[permission] === true}
+                            onChange={() =>
+                              setSelectedPermissions((current) => ({
+                                ...current,
+                                [permission]: !current[permission],
+                              }))
+                            }
+                          />
+
+                          <span>{labelize(permission)}</span>
                         </label>
                       ))}
                     </div>

@@ -68,6 +68,7 @@ router.patch("/:id/permissions", async (req: AuthenticatedRequest, res) => {
       params.id,
       req.user!.id,
       input.assignedModules,
+      input.permissions,
     );
 
     return res.json({ success: true, data });

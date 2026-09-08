@@ -341,6 +341,18 @@ enum MarketplaceBidStatus {
   EXPIRED
 }
 
+enum WithdrawalAccountStatus {
+  PENDING
+  VERIFIED
+  SUSPENDED
+  REJECTED
+}
+
+enum WithdrawalSecurityChallengePurpose {
+  ADD_WITHDRAWAL_ACCOUNT
+  CHANGE_WITHDRAWAL_ACCOUNT
+}
+
 model User {
   id                     String           @id @default(uuid())
   firstName              String
@@ -381,6 +393,8 @@ model User {
   vehicles             Vehicle[]                 @relation("TransporterVehicles")
   payments             Payment[]                 @relation("CustomerPayments")
   wallet               Wallet?
+  withdrawalAccounts   WithdrawalAccount[]
+  withdrawalSecurityChallenges WithdrawalSecurityChallenge[]
   marketplaceRequests  MarketplaceRequest[]      @relation("MarketplaceRequests")
   marketplaceBids      MarketplaceBid[]          @relation("MarketplaceBids")
   negotiationAgreementsAsCustomer NegotiationAgreement[] @relation("NegotiationCustomer")
@@ -966,13 +980,77 @@ model Withdrawal {
 
   accountName String
 
+  idempotencyKey String?
+
   status String @default("PENDING")
 
   createdAt DateTime @default(now())
 
+  withdrawalAccountId String?
+
   wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  withdrawalAccount WithdrawalAccount? @relation(fields: [withdrawalAccountId], references: [id], onDelete: SetNull)
 
   @@index([walletId])
+  @@index([withdrawalAccountId])
+  @@unique([walletId, idempotencyKey])
+}
+
+model WithdrawalAccount {
+  id String @id @default(uuid())
+
+  transporterId String
+
+  bankCode String
+  bankName String
+
+  accountNumberEncrypted String
+  accountNumberFingerprint String
+  accountNumberLast4 String
+
+  accountName String
+
+  status WithdrawalAccountStatus @default(PENDING)
+
+  provider String?
+  providerReference String?
+  verifiedAt DateTime?
+
+  securityCooldownUntil DateTime?
+
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transporter User @relation(fields: [transporterId], references: [id], onDelete: Cascade)
+  withdrawals Withdrawal[]
+
+  @@index([transporterId, status])
+  @@index([transporterId, isDefault])
+  @@unique([transporterId, accountNumberFingerprint])
+}
+
+model WithdrawalSecurityChallenge {
+  id String @id @default(uuid())
+
+  userId String
+  purpose WithdrawalSecurityChallengePurpose
+
+  provider String
+  providerPinId String
+
+  expiresAt DateTime
+  attempts Int @default(0)
+  maxAttempts Int @default(3)
+  consumedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose, createdAt])
+  @@index([expiresAt])
 }
 
 model Notification {

@@ -51,10 +51,11 @@ export async function getAdminRole(userId: string): Promise<AdminRole> {
 export async function updateAdminPermissions(
   userId: string,
   assignedModules: AdminModule[],
+  permissions: Record<string, boolean>,
 ): Promise<AdminRole> {
   const response = await apiClient.patch<ApiResponse<AdminRole>>(
     `/admin/roles/${userId}/permissions`,
-    { assignedModules },
+    { assignedModules, permissions },
   );
 
   return response.data.data;

@@ -53,47 +53,128 @@ export async function createWallet(
 
 export async function createWithdrawal(
   data: {
-    walletId: string;
     amount: number;
-    bankName: string;
-    accountNumber: string;
-    accountName: string;
+    withdrawalAccountId: string;
   },
   userId: string,
   role: string,
+  idempotencyKey: string,
 ) {
   if (!Number.isFinite(data.amount) || data.amount <= 0) {
     throw new Error("Withdrawal amount must be greater than zero");
   }
 
+  if (role !== "TRANSPORTER") {
+    throw new Error("Only transporters can withdraw funds");
+  }
+
   const amount = new Prisma.Decimal(data.amount);
 
   const result = await prisma.$transaction(async (tx) => {
-    const wallet = await tx.wallet.findUnique({
-      where: {
-        id: data.walletId,
-      },
-      select: {
-        id: true,
-        transporterId: true,
-        availableBalance: true,
-      },
-    });
+    /*
+     * Serialize financial operations for this wallet.
+     *
+     * PostgreSQL row-level locking prevents two concurrent withdrawal
+     * requests from both reserving the same available balance.
+     */
+    const lockedWallets = await tx.$queryRaw<
+      Array<{
+        id: string;
+        transporterId: string;
+        availableBalance: Prisma.Decimal;
+      }>
+    >`
+      SELECT
+        "id",
+        "transporterId",
+        "availableBalance"
+      FROM "Wallet"
+      WHERE "transporterId" = ${userId}
+      FOR UPDATE
+    `;
+
+    const wallet = lockedWallets[0];
 
     if (!wallet) {
       throw new Error("Wallet not found");
     }
 
-    if (role !== "ADMIN" && wallet.transporterId !== userId) {
+    if (wallet.transporterId !== userId) {
       throw new Error("Access denied");
     }
 
     /*
-     * Atomically reserve the withdrawal amount.
-     *
-     * The balance condition is part of the UPDATE itself, preventing
-     * concurrent withdrawal requests from spending the same balance.
+     * Idempotency is checked after the wallet lock so concurrent retries
+     * cannot both reserve funds.
      */
+    const existingWithdrawal = await tx.withdrawal.findFirst({
+      where: {
+        walletId: wallet.id,
+        idempotencyKey,
+      },
+    });
+
+    if (existingWithdrawal) {
+      if (
+        !existingWithdrawal.amount.equals(amount) ||
+        existingWithdrawal.withdrawalAccountId !==
+          data.withdrawalAccountId
+      ) {
+        throw new Error(
+          "Idempotency key has already been used with different withdrawal parameters",
+        );
+      }
+
+      return existingWithdrawal;
+    }
+
+    /*
+     * Only a transporter-owned VERIFIED withdrawal account may receive
+     * funds. The encrypted account number never leaves the protected
+     * WithdrawalAccount record.
+     */
+    const withdrawalAccount =
+      await tx.withdrawalAccount.findFirst({
+        where: {
+          id: data.withdrawalAccountId,
+          transporterId: userId,
+        },
+        select: {
+          id: true,
+          bankName: true,
+          accountName: true,
+          accountNumberLast4: true,
+          status: true,
+          securityCooldownUntil: true,
+        },
+      });
+
+    if (!withdrawalAccount) {
+      throw new Error("Withdrawal account not found");
+    }
+
+    if (withdrawalAccount.status !== "VERIFIED") {
+      throw new Error(
+        "Withdrawal account is not verified and cannot receive funds",
+      );
+    }
+
+    if (
+      withdrawalAccount.securityCooldownUntil &&
+      withdrawalAccount.securityCooldownUntil.getTime() > Date.now()
+    ) {
+      throw new Error(
+        "This withdrawal account is temporarily locked for security. Please try again after the security cooldown expires.",
+      );
+    }
+
+    /*
+     * Reserve the balance while the wallet row remains locked.
+     */
+    if (wallet.availableBalance.lt(amount)) {
+      throw new Error("Insufficient available balance");
+    }
+
     const reserved = await tx.wallet.updateMany({
       where: {
         id: wallet.id,
@@ -112,13 +193,22 @@ export async function createWithdrawal(
       throw new Error("Insufficient available balance");
     }
 
+    /*
+     * accountNumber is a legacy field retained for historical records.
+     * New withdrawals deliberately store only the masked value.
+     *
+     * The encrypted full account number remains exclusively inside
+     * WithdrawalAccount and is not copied into the withdrawal record.
+     */
     const withdrawal = await tx.withdrawal.create({
       data: {
-        walletId: data.walletId,
+        walletId: wallet.id,
         amount,
-        bankName: data.bankName,
-        accountNumber: data.accountNumber,
-        accountName: data.accountName,
+        bankName: withdrawalAccount.bankName,
+        accountNumber: `******${withdrawalAccount.accountNumberLast4}`,
+        accountName: withdrawalAccount.accountName,
+        withdrawalAccountId: withdrawalAccount.id,
+        idempotencyKey,
         status: "PENDING",
       },
     });
@@ -146,6 +236,7 @@ export async function createWithdrawal(
     data: {
       withdrawalId: withdrawalDto.id,
       walletId: withdrawalDto.walletId,
+      withdrawalAccountId: result.withdrawalAccountId,
       amount: withdrawalDto.amount,
       status: withdrawalDto.status,
     },

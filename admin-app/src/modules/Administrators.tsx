@@ -188,8 +188,13 @@ export default function Administrators() {
         ),
       );
       setNotice(`Administrator ${action}d successfully.`);
-    } catch {
-      setDetailError(`Unable to ${action} this administrator.`);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : `Unable to ${action} this administrator.`;
+
+      setDetailError(message);
     } finally {
       setSaving(false);
     }
