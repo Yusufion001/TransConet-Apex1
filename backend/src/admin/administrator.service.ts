@@ -381,6 +381,28 @@ export async function changeAdministratorStatus(
         },
       });
 
+    const userStatus =
+      status === AdminStatus.ACTIVE
+        ? "ACTIVE"
+        : status === AdminStatus.SUSPENDED
+          ? "SUSPENDED"
+          : "BLOCKED";
+
+    await tx.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        status: userStatus,
+        ...(status !== AdminStatus.ACTIVE
+          ? {
+              refreshTokenHash: null,
+              refreshTokenExpiresAt: null,
+            }
+          : {}),
+      },
+    });
+
     await tx.auditLog.create({
       data: {
         administratorId: creatorId,

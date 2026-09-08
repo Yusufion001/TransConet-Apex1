@@ -6,6 +6,8 @@ import type { AuthenticatedRequest } from "../middleware/auth.middleware.js";
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
 import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import { requireAdminPermission } from "../middleware/admin-permission.middleware.js";
+import { requireAdminWithdrawalPermission } from "../middleware/admin-withdrawal-permission.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import {
   withdrawalStatusSchema,
@@ -46,7 +48,7 @@ router.use(authenticate);
 router.use(requireAdmin);
 router.use(requireAdminModule("FINANCIAL_OPERATIONS"));
 
-router.get("/overview", async (_req, res) => {
+router.get("/overview", requireAdminPermission("FINANCIAL_VIEW"), async (_req, res) => {
   try {
     const overview = await getFinancialOverview();
 
@@ -69,6 +71,7 @@ router.get("/overview", async (_req, res) => {
 
 router.get(
   "/payments",
+  requireAdminPermission("PAYMENTS_VIEW"),
   validate(adminPaymentQuerySchema, "query"),
   async (req, res) => {
   try {
@@ -105,6 +108,7 @@ router.get(
 
 router.get(
   "/webhooks",
+  requireAdminPermission("FINANCIAL_WEBHOOK_VIEW"),
   validate(adminWebhookQuerySchema, "query"),
   async (req, res) => {
   try {
@@ -127,6 +131,7 @@ router.get(
 
 router.get(
   "/settlements",
+  requireAdminPermission("SETTLEMENT_VIEW"),
   validate(adminSettlementQuerySchema, "query"),
   async (req, res) => {
   try {
@@ -149,6 +154,7 @@ router.get(
 
 router.get(
   "/settlements/:id",
+  requireAdminPermission("SETTLEMENT_VIEW"),
   validate(adminSettlementIdParamsSchema, "params"),
   async (req, res) => {
   try {
@@ -180,6 +186,7 @@ router.get(
 
 router.post(
   "/settlements/:id/submit",
+  requireAdminPermission("SETTLEMENT_SUBMIT"),
   async (req, res) => {
     try {
       const settlement =
@@ -205,6 +212,7 @@ router.post(
 
 router.post(
   "/settlements/:id/approve",
+  requireAdminPermission("SETTLEMENT_APPROVE"),
   async (req: AuthenticatedRequest, res) => {
     try {
       const result = await approveSettlement(
@@ -238,6 +246,7 @@ router.post(
 
 router.post(
   "/settlements/:id/reject",
+  requireAdminPermission("SETTLEMENT_REJECT"),
   async (req: AuthenticatedRequest, res) => {
     try {
       const input = settlementRejectionSchema.parse(req.body);
@@ -273,6 +282,7 @@ router.post(
 
 router.post(
   "/settlements/:id/resubmit",
+  requireAdminPermission("SETTLEMENT_RESUBMIT"),
   async (req, res) => {
     try {
       emptyBodySchema.parse(req.body);
@@ -299,6 +309,7 @@ router.post(
 
 router.post(
   "/settlements/:id/release",
+  requireAdminPermission("SETTLEMENT_RELEASE"),
   async (req: AuthenticatedRequest, res) => {
     try {
       emptyBodySchema.parse(req.body);
@@ -326,6 +337,7 @@ router.post(
 
 router.get(
   "/withdrawals",
+  requireAdminPermission("WITHDRAWALS_VIEW"),
   validate(adminWithdrawalQuerySchema, "query"),
   async (req, res) => {
   try {
@@ -348,6 +360,7 @@ router.get(
 
 router.post(
   "/webhooks/:id/retry",
+  requireAdminPermission("FINANCIAL_WEBHOOK_RETRY"),
   validate(adminWebhookIdParamsSchema, "params"),
   async (req: AuthenticatedRequest, res) => {
     try {
@@ -386,12 +399,16 @@ router.post(
 router.patch(
   "/withdrawals/:id/status",
   validate(adminWithdrawalIdParamsSchema, "params"),
+  validate(withdrawalStatusSchema, "body"),
+  requireAdminWithdrawalPermission,
   async (
     req: AuthenticatedRequest,
     res,
   ) => {
     try {
-      const input = withdrawalStatusSchema.parse(req.body);
+      const input = req.body as {
+        status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
+      };
 
       const withdrawal =
         await updateWithdrawalStatus(
@@ -417,7 +434,7 @@ router.patch(
 );
 
 
-router.get("/commission-payments", async (req, res) => {
+router.get("/commission-payments", requireAdminPermission("COMMISSION_PAYMENTS_VIEW"), async (req, res) => {
   try {
     const status =
       typeof req.query.status === "string"
@@ -445,7 +462,7 @@ router.get("/commission-payments", async (req, res) => {
   }
 });
 
-router.get("/commission-payments/:id", async (req, res) => {
+router.get("/commission-payments/:id", requireAdminPermission("COMMISSION_PAYMENTS_VIEW"), async (req, res) => {
   try {
     const { getCommissionPaymentById } = await import(
       "./commission-payment.service.js"
@@ -475,7 +492,7 @@ router.get("/commission-payments/:id", async (req, res) => {
   }
 });
 
-router.post("/commission-payments/:id/verify", async (req: AuthenticatedRequest, res) => {
+router.post("/commission-payments/:id/verify", requireAdminPermission("COMMISSION_PAYMENTS_VERIFY"), async (req: AuthenticatedRequest, res) => {
   try {
     emptyBodySchema.parse(req.body);
 
@@ -512,7 +529,7 @@ router.post("/commission-payments/:id/verify", async (req: AuthenticatedRequest,
   }
 });
 
-router.post("/commission-payments/:id/reject", async (req: AuthenticatedRequest, res) => {
+router.post("/commission-payments/:id/reject", requireAdminPermission("COMMISSION_PAYMENTS_REJECT"), async (req: AuthenticatedRequest, res) => {
   try {
     const rejectionSchema = z.object({
       rejectionReason: z.string().trim().min(3).max(1000),

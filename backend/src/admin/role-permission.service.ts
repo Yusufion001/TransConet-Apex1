@@ -76,6 +76,7 @@ export async function updateAdminPermissions(
   userId: string,
   administratorId: string,
   assignedModules: AdminModule[],
+  permissions: Record<string, boolean>,
 ) {
   await requireActiveSuperAdministrator(administratorId);
 
@@ -97,6 +98,7 @@ export async function updateAdminPermissions(
     where: { userId },
     data: {
       assignedModules,
+      permissions,
     },
     select: adminRoleSelect,
   });
@@ -110,6 +112,7 @@ export async function updateAdminPermissions(
     data: {
       userId,
       assignedModules: updated.assignedModules,
+      permissions: updated.permissions,
     },
   });
 
