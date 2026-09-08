@@ -46,7 +46,7 @@ export default function SignInScreen() {
           session.user.id,
         );
 
-        if (onboarding.marketplaceReady) {
+        if (onboarding.marketplaceReady || onboarding.currentStep === "APPROVED") {
           router.replace("/(transporter)");
         } else {
           switch (onboarding.currentStep) {
@@ -61,7 +61,6 @@ export default function SignInScreen() {
               router.replace("/(transporter-onboarding)/vehicle");
               break;
             case "ADMIN_REVIEW":
-            case "APPROVED":
               router.replace("/(transporter-onboarding)/review");
               break;
             case "TIER_2_DOCUMENTS":

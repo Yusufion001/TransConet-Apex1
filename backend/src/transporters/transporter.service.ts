@@ -190,6 +190,32 @@ export async function updateTransporterProfile(
     throw new Error("Transporter profile not found");
   }
 
+  const approvedIdentityVerification = await prisma.verification.findFirst({
+    where: {
+      userId: transporterId,
+      type: {
+        in: ["NIN", "DRIVERS_LICENSE"],
+      },
+      providerStatus: "SUCCESS",
+      adminStatus: "APPROVED",
+      adminApproved: true,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (
+    profile.verificationStatus === "APPROVED" &&
+    (data.transporterType !== undefined ||
+      data.companyName !== undefined ||
+      data.businessRegistrationNumber !== undefined)
+  ) {
+    throw new Error(
+      "Approved transporter business information cannot be changed. Contact TransConet Admin Management for corrections.",
+    );
+  }
+
   const resultingTransporterType =
     data.transporterType ?? profile.transporterType;
 
