@@ -123,6 +123,16 @@ export default function BookingDetails() {
     messagesQuery.refetch,
   ]);
 
+  const refreshPaymentState = useCallback(async () => {
+    await Promise.all([
+      bookingQuery.refetch(),
+      paymentsQuery.refetch(),
+    ]);
+  }, [
+    bookingQuery.refetch,
+    paymentsQuery.refetch,
+  ]);
+
   useEffect(() => {
     if (!id) return;
 
@@ -225,13 +235,13 @@ export default function BookingDetails() {
       }
 
       if (payment.status === "SUCCESS") {
-        await refreshBooking();
+        await refreshPaymentState();
         Alert.alert("Payment", "This shipment has already been paid.");
         return;
       }
 
       if (payment.status === "PROCESSING") {
-        await refreshBooking();
+        await refreshPaymentState();
         Alert.alert(
           "Payment processing",
           "Your payment is being processed. Please wait for the payment status to update.",
@@ -251,9 +261,6 @@ export default function BookingDetails() {
 
       await Linking.openURL(payment.checkoutUrl);
 
-      // Give the provider redirect/webhook a chance to complete before
-      // refreshing the booking state.
-      await new Promise((resolve) => setTimeout(resolve, 1500));
       await refreshBooking();
     } catch (error) {
       Alert.alert(
@@ -265,7 +272,7 @@ export default function BookingDetails() {
     } finally {
       setPaymentLoading(false);
     }
-  }, [id, latestPayment, paymentLoading, refreshBooking]);
+  }, [id, latestPayment, paymentLoading, refreshPaymentState]);
 
   if (bookingQuery.isLoading) {
     return (
