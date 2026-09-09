@@ -120,6 +120,17 @@ router.post(
       const rawBody =
         (req as typeof req & { rawBody?: Buffer }).rawBody;
 
+      console.info("Flutterwave webhook received", {
+        method: req.method,
+        path: req.originalUrl,
+        hasRawBody: Boolean(rawBody),
+        rawBodyLength: rawBody?.length ?? 0,
+        hasFlutterwaveSignature: Boolean(req.header("flutterwave-signature")),
+        hasLegacyFlutterwaveHash: Boolean(req.header("verif-hash")),
+        hasInternalSignature: Boolean(req.header("X-Webhook-Signature")),
+        contentType: req.header("content-type") ?? null,
+      });
+
      const flutterwaveSignature =
         req.header("flutterwave-signature")?.trim();
      const legacyFlutterwaveHash =
