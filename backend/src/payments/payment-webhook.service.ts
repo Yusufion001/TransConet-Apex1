@@ -405,55 +405,67 @@ export async function processPaymentWebhook(
     },
   });
 
-  if (existing) {
+  let webhookEvent;
+
+  if (existing?.processed) {
     return {
       duplicate: true,
-      processed: existing.processed,
+      processed: true,
       webhookEventId: existing.id,
     };
   }
 
-  let webhookEvent;
-
-  try {
-    webhookEvent = await prisma.paymentWebhookEvent.create({
-      data: {
-        id: crypto.randomUUID(),
-        provider,
-        providerEventId,
-        eventType,
-        paymentId: validatedPaymentId,
-        subscriptionInvoiceId: validatedSubscriptionInvoiceId,
-        payload: payload as object,
-      },
-    });
-  } catch (error) {
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "code" in error &&
-      error.code === "P2002"
-    ) {
-      const concurrentEvent =
-        await prisma.paymentWebhookEvent.findUnique({
-          where: {
-            provider_providerEventId: {
-              provider,
-              providerEventId,
+  if (existing) {
+    // Unprocessed webhook events are retryable.
+    webhookEvent = existing;
+  } else {
+    try {
+      webhookEvent = await prisma.paymentWebhookEvent.create({
+        data: {
+          id: crypto.randomUUID(),
+          provider,
+          providerEventId,
+          eventType,
+          paymentId: validatedPaymentId,
+          subscriptionInvoiceId: validatedSubscriptionInvoiceId,
+          payload: payload as object,
+        },
+      });
+    } catch (error) {
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        error.code === "P2002"
+      ) {
+        const concurrentEvent =
+          await prisma.paymentWebhookEvent.findUnique({
+            where: {
+              provider_providerEventId: {
+                provider,
+                providerEventId,
+              },
             },
-          },
-        });
+          });
 
-      if (concurrentEvent) {
-        return {
-          duplicate: true,
-          processed: concurrentEvent.processed,
-          webhookEventId: concurrentEvent.id,
-        };
+        if (concurrentEvent) {
+          if (concurrentEvent.processed) {
+            return {
+              duplicate: true,
+              processed: true,
+              webhookEventId: concurrentEvent.id,
+            };
+          }
+
+          // The event exists but is still unprocessed, so retry it.
+          webhookEvent = concurrentEvent;
+        } else {
+          throw error;
+        }
+      } else {
+        throw error;
       }
     }
-
-    throw error;
   }
 
   try {

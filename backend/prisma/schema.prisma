@@ -794,6 +794,7 @@ model Payment {
   currency             String        @default("NGN")
   provider             String
   transactionReference String        @unique
+  providerTransactionId String?
   checkoutUrl          String?
   idempotencyKey       String?
   status               PaymentStatus @default(PENDING)

@@ -20,6 +20,7 @@ type FlutterwaveInitializeResponse = {
   status: string;
   message?: string;
   data?: {
+    id?: number;
     link?: string;
   };
 };
@@ -96,6 +97,8 @@ export async function initializeFlutterwavePayment(
 
   return {
     link: response.data.link,
+    transactionId:
+      response.data.id !== undefined ? String(response.data.id) : undefined,
   };
 }
 

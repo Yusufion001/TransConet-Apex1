@@ -194,6 +194,9 @@ export async function initializePayment(
     },
     data: {
       checkoutUrl: flutterwavePayment.link,
+      ...(flutterwavePayment.transactionId
+        ? { providerTransactionId: flutterwavePayment.transactionId }
+        : {}),
     },
   });
 
