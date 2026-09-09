@@ -345,6 +345,7 @@ async function initializeFlutterwaveCommission(
     },
     data: {
       checkoutUrl: flutterwavePayment.link,
+      providerTransactionId: flutterwavePayment.transactionId ?? null,
     },
   });
 
