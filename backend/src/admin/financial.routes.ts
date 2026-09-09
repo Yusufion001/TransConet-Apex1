@@ -487,6 +487,47 @@ router.post("/commission-payments/:id/verify", requireAdminPermission("COMMISSIO
   }
 });
 
+router.post(
+  "/commission-payments/:id/verify-flutterwave",
+  requireAdminPermission("COMMISSION_PAYMENTS_VERIFY"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      emptyBodySchema.parse(req.body);
+
+      const { verifyFlutterwaveCommissionPayment } = await import(
+        "./commission-payment.service.js"
+      );
+
+      const payment = await verifyFlutterwaveCommissionPayment(
+        String(req.params.id),
+        req.user!.id,
+      );
+
+      return res.json({
+        success: true,
+        data: payment,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Flutterwave commission payment verification failed";
+
+      return res.status(400).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
+
 router.post("/commission-payments/:id/reject", requireAdminPermission("COMMISSION_PAYMENTS_REJECT"), async (req: AuthenticatedRequest, res) => {
   try {
     const rejectionSchema = z.object({

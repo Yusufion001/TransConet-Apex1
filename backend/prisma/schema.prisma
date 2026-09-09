@@ -738,6 +738,7 @@ model CommissionPayment {
 
   provider              CommissionPaymentProvider
   transactionReference  String  @unique
+  providerTransactionId String?
   checkoutUrl           String?
   idempotencyKey        String?
 

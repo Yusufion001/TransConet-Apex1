@@ -102,6 +102,42 @@ export async function initializeFlutterwavePayment(
   };
 }
 
+type FlutterwaveTransactionsResponse = {
+  status: string;
+  message?: string;
+  data?: FlutterwaveTransaction[];
+};
+
+export async function findFlutterwaveTransactionByReference(
+  transactionReference: string,
+) {
+  const params = new URLSearchParams({
+    tx_ref: transactionReference,
+  });
+
+  const response =
+    await flutterwaveRequest<FlutterwaveTransactionsResponse>(
+      `/transactions?${params.toString()}`,
+      {
+        method: "GET",
+      },
+    );
+
+  if (response.status !== "success" || !response.data) {
+    throw new Error("Flutterwave transaction lookup failed");
+  }
+
+  const transaction = response.data.find(
+    (item) => item.tx_ref === transactionReference,
+  );
+
+  if (!transaction) {
+    throw new Error("Flutterwave transaction not found");
+  }
+
+  return transaction;
+}
+
 export async function verifyFlutterwaveTransaction(
   transactionId: string,
 ) {

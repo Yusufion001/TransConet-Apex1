@@ -400,6 +400,14 @@ export async function verifyCommissionPayment(id: string) {
   return response.data.data;
 }
 
+export async function verifyFlutterwaveCommissionPayment(id: string) {
+  const response = await apiClient.post<
+    ApiResponse<CommissionPayment>
+  >(`/admin/financial/commission-payments/${id}/verify-flutterwave`, {});
+
+  return response.data.data;
+}
+
 export async function rejectCommissionPayment(
   id: string,
   rejectionReason: string,

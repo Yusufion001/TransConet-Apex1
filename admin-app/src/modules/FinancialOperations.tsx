@@ -16,6 +16,7 @@ import {
   retryPaymentWebhook,
   submitSettlement,
   verifyCommissionPayment,
+  verifyFlutterwaveCommissionPayment,
   updateWithdrawalStatus,
   type FinancialOverview,
   type FinancialPayment,
@@ -457,6 +458,12 @@ export default function FinancialOperations() {
               () => verifyCommissionPayment(id),
             )
           }
+          onVerifyFlutterwave={(id) =>
+            void runAction(
+              `commission-verify-flutterwave:${id}`,
+              () => verifyFlutterwaveCommissionPayment(id),
+            )
+          }
           onReject={(id) => {
             const reason = window.prompt(
               "Enter the commission payment rejection reason:",
@@ -479,11 +486,13 @@ function CommissionPaymentsPanel({
   payments,
   actionLoading,
   onVerify,
+  onVerifyFlutterwave,
   onReject,
 }: {
   payments: CommissionPayment[];
   actionLoading: string | null;
   onVerify: (id: string) => void;
+  onVerifyFlutterwave: (id: string) => void;
   onReject: (id: string) => void;
 }) {
   return (
@@ -543,6 +552,10 @@ function CommissionPaymentsPanel({
                 const canReview =
                   payment.status === "PENDING" &&
                   payment.provider === "BANK_TRANSFER";
+                const canVerifyFlutterwave =
+                  (payment.status === "PENDING" ||
+                    payment.status === "PROCESSING") &&
+                  payment.provider === "FLUTTERWAVE";
 
                 return (
                   <tr key={payment.id}>
@@ -596,7 +609,24 @@ function CommissionPaymentsPanel({
                     <td>{formatDate(payment.submittedAt)}</td>
 
                     <td>
-                      {canReview ? (
+                      {canVerifyFlutterwave ? (
+                        <button
+                          type="button"
+                          className="text-button"
+                          disabled={
+                            actionLoading ===
+                            `commission-verify-flutterwave:${payment.id}`
+                          }
+                          onClick={() =>
+                            onVerifyFlutterwave(payment.id)
+                          }
+                        >
+                          {actionLoading ===
+                          `commission-verify-flutterwave:${payment.id}`
+                            ? "Verifying…"
+                            : "Verify with Flutterwave"}
+                        </button>
+                      ) : canReview ? (
                         <div
                           style={{
                             display: "flex",
