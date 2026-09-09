@@ -97,10 +97,12 @@ function resetMocks() {
   prismaMock.paymentWebhookEvent.create.mock.mockImplementation(
     async ({ data }: any) => ({ id: data.id, processed: false }),
   );
-  prismaMock.paymentWebhookEvent.update.mock.mockImplementation(async () => ({
-    id: "event-1",
-    processed: true,
-  }));
+  prismaMock.paymentWebhookEvent.update.mock.mockImplementation(
+    async ({ where }: any) => ({
+      id: where.id,
+      processed: true,
+    }),
+  );
 
   prismaMock.commissionPaymentWebhookEvent.findUnique.mock.mockImplementation(
     async () => null,
@@ -284,6 +286,22 @@ test("replayed processed payment webhook is idempotent", async () => {
   assert.equal(result.processed, true);
   assert.equal(completePaymentMock.mock.callCount(), 0);
   assert.equal(prismaMock.paymentWebhookEvent.create.mock.callCount(), 0);
+});
+
+test("unprocessed payment webhook is retried", async () => {
+  prismaMock.paymentWebhookEvent.findUnique.mock.mockImplementationOnce(async () => ({
+    id: "event-existing",
+    processed: false,
+  }));
+
+  const result = await processPaymentWebhook(paymentInput());
+
+  assert.equal(result.duplicate, false);
+  assert.equal(result.processed, true);
+  assert.equal(result.webhookEventId, "event-existing");
+  assert.equal(completePaymentMock.mock.callCount(), 1);
+  assert.equal(prismaMock.paymentWebhookEvent.create.mock.callCount(), 0);
+  assert.equal(prismaMock.paymentWebhookEvent.update.mock.callCount(), 1);
 });
 
 test("non-success event cannot complete payment", async () => {
