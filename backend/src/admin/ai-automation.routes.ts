@@ -31,10 +31,7 @@ router.get("/", async (_req, res) => {
 
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load AI automation overview",
+      error: "Failed to load AI automation overview",
     });
   }
 });
@@ -52,10 +49,7 @@ router.post("/run", async (req: AuthenticatedRequest, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to run automation",
+      error: "Failed to run automation",
     });
   }
 });

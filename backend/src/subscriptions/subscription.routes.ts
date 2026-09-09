@@ -31,7 +31,7 @@ router.get("/plans", async (_req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -43,7 +43,7 @@ router.get("/me", async (req: AuthenticatedRequest, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -55,7 +55,7 @@ router.get("/invoices", async (req: AuthenticatedRequest, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -80,7 +80,7 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
 
     return res.status(400).json({
       success: false,
-      error: error instanceof Error ? error.message : "Subscription failed",
+      error: "Subscription failed",
     });
   }
 });
@@ -105,7 +105,7 @@ router.post("/cancel", async (req: AuthenticatedRequest, res) => {
 
     return res.status(400).json({
       success: false,
-      error: error instanceof Error ? error.message : "Cancellation failed",
+      error: "Cancellation failed",
     });
   }
 });

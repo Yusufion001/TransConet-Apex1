@@ -34,7 +34,7 @@ router.get("/customers", async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -60,7 +60,7 @@ router.get(
 
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
       requestId,
     });
   }
@@ -84,7 +84,7 @@ router.get("/summary", async (req, res) => {
 
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
       requestId,
     });
   }
@@ -110,7 +110,7 @@ router.patch(
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });

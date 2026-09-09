@@ -97,7 +97,7 @@ function handleBookingRouteError(
 
   return res.status(500).json({
     success: false,
-    error: message,
+    error: "Server error",
   });
 }
 

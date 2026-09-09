@@ -17,9 +17,7 @@ router.get("/", async (_req, res) => {
   } catch (error) {
     return res.status(503).json({
       success: false,
-      error: error instanceof Error
-        ? error.message
-        : "Database health check failed",
+      error: "Database health check failed",
     });
   }
 });

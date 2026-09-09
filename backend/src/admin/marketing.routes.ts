@@ -50,10 +50,7 @@ router.get("/", async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load marketing campaigns",
+      error: "Failed to load marketing campaigns",
     });
   }
 });
@@ -85,10 +82,7 @@ router.get("/:id", async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load marketing campaign",
+      error: "Failed to load marketing campaign",
     });
   }
 });
@@ -116,10 +110,7 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
 
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to create marketing campaign",
+      error: "Failed to create marketing campaign",
     });
   }
 });
@@ -148,10 +139,7 @@ router.patch("/:id", async (req: AuthenticatedRequest, res) => {
 
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to update marketing campaign",
+      error: "Failed to update marketing campaign",
     });
   }
 });
@@ -175,10 +163,7 @@ router.patch(
     } catch (error) {
       return res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to update campaign status",
+        error: "Failed to update campaign status",
       });
     }
   },

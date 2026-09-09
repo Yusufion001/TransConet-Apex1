@@ -56,7 +56,12 @@ export async function applicationErrorMiddleware(
     "statusCode" in err &&
     typeof (err as { statusCode?: unknown }).statusCode === "number"
       ? (err as { statusCode: number }).statusCode
-      : 500;
+      : typeof err === "object" &&
+          err !== null &&
+          "status" in err &&
+          typeof (err as { status?: unknown }).status === "number"
+        ? (err as { status: number }).status
+        : 500;
 
   const isServerError = statusCode >= 500;
 

@@ -27,10 +27,7 @@ router.get("/", async (_req, res) => {
   } catch (error) {
     return res.status(503).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Backup and recovery status check failed",
+      error: "Backup and recovery status check failed",
     });
   }
 });
@@ -52,10 +49,7 @@ router.post("/snapshot", async (req: AuthenticatedRequest, res) => {
 
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to request backup snapshot",
+      error: "Failed to request backup snapshot",
     });
   }
 });

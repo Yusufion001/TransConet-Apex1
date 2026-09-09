@@ -61,10 +61,7 @@ router.get("/overview", requireAdminPermission("FINANCIAL_VIEW"), async (_req, r
 
     res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -98,10 +95,7 @@ router.get(
   } catch (error) {
     res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -121,10 +115,7 @@ router.get(
   } catch (error) {
     res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -144,10 +135,7 @@ router.get(
   } catch (error) {
     res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -176,10 +164,7 @@ router.get(
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -201,10 +186,7 @@ router.post(
     } catch (error) {
       res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Server error",
+        error: "Server error",
       });
     }
   },
@@ -235,10 +217,7 @@ router.post(
 
       res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Server error",
+        error: "Server error",
       });
     }
   },
@@ -271,10 +250,7 @@ router.post(
 
       return res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Server error",
+        error: "Server error",
       });
     }
   },
@@ -298,10 +274,7 @@ router.post(
     } catch (error) {
       return res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Server error",
+        error: "Server error",
       });
     }
   },
@@ -326,10 +299,7 @@ router.post(
     } catch (error) {
       res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Server error",
+        error: "Server error",
       });
     }
   },
@@ -350,10 +320,7 @@ router.get(
   } catch (error) {
     res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -384,13 +351,13 @@ router.post(
       if (message === "Payment webhook event not found") {
         return res.status(404).json({
           success: false,
-          error: message,
+          error: "Server error",
         });
       }
 
       return res.status(500).json({
         success: false,
-        error: message,
+        error: "Server error",
       });
     }
   },
@@ -424,10 +391,7 @@ router.patch(
     } catch (error) {
       res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Server error",
+        error: "Server error",
       });
     }
   },
@@ -454,10 +418,7 @@ router.get("/commission-payments", requireAdminPermission("COMMISSION_PAYMENTS_V
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -484,10 +445,7 @@ router.get("/commission-payments/:id", requireAdminPermission("COMMISSION_PAYMEN
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Server error",
+      error: "Server error",
     });
   }
 });

@@ -45,10 +45,7 @@ router.get(
     } catch (error) {
       return res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to load disputes",
+        error: "Failed to load disputes",
       });
     }
   },

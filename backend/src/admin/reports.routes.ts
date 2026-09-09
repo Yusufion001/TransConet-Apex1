@@ -31,10 +31,7 @@ router.get("/", async (_req, res) => {
 
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to generate reports overview",
+      error: "Failed to generate reports overview",
     });
   }
 });
@@ -52,10 +49,7 @@ router.post("/generate", async (req: AuthenticatedRequest, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to generate report",
+      error: "Failed to generate report",
     });
   }
 });

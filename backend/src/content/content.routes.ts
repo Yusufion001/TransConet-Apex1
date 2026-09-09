@@ -38,7 +38,7 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
     }
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -57,7 +57,7 @@ router.get("/", async (req: AuthenticatedRequest, res) => {
     }
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -80,7 +80,7 @@ router.get("/:id", async (req: AuthenticatedRequest, res) => {
     }
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -103,7 +103,7 @@ router.patch("/:id", async (req: AuthenticatedRequest, res) => {
     }
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -124,7 +124,7 @@ router.patch("/:id/publish", async (req: AuthenticatedRequest, res) => {
     }
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });

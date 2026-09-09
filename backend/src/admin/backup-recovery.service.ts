@@ -53,10 +53,7 @@ export async function getBackupRecoveryStatus() {
       responseTimeMs: Date.now() - startedAt,
       protectedRecords: null,
       checkedAt: new Date(),
-      error:
-        error instanceof Error
-          ? error.message
-          : "Backup and recovery status check failed",
+      error: "Backup and recovery status check failed",
     };
   }
 }

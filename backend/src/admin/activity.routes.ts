@@ -26,10 +26,7 @@ router.get(
     } catch (error) {
       return res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to load activity timeline",
+        error: "Failed to load activity timeline",
       });
     }
   },

@@ -598,10 +598,37 @@ export async function verifyPhoneVerificationOtp(
    * A provider/network failure therefore does not consume
    * one of the user's three verification attempts.
    */
-  await verifyPhoneOtp(
+  const verification = await verifyPhoneOtp(
     user.phoneVerificationPinId,
     pin,
   );
+
+  if (!verification.verified) {
+    const attempt = await prisma.user.updateMany({
+      where: {
+        id: user.id,
+        phoneVerifiedAt: null,
+        phoneVerificationPinId: user.phoneVerificationPinId,
+        phoneVerificationExpiresAt: {
+          gt: new Date(),
+        },
+        phoneVerificationAttempts: {
+          lt: 3,
+        },
+      },
+      data: {
+        phoneVerificationAttempts: {
+          increment: 1,
+        },
+      },
+    });
+
+    if (attempt.count !== 1) {
+      throw new Error("Too many verification attempts");
+    }
+
+    throw new Error("Invalid verification code");
+  }
 
   const now = new Date();
 

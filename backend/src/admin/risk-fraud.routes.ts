@@ -32,10 +32,7 @@ router.get("/", async (_req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load risk and fraud overview",
+      error: "Failed to load risk and fraud overview",
     });
   }
 });
@@ -65,10 +62,7 @@ router.post(
 
       return res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to create risk alert",
+        error: "Failed to create risk alert",
       });
     }
   },

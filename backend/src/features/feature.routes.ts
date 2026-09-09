@@ -66,7 +66,7 @@ router.get("/:key", async (req: AuthenticatedRequest, res) => {
 
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -89,7 +89,7 @@ router.get("/", async (req: AuthenticatedRequest, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });

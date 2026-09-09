@@ -71,8 +71,7 @@ router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      error:
-        error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -106,8 +105,7 @@ router.get(
     } catch (error) {
       res.status(500).json({
         success: false,
-        error:
-          error instanceof Error ? error.message : "Server error",
+        error: "Server error",
       });
     }
   },
@@ -246,10 +244,7 @@ router.get(
     } catch (error) {
       return res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unable to retrieve withdrawal accounts",
+        error: "Unable to retrieve withdrawal accounts",
       });
     }
   },
@@ -303,7 +298,7 @@ router.post(
 
       res.status(500).json({
         success: false,
-        error: message,
+        error: "Server error",
       });
     }
   },

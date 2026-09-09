@@ -45,7 +45,7 @@ router.post(
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -74,7 +74,7 @@ router.get("/:id", async (req: AuthenticatedRequest, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -143,13 +143,13 @@ router.patch("/:id/availability", async (req: AuthenticatedRequest, res) => {
     ) {
       return res.status(409).json({
         success: false,
-        error: message,
+        error: "Server error",
       });
     }
 
     return res.status(500).json({
       success: false,
-      error: message,
+      error: "Server error",
     });
   }
 });
@@ -185,7 +185,7 @@ router.patch("/:id", async (req: AuthenticatedRequest, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });

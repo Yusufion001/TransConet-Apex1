@@ -34,7 +34,7 @@ router.get("/", async (_req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -68,7 +68,7 @@ router.get("/:key", async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -106,7 +106,7 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
 
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -149,7 +149,7 @@ router.patch("/:key", async (req: AuthenticatedRequest, res) => {
 
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -194,7 +194,7 @@ router.patch("/:key/enabled", async (req: AuthenticatedRequest, res) => {
 
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });

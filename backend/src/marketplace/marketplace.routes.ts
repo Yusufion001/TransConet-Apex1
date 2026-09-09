@@ -92,7 +92,7 @@ router.get(
 
       return res.status(500).json({
         success: false,
-        error: message,
+        error: "Server error",
       });
     }
   },
@@ -125,7 +125,7 @@ router.post(
 
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : "Server error",
+        error: "Server error",
       });
     }
   },
@@ -146,7 +146,7 @@ router.get(
     } catch (error) {
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : "Server error",
+        error: "Server error",
       });
     }
   },
@@ -192,7 +192,7 @@ router.post(
 
       return res.status(500).json({
         success: false,
-        error: message,
+        error: "Server error",
       });
     }
   },
@@ -222,7 +222,7 @@ router.get(
     } catch (error) {
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : "Server error",
+        error: "Server error",
       });
     }
   },
