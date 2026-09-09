@@ -108,7 +108,10 @@ export async function verifyPhoneOtp(
     result.status?.toLowerCase() === "success";
 
   if (!verified) {
-    throw new Error(result.message || "Invalid verification code");
+    return {
+      verified: false,
+      phone: result.msisdn,
+    };
   }
 
   return {

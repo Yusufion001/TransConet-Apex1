@@ -57,7 +57,7 @@ router.get("/", async (_req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -85,7 +85,7 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
 
     return res.status(400).json({
       success: false,
-      error: error instanceof Error ? error.message : "Plan creation failed",
+      error: "Plan creation failed",
     });
   }
 });
@@ -114,7 +114,7 @@ router.patch("/:id", async (req: AuthenticatedRequest, res) => {
 
     return res.status(400).json({
       success: false,
-      error: error instanceof Error ? error.message : "Plan update failed",
+      error: "Plan update failed",
     });
   }
 });
@@ -143,7 +143,7 @@ router.patch("/:id/status", async (req: AuthenticatedRequest, res) => {
 
     return res.status(400).json({
       success: false,
-      error: error instanceof Error ? error.message : "Plan status update failed",
+      error: "Plan status update failed",
     });
   }
 });

@@ -46,7 +46,7 @@ router.post("/", authorize("TRANSPORTER"), async (req: AuthenticatedRequest, res
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -76,7 +76,7 @@ router.get(
     } catch (error) {
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : "Server error",
+        error: "Server error",
       });
     }
   },
@@ -105,7 +105,7 @@ router.get("/:id", async (req: AuthenticatedRequest, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -147,7 +147,7 @@ router.patch("/:id/profile", async (req: AuthenticatedRequest, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -168,7 +168,7 @@ router.get("/:id/vehicles", async (req: AuthenticatedRequest, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -212,10 +212,7 @@ router.post(
 
       return res.status(400).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Unable to start transporter verification",
+        error: "Unable to start transporter verification",
       });
     }
   },
@@ -245,7 +242,7 @@ router.patch(
     } catch (error) {
       res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : "Server error",
+        error: "Server error",
       });
     }
   },

@@ -37,7 +37,7 @@ router.get("/overview", async (_req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -70,7 +70,7 @@ router.get("/audit-logs", async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -94,7 +94,7 @@ router.get("/administrators/:id", async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -125,8 +125,7 @@ router.patch(
 
       return res.status(500).json({
         success: false,
-        error:
-          error instanceof Error ? error.message : "Server error",
+        error: "Server error",
       });
     }
   },
@@ -160,8 +159,7 @@ router.patch(
 
       return res.status(500).json({
         success: false,
-        error:
-          error instanceof Error ? error.message : "Server error",
+        error: "Server error",
       });
     }
   },

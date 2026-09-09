@@ -804,3 +804,63 @@ test("confirmDelivery rejects a booking that has no transporter", async () => {
     0,
   );
 });
+
+test("assignBooking rejects a cancelled booking", async () => {
+  prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
+    id: "booking-1",
+    status: "CANCELLED",
+  }));
+
+  prismaMock.user.findUnique.mock.mockImplementation(async () => ({
+    id: "transporter-1",
+    role: "TRANSPORTER",
+    status: "ACTIVE",
+  }));
+
+  prismaMock.vehicle.findUnique.mock.mockImplementation(async () => ({
+    id: "vehicle-1",
+    transporterId: "transporter-1",
+    availabilityStatus: "AVAILABLE",
+    verificationStatus: "APPROVED",
+  }));
+
+  await assert.rejects(
+    assignBooking("booking-1", "transporter-1", "vehicle-1"),
+    {
+      message: "Cannot assign a booking in status CANCELLED",
+    },
+  );
+
+  assert.equal(prismaMock.booking.update.mock.calls.length, 0);
+  assert.equal(prismaMock.vehicle.update.mock.calls.length, 0);
+});
+
+test("assignBooking rejects a completed booking", async () => {
+  prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
+    id: "booking-1",
+    status: "COMPLETED",
+  }));
+
+  prismaMock.user.findUnique.mock.mockImplementation(async () => ({
+    id: "transporter-1",
+    role: "TRANSPORTER",
+    status: "ACTIVE",
+  }));
+
+  prismaMock.vehicle.findUnique.mock.mockImplementation(async () => ({
+    id: "vehicle-1",
+    transporterId: "transporter-1",
+    availabilityStatus: "AVAILABLE",
+    verificationStatus: "APPROVED",
+  }));
+
+  await assert.rejects(
+    assignBooking("booking-1", "transporter-1", "vehicle-1"),
+    {
+      message: "Cannot assign a booking in status COMPLETED",
+    },
+  );
+
+  assert.equal(prismaMock.booking.update.mock.calls.length, 0);
+  assert.equal(prismaMock.vehicle.update.mock.calls.length, 0);
+});

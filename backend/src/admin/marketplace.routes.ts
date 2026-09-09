@@ -37,10 +37,7 @@ router.get("/pricing", async (_req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load marketplace pricing",
+      error: "Failed to load marketplace pricing",
     });
   }
 });
@@ -72,10 +69,7 @@ router.put("/pricing", async (req: AuthenticatedRequest, res) => {
 
     return res.status(400).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to update marketplace pricing",
+      error: "Failed to update marketplace pricing",
     });
   }
 });
@@ -91,7 +85,7 @@ router.get("/summary", async (_req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -116,7 +110,7 @@ router.get("/requests", async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -141,7 +135,7 @@ router.get("/requests/:id", async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -166,7 +160,7 @@ router.get("/bids", async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -191,7 +185,7 @@ router.get("/bids/:id", async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });

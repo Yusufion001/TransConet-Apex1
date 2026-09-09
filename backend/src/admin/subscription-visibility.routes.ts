@@ -70,10 +70,7 @@ router.get("/", async (_req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load visibility configuration",
+      error: "Failed to load visibility configuration",
     });
   }
 });
@@ -105,10 +102,7 @@ router.put(
 
       return res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to update visibility configuration",
+        error: "Failed to update visibility configuration",
       });
     }
   },

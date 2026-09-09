@@ -75,10 +75,7 @@ router.get("/assignment-options", async (_req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load booking assignment options",
+      error: "Failed to load booking assignment options",
     });
   }
 });
@@ -103,10 +100,7 @@ router.get("/", async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load bookings and shipments",
+      error: "Failed to load bookings and shipments",
     });
   }
 });
@@ -138,10 +132,7 @@ router.get("/:id", async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load booking",
+      error: "Failed to load booking",
     });
   }
 });

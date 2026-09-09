@@ -80,8 +80,7 @@ router.get(
     } catch (error) {
       res.status(500).json({
         success: false,
-        error:
-          error instanceof Error ? error.message : "Server error",
+        error: "Server error",
       });
     }
   },

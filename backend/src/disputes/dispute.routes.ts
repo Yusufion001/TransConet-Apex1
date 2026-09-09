@@ -132,7 +132,7 @@ router.post("/evidence/upload-url", async (req: AuthenticatedRequest, res) => {
 
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -226,7 +226,7 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
 
     res.status(500).json({
       success: false,
-      error: message,
+      error: "Server error",
     });
   }
 });
@@ -268,8 +268,7 @@ router.get(
 
       res.status(500).json({
         success: false,
-        error:
-          error instanceof Error ? error.message : "Server error",
+        error: "Server error",
       });
     }
   },
@@ -313,8 +312,7 @@ router.get(
 
       res.status(500).json({
         success: false,
-        error:
-          error instanceof Error ? error.message : "Server error",
+        error: "Server error",
       });
     }
   },
@@ -347,8 +345,7 @@ router.patch(
 
       res.status(500).json({
         success: false,
-        error:
-          error instanceof Error ? error.message : "Server error",
+        error: "Server error",
       });
     }
   },

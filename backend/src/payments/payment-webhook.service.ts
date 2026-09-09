@@ -328,7 +328,7 @@ export async function processPaymentWebhook(
     }
 
     validatedPaymentId = payment.id;
-  } else if (transactionReference) {
+  } else if (transactionReference && !validatedSubscriptionInvoiceId) {
     const payment = await prisma.payment.findUnique({
       where: { transactionReference },
       select: {

@@ -412,10 +412,7 @@ io.on("connection", (socket) => {
         socket.emit("vehicle:location-updated", location);
       } catch (error) {
         socket.emit("vehicle:update-rejected", {
-          error:
-            error instanceof Error
-              ? error.message
-              : "Failed to update vehicle location",
+          error: "Failed to update vehicle location",
         });
       }
     },

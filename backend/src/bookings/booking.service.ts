@@ -227,6 +227,12 @@ export async function assignBooking(
       throw new Error("Booking not found");
     }
 
+    if (!["REQUESTED", "SEARCHING"].includes(booking.status)) {
+      throw new Error(
+        `Cannot assign a booking in status ${booking.status}`,
+      );
+    }
+
     const transporter = await tx.user.findUnique({
       where: { id: transporterId },
       select: {

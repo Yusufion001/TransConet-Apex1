@@ -58,10 +58,7 @@ router.post(
 
       res.status(500).json({
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Server error",
+        error: "Server error",
       });
     }
   },
@@ -100,13 +97,13 @@ router.get(
       if (message === "Access denied") {
         return res.status(403).json({
           success: false,
-          error: message,
+          error: "Server error",
         });
       }
 
       res.status(500).json({
         success: false,
-        error: message,
+        error: "Server error",
       });
     }
   },

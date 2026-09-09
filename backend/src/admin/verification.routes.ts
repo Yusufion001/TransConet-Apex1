@@ -43,7 +43,7 @@ router.get("/pending", async (_req, res) => {
 
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -62,7 +62,7 @@ router.get("/verified", async (_req, res) => {
 
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -124,7 +124,7 @@ router.get("/:id/document-url", async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });
@@ -137,10 +137,7 @@ router.get("/transporter-verifications/pending", async (_req, res) => {
     console.error("ADMIN_TRANSPORTER_VERIFICATIONS_PENDING_ERROR", error);
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load transporter verifications",
+      error: "Failed to load transporter verifications",
     });
   }
 });
@@ -153,10 +150,7 @@ router.get("/transporter-verifications/approved", async (_req, res) => {
     console.error("ADMIN_TRANSPORTER_VERIFICATIONS_APPROVED_ERROR", error);
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load approved transporter verifications",
+      error: "Failed to load approved transporter verifications",
     });
   }
 });
@@ -218,7 +212,7 @@ router.patch(
 
       return res.status(500).json({
         success: false,
-        error: message,
+        error: "Server error",
       });
     }
   },
@@ -272,7 +266,7 @@ router.patch(
 
       return res.status(500).json({
         success: false,
-        error: message,
+        error: "Server error",
       });
     }
   },
@@ -349,7 +343,7 @@ router.patch("/:id/reject", async (req: AuthenticatedRequest, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error: error instanceof Error ? error.message : "Server error",
+      error: "Server error",
     });
   }
 });

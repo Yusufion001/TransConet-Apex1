@@ -35,10 +35,7 @@ router.get("/summary", async (_req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load live trip summary",
+      error: "Failed to load live trip summary",
     });
   }
 });
@@ -57,10 +54,7 @@ router.get(
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load live trips",
+      error: "Failed to load live trips",
     });
   }
 });
@@ -90,10 +84,7 @@ router.get(
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load live trip tracking",
+      error: "Failed to load live trip tracking",
     });
   }
 });
@@ -121,10 +112,7 @@ router.get(
   } catch (error) {
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load live trip",
+      error: "Failed to load live trip",
     });
   }
 });

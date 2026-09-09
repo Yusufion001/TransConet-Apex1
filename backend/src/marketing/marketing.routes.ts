@@ -48,10 +48,7 @@ router.get("/", async (req: AuthenticatedRequest, res) => {
 
     return res.status(500).json({
       success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to load advertisements",
+      error: "Failed to load advertisements",
     });
   }
 });

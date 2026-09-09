@@ -42,6 +42,23 @@ const sendEmailVerificationEmailMock =
 const sendAdminInvitationEmailMock =
   mock.fn<(...args: any[]) => any>();
 
+const sendPhoneOtpMock =
+  mock.fn<(...args: any[]) => any>();
+
+const verifyPhoneOtpMock =
+  mock.fn<(...args: any[]) => any>();
+
+const sendSmsMock =
+  mock.fn<(...args: any[]) => any>();
+
+mock.module(new URL("../src/services/termii.service.js", import.meta.url).href, {
+  namedExports: {
+    sendPhoneOtp: sendPhoneOtpMock,
+    verifyPhoneOtp: verifyPhoneOtpMock,
+    sendSms: sendSmsMock,
+  },
+});
+
 mock.module(new URL("../src/config/prisma.js", import.meta.url).href, {
   namedExports: {
     prisma: prismaMock,
@@ -84,6 +101,9 @@ const {
   resetPassword,
   refreshAccessToken,
   logoutUser,
+  sendPhoneVerificationOtp,
+  resendPhoneVerificationOtp,
+  verifyPhoneVerificationOtp,
 } = await import("../src/services/auth.service.js");
 
 function resetMocks() {
@@ -105,6 +125,9 @@ function resetMocks() {
     prismaMock.$transaction,
     sendPasswordResetEmailMock,
     sendEmailVerificationEmailMock,
+    sendPhoneOtpMock,
+    verifyPhoneOtpMock,
+    sendSmsMock,
   ]) {
     fn.mock.resetCalls();
   }

@@ -159,19 +159,41 @@ function securityErrorMiddleware(
     });
   }
 
+  const statusCode =
+    typeof err === "object" &&
+    err !== null &&
+    "statusCode" in err &&
+    typeof (err as { statusCode?: unknown }).statusCode === "number"
+      ? (err as { statusCode: number }).statusCode
+      : typeof err === "object" &&
+          err !== null &&
+          "status" in err &&
+          typeof (err as { status?: unknown }).status === "number"
+        ? (err as { status: number }).status
+        : 500;
+
+  const safeStatusCode =
+    statusCode >= 400 && statusCode < 500 ? statusCode : 500;
+
   /*
    * Never expose internal exception details in production.
    */
   if (isProduction) {
-    return res.status(500).json({
+    return res.status(safeStatusCode).json({
       success: false,
-      error: "Internal server error",
+      error:
+        safeStatusCode >= 500
+          ? "Internal server error"
+          : "Request failed",
     });
   }
 
-  return res.status(500).json({
+  return res.status(safeStatusCode).json({
     success: false,
-    error: message || "Internal server error",
+    error:
+      safeStatusCode >= 500
+        ? "Internal server error"
+        : message || "Request failed",
   });
 }
 
