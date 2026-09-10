@@ -41,10 +41,13 @@ const publishEventMock = mock.fn<(...args: any[]) => any>();
 
 const createSettlementMock =
   mock.fn<(...args: any[]) => any>();
+const createSettlementInTransactionMock =
+  mock.fn<(...args: any[]) => any>();
 
 mock.module(new URL("../src/settlements/settlement.service.js", import.meta.url).href, {
   namedExports: {
     createSettlement: createSettlementMock,
+      createSettlementInTransaction: createSettlementInTransactionMock,
   },
 });
 
@@ -127,6 +130,8 @@ test("initializePayment uses the booking fare as the authoritative amount", asyn
   prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
     id: "booking-1",
     customerId: "customer-1",
+    transporterId: "transporter-1",
+    vehicleId: "vehicle-1",
     fare,
     customer: {
       firstName: "Test",
@@ -221,6 +226,8 @@ test("initializePayment rejects a booking with an invalid fare", async () => {
   prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
     id: "booking-1",
     customerId: "customer-1",
+    transporterId: "transporter-1",
+    vehicleId: "vehicle-1",
     fare: new Prisma.Decimal("0"),
   }));
 
@@ -251,6 +258,8 @@ test("initializePayment returns the existing payment for the same idempotency ke
   prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
     id: "booking-1",
     customerId: "customer-1",
+    transporterId: "transporter-1",
+    vehicleId: "vehicle-1",
     fare,
   }));
 
@@ -273,6 +282,8 @@ test("initializePayment rejects idempotency-key reuse with different parameters"
   prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
     id: "booking-1",
     customerId: "customer-1",
+    transporterId: "transporter-1",
+    vehicleId: "vehicle-1",
     fare: new Prisma.Decimal("150000.00"),
   }));
 
@@ -376,6 +387,7 @@ test("completePayment marks payment successful and moves funds into transporter 
     booking: {
       id: "booking-1",
       transporterId: "transporter-1",
+      vehicleId: "vehicle-1",
     },
   };
 
@@ -531,6 +543,7 @@ test("completePayment returns an already completed payment without duplicating p
     booking: {
       id: "booking-1",
       transporterId: "transporter-1",
+      vehicleId: "vehicle-1",
     },
   }));
 
@@ -584,6 +597,7 @@ test("completePayment rejects a refunded payment", async () => {
     booking: {
       id: "booking-1",
       transporterId: "transporter-1",
+      vehicleId: "vehicle-1",
     },
   }));
 
@@ -605,6 +619,7 @@ test("completePayment rejects when the atomic payment claim fails", async () => 
     booking: {
       id: "booking-1",
       transporterId: "transporter-1",
+      vehicleId: "vehicle-1",
     },
   };
 
@@ -639,6 +654,7 @@ test("completePayment rejects when the transporter wallet is missing", async () 
     booking: {
       id: "booking-1",
       transporterId: "transporter-1",
+      vehicleId: "vehicle-1",
     },
   };
 

@@ -3,7 +3,10 @@ import assert from "node:assert/strict";
 
 const prismaMock = {
   subscriptionInvoice: { findUnique: mock.fn<(...args: any[]) => any>() },
-  payment: { findUnique: mock.fn<(...args: any[]) => any>() },
+  payment: {
+    findUnique: mock.fn<(...args: any[]) => any>(),
+    update: mock.fn<(...args: any[]) => any>(),
+  },
   paymentWebhookEvent: {
     findUnique: mock.fn<(...args: any[]) => any>(),
     create: mock.fn<(...args: any[]) => any>(),
@@ -69,6 +72,7 @@ function resetMocks() {
   for (const fn of [
     prismaMock.subscriptionInvoice.findUnique,
     prismaMock.payment.findUnique,
+                                           prismaMock.payment.update,
     prismaMock.paymentWebhookEvent.findUnique,
     prismaMock.paymentWebhookEvent.create,
     prismaMock.paymentWebhookEvent.update,
