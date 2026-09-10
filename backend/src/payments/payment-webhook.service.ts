@@ -102,6 +102,15 @@ export async function processPaymentWebhook(
     signatureType,
   } = input;
 
+  console.info("Payment webhook processing entered", {
+    provider,
+    signatureType,
+    hasSignature: Boolean(input.signature),
+    signatureLength: input.signature?.length ?? 0,
+    hasRawBody: Boolean(input.rawBody),
+    rawBodyLength: input.rawBody?.length ?? 0,
+  });
+
   if (!verifyWebhookSignature(
     input.rawBody,
     input.signature,
