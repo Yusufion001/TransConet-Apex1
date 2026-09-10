@@ -174,7 +174,7 @@ router.post(
       const providerEventId =
         req.header("X-Provider-Event-Id")?.trim() ||
         req.body?.providerEventId ||
-        req.body?.id ||
+        req.body?.data?.flw_ref ||
         req.body?.webhook_id;
 
       const eventType =
@@ -188,11 +188,16 @@ router.post(
         req.body?.data?.paymentId ||
         req.header("X-Payment-Id")?.trim();
 
-      const transactionId =
-        req.body?.transactionId ||
-        req.body?.transaction_id ||
-        req.body?.data?.id ||
+      const transactionIdRaw =
+        req.body?.transactionId ??
+        req.body?.transaction_id ??
+        req.body?.data?.id ??
         req.header("X-Transaction-Id")?.trim();
+
+      const transactionId =
+        transactionIdRaw !== undefined && transactionIdRaw !== null
+          ? String(transactionIdRaw)
+          : undefined;
 
       const transactionReference =
         req.body?.transactionReference ||
