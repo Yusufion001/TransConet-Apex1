@@ -222,6 +222,38 @@ router.post(
       });
 
       if (!webhookData.success) {
+        console.warn("Flutterwave webhook schema validation failed", {
+          providerEventId: {
+            present: providerEventId !== undefined && providerEventId !== null,
+            type: typeof providerEventId,
+          },
+          eventType: {
+            present: eventType !== undefined && eventType !== null,
+            type: typeof eventType,
+          },
+          transactionId: {
+            present: transactionId !== undefined && transactionId !== null,
+            type: typeof transactionId,
+          },
+          transactionReference: {
+            present: transactionReference !== undefined && transactionReference !== null,
+            type: typeof transactionReference,
+          },
+          amount: {
+            present: amount !== undefined && amount !== null,
+            type: typeof amount,
+          },
+          currency: {
+            present: currency !== undefined && currency !== null,
+            type: typeof currency,
+          },
+          issues: webhookData.error.issues.map((issue) => ({
+            path: issue.path,
+            code: issue.code,
+            message: issue.message,
+          })),
+        });
+
         return res.status(400).json({
           success: false,
           error: "Invalid webhook event information",
