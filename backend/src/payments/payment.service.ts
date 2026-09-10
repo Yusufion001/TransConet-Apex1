@@ -30,6 +30,8 @@ export async function initializePayment(
     select: {
       id: true,
       customerId: true,
+      transporterId: true,
+      vehicleId: true,
       fare: true,
       customer: {
         select: {
@@ -48,6 +50,12 @@ export async function initializePayment(
 
   if (booking.customerId !== customerId) {
     throw new Error("Access denied");
+  }
+
+  if (!booking.transporterId || !booking.vehicleId) {
+    throw new Error(
+      "Payment is only available after a transporter bid has been accepted",
+    );
   }
 
   if (booking.fare === null || booking.fare.lessThanOrEqualTo(0)) {
