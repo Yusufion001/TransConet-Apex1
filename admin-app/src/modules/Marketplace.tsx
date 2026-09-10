@@ -760,6 +760,23 @@ export default function Marketplace() {
                 />
               </label>
 
+
+              <label>
+                <span>Fuel Rate / Km (₦)</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={pricingForm.fuelRatePerKm}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      fuelRatePerKm: Number(event.target.value),
+                    })
+                  }
+                />
+              </label>
+
               <label>
                 <span>Weight ≤ 100</span>
                 <input

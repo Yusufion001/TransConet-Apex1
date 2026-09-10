@@ -221,14 +221,17 @@ export default function MarketplaceOpportunity() {
 
         <Text style={styles.inputLabel}>YOUR BID AMOUNT</Text>
 
-        <TextInput
-          value={amount}
-          onChangeText={setAmount}
-          placeholder="Enter amount"
-          placeholderTextColor="#98A2B3"
-          keyboardType="decimal-pad"
-          style={styles.input}
-        />
+        <View style={styles.currencyInput}>
+          <Text style={styles.currencyPrefix}>₦</Text>
+          <TextInput
+            value={amount}
+            onChangeText={setAmount}
+            placeholder="Enter amount"
+            placeholderTextColor="#98A2B3"
+            keyboardType="decimal-pad"
+            style={styles.currencyInputField}
+          />
+        </View>
 
         <Text style={styles.inputLabel}>MESSAGE (OPTIONAL)</Text>
 
@@ -501,6 +504,31 @@ const styles = StyleSheet.create({
     color: "#101828",
     backgroundColor: "#FFFFFF",
     marginBottom: 12,
+  },
+
+  currencyInput: {
+    flexDirection: "row",
+    alignItems: "center",
+    minHeight: 50,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    marginBottom: 12,
+  },
+
+  currencyPrefix: {
+    paddingLeft: 14,
+    fontSize: 15,
+    color: "#344054",
+    fontWeight: "600",
+  },
+
+  currencyInputField: {
+    flex: 1,
+    paddingHorizontal: 10,
+    fontSize: 15,
+    color: "#101828",
   },
   messageInput: {
     minHeight: 100,

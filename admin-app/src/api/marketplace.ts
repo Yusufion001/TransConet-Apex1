@@ -112,6 +112,7 @@ export type MarketplacePricingConfig = {
   };
   truckMultipliers: Record<string, number>;
   distanceRatePerKm: number;
+  fuelRatePerKm: number;
 };
 
 export type MarketplacePricing = {

@@ -1339,7 +1339,7 @@ function WithdrawalsPanel({
                           "—"}
                     </td>
 
-                    <td>{formatAmount(withdrawal.amount)}</td>
+                    <td>{formatAmount(withdrawal.amount, "NGN")}</td>
 
                     <td>
                       <span

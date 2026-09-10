@@ -81,6 +81,7 @@ export const pricingConfigSchema = z.object({
   truckMultipliers: pricingTruckMultipliersSchema,
 
   distanceRatePerKm: positivePricingNumber,
+  fuelRatePerKm: positivePricingNumber,
 }).strict();
 
 const positiveTrackingNumber = z.coerce

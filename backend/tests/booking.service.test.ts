@@ -186,6 +186,26 @@ test.beforeEach(() => {
 test("createBooking creates a booking and publishes shipment events", async () => {
   const booking = makeBooking();
 
+  prismaMock.$queryRaw.mock.mockImplementation(async () => [
+    {
+      value: {
+        baseRate: 1000,
+        weightMultipliers: {
+          upTo100: 0.4,
+          upTo1000: 0.5,
+          upTo5000: 0.6,
+          upTo10000: 0.8,
+          above10000: 1.2,
+        },
+        truckMultipliers: {
+          MEDIUM_TRUCK: 2,
+        },
+        distanceRatePerKm: 1,
+        fuelRatePerKm: 50,
+      },
+    },
+  ]);
+
   prismaMock.booking.create.mock.mockImplementation(
     async () => booking,
   );

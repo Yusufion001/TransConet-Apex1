@@ -25,6 +25,19 @@ function statusClass(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }
 
+function money(value: string | null | undefined) {
+  if (!value) return "—";
+
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount)) return value;
+
+  return `₦${amount.toLocaleString("en-NG", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 export default function Transporters() {
   const [transporterId, setTransporterId] = useState<string | null>(
     null,
@@ -677,7 +690,7 @@ export default function Transporters() {
                               </td>
 
                               <td>
-                                {booking.fare || "—"}
+                                {money(booking.fare)}
                               </td>
 
                               <td>
