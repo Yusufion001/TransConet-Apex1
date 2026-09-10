@@ -1,6 +1,93 @@
 import { prisma } from "../config/prisma.js";
+import type { Prisma } from "../../generated/prisma/client.js";
 import { calculateCommission } from "./commission.service.js";
 import { publishEvent } from "../realtime/event-bus.js";
+
+export async function createSettlementInTransaction(
+  tx: Prisma.TransactionClient,
+  bookingId: string,
+  paymentId: string,
+) {
+  const existing = await tx.settlement.findUnique({
+    where: {
+      paymentId,
+    },
+  });
+
+  if (existing) {
+    return existing;
+  }
+
+  const payment = await tx.payment.findUnique({
+    where: {
+      id: paymentId,
+    },
+    include: {
+      booking: {
+        select: {
+          id: true,
+          transporterId: true,
+        },
+      },
+    },
+  });
+
+  if (!payment) {
+    throw new Error("Payment not found");
+  }
+
+  if (payment.bookingId !== bookingId) {
+    throw new Error(
+      "Payment does not belong to the specified booking",
+    );
+  }
+
+  if (payment.status !== "SUCCESS") {
+    throw new Error(
+      "Settlement can only be created for a successful payment",
+    );
+  }
+
+  if (!payment.booking.transporterId) {
+    throw new Error(
+      "Booking has no assigned transporter",
+    );
+  }
+
+  const transporter = await tx.user.findUnique({
+    where: {
+      id: payment.booking.transporterId,
+    },
+    select: {
+      id: true,
+      transporterTier: true,
+    },
+  });
+
+  if (!transporter) {
+    throw new Error("Transporter not found");
+  }
+
+  const calculation = await calculateCommission(
+    Number(payment.amount),
+    transporter.transporterTier,
+    tx,
+  );
+
+  return tx.settlement.create({
+    data: {
+      bookingId,
+      paymentId,
+      transporterId: transporter.id,
+      commissionRuleId: calculation.rule?.id ?? null,
+      grossAmount: calculation.grossAmount,
+      commissionAmount: calculation.commissionAmount,
+      netAmount: calculation.netAmount,
+      currency: payment.currency,
+      status: "PENDING",
+    },
+  });
+}
 
 export async function createSettlement(
   bookingId: string,

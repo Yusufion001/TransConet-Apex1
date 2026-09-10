@@ -3,7 +3,7 @@ import { prisma } from "../config/prisma.js";
 import { createNotification } from "../notifications/notification.service.js";
 import { createShipmentEvent } from "../events/event.service.js";
 import { publishEvent } from "../realtime/event-bus.js";
-import { createSettlement } from "../settlements/settlement.service.js";
+import { createSettlementInTransaction } from "../settlements/settlement.service.js";
 import { toPaymentDto } from "./dto/payment.dto.js";
 import { initializeFlutterwavePayment } from "./flutterwave.service.js";
 
@@ -290,6 +290,12 @@ export async function completePayment(
       throw new Error("Payment has already been refunded");
     }
 
+    if (!payment.booking.transporterId || !payment.booking.vehicleId) {
+      throw new Error(
+        "Payment cannot be completed until a transporter and vehicle are assigned",
+      );
+    }
+
     /*
      * Atomically claim the payment.
      *
@@ -398,26 +404,18 @@ export async function completePayment(
       });
     }
 
+    await createSettlementInTransaction(
+      tx,
+      updatedPayment.bookingId,
+      updatedPayment.id,
+    );
+
     return {
       alreadyCompleted: false,
       payment: updatedPayment,
-      settlementExists: false,
+      settlementExists: true,
     };
   });
-
-  /*
-   * A successful payment must always have a settlement record.
-   *
-   * This is intentionally idempotent: createSettlement() returns the
-   * existing settlement when a webhook is retried or an administrator
-   * reprocesses the payment.
-   */
-  if (!result.settlementExists) {
-    await createSettlement(
-      result.payment.bookingId,
-      result.payment.id,
-    );
-  }
 
   publishEvent("admin", {
     eventType: "PAYMENT_COMPLETED",

@@ -55,7 +55,10 @@ function formatAmount(
 
   if (!Number.isFinite(amount)) return String(value);
 
-  return `${currency ? `${currency} ` : ""}${amount.toLocaleString(
+  const currencyLabel =
+    currency?.toUpperCase() === "NGN" ? "₦" : currency ? `${currency} ` : "";
+
+  return `${currencyLabel}${amount.toLocaleString(
     undefined,
     {
       minimumFractionDigits: 2,

@@ -298,6 +298,8 @@ export default function BookingDetails() {
   const isNegotiatedBooking = booking.paymentMethod === "NEGOTIATE";
   const canPay =
     !isNegotiatedBooking &&
+    Boolean(booking.transporterId) &&
+    Boolean(booking.vehicleId) &&
     paymentStatus !== "SUCCESS" &&
     paymentStatus !== "PROCESSING" &&
     paymentStatus !== "REFUNDED" &&

@@ -502,6 +502,18 @@ export async function processPaymentWebhook(
       successfulEvent &&
       validatedPaymentId
     ) {
+      if (
+        provider.toUpperCase() === "FLUTTERWAVE" &&
+        verifiedTransaction?.id !== undefined
+      ) {
+        await prisma.payment.update({
+          where: { id: validatedPaymentId },
+          data: {
+            providerTransactionId: String(verifiedTransaction.id),
+          },
+        });
+      }
+
       try {
         await completePayment(validatedPaymentId);
       } catch (error) {
