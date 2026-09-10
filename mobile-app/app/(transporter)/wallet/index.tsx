@@ -977,14 +977,17 @@ export default function TransporterWallet() {
           Amount
         </Text>
 
-        <TextInput
-          value={amount}
-          onChangeText={setAmount}
-          placeholder="Enter amount"
-          placeholderTextColor="#98A2B3"
-          keyboardType="decimal-pad"
-          style={styles.input}
-        />
+        <View style={styles.currencyInput}>
+          <Text style={styles.currencyPrefix}>₦</Text>
+          <TextInput
+            value={amount}
+            onChangeText={setAmount}
+            placeholder="Enter amount"
+            placeholderTextColor="#98A2B3"
+            keyboardType="decimal-pad"
+            style={styles.currencyInputField}
+          />
+        </View>
 
         <Text style={styles.label}>
           Withdrawal account
@@ -1548,6 +1551,31 @@ const styles = StyleSheet.create({
     color: "#101828",
     backgroundColor: "#FFFFFF",
     marginBottom: 12,
+  },
+
+  currencyInput: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    marginBottom: 12,
+  },
+
+  currencyPrefix: {
+    paddingLeft: 14,
+    fontSize: 16,
+    color: "#344054",
+    fontWeight: "600",
+  },
+
+  currencyInputField: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 13,
+    fontSize: 16,
+    color: "#101828",
   },
 
   selectedAccountBox: {

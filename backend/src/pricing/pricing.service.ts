@@ -11,28 +11,11 @@ type PricingConfig = {
   };
   truckMultipliers: Record<string, number>;
   distanceRatePerKm: number;
+  fuelRatePerKm?: number;
 };
 
-const DEFAULT_PRICING_CONFIG: PricingConfig = {
-  baseRate: 10000,
-  weightMultipliers: {
-    upTo100: 1,
-    upTo1000: 1.5,
-    upTo5000: 2,
-    upTo10000: 3,
-    above10000: 4,
-  },
-  truckMultipliers: {
-    MINI_TRUCK: 1,
-    LIGHT_TRUCK: 1.2,
-    MEDIUM_TRUCK: 1.5,
-    HEAVY_TRUCK: 2,
-    CONTAINER_TRUCK: 2.5,
-    REFRIGERATED_TRUCK: 3,
-    TANKER: 3.5,
-    SPECIALIZED: 4,
-  },
-  distanceRatePerKm: 1,
+type ResolvedPricingConfig = Omit<PricingConfig, "fuelRatePerKm"> & {
+  fuelRatePerKm: number;
 };
 
 type ConfigRow = {
@@ -47,7 +30,7 @@ function isPositiveFiniteNumber(value: unknown): value is number {
   );
 }
 
-async function getPricingConfig(): Promise<PricingConfig> {
+async function getPricingConfig(): Promise<ResolvedPricingConfig> {
   const rows = await prisma.$queryRaw<ConfigRow[]>`
     SELECT value
     FROM "PlatformConfig"
@@ -58,36 +41,56 @@ async function getPricingConfig(): Promise<PricingConfig> {
   const value = rows[0]?.value;
 
   if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return DEFAULT_PRICING_CONFIG;
+    throw new Error("Pricing configuration is not configured");
   }
 
   const config = value as Partial<PricingConfig>;
 
-  const weightMultipliers = {
-    ...DEFAULT_PRICING_CONFIG.weightMultipliers,
-    ...(config.weightMultipliers ?? {}),
-  };
-
-  const truckMultipliers = {
-    ...DEFAULT_PRICING_CONFIG.truckMultipliers,
-    ...(config.truckMultipliers ?? {}),
-  };
-
   const baseRate = isPositiveFiniteNumber(config.baseRate)
     ? config.baseRate
-    : DEFAULT_PRICING_CONFIG.baseRate;
+    : (() => {
+        throw new Error("Base rate is not configured");
+      })();
 
   const distanceRatePerKm = isPositiveFiniteNumber(
     config.distanceRatePerKm,
   )
     ? config.distanceRatePerKm
-    : DEFAULT_PRICING_CONFIG.distanceRatePerKm;
+    : (() => {
+        throw new Error("Distance rate per km is not configured");
+      })();
+
+  const fuelRatePerKm = isPositiveFiniteNumber(config.fuelRatePerKm)
+    ? config.fuelRatePerKm
+    : (() => {
+        throw new Error("Fuel rate per km is not configured");
+      })();
+
+  const weightMultipliers = config.weightMultipliers;
+
+  if (
+    !weightMultipliers ||
+    !isPositiveFiniteNumber(weightMultipliers.upTo100) ||
+    !isPositiveFiniteNumber(weightMultipliers.upTo1000) ||
+    !isPositiveFiniteNumber(weightMultipliers.upTo5000) ||
+    !isPositiveFiniteNumber(weightMultipliers.upTo10000) ||
+    !isPositiveFiniteNumber(weightMultipliers.above10000)
+  ) {
+    throw new Error("Weight pricing multipliers are not fully configured");
+  }
+
+  const truckMultipliers = config.truckMultipliers;
+
+  if (!truckMultipliers || typeof truckMultipliers !== "object") {
+    throw new Error("Truck pricing multipliers are not configured");
+  }
 
   return {
     baseRate,
     weightMultipliers,
     truckMultipliers,
     distanceRatePerKm,
+    fuelRatePerKm,
   };
 }
 
@@ -205,11 +208,15 @@ export async function estimateFare(data: {
   const distanceComponent =
     distanceKm * config.distanceRatePerKm;
 
-  const fare =
+  const baseFare =
     config.baseRate *
     weightMultiplier *
     truckMultiplier *
     distanceComponent;
+
+  const fuelCost = distanceKm * config.fuelRatePerKm;
+
+  const fare = baseFare + fuelCost;
 
   return {
     fare: Math.round(fare),
@@ -220,6 +227,8 @@ export async function estimateFare(data: {
     distanceRatePerKm: config.distanceRatePerKm,
     distanceComponent:
       Math.round(distanceComponent * 100) / 100,
+    fuelRatePerKm: config.fuelRatePerKm,
+    fuelCost: Math.round(fuelCost * 100) / 100,
   };
 }
 

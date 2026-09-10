@@ -44,6 +44,33 @@ import {
 } from "../../../src/realtime/location-publisher";
 import BookingReviewForm from "../../../src/components/BookingReviewForm";
 
+function money(
+  value: string | number | null | undefined,
+  currency: string | null | undefined,
+) {
+  if (value == null) return "—";
+
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount)) {
+    return `${value} ${currency ?? ""}`.trim();
+  }
+
+  const code = currency?.toUpperCase();
+
+  if (code === "NGN" || !code) {
+    return `₦${amount.toLocaleString("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
+
+  return `${code} ${amount.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 function formatStatus(status: string) {
   return status.replace(/_/g, " ");
 }
@@ -562,7 +589,7 @@ export default function TransporterBookingDetails() {
 
         <InfoRow
           label="Fare"
-          value={booking.fare ?? booking.estimatedFare ?? "Pending"}
+          value={money(booking.fare ?? booking.estimatedFare, "NGN")}
         />
 
         <InfoRow
@@ -618,8 +645,10 @@ export default function TransporterBookingDetails() {
                     COMMISSION DUE
                   </Text>
                   <Text style={styles.commissionAmount}>
-                    {String(commissionQuery.data.commissionAmount)}{" "}
-                    {commissionQuery.data.currency}
+                    {money(
+                      commissionQuery.data.commissionAmount,
+                      commissionQuery.data.currency,
+                    )}
                   </Text>
                   <Text style={styles.commissionStatus}>
                     {formatStatus(commissionQuery.data.commissionStatus)}

@@ -12,12 +12,23 @@ import {
 
 function formatPrice(plan: SubscriptionPlan) {
   const amount = Number(plan.price);
+  const currency = plan.currency?.toUpperCase();
 
   if (!Number.isFinite(amount)) {
-    return `${plan.currency} ${String(plan.price)}`;
+    return `${currency === "NGN" ? "₦" : currency} ${String(plan.price)}`;
   }
 
-  return `${plan.currency} ${amount.toLocaleString()}`;
+  if (currency === "NGN") {
+    return `₦${amount.toLocaleString("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+  }
+
+  return `${currency} ${amount.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 function benefitsFor(plan: SubscriptionPlan) {

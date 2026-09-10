@@ -40,6 +40,19 @@ import TransConetMap, {
   type MapCoordinate,
 } from "../../../src/components/maps/TransConetMap";
 
+function money(value: string | number | null | undefined) {
+  if (value == null) return "Pending";
+
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount)) return String(value);
+
+  return `₦${amount.toLocaleString("en-NG", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 export default function BookingDetails() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [liveStatus, setLiveStatus] = useState<string | null>(null);
@@ -347,7 +360,7 @@ export default function BookingDetails() {
           Weight: {booking.cargoWeight ?? "—"}
         </Text>
         <Text style={styles.detail}>
-          Fare: {booking.fare ?? booking.estimatedFare ?? "Pending"}
+          Fare: {money(booking.fare ?? booking.estimatedFare)}
         </Text>
         <Text style={styles.detail}>
           Payment: {isNegotiatedBooking ? "NEGOTIATED" : paymentStatus}

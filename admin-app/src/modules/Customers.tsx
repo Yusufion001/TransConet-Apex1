@@ -28,6 +28,19 @@ function statusClass(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }
 
+function money(value: string | null | undefined) {
+  if (!value) return "—";
+
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount)) return value;
+
+  return `₦${amount.toLocaleString("en-NG", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 export default function Customers() {
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -454,7 +467,7 @@ function BookingTable({ bookings }: { bookings: Booking[] }) {
               </td>
 
               <td>{booking.paymentStatus}</td>
-              <td>{booking.fare || booking.estimatedFare || "—"}</td>
+              <td>{money(booking.fare || booking.estimatedFare)}</td>
               <td>{formatDate(booking.createdAt)}</td>
             </tr>
           ))}
