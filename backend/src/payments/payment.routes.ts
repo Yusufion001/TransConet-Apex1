@@ -150,7 +150,13 @@ router.post(
             ? "verif-hash"
             : "internal";
 
+      console.info("Flutterwave webhook signature detected", {
+        signatureType,
+        hasRawBody: Boolean(rawBody),
+      });
+
       if (!rawBody || !signature) {
+        console.warn("Flutterwave webhook rejected: missing raw body or signature");
         return res.status(401).json({ success: false, error: "Webhook signature verification required" });
       }
 
