@@ -222,6 +222,17 @@ router.post(
       });
 
       if (!webhookData.success) {
+        console.warn("Flutterwave webhook payload keys", {
+          topLevelKeys:
+            req.body && typeof req.body === "object"
+              ? Object.keys(req.body)
+              : [],
+          dataKeys:
+            req.body?.data && typeof req.body.data === "object"
+              ? Object.keys(req.body.data)
+              : [],
+        });
+
         console.warn("Flutterwave webhook schema validation failed", {
           providerEventId: {
             present: providerEventId !== undefined && providerEventId !== null,
