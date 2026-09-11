@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AdminModule } from "../../generated/prisma/enums.js";
+import { AdminModule, FuelType, VehicleClass } from "../../generated/prisma/enums.js";
 
 export const withdrawalStatusSchema = z.object({
   status: z.enum(["PENDING", "PROCESSING", "COMPLETED", "FAILED"]),
@@ -73,15 +73,71 @@ const pricingTruckMultipliersSchema = z.record(
   positivePricingNumber,
 );
 
+const fuelPriceSchema = z.object({
+  pricePerLitre: positivePricingNumber,
+  currency: z.literal("NGN"),
+}).strict();
+
+const fuelYearBandSchema = z.object({
+  minYear: z.coerce.number().int().min(1900).max(2100).optional(),
+  maxYear: z.coerce.number().int().max(2100).optional(),
+  efficiencyFactor: positivePricingNumber,
+}).strict().refine(
+  (value) =>
+    value.minYear === undefined ||
+    value.maxYear === undefined ||
+    value.minYear <= value.maxYear,
+  {
+    message: "Year band minYear must be less than or equal to maxYear.",
+  },
+).refine(
+  (value) => value.minYear !== undefined || value.maxYear !== undefined,
+  {
+    message: "Year band must define minYear or maxYear.",
+  },
+);
+
+const vehicleFuelProfileSchema = z.object({
+  fuelType: z.nativeEnum(FuelType),
+  baseEfficiencyKmPerLitre: positivePricingNumber,
+  yearBands: z.array(fuelYearBandSchema).min(1),
+  missingYearEfficiencyFactor: positivePricingNumber.optional(),
+}).strict();
+
+const pricingFuelSchema = z.object({
+  enabled: z.boolean(),
+  prices: z.object({
+    PETROL: fuelPriceSchema,
+    DIESEL: fuelPriceSchema,
+  }).strict(),
+  vehicleProfiles: z.record(
+    z.nativeEnum(VehicleClass),
+    vehicleFuelProfileSchema,
+  ),
+  vehicleYearCategories: z.object({
+    PREMIUM: z.object({
+      minYear: z.coerce.number().int().min(1900).max(2100),
+    }).strict(),
+    STANDARD: z.object({
+      minYear: z.coerce.number().int().min(1900).max(2100),
+      maxYear: z.coerce.number().int().min(1900).max(2100),
+    }).strict(),
+    ECONOMY: z.object({
+      minYear: z.coerce.number().int().min(1900).max(2100),
+      maxYear: z.coerce.number().int().min(1900).max(2100),
+    }).strict(),
+    EXCLUDED: z.object({
+      maxYear: z.coerce.number().int().min(1900).max(2100),
+    }).strict(),
+  }).strict(),
+}).strict();
+
 export const pricingConfigSchema = z.object({
   baseRate: positivePricingNumber,
-
   weightMultipliers: pricingWeightMultipliersSchema,
-
   truckMultipliers: pricingTruckMultipliersSchema,
-
   distanceRatePerKm: positivePricingNumber,
-  fuelRatePerKm: positivePricingNumber,
+  fuel: pricingFuelSchema,
 }).strict();
 
 const positiveTrackingNumber = z.coerce

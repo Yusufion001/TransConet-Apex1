@@ -16,6 +16,8 @@ import {
   type MarketplaceSummary,
   type MarketplacePricing,
   type MarketplacePricingConfig,
+  type MarketplaceCustomerPriceCategory,
+    type MarketplaceLegacyPricingConfig,
   type MarketplaceCommissionRule,
   type MarketplaceCommissionRuleInput,
 } from "../api/marketplace";
@@ -53,6 +55,345 @@ function person(
 ) {
   if (!value) return "Unavailable";
   return `${value.firstName} ${value.lastName}`.trim();
+}
+
+function isMarketplacePricingConfig(
+  value: MarketplacePricing["value"] | null | undefined,
+): value is MarketplacePricingConfig {
+  return Boolean(
+    value &&
+      "fuel" in value &&
+      value.fuel &&
+      typeof value.fuel === "object" &&
+      "prices" in value.fuel &&
+      "vehicleProfiles" in value.fuel &&
+      "customerCategories" in value.fuel,
+  );
+}
+
+
+type MarketplacePricingDraft = Omit<MarketplacePricingConfig, "fuel"> & {
+  fuel: {
+    enabled: boolean;
+    prices: Record<
+      "PETROL" | "DIESEL",
+      {
+        pricePerLitre: number | "";
+        currency: "NGN";
+      }
+    >;
+    vehicleProfiles: Record<
+      string,
+      {
+        fuelType: "PETROL" | "DIESEL" | "";
+        baseEfficiencyKmPerLitre: number | "";
+        yearBands: Array<{
+          minYear: number | "";
+          maxYear: number | "";
+          efficiencyFactor: number | "";
+        }>;
+        missingYearEfficiencyFactor: number | "";
+      }
+    >;
+    customerCategories: {
+      ECONOMY: { vehicleClass: string };
+      STANDARD: { vehicleClass: string };
+      PREMIUM: { vehicleClass: string };
+    };
+    defaultCustomerCategory: MarketplaceCustomerPriceCategory | "";
+  };
+};
+
+
+function normalizeMarketplacePricingDraft(
+  config: MarketplacePricingDraft,
+): MarketplacePricingConfig {
+  const toRequiredNumber = (value: number | "", field: string): number => {
+    if (value === "" || !Number.isFinite(value)) {
+      throw new Error(`${field} must be a valid number.`);
+    }
+    return value;
+  };
+
+  const toOptionalNumber = (value: number | ""): number | undefined => {
+    if (value === "") return undefined;
+    if (!Number.isFinite(value)) {
+      throw new Error("Optional numeric value must be a valid number.");
+    }
+    return value;
+  };
+
+  const toCustomerPriceCategory = (
+    value: MarketplaceCustomerPriceCategory | "",
+  ): MarketplaceCustomerPriceCategory => {
+    if (
+      value !== "ECONOMY" &&
+      value !== "STANDARD" &&
+      value !== "PREMIUM"
+    ) {
+      throw new Error("A default customer pricing category must be selected.");
+    }
+    return value;
+  };
+
+  return {
+    baseRate: config.baseRate,
+    weightMultipliers: { ...config.weightMultipliers },
+    truckMultipliers: { ...config.truckMultipliers },
+    distanceRatePerKm: config.distanceRatePerKm,
+    fuel: {
+      enabled: config.fuel.enabled,
+      prices: {
+        PETROL: {
+          pricePerLitre: toRequiredNumber(
+            config.fuel.prices.PETROL.pricePerLitre,
+            "Petrol price per litre",
+          ),
+          currency: "NGN",
+        },
+        DIESEL: {
+          pricePerLitre: toRequiredNumber(
+            config.fuel.prices.DIESEL.pricePerLitre,
+            "Diesel price per litre",
+          ),
+          currency: "NGN",
+        },
+      },
+      vehicleProfiles: Object.fromEntries(
+        Object.entries(config.fuel.vehicleProfiles).map(
+          ([vehicleClass, profile]) => [
+            vehicleClass,
+            {
+              fuelType:
+                profile.fuelType === "PETROL" || profile.fuelType === "DIESEL"
+                  ? profile.fuelType
+                  : (() => {
+                      throw new Error(
+                        `${labelize(vehicleClass)} requires a fuel type.`,
+                      );
+                    })(),
+              baseEfficiencyKmPerLitre: toRequiredNumber(
+                profile.baseEfficiencyKmPerLitre,
+                `${labelize(vehicleClass)} base efficiency`,
+              ),
+              yearBands: profile.yearBands.map((band) => ({
+                ...(band.minYear === ""
+                  ? {}
+                  : { minYear: toOptionalNumber(band.minYear) }),
+                ...(band.maxYear === ""
+                  ? {}
+                  : { maxYear: toOptionalNumber(band.maxYear) }),
+                efficiencyFactor: toRequiredNumber(
+                  band.efficiencyFactor,
+                  `${labelize(vehicleClass)} efficiency factor`,
+                ),
+              })),
+              ...(profile.missingYearEfficiencyFactor === ""
+                ? {}
+                : {
+                    missingYearEfficiencyFactor: toOptionalNumber(
+                      profile.missingYearEfficiencyFactor,
+                    ),
+                  }),
+            },
+          ],
+        ),
+      ),
+      customerCategories: {
+        ECONOMY: { ...config.fuel.customerCategories.ECONOMY },
+        STANDARD: { ...config.fuel.customerCategories.STANDARD },
+        PREMIUM: { ...config.fuel.customerCategories.PREMIUM },
+      },
+      defaultCustomerCategory: toCustomerPriceCategory(
+        config.fuel.defaultCustomerCategory,
+      ),
+    },
+  };
+}
+
+
+function createMarketplacePricingDraftFromConfig(
+  config: MarketplacePricingConfig,
+): MarketplacePricingDraft {
+  return {
+    baseRate: config.baseRate,
+    weightMultipliers: { ...config.weightMultipliers },
+    truckMultipliers: { ...config.truckMultipliers },
+    distanceRatePerKm: config.distanceRatePerKm,
+    fuel: {
+      enabled: config.fuel.enabled,
+      prices: {
+        PETROL: { ...config.fuel.prices.PETROL },
+        DIESEL: { ...config.fuel.prices.DIESEL },
+      },
+      vehicleProfiles: Object.fromEntries(
+        Object.entries(config.fuel.vehicleProfiles).map(
+          ([vehicleClass, profile]) => [
+            vehicleClass,
+            {
+              ...profile,
+              yearBands: profile.yearBands.map((band) => ({
+                minYear: band.minYear ?? "",
+                maxYear: band.maxYear ?? "",
+                efficiencyFactor: band.efficiencyFactor,
+              })),
+              missingYearEfficiencyFactor:
+                profile.missingYearEfficiencyFactor ?? "",
+            },
+          ],
+        ),
+      ),
+      customerCategories: {
+        ECONOMY: { ...config.fuel.customerCategories.ECONOMY },
+        STANDARD: { ...config.fuel.customerCategories.STANDARD },
+        PREMIUM: { ...config.fuel.customerCategories.PREMIUM },
+      },
+      defaultCustomerCategory: config.fuel.defaultCustomerCategory,
+    },
+  };
+}
+
+function validateMarketplacePricingDraft(
+  config: MarketplacePricingDraft,
+): string | null {
+  if (!config.fuel.enabled) {
+    return null;
+  }
+
+  if (
+    config.fuel.defaultCustomerCategory !== "ECONOMY" &&
+    config.fuel.defaultCustomerCategory !== "STANDARD" &&
+    config.fuel.defaultCustomerCategory !== "PREMIUM"
+  ) {
+    return "A default customer pricing category must be selected.";
+  }
+
+  for (const fuelType of ["PETROL", "DIESEL"] as const) {
+    const price = config.fuel.prices[fuelType].pricePerLitre;
+
+    if (typeof price !== "number" || !Number.isFinite(price) || price <= 0) {
+      return `${fuelType} fuel price per litre must be greater than zero.`;
+    }
+  }
+
+  for (const [vehicleClass, profile] of Object.entries(
+    config.fuel.vehicleProfiles,
+  )) {
+    if (profile.fuelType !== "PETROL" && profile.fuelType !== "DIESEL") {
+      return `${labelize(vehicleClass)} requires a fuel type.`;
+    }
+
+    if (
+      typeof profile.baseEfficiencyKmPerLitre !== "number" ||
+      !Number.isFinite(profile.baseEfficiencyKmPerLitre) ||
+      profile.baseEfficiencyKmPerLitre <= 0
+    ) {
+      return `${labelize(vehicleClass)} requires a valid base efficiency in km/L.`;
+    }
+
+    if (
+      profile.missingYearEfficiencyFactor !== "" &&
+      (!Number.isFinite(profile.missingYearEfficiencyFactor) ||
+        profile.missingYearEfficiencyFactor <= 0)
+    ) {
+      return `${labelize(vehicleClass)} has an invalid missing-year efficiency factor.`;
+    }
+
+    if (profile.yearBands.length === 0) {
+      return `${labelize(vehicleClass)} requires at least one year band.`;
+    }
+
+    for (const [index, band] of profile.yearBands.entries()) {
+      if (
+        band.minYear !== "" &&
+        (!Number.isInteger(band.minYear) ||
+          band.minYear < 1900 ||
+          band.minYear > 2100)
+      ) {
+        return `${labelize(vehicleClass)} year band ${index + 1} has an invalid minimum year.`;
+      }
+
+      if (
+        band.maxYear !== "" &&
+        (!Number.isInteger(band.maxYear) ||
+          band.maxYear < 1900 ||
+          band.maxYear > 2100)
+      ) {
+        return `${labelize(vehicleClass)} year band ${index + 1} has an invalid maximum year.`;
+      }
+
+      if (
+        band.minYear !== "" &&
+        band.maxYear !== "" &&
+        band.minYear > band.maxYear
+      ) {
+        return `${labelize(vehicleClass)} year band ${index + 1} has minimum year greater than maximum year.`;
+      }
+
+      if (
+        typeof band.efficiencyFactor !== "number" ||
+        !Number.isFinite(band.efficiencyFactor) ||
+        band.efficiencyFactor <= 0
+      ) {
+        return `${labelize(vehicleClass)} year band ${index + 1} requires a valid efficiency factor.`;
+      }
+
+      if (band.minYear === "" && band.maxYear === "") {
+        return `${labelize(vehicleClass)} year band ${index + 1} must define a minimum or maximum year.`;
+      }
+    }
+  }
+
+  return null;
+}
+
+function createMarketplacePricingDraft(
+  legacy: MarketplaceLegacyPricingConfig,
+): MarketplacePricingDraft {
+  const vehicleClasses = Object.keys(legacy.truckMultipliers);
+
+  return {
+    baseRate: legacy.baseRate,
+    weightMultipliers: { ...legacy.weightMultipliers },
+    truckMultipliers: { ...legacy.truckMultipliers },
+    distanceRatePerKm: legacy.distanceRatePerKm,
+    fuel: {
+      enabled: true,
+      prices: {
+        PETROL: {
+          pricePerLitre: "",
+          currency: "NGN",
+        },
+        DIESEL: {
+          pricePerLitre: "",
+          currency: "NGN",
+        },
+      },
+      vehicleProfiles: Object.fromEntries(
+        vehicleClasses.map((vehicleClass) => [
+          vehicleClass,
+          {
+            fuelType: "",
+            baseEfficiencyKmPerLitre: "",
+            yearBands: [
+              {
+                minYear: "",
+                maxYear: "",
+                efficiencyFactor: "",
+              },
+            ],
+            missingYearEfficiencyFactor: "",
+          },
+        ]),
+      ),
+      customerCategories: {
+        ECONOMY: { vehicleClass: "" },
+        STANDARD: { vehicleClass: "" },
+        PREMIUM: { vehicleClass: "" },
+      },
+      defaultCustomerCategory: "",
+    },
+  };
 }
 
 const requestStatuses: Array<MarketplaceRequestStatus | ""> = [
@@ -98,7 +439,10 @@ export default function Marketplace() {
 
   const [pricing, setPricing] = useState<MarketplacePricing | null>(null);
   const [pricingForm, setPricingForm] =
-    useState<MarketplacePricingConfig | null>(null);
+    useState<MarketplacePricingDraft | null>(null);
+  const [pricingLegacy, setPricingLegacy] = useState(false);
+  const [pricingMigrationDraft, setPricingMigrationDraft] =
+    useState<MarketplacePricingDraft | null>(null);
   const [pricingLoading, setPricingLoading] = useState(false);
   const [pricingSaving, setPricingSaving] = useState(false);
   const [pricingError, setPricingError] = useState("");
@@ -184,7 +528,20 @@ export default function Marketplace() {
       const data = await getMarketplacePricing();
 
       setPricing(data);
-      setPricingForm(data?.value ?? null);
+      if (isMarketplacePricingConfig(data?.value)) {
+        setPricingLegacy(false);
+        setPricingForm(createMarketplacePricingDraftFromConfig(data.value));
+      } else if (data?.value && "fuelRatePerKm" in data.value) {
+        setPricingLegacy(true);
+        setPricingForm(null);
+        setPricingMigrationDraft(
+          createMarketplacePricingDraft(data.value),
+        );
+      } else {
+        setPricingLegacy(false);
+        setPricingForm(null);
+        setPricingMigrationDraft(null);
+      }
     } catch {
       setPricingError("Unable to load fare configuration.");
     } finally {
@@ -308,18 +665,33 @@ export default function Marketplace() {
   async function saveMarketplacePricing() {
     if (!pricingForm) return;
 
+    const validationError = validateMarketplacePricingDraft(pricingForm);
+
+    if (validationError) {
+      setPricingError(validationError);
+      setPricingSuccess("");
+      return;
+    }
+
     try {
       setPricingSaving(true);
       setPricingError("");
       setPricingSuccess("");
 
-      const updated = await updateMarketplacePricing(
-        pricingForm,
-        pricing?.description ?? "Fleet Marketplace fare calculation configuration",
-      );
+      const normalizedPricing = normalizeMarketplacePricingDraft(pricingForm);
+
+        const updated = await updateMarketplacePricing(
+          normalizedPricing,
+          pricing?.description ?? "Fleet Marketplace fare calculation configuration",
+        );
+
+        if (!isMarketplacePricingConfig(updated.value)) {
+        throw new Error("Backend returned an incomplete fare configuration.");
+      }
 
       setPricing(updated);
-      setPricingForm(updated.value);
+      setPricingLegacy(false);
+      setPricingForm(createMarketplacePricingDraftFromConfig(updated.value));
       setPricingSuccess("Fare configuration saved successfully.");
     } catch {
       setPricingError(
@@ -718,6 +1090,28 @@ export default function Marketplace() {
           <div className="customer-state">
             Loading fare configuration…
           </div>
+        ) : pricingLegacy ? (
+          <div className="empty-activity">
+            <strong>Legacy fare configuration detected</strong>
+            <span>
+              The current production configuration still uses the obsolete
+              fuel-rate-per-kilometre model. Initialize the new fuel pricing
+              configuration to enter current fuel prices and vehicle efficiency
+              profiles.
+            </span>
+            {pricingMigrationDraft && (
+              <button
+                type="button"
+                className="refresh-button"
+                onClick={() => {
+                  setPricingForm(pricingMigrationDraft);
+                  setPricingLegacy(false);
+                }}
+              >
+                Initialize New Fuel Configuration
+              </button>
+            )}
+          </div>
         ) : !pricingForm ? (
           <div className="empty-activity">
             <strong>Fare configuration unavailable</strong>
@@ -761,21 +1155,6 @@ export default function Marketplace() {
               </label>
 
 
-              <label>
-                <span>Fuel Rate / Km (₦)</span>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={pricingForm.fuelRatePerKm}
-                  onChange={(event) =>
-                    setPricingForm({
-                      ...pricingForm,
-                      fuelRatePerKm: Number(event.target.value),
-                    })
-                  }
-                />
-              </label>
 
               <label>
                 <span>Weight ≤ 100</span>
@@ -870,6 +1249,428 @@ export default function Marketplace() {
                     })
                   }
                 />
+              </label>
+            </div>
+
+            <div className="section-title">
+              <h3>Fuel Pricing</h3>
+              <span>Current Admin-configured fuel prices per litre</span>
+            </div>
+
+            <div className="detail-grid">
+              <label>
+                <span>Fuel Pricing Enabled</span>
+                <input
+                  type="checkbox"
+                  checked={pricingForm.fuel.enabled}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      fuel: {
+                        ...pricingForm.fuel,
+                        enabled: event.target.checked,
+                      },
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                <span>Petrol Price / Litre (₦)</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={pricingForm.fuel.prices.PETROL.pricePerLitre}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      fuel: {
+                        ...pricingForm.fuel,
+                        prices: {
+                          ...pricingForm.fuel.prices,
+                          PETROL: {
+                            ...pricingForm.fuel.prices.PETROL,
+                            pricePerLitre: Number(event.target.value),
+                          },
+                        },
+                      },
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                <span>Diesel Price / Litre (₦)</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={pricingForm.fuel.prices.DIESEL.pricePerLitre}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      fuel: {
+                        ...pricingForm.fuel,
+                        prices: {
+                          ...pricingForm.fuel.prices,
+                          DIESEL: {
+                            ...pricingForm.fuel.prices.DIESEL,
+                            pricePerLitre: Number(event.target.value),
+                          },
+                        },
+                      },
+                    })
+                  }
+                />
+              </label>
+            </div>
+
+            <div className="section-title">
+              <h3>Vehicle Fuel Efficiency Profiles</h3>
+              <span>
+                Configure fuel type, base km/L, year efficiency and missing-year
+                handling for each vehicle class.
+              </span>
+            </div>
+
+            <div className="detail-grid">
+              {Object.entries(pricingForm.fuel.vehicleProfiles).map(
+                ([vehicleClass, profile]) => (
+                  <div className="panel" key={vehicleClass}>
+                    <div className="section-title">
+                      <h3>{labelize(vehicleClass)}</h3>
+                      <span>Fuel efficiency profile</span>
+                    </div>
+
+                    <div className="detail-grid">
+                      <label>
+                        <span>Fuel Type</span>
+                        <select
+                          value={profile.fuelType}
+                          onChange={(event) =>
+                            setPricingForm({
+                              ...pricingForm,
+                              fuel: {
+                                ...pricingForm.fuel,
+                                vehicleProfiles: {
+                                  ...pricingForm.fuel.vehicleProfiles,
+                                  [vehicleClass]: {
+                                    ...profile,
+                                    fuelType: event.target.value as
+                                      | "PETROL"
+                                      | "DIESEL",
+                                  },
+                                },
+                              },
+                            })
+                          }
+                        >
+                          <option value="">Select fuel type</option>
+                          <option value="PETROL">Petrol</option>
+                          <option value="DIESEL">Diesel</option>
+                        </select>
+                      </label>
+
+                      <label>
+                        <span>Base Efficiency (km/L)</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={profile.baseEfficiencyKmPerLitre}
+                          onChange={(event) =>
+                            setPricingForm({
+                              ...pricingForm,
+                              fuel: {
+                                ...pricingForm.fuel,
+                                vehicleProfiles: {
+                                  ...pricingForm.fuel.vehicleProfiles,
+                                  [vehicleClass]: {
+                                    ...profile,
+                                    baseEfficiencyKmPerLitre:
+                                      event.target.value === ""
+                                        ? ""
+                                        : Number(event.target.value),
+                                  },
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </label>
+
+                      <label>
+                        <span>Missing-Year Efficiency Factor</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={profile.missingYearEfficiencyFactor}
+                          onChange={(event) =>
+                            setPricingForm({
+                              ...pricingForm,
+                              fuel: {
+                                ...pricingForm.fuel,
+                                vehicleProfiles: {
+                                  ...pricingForm.fuel.vehicleProfiles,
+                                  [vehicleClass]: {
+                                    ...profile,
+                                    missingYearEfficiencyFactor:
+                                      event.target.value === ""
+                                        ? ""
+                                        : Number(event.target.value),
+                                  },
+                                },
+                              },
+                            })
+                          }
+                        />
+                      </label>
+                    <div className="detail-grid">
+                      <div>
+                        <div className="section-title">
+                          <h3>Year Efficiency Bands</h3>
+                          <span>Admin-defined vehicle-year efficiency factors</span>
+                        </div>
+
+                        {profile.yearBands.map((band, bandIndex) => (
+                          <div
+                            className="detail-grid"
+                            key={`${vehicleClass}-year-band-${bandIndex}`}
+                          >
+                            <label>
+                              <span>Minimum Year</span>
+                              <input
+                                type="number"
+                                min="1900"
+                                max="2100"
+                                step="1"
+                                value={band.minYear}
+                                onChange={(event) => {
+                                  const yearBands = [...profile.yearBands];
+                                  yearBands[bandIndex] = {
+                                    ...band,
+                                    minYear:
+                                      event.target.value === ""
+                                        ? ""
+                                        : Number(event.target.value),
+                                  };
+
+                                  setPricingForm({
+                                    ...pricingForm,
+                                    fuel: {
+                                      ...pricingForm.fuel,
+                                      vehicleProfiles: {
+                                        ...pricingForm.fuel.vehicleProfiles,
+                                        [vehicleClass]: {
+                                          ...profile,
+                                          yearBands,
+                                        },
+                                      },
+                                    },
+                                  });
+                                }}
+                              />
+                            </label>
+
+                            <label>
+                              <span>Maximum Year</span>
+                              <input
+                                type="number"
+                                min="1900"
+                                max="2100"
+                                step="1"
+                                value={band.maxYear}
+                                onChange={(event) => {
+                                  const yearBands = [...profile.yearBands];
+                                  yearBands[bandIndex] = {
+                                    ...band,
+                                    maxYear:
+                                      event.target.value === ""
+                                        ? ""
+                                        : Number(event.target.value),
+                                  };
+
+                                  setPricingForm({
+                                    ...pricingForm,
+                                    fuel: {
+                                      ...pricingForm.fuel,
+                                      vehicleProfiles: {
+                                        ...pricingForm.fuel.vehicleProfiles,
+                                        [vehicleClass]: {
+                                          ...profile,
+                                          yearBands,
+                                        },
+                                      },
+                                    },
+                                  });
+                                }}
+                              />
+                            </label>
+
+                            <label>
+                              <span>Efficiency Factor</span>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={band.efficiencyFactor}
+                                onChange={(event) => {
+                                  const yearBands = [...profile.yearBands];
+                                  yearBands[bandIndex] = {
+                                    ...band,
+                                    efficiencyFactor:
+                                      event.target.value === ""
+                                        ? ""
+                                        : Number(event.target.value),
+                                  };
+
+                                  setPricingForm({
+                                    ...pricingForm,
+                                    fuel: {
+                                      ...pricingForm.fuel,
+                                      vehicleProfiles: {
+                                        ...pricingForm.fuel.vehicleProfiles,
+                                        [vehicleClass]: {
+                                          ...profile,
+                                          yearBands,
+                                        },
+                                      },
+                                    },
+                                  });
+                                }}
+                              />
+                            </label>
+
+                            <button
+                              type="button"
+                              className="refresh-button"
+                              disabled={profile.yearBands.length <= 1}
+                              onClick={() => {
+                                const yearBands = profile.yearBands.filter(
+                                  (_, index) => index !== bandIndex,
+                                );
+
+                                setPricingForm({
+                                  ...pricingForm,
+                                  fuel: {
+                                    ...pricingForm.fuel,
+                                    vehicleProfiles: {
+                                      ...pricingForm.fuel.vehicleProfiles,
+                                      [vehicleClass]: {
+                                        ...profile,
+                                        yearBands,
+                                      },
+                                    },
+                                  },
+                                });
+                              }}
+                            >
+                              Remove Band
+                            </button>
+                          </div>
+                        ))}
+
+                        <button
+                          type="button"
+                          className="refresh-button"
+                          onClick={() => {
+                            const yearBands: MarketplacePricingDraft["fuel"]["vehicleProfiles"][string]["yearBands"] = [
+                              ...profile.yearBands,
+                              {
+                                minYear: "",
+                                maxYear: "",
+                                efficiencyFactor: "",
+                              },
+                            ];
+
+                            setPricingForm({
+                              ...pricingForm,
+                              fuel: {
+                                ...pricingForm.fuel,
+                                vehicleProfiles: {
+                                  ...pricingForm.fuel.vehicleProfiles,
+                                  [vehicleClass]: {
+                                    ...profile,
+                                    yearBands,
+                                  },
+                                },
+                              },
+                            });
+                          }}
+                        >
+                          Add Year Band
+                        </button>
+                      </div>
+                    </div>
+                    </div>
+                  </div>
+                ),
+              )}
+            </div>
+
+            <div className="section-title">
+              <h3>Customer Indicative Pricing Categories</h3>
+              <span>
+                Configure which Admin-defined vehicle class represents each
+                customer-facing indicative pricing category.
+              </span>
+            </div>
+
+            <div className="detail-grid">
+              {(["ECONOMY", "STANDARD", "PREMIUM"] as const).map((category) => (
+                <label key={category}>
+                  <span>{labelize(category)} Vehicle Class</span>
+                  <select
+                    value={pricingForm.fuel.customerCategories[category].vehicleClass}
+                    onChange={(event) =>
+                      setPricingForm({
+                        ...pricingForm,
+                        fuel: {
+                          ...pricingForm.fuel,
+                          customerCategories: {
+                            ...pricingForm.fuel.customerCategories,
+                            [category]: {
+                              vehicleClass: event.target.value,
+                            },
+                          },
+                        },
+                      })
+                    }
+                  >
+                    <option value="">Select vehicle class</option>
+                    {Object.keys(pricingForm.fuel.vehicleProfiles).map(
+                      (vehicleClass) => (
+                        <option key={vehicleClass} value={vehicleClass}>
+                          {labelize(vehicleClass)}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </label>
+              ))}
+
+              <label>
+                <span>Default Indicative Pricing Category</span>
+                <select
+                  value={pricingForm.fuel.defaultCustomerCategory}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      fuel: {
+                        ...pricingForm.fuel,
+                        defaultCustomerCategory:
+                          event.target.value as MarketplaceCustomerPriceCategory | "",
+                      },
+                    })
+                  }
+                >
+                  <option value="">Select default category</option>
+                  <option value="ECONOMY">Economy</option>
+                  <option value="STANDARD">Standard</option>
+                  <option value="PREMIUM">Premium</option>
+                </select>
               </label>
             </div>
 

@@ -7,7 +7,9 @@ export async function createVehicle(data: {
   registrationNumber: string;
   vehicleType: string;
   vehicleClass: VehicleClass;
+  fuelType: "PETROL" | "DIESEL";
   vehicleBodyType?: string;
+  year?: number;
 }) {
   const vehicle = await prisma.vehicle.create({ data });
 
@@ -58,6 +60,7 @@ export async function updateVehicle(
     year?: number;
     color?: string;
     capacity?: number;
+    fuelType?: "PETROL" | "DIESEL";
   },
 ) {
   const vehicle = await prisma.vehicle.update({

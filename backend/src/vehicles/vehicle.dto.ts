@@ -26,6 +26,7 @@ export function toVehicleDto(vehicle: any) {
     registrationNumber: vehicle.registrationNumber,
     vehicleType: vehicle.vehicleType,
     vehicleClass: vehicle.vehicleClass,
+    fuelType: vehicle.fuelType,
     vehicleBodyType: vehicle.vehicleBodyType,
 
     make: vehicle.make,
