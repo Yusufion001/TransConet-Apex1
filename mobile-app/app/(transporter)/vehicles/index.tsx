@@ -102,6 +102,7 @@ export default function TransporterFleet() {
   const [vehicleType, setVehicleType] = useState("");
   const [vehicleBodyType, setVehicleBodyType] = useState("");
   const [vehicleClass, setVehicleClass] = useState<VehicleClass | "">("");
+  const [fuelType, setFuelType] = useState<"PETROL" | "DIESEL" | "">("");
 
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
@@ -137,6 +138,7 @@ export default function TransporterFleet() {
     setVehicleType("");
     setVehicleBodyType("");
     setVehicleClass("");
+    setFuelType("");
     setMake("");
     setModel("");
     setYear("");
@@ -159,6 +161,8 @@ export default function TransporterFleet() {
         vehicleType: vehicleType.trim(),
         vehicleBodyType: vehicleBodyType.trim() || undefined,
         vehicleClass: vehicleClass as VehicleClass,
+        fuelType: fuelType as "PETROL" | "DIESEL",
+        ...(year.trim() ? { year: Number(year) } : {}),
       }),
     onSuccess: () => {
       resetForm();
@@ -205,6 +209,7 @@ export default function TransporterFleet() {
     vehicleType.trim().length > 0 &&
     vehicleBodyType.trim().length > 0 &&
     vehicleClass.length > 0 &&
+    fuelType.length > 0 &&
     !createMutation.isPending;
 
   const updateFormValid =
@@ -323,6 +328,33 @@ export default function TransporterFleet() {
             onChangeText={setVehicleBodyType}
             placeholder="e.g. Flatbed or Tarpaulin"
           />
+
+          <Text style={styles.fieldLabel}>FUEL TYPE</Text>
+
+          <View style={styles.classGrid}>
+            {(["PETROL", "DIESEL"] as const).map((item) => {
+              const selected = fuelType === item;
+              return (
+                <Pressable
+                  key={item}
+                  onPress={() => setFuelType(item)}
+                  style={[
+                    styles.classOption,
+                    selected && styles.classOptionSelected,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.classOptionText,
+                      selected && styles.classOptionTextSelected,
+                    ]}
+                  >
+                    {item}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
 
           <Text style={styles.fieldLabel}>VEHICLE CLASS</Text>
 
@@ -502,6 +534,7 @@ export default function TransporterFleet() {
                   {vehicle.vehicleBodyType
                     ? ` · ${vehicle.vehicleBodyType}`
                     : ""}
+                  {vehicle.fuelType ? ` · ${vehicle.fuelType}` : ""}
                 </Text>
               </View>
 

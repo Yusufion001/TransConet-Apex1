@@ -101,6 +101,32 @@ export type MarketplaceRequest = {
   bidCount: number;
 };
 
+export type MarketplaceFuelType = "PETROL" | "DIESEL";
+
+export type MarketplaceFuelPrice = {
+  pricePerLitre: number;
+  currency: "NGN";
+};
+
+export type MarketplaceFuelYearBand = {
+  minYear?: number;
+  maxYear?: number;
+  efficiencyFactor: number;
+};
+
+export type MarketplaceVehicleFuelProfile = {
+  fuelType: MarketplaceFuelType;
+  baseEfficiencyKmPerLitre: number;
+  yearBands: MarketplaceFuelYearBand[];
+  missingYearEfficiencyFactor?: number;
+};
+
+export type MarketplaceCustomerPriceCategory = "ECONOMY" | "STANDARD" | "PREMIUM";
+
+export type MarketplaceCustomerPriceCategoryConfig = {
+  vehicleClass: string;
+};
+
 export type MarketplacePricingConfig = {
   baseRate: number;
   weightMultipliers: {
@@ -112,13 +138,40 @@ export type MarketplacePricingConfig = {
   };
   truckMultipliers: Record<string, number>;
   distanceRatePerKm: number;
-  fuelRatePerKm: number;
+  fuel: {
+    enabled: boolean;
+    prices: Record<MarketplaceFuelType, MarketplaceFuelPrice>;
+    vehicleProfiles: Record<string, MarketplaceVehicleFuelProfile>;
+    customerCategories: Record<
+      MarketplaceCustomerPriceCategory,
+      MarketplaceCustomerPriceCategoryConfig
+    >;
+    defaultCustomerCategory: MarketplaceCustomerPriceCategory;
+  };
 };
+
+export type MarketplaceLegacyPricingConfig = {
+  baseRate: number;
+  fuelRatePerKm: number;
+  truckMultipliers: Record<string, number>;
+  distanceRatePerKm: number;
+  weightMultipliers: {
+    upTo100: number;
+    upTo1000: number;
+    upTo5000: number;
+    upTo10000: number;
+    above10000: number;
+  };
+};
+
+export type MarketplacePricingValue =
+  | MarketplacePricingConfig
+  | MarketplaceLegacyPricingConfig;
 
 export type MarketplacePricing = {
   id: string;
   key: "PRICING_CONFIG";
-  value: MarketplacePricingConfig;
+  value: MarketplacePricingValue;
   description: string | null;
   updatedBy: string | null;
   createdAt: string;

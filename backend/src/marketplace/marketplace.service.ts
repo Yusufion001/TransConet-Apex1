@@ -1,6 +1,6 @@
 import { prisma } from "../config/prisma.js";
 import { publishEvent } from "../realtime/event-bus.js";
-import { estimateFare } from "../pricing/pricing.service.js";
+import { estimateIndicativeFare } from "../pricing/pricing.service.js";
 import { calculateCommission } from "../settlements/commission.service.js";
 
 
@@ -148,9 +148,11 @@ export async function createMarketplaceRequest(data: {
     | "HAZARDOUS"
     | "REFRIGERATED";
   cargoWeight: number;
+  preferredVehicleYearMin?: number;
+  preferredVehicleYearMax?: number;
   scheduledDate?: Date;
 }) {
-  const pricing = await estimateFare({
+  const pricing = await estimateIndicativeFare({
     weight: data.cargoWeight,
     truck: data.truckCategory,
     pickupLatitude: data.pickupLatitude,
@@ -170,10 +172,12 @@ export async function createMarketplaceRequest(data: {
       destinationLongitude: data.destinationLongitude,
       cargoDescription: data.cargoDescription,
       truckCategory: data.truckCategory,
+      preferredVehicleYearMin: data.preferredVehicleYearMin,
+      preferredVehicleYearMax: data.preferredVehicleYearMax,
       cargoCategory: data.cargoCategory,
       cargoWeight: data.cargoWeight,
       scheduledDate: data.scheduledDate,
-      estimatedFare: pricing.fare,
+      estimatedFare: pricing.estimatedFare,
       status: "OPEN",
     },
   });
@@ -250,6 +254,7 @@ export async function getMarketplaceRequest(
               id: true,
               vehicleType: true,
               vehicleClass: true,
+              year: true,
             },
           },
           transporter: {
@@ -338,6 +343,7 @@ export async function getCustomerMarketplaceRequests(customerId: string) {
               id: true,
               vehicleType: true,
               vehicleClass: true,
+              year: true,
             },
           },
           transporter: {
@@ -448,6 +454,8 @@ export async function createMarketplaceBid(data: {
       id: true,
       status: true,
       truckCategory: true,
+      preferredVehicleYearMin: true,
+      preferredVehicleYearMax: true,
       scheduledDate: true,
       customerId: true,
     },
@@ -501,6 +509,7 @@ export async function createMarketplaceBid(data: {
       transporterId: true,
       vehicleType: true,
       vehicleClass: true,
+      year: true,
       verificationStatus: true,
       availabilityStatus: true,
     },
@@ -527,6 +536,31 @@ export async function createMarketplaceBid(data: {
     vehicle.vehicleClass !== request.truckCategory
   ) {
     throw new Error("Vehicle does not match requested truck category");
+  }
+
+  if (
+    request.preferredVehicleYearMin !== null ||
+    request.preferredVehicleYearMax !== null
+  ) {
+    if (vehicle.year === null) {
+      throw new Error(
+        "Vehicle year is required for this marketplace request",
+      );
+    }
+
+    if (
+      request.preferredVehicleYearMin !== null &&
+      vehicle.year < request.preferredVehicleYearMin
+    ) {
+      throw new Error("Vehicle year is below the customer's preferred range");
+    }
+
+    if (
+      request.preferredVehicleYearMax !== null &&
+      vehicle.year > request.preferredVehicleYearMax
+    ) {
+      throw new Error("Vehicle year is above the customer's preferred range");
+    }
   }
 
   if (data.expiresAt && data.expiresAt <= new Date()) {
@@ -649,6 +683,8 @@ export async function selectMarketplaceBid(
         status: true,
         cargoDescription: true,
         truckCategory: true,
+        preferredVehicleYearMin: true,
+        preferredVehicleYearMax: true,
         cargoCategory: true,
         cargoWeight: true,
         pickupLocation: true,
@@ -759,6 +795,7 @@ export async function selectMarketplaceBid(
         transporterId: true,
         vehicleType: true,
         vehicleClass: true,
+        year: true,
         verificationStatus: true,
         availabilityStatus: true,
       },
@@ -787,6 +824,34 @@ export async function selectMarketplaceBid(
       throw new Error("Selected vehicle no longer matches truck category");
     }
 
+      if (
+        request.preferredVehicleYearMin !== null ||
+        request.preferredVehicleYearMax !== null
+      ) {
+        if (vehicle.year === null) {
+          throw new Error(
+            "Selected vehicle year is required for this marketplace request",
+          );
+        }
+
+        if (
+          request.preferredVehicleYearMin !== null &&
+          vehicle.year < request.preferredVehicleYearMin
+        ) {
+          throw new Error(
+            "Selected vehicle year is below the customer's preferred range",
+          );
+        }
+
+        if (
+          request.preferredVehicleYearMax !== null &&
+          vehicle.year > request.preferredVehicleYearMax
+        ) {
+          throw new Error(
+            "Selected vehicle year is above the customer's preferred range",
+          );
+        }
+      }
     /*
      * Claim the marketplace request first.
      *

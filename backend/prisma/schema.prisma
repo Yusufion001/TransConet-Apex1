@@ -388,21 +388,21 @@ model User {
 
   adminInvitations AdminInvitation[] @relation("AdminInvitationUser")
 
-  customerBookings     Booking[]                 @relation("CustomerBookings")
-  transporterBookings  Booking[]                 @relation("TransporterBookings")
-  vehicles             Vehicle[]                 @relation("TransporterVehicles")
-  payments             Payment[]                 @relation("CustomerPayments")
-  wallet               Wallet?
-  withdrawalAccounts   WithdrawalAccount[]
-  withdrawalSecurityChallenges WithdrawalSecurityChallenge[]
-  marketplaceRequests  MarketplaceRequest[]      @relation("MarketplaceRequests")
-  marketplaceBids      MarketplaceBid[]          @relation("MarketplaceBids")
-  negotiationAgreementsAsCustomer NegotiationAgreement[] @relation("NegotiationCustomer")
-  negotiationAgreementsAsTransporter NegotiationAgreement[] @relation("NegotiationTransporter")
-  commissionPaymentsAsTransporter CommissionPayment[] @relation("TransporterCommissionPayments")
-  commissionPaymentsVerified CommissionPayment[] @relation("CommissionPaymentVerifiers")
-  subscriptions        TransporterSubscription[]
-  subscriptionInvoices SubscriptionInvoice[]
+  customerBookings                   Booking[]                     @relation("CustomerBookings")
+  transporterBookings                Booking[]                     @relation("TransporterBookings")
+  vehicles                           Vehicle[]                     @relation("TransporterVehicles")
+  payments                           Payment[]                     @relation("CustomerPayments")
+  wallet                             Wallet?
+  withdrawalAccounts                 WithdrawalAccount[]
+  withdrawalSecurityChallenges       WithdrawalSecurityChallenge[]
+  marketplaceRequests                MarketplaceRequest[]          @relation("MarketplaceRequests")
+  marketplaceBids                    MarketplaceBid[]              @relation("MarketplaceBids")
+  negotiationAgreementsAsCustomer    NegotiationAgreement[]        @relation("NegotiationCustomer")
+  negotiationAgreementsAsTransporter NegotiationAgreement[]        @relation("NegotiationTransporter")
+  commissionPaymentsAsTransporter    CommissionPayment[]           @relation("TransporterCommissionPayments")
+  commissionPaymentsVerified         CommissionPayment[]           @relation("CommissionPaymentVerifiers")
+  subscriptions                      TransporterSubscription[]
+  subscriptionInvoices               SubscriptionInvoice[]
 
   commissionRulesCreated CommissionRule[] @relation("CommissionRuleCreator")
   commissionRulesUpdated CommissionRule[] @relation("CommissionRuleUpdater")
@@ -420,10 +420,10 @@ model User {
   supportTickets  SupportTicket[] @relation("TicketRequester")
   assignedTickets SupportTicket[] @relation("TicketAssignee")
 
-  auditLogs         AuditLog[]      @relation("AuditAdministrator")
-  adminActivities   AdminActivity[]
-  affectedAuditLogs AuditLog[]      @relation("AuditAffectedUser")
-  customerBankTransfers BankTransferPayment[] @relation("CustomerBankTransfers")
+  auditLogs                 AuditLog[]            @relation("AuditAdministrator")
+  adminActivities           AdminActivity[]
+  affectedAuditLogs         AuditLog[]            @relation("AuditAffectedUser")
+  customerBankTransfers     BankTransferPayment[] @relation("CustomerBankTransfers")
   bankTransferVerifications BankTransferPayment[] @relation("BankTransferVerifiers")
 
   disputesAsCustomer    Dispute[] @relation("DisputeCustomer")
@@ -442,7 +442,7 @@ model User {
 
 model CustomerProfile {
   userId                     String             @id
-  customerType               CustomerType      @default(INDIVIDUAL)
+  customerType               CustomerType       @default(INDIVIDUAL)
   dateOfBirth                DateTime?
   businessName               String?
   businessAddress            String?
@@ -515,8 +515,9 @@ model Vehicle {
   transporterId      String
   registrationNumber String @unique
 
-  vehicleType    String
-  vehicleClass   VehicleClass
+  vehicleType     String
+  vehicleClass    VehicleClass
+  fuelType        FuelType?
   vehicleBodyType String?
 
   make               String?
@@ -581,8 +582,8 @@ model Booking {
   status BookingStatus @default(REQUESTED)
   fare   Decimal       @db.Decimal(14, 2)
 
-  paymentStatus PaymentStatus @default(PENDING)
-  paymentMethod PaymentMethod @default(FLUTTERWAVE)
+  paymentStatus       PaymentStatus        @default(PENDING)
+  paymentMethod       PaymentMethod        @default(FLUTTERWAVE)
   bankTransferPayment BankTransferPayment?
 
   acceptedAt  DateTime?
@@ -596,9 +597,11 @@ model Booking {
   cargoPhotoPath           String?
   receiverSignaturePath    String?
   deliveryConfirmationCode String?
-  trackingShareToken      String? @unique
+  trackingShareToken       String?  @unique
   createdAt                DateTime @default(now())
   updatedAt                DateTime @updatedAt
+
+  pricingSnapshot BookingPricingSnapshot?
 
   customer    User     @relation("CustomerBookings", fields: [customerId], references: [id])
   transporter User?    @relation("TransporterBookings", fields: [transporterId], references: [id])
@@ -619,15 +622,53 @@ model Booking {
   @@index([scheduledDate])
 }
 
+model BookingPricingSnapshot {
+  id           String   @id @default(uuid())
+  bookingId    String   @unique
+  calculatedAt DateTime @default(now())
+  currency     String   @default("NGN")
+
+  distanceKm        Decimal @db.Decimal(14, 3)
+  baseRate          Decimal @db.Decimal(14, 2)
+  distanceRatePerKm Decimal @db.Decimal(14, 2)
+  weightMultiplier  Decimal @db.Decimal(10, 4)
+  truckMultiplier   Decimal @db.Decimal(10, 4)
+  distanceComponent Decimal @db.Decimal(14, 2)
+
+  vehicleClass                  VehicleClass
+  vehicleYear                   Int
+  fuelType                      FuelType
+  fuelPricePerLitre             Decimal      @db.Decimal(14, 2)
+  baseEfficiencyKmPerLitre      Decimal      @db.Decimal(10, 4)
+  yearEfficiencyFactor          Decimal      @db.Decimal(10, 4)
+  effectiveEfficiencyKmPerLitre Decimal      @db.Decimal(10, 4)
+  fuelLitres                    Decimal      @db.Decimal(14, 4)
+  fuelCost                      Decimal      @db.Decimal(14, 2)
+
+  indicativeFare Decimal @db.Decimal(14, 2)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleClass, vehicleYear])
+  @@index([calculatedAt])
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+}
+
 model MarketplaceRequest {
   id         String  @id @default(uuid())
   customerId String
   bookingId  String? @unique
 
-  cargoDescription String?
-  truckCategory    TruckCategory?
-  cargoCategory    CargoCategory?
-  cargoWeight      Decimal?       @db.Decimal(14, 2)
+  cargoDescription        String?
+  truckCategory           TruckCategory?
+  preferredVehicleYearMin Int?
+  preferredVehicleYearMax Int?
+  cargoCategory           CargoCategory?
+  cargoWeight             Decimal?       @db.Decimal(14, 2)
 
   pickupLocation       String
   destination          String
@@ -646,8 +687,8 @@ model MarketplaceRequest {
   updatedAt   DateTime  @updatedAt
   closedAt    DateTime?
 
-  customer User     @relation("MarketplaceRequests", fields: [customerId], references: [id], onDelete: Cascade)
-  booking  Booking? @relation(fields: [bookingId], references: [id])
+  customer             User                  @relation("MarketplaceRequests", fields: [customerId], references: [id], onDelete: Cascade)
+  booking              Booking?              @relation(fields: [bookingId], references: [id])
   negotiationAgreement NegotiationAgreement?
 
   bids MarketplaceBid[]
@@ -673,10 +714,10 @@ model MarketplaceBid {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  request     MarketplaceRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  transporter User               @relation("MarketplaceBids", fields: [transporterId], references: [id], onDelete: Cascade)
+  request              MarketplaceRequest    @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  transporter          User                  @relation("MarketplaceBids", fields: [transporterId], references: [id], onDelete: Cascade)
   negotiationAgreement NegotiationAgreement?
-  vehicle     Vehicle            @relation(fields: [vehicleId], references: [id])
+  vehicle              Vehicle               @relation(fields: [vehicleId], references: [id])
 
   @@unique([requestId, transporterId])
   @@index([requestId, status])
@@ -697,29 +738,29 @@ model NegotiationAgreement {
 
   commissionRuleId String?
   commissionAmount Decimal @db.Decimal(14, 2)
-  currency         String @default("NGN")
+  currency         String  @default("NGN")
 
   status NegotiationStatus @default(NEGOTIATING)
 
-  commissionStatus CommissionObligationStatus @default(DUE)
-  commissionReference String?
+  commissionStatus     CommissionObligationStatus @default(DUE)
+  commissionReference  String?
   commissionVerifiedAt DateTime?
   commissionVerifiedBy String?
 
   refusalStrikeCount Int @default(0)
 
-  agreedAt DateTime?
+  agreedAt    DateTime?
   confirmedAt DateTime?
   cancelledAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   marketplaceRequest MarketplaceRequest @relation(fields: [marketplaceRequestId], references: [id], onDelete: Cascade)
-  marketplaceBid MarketplaceBid @relation(fields: [marketplaceBidId], references: [id], onDelete: Cascade)
-  customer User @relation("NegotiationCustomer", fields: [customerId], references: [id], onDelete: Cascade)
-  transporter User @relation("NegotiationTransporter", fields: [transporterId], references: [id], onDelete: Cascade)
-  commissionRule CommissionRule? @relation(fields: [commissionRuleId], references: [id])
-  commissionPayment CommissionPayment?
+  marketplaceBid     MarketplaceBid     @relation(fields: [marketplaceBidId], references: [id], onDelete: Cascade)
+  customer           User               @relation("NegotiationCustomer", fields: [customerId], references: [id], onDelete: Cascade)
+  transporter        User               @relation("NegotiationTransporter", fields: [transporterId], references: [id], onDelete: Cascade)
+  commissionRule     CommissionRule?    @relation(fields: [commissionRuleId], references: [id])
+  commissionPayment  CommissionPayment?
 
   @@index([customerId, status])
   @@index([transporterId, status])
@@ -737,24 +778,24 @@ model CommissionPayment {
   currency String  @default("NGN")
 
   provider              CommissionPaymentProvider
-  transactionReference  String  @unique
+  transactionReference  String                    @unique
   providerTransactionId String?
   checkoutUrl           String?
   idempotencyKey        String?
 
   status CommissionPaymentStatus @default(PENDING)
 
-  submittedAt       DateTime @default(now())
-  verifiedAt        DateTime?
-  verifiedBy        String?
-  rejectionReason   String?
+  submittedAt     DateTime  @default(now())
+  verifiedAt      DateTime?
+  verifiedBy      String?
+  rejectionReason String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  negotiationAgreement NegotiationAgreement @relation(fields: [negotiationAgreementId], references: [id], onDelete: Cascade)
-  transporter          User @relation("TransporterCommissionPayments", fields: [transporterId], references: [id], onDelete: Cascade)
-  verifier             User? @relation("CommissionPaymentVerifiers", fields: [verifiedBy], references: [id])
+  negotiationAgreement NegotiationAgreement            @relation(fields: [negotiationAgreementId], references: [id], onDelete: Cascade)
+  transporter          User                            @relation("TransporterCommissionPayments", fields: [transporterId], references: [id], onDelete: Cascade)
+  verifier             User?                           @relation("CommissionPaymentVerifiers", fields: [verifiedBy], references: [id])
   webhookEvents        CommissionPaymentWebhookEvent[]
 
   @@index([transporterId])
@@ -788,19 +829,19 @@ model TrackingPoint {
 }
 
 model Payment {
-  id                   String        @id @default(uuid())
-  bookingId            String
-  customerId           String
-  amount               Decimal       @db.Decimal(14, 2)
-  currency             String        @default("NGN")
-  provider             String
-  transactionReference String        @unique
+  id                    String        @id @default(uuid())
+  bookingId             String
+  customerId            String
+  amount                Decimal       @db.Decimal(14, 2)
+  currency              String        @default("NGN")
+  provider              String
+  transactionReference  String        @unique
   providerTransactionId String?
-  checkoutUrl          String?
-  idempotencyKey       String?
-  status               PaymentStatus @default(PENDING)
-  createdAt            DateTime      @default(now())
-  updatedAt            DateTime      @updatedAt
+  checkoutUrl           String?
+  idempotencyKey        String?
+  status                PaymentStatus @default(PENDING)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
 
   settlement Settlement?
 
@@ -821,22 +862,22 @@ enum BankTransferStatus {
 }
 
 model BankTransferPayment {
-  id                    String   @id @default(uuid())
-  bookingId             String   @unique
-  customerId            String
-  amount                Decimal  @db.Decimal(14, 2)
-  currency              String   @default("NGN")
-  transferReference     String   @unique
-  status                BankTransferStatus @default(PENDING)
-  verifiedAt            DateTime?
-  verifiedBy            String?
-  rejectionReason       String?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                String             @id @default(uuid())
+  bookingId         String             @unique
+  customerId        String
+  amount            Decimal            @db.Decimal(14, 2)
+  currency          String             @default("NGN")
+  transferReference String             @unique
+  status            BankTransferStatus @default(PENDING)
+  verifiedAt        DateTime?
+  verifiedBy        String?
+  rejectionReason   String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 
-  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  customer  User    @relation("CustomerBankTransfers", fields: [customerId], references: [id], onDelete: Cascade)
-  verifier  User?   @relation("BankTransferVerifiers", fields: [verifiedBy], references: [id])
+  booking  Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  customer User    @relation("CustomerBankTransfers", fields: [customerId], references: [id], onDelete: Cascade)
+  verifier User?   @relation("BankTransferVerifiers", fields: [verifiedBy], references: [id])
 
   @@index([bookingId])
   @@index([customerId])
@@ -867,15 +908,15 @@ model PaymentWebhookEvent {
 }
 
 model CommissionPaymentWebhookEvent {
-  id                   String    @id @default(uuid())
-  provider             String
-  providerEventId      String
-  eventType            String
-  commissionPaymentId  String?
-  payload              Json
-  processed             Boolean   @default(false)
-  processedAt           DateTime?
-  createdAt             DateTime  @default(now())
+  id                  String    @id @default(uuid())
+  provider            String
+  providerEventId     String
+  eventType           String
+  commissionPaymentId String?
+  payload             Json
+  processed           Boolean   @default(false)
+  processedAt         DateTime?
+  createdAt           DateTime  @default(now())
 
   commissionPayment CommissionPayment? @relation(fields: [commissionPaymentId], references: [id], onDelete: SetNull)
 
@@ -891,7 +932,7 @@ model YouverifyWebhookEvent {
   providerEventId String
   eventType       String
   documentId      String?
-  verificationId   String?
+  verificationId  String?
   payload         Json
   processed       Boolean   @default(false)
   processedAt     DateTime?
@@ -908,24 +949,24 @@ model YouverifyWebhookEvent {
 }
 
 model Verification {
-  id                      String                   @id @default(uuid())
-  userId                  String
-  type                    VerificationType
+  id                     String                     @id @default(uuid())
+  userId                 String
+  type                   VerificationType
   verificationNumber     String
-  verificationProvider   String                   @default("YOUVERIFY")
+  verificationProvider   String                     @default("YOUVERIFY")
   externalVerificationId String?
   providerStatus         VerificationProviderStatus @default(PENDING)
   providerResponse       Json?
   verifiedAt             DateTime?
-  adminStatus             VerificationAdminStatus @default(PENDING)
-  adminApproved           Boolean                  @default(false)
-  adminApprovedAt         DateTime?
-  reviewedBy              String?
-  rejectionReason         String?
-  createdAt               DateTime                 @default(now())
-  updatedAt               DateTime                 @updatedAt
+  adminStatus            VerificationAdminStatus    @default(PENDING)
+  adminApproved          Boolean                    @default(false)
+  adminApprovedAt        DateTime?
+  reviewedBy             String?
+  rejectionReason        String?
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
 
-  user                  User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   youverifyWebhookEvents YouverifyWebhookEvent[]
 
   @@index([userId, type, createdAt])
@@ -990,12 +1031,12 @@ model Withdrawal {
 
   withdrawalAccountId String?
 
-  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  wallet            Wallet             @relation(fields: [walletId], references: [id], onDelete: Cascade)
   withdrawalAccount WithdrawalAccount? @relation(fields: [withdrawalAccountId], references: [id], onDelete: SetNull)
 
+  @@unique([walletId, idempotencyKey])
   @@index([walletId])
   @@index([withdrawalAccountId])
-  @@unique([walletId, idempotencyKey])
 }
 
 model WithdrawalAccount {
@@ -1006,17 +1047,17 @@ model WithdrawalAccount {
   bankCode String
   bankName String
 
-  accountNumberEncrypted String
+  accountNumberEncrypted   String
   accountNumberFingerprint String
-  accountNumberLast4 String
+  accountNumberLast4       String
 
   accountName String
 
   status WithdrawalAccountStatus @default(PENDING)
 
-  provider String?
+  provider          String?
   providerReference String?
-  verifiedAt DateTime?
+  verifiedAt        DateTime?
 
   securityCooldownUntil DateTime?
 
@@ -1025,27 +1066,27 @@ model WithdrawalAccount {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  transporter User @relation(fields: [transporterId], references: [id], onDelete: Cascade)
+  transporter User         @relation(fields: [transporterId], references: [id], onDelete: Cascade)
   withdrawals Withdrawal[]
 
+  @@unique([transporterId, accountNumberFingerprint])
   @@index([transporterId, status])
   @@index([transporterId, isDefault])
-  @@unique([transporterId, accountNumberFingerprint])
 }
 
 model WithdrawalSecurityChallenge {
   id String @id @default(uuid())
 
-  userId String
+  userId  String
   purpose WithdrawalSecurityChallengePurpose
 
-  provider String
+  provider      String
   providerPinId String
 
-  expiresAt DateTime
-  attempts Int @default(0)
-  maxAttempts Int @default(3)
-  consumedAt DateTime?
+  expiresAt   DateTime
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  consumedAt  DateTime?
 
   createdAt DateTime @default(now())
 
@@ -1471,7 +1512,7 @@ model CommissionRule {
   creator User  @relation("CommissionRuleCreator", fields: [createdBy], references: [id])
   updater User? @relation("CommissionRuleUpdater", fields: [updatedBy], references: [id])
 
-  settlements Settlement[]
+  settlements           Settlement[]
   negotiationAgreements NegotiationAgreement[]
 
   @@index([status])

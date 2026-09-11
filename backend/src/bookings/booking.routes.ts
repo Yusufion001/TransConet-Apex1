@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { estimateFare } from "../pricing/pricing.service.js";
+import { estimateIndicativeFare } from "../pricing/pricing.service.js";
 import { Router, type Response } from "express";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { z } from "zod";
@@ -129,7 +129,7 @@ router.post(
         paymentMethod: true,
       }).parse(req.body);
 
-      const pricing = await estimateFare({
+      const pricing = await estimateIndicativeFare({
         weight: input.cargoWeight,
         truck: input.truckCategory,
         pickupLatitude: input.pickupLatitude,
@@ -141,7 +141,7 @@ router.post(
       res.json({
         success: true,
         data: {
-          estimatedFare: pricing.fare,
+          estimatedFare: pricing.estimatedFare,
           distanceKm: pricing.distanceKm,
         },
       });

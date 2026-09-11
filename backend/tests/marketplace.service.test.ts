@@ -48,7 +48,7 @@ const prismaMock = {
 const publishEventMock =
   mock.fn<(...args: any[]) => any>();
 
-const estimateFareMock =
+const estimateIndicativeFareMock =
   mock.fn<(...args: any[]) => any>();
 
 mock.module(new URL("../src/config/prisma.js", import.meta.url).href, {
@@ -65,7 +65,7 @@ mock.module(new URL("../src/realtime/event-bus.js", import.meta.url).href, {
 
 mock.module(new URL("../src/pricing/pricing.service.js", import.meta.url).href, {
   namedExports: {
-    estimateFare: estimateFareMock,
+    estimateIndicativeFare: estimateIndicativeFareMock,
   },
 });
 
@@ -105,7 +105,7 @@ function resetMocks() {
     prismaMock.$transaction,
 
     publishEventMock,
-    estimateFareMock,
+    estimateIndicativeFareMock,
   ]) {
     fn.mock.resetCalls();
   }
@@ -118,9 +118,9 @@ test.beforeEach(() => {
     async (callback: any) => callback(prismaMock),
   );
 
-  estimateFareMock.mock.mockImplementation(
+  estimateIndicativeFareMock.mock.mockImplementation(
     async () => ({
-      fare: 150000,
+      estimatedFare: 150000,
     }),
   );
 
@@ -186,7 +186,7 @@ test("createMarketplaceRequest creates an OPEN marketplace load", async () => {
   assert.equal(result.status, "OPEN");
 
   assert.equal(
-    estimateFareMock.mock.calls.length,
+    estimateIndicativeFareMock.mock.calls.length,
     1,
   );
 

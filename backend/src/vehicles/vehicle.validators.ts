@@ -13,13 +13,16 @@ export const createVehicleSchema = z.object({
     "TANKER",
     "SPECIALIZED",
   ]),
+  fuelType: z.enum(["PETROL", "DIESEL"]),
   vehicleBodyType: z.string().trim().min(1).max(100).optional(),
+  year: z.coerce.number().int().min(1900).max(2100).optional(),
 });
 
 export const updateVehicleSchema = z.object({
   make: z.string().trim().min(1).max(100).optional(),
   model: z.string().trim().min(1).max(100).optional(),
   year: z.coerce.number().int().min(1900).max(2100).optional(),
+  fuelType: z.enum(["PETROL", "DIESEL"]).optional(),
   color: z.string().trim().min(1).max(50).optional(),
   capacity: z.coerce.number().finite().positive().optional(),
 });

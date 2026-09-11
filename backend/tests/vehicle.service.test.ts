@@ -116,6 +116,7 @@ test("createVehicle creates the vehicle and publishes an administration event", 
     registrationNumber: "ABC-123",
     vehicleType: "TRUCK",
     vehicleClass: "HEAVY",
+    fuelType: "DIESEL",
   };
 
   prismaMock.vehicle.create.mock.mockImplementation(async () => vehicle);
@@ -125,6 +126,7 @@ test("createVehicle creates the vehicle and publishes an administration event", 
     registrationNumber: "ABC-123",
     vehicleType: "TRUCK",
     vehicleClass: "HEAVY" as any,
+    fuelType: "DIESEL",
   });
 
   assert.deepEqual(result, vehicle);

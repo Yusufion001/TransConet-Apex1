@@ -201,7 +201,45 @@ test("createBooking creates a booking and publishes shipment events", async () =
           MEDIUM_TRUCK: 2,
         },
         distanceRatePerKm: 1,
-        fuelRatePerKm: 50,
+        fuel: {
+          enabled: true,
+          prices: {
+            PETROL: {
+              pricePerLitre: 1200,
+              currency: "NGN",
+            },
+            DIESEL: {
+              pricePerLitre: 1400,
+              currency: "NGN",
+            },
+          },
+          vehicleProfiles: {
+            MEDIUM_TRUCK: {
+              fuelType: "DIESEL",
+              baseEfficiencyKmPerLitre: 4,
+              yearBands: [
+                {
+                  minYear: 1900,
+                  maxYear: 2100,
+                  efficiencyFactor: 1,
+                },
+              ],
+              missingYearEfficiencyFactor: 1,
+            },
+          },
+          customerCategories: {
+            ECONOMY: {
+              vehicleClass: "MEDIUM_TRUCK",
+            },
+            STANDARD: {
+              vehicleClass: "MEDIUM_TRUCK",
+            },
+            PREMIUM: {
+              vehicleClass: "MEDIUM_TRUCK",
+            },
+          },
+          defaultCustomerCategory: "STANDARD",
+        },
       },
     },
   ]);

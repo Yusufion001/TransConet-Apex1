@@ -26,6 +26,9 @@ export const createMarketplaceRequestSchema = z.object({
     "SPECIALIZED",
   ]),
 
+  preferredVehicleYearMin: z.coerce.number().int().min(1900).max(2100).optional(),
+  preferredVehicleYearMax: z.coerce.number().int().min(1900).max(2100).optional(),
+
   cargoCategory: z.enum([
     "GENERAL",
     "FRAGILE",
@@ -41,7 +44,16 @@ export const createMarketplaceRequestSchema = z.object({
   cargoWeight: positiveNumber,
 
   scheduledDate: z.coerce.date().optional(),
-}).strict();
+}).strict().refine(
+  (value) =>
+    value.preferredVehicleYearMin === undefined ||
+    value.preferredVehicleYearMax === undefined ||
+    value.preferredVehicleYearMin <= value.preferredVehicleYearMax,
+  {
+    message: "Preferred vehicle year minimum must be less than or equal to maximum.",
+    path: ["preferredVehicleYearMax"],
+  },
+);
 
 export const createMarketplaceBidSchema = z.object({
   vehicleId: z.string().uuid("Invalid vehicle ID"),

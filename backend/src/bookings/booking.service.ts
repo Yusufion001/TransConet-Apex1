@@ -5,7 +5,7 @@ import { publishEvent } from "../realtime/event-bus.js";
 import { publishAdminEvent, publishBookingEvent } from "../realtime/realtime.service.js";
 import { createSettlement } from "../settlements/settlement.service.js";
 import { toBookingDto } from "./booking.dto.js";
-import { estimateFare } from "../pricing/pricing.service.js";
+import { estimateIndicativeFare } from "../pricing/pricing.service.js";
 import { createBankTransferPayment } from "../payments/bank-transfer.service.js";
 
 export async function createBooking(data: {
@@ -39,7 +39,7 @@ pickupLatitude: number;
   cargoWeight: number;
   paymentMethod?: "FLUTTERWAVE" | "BANK_TRANSFER" | "NEGOTIATE";
 }) {
-  const pricing = await estimateFare({
+  const pricing = await estimateIndicativeFare({
     weight: data.cargoWeight,
     truck: data.truckCategory,
     pickupLatitude: data.pickupLatitude,
@@ -68,8 +68,8 @@ pickupLatitude: data.pickupLatitude,
         truckCategory: data.truckCategory,
         cargoCategory: data.cargoCategory,
         cargoWeight: data.cargoWeight,
-        estimatedFare: pricing.fare,
-        fare: pricing.fare,
+        estimatedFare: pricing.estimatedFare,
+        fare: pricing.estimatedFare,
         paymentMethod,
         deliveryConfirmationCode,
       },
@@ -99,7 +99,7 @@ pickupLatitude: data.pickupLatitude,
           destinationLatitude: data.destinationLatitude,
           destinationLongitude: data.destinationLongitude,
           scheduledDate: null,
-          estimatedFare: pricing.fare,
+          estimatedFare: pricing.estimatedFare,
           status: "OPEN",
         },
       });
