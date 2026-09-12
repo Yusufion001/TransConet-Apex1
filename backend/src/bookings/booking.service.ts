@@ -752,6 +752,34 @@ export async function confirmDelivery(
       throw new Error("Successful shipment payment not found");
     }
 
+    const expressBooking = await tx.expressBooking.findUnique({
+      where: {
+        bookingId: booking.id,
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (expressBooking) {
+      const expressCompleted = await tx.expressBooking.updateMany({
+        where: {
+          id: expressBooking.id,
+          status: "ACTIVE",
+        },
+        data: {
+          status: "COMPLETED",
+        },
+      });
+
+      if (expressCompleted.count !== 1) {
+        throw new Error(
+          "Express booking is not in an active state for delivery completion",
+        );
+      }
+    }
+
     if (booking.vehicleId) {
       await tx.vehicle.update({
         where: {

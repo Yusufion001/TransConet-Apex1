@@ -263,7 +263,8 @@ export function applySecurityFoundation(app: Express) {
       if (
         req.url === "/api/payments/webhook" ||
         req.url === "/api/commission-payments/webhook" ||
-        req.url === "/api/verification/youverify/webhook"
+        req.url === "/api/verification/youverify/webhook" ||
+        req.url === "/api/express/paystack/webhook"
       ) {
         (req as typeof req & { rawBody?: Buffer }).rawBody = Buffer.from(buf);
       }

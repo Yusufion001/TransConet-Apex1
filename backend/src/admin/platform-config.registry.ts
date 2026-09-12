@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  expressPricingConfigSchema,
   pricingConfigSchema,
   tripTrackingConfigSchema,
 } from "./admin.validators.js";
@@ -9,6 +10,7 @@ import {
 
 export const PLATFORM_CONFIG_KEYS = {
   PRICING_CONFIG: "PRICING_CONFIG",
+  EXPRESS_PRICING_CONFIG: "EXPRESS_PRICING_CONFIG",
   MARKETPLACE_VISIBILITY_CONFIG: "MARKETPLACE_VISIBILITY_CONFIG",
   TRIP_TRACKING_CONFIG: "TRIP_TRACKING_CONFIG",
 } as const;
@@ -34,6 +36,14 @@ export const PLATFORM_CONFIG_REGISTRY: Record<
     editable: true,
     deletable: false,
     schema: pricingConfigSchema,
+  },
+
+  EXPRESS_PRICING_CONFIG: {
+    key: PLATFORM_CONFIG_KEYS.EXPRESS_PRICING_CONFIG,
+    description: "Express W/M freight pricing and cargo limit configuration",
+    editable: true,
+    deletable: false,
+    schema: expressPricingConfigSchema,
   },
 
   MARKETPLACE_VISIBILITY_CONFIG: {
