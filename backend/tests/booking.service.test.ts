@@ -33,6 +33,10 @@ const prismaMock = {
     findFirst: mock.fn<(...args: any[]) => any>(),
     findUnique: mock.fn<(...args: any[]) => any>(),
   },
+  expressBooking: {
+    findUnique: mock.fn<(...args: any[]) => any>(),
+    updateMany: mock.fn<(...args: any[]) => any>(),
+  },
 
   wallet: {
     findUnique: mock.fn<(...args: any[]) => any>(),
@@ -155,6 +159,8 @@ function resetMocks() {
     prismaMock.vehicle.update,
     prismaMock.payment.findFirst,
     prismaMock.payment.findUnique,
+    prismaMock.expressBooking.findUnique,
+    prismaMock.expressBooking.updateMany,
     prismaMock.settlement.findUnique,
     prismaMock.settlement.create,
     prismaMock.commissionRule.findMany,
@@ -756,6 +762,81 @@ test("confirmDelivery completes delivery and creates a settlement", async () => 
     createShipmentEventMock.mock.calls.length,
     1,
   );
+});
+
+test("confirmDelivery completes an Express booking through the existing delivery flow", async () => {
+  prismaMock.booking.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "booking-1",
+      status: "ARRIVED",
+      transporterId: "transporter-1",
+      vehicleId: "vehicle-1",
+      deliveryConfirmationCode: "123456",
+    }),
+  );
+
+  prismaMock.booking.updateMany.mock.mockImplementation(
+    async () => ({ count: 1 }),
+  );
+
+  prismaMock.payment.findFirst.mock.mockImplementation(
+    async () => ({
+      id: "payment-1",
+      bookingId: "booking-1",
+      amount: 150000,
+      status: "SUCCESS",
+    }),
+  );
+
+  prismaMock.expressBooking.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "express-1",
+      status: "ACTIVE",
+    }),
+  );
+
+  prismaMock.expressBooking.updateMany.mock.mockImplementation(
+    async () => ({ count: 1 }),
+  );
+
+  prismaMock.vehicle.update.mock.mockImplementation(
+    async () => ({
+      id: "vehicle-1",
+      availabilityStatus: "AVAILABLE",
+    }),
+  );
+
+  prismaMock.booking.update.mock.mockImplementation(
+    async () =>
+      makeBooking({
+        status: "COMPLETED",
+        paymentStatus: "SUCCESS",
+      }),
+  );
+
+  createSettlementMock.mock.mockImplementation(
+    async () => ({
+      id: "settlement-1",
+      bookingId: "booking-1",
+      paymentId: "payment-1",
+      transporterId: "transporter-1",
+      status: "PENDING",
+    }),
+  );
+
+  const result = await confirmDelivery("booking-1", "123456");
+
+  assert.equal(result.status, "COMPLETED");
+  assert.equal(prismaMock.expressBooking.findUnique.mock.calls.length, 1);
+  assert.equal(prismaMock.expressBooking.updateMany.mock.calls.length, 1);
+
+  const expressUpdate =
+    prismaMock.expressBooking.updateMany.mock.calls[0]?.arguments[0];
+
+  assert.equal(expressUpdate.where.id, "express-1");
+  assert.equal(expressUpdate.where.status, "ACTIVE");
+  assert.equal(expressUpdate.data.status, "COMPLETED");
+  assert.equal(createSettlementMock.mock.calls.length, 1);
 });
 
 test("confirmDelivery rejects an invalid confirmation code", async () => {

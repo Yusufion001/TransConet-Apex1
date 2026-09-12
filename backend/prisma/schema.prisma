@@ -142,6 +142,18 @@ enum BookingStatus {
   DISPUTED
 }
 
+enum ExpressBookingStatus {
+  AWAITING_PAYMENT
+  READY_FOR_DISPATCH
+  DISPATCHING
+  ASSIGNED
+  PICKUP_VERIFICATION
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
 enum PaymentStatus {
   PENDING
   PROCESSING
@@ -154,6 +166,7 @@ enum PaymentMethod {
   FLUTTERWAVE
   BANK_TRANSFER
   NEGOTIATE
+  PAYSTACK
 }
 
 enum NegotiationStatus {
@@ -602,6 +615,7 @@ model Booking {
   updatedAt                DateTime @updatedAt
 
   pricingSnapshot BookingPricingSnapshot?
+  expressBooking ExpressBooking?
 
   customer    User     @relation("CustomerBookings", fields: [customerId], references: [id])
   transporter User?    @relation("TransporterBookings", fields: [transporterId], references: [id])
@@ -620,6 +634,47 @@ model Booking {
   @@index([vehicleId])
   @@index([status])
   @@index([scheduledDate])
+}
+
+model ExpressBooking {
+  id                    String   @id @default(uuid())
+  bookingId             String   @unique
+  status                ExpressBookingStatus @default(AWAITING_PAYMENT)
+
+  packagingType         String
+  packageCount          Int
+
+  weightKg              Decimal  @db.Decimal(14, 2)
+  volumeCbm             Decimal  @db.Decimal(14, 4)
+  chargeableRevenueTons Decimal  @db.Decimal(14, 4)
+
+  distanceKm            Decimal  @db.Decimal(14, 3)
+
+  baseCharge            Decimal  @db.Decimal(14, 2)
+  distanceCharge        Decimal  @db.Decimal(14, 2)
+  revenueTonCharge      Decimal  @db.Decimal(14, 2)
+  packagingCharge       Decimal  @db.Decimal(14, 2)
+  fare                  Decimal  @db.Decimal(14, 2)
+
+  currency                      String   @default("NGN")
+  kgPerMetricTon                Decimal  @db.Decimal(14, 4)
+  volumeCbmPerPackage           Decimal  @db.Decimal(14, 4)
+  distanceRatePerKm             Decimal  @db.Decimal(14, 4)
+  revenueTonRate                Decimal  @db.Decimal(14, 4)
+  minimumChargeableRevenueTons  Decimal  @db.Decimal(14, 4)
+  maxCargoWeightKg              Decimal  @db.Decimal(14, 2)
+
+  pickupOtpHash         String?
+  pickupOtpExpiresAt    DateTime?
+  pickupVerifiedAt      DateTime?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  booking               Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([createdAt])
 }
 
 model BookingPricingSnapshot {

@@ -140,6 +140,27 @@ export const pricingConfigSchema = z.object({
   fuel: pricingFuelSchema,
 }).strict();
 
+const expressPackageTypeSchema = z.object({
+  volumeCbmPerPackage: positivePricingNumber,
+  handlingCharge: positivePricingNumber,
+}).strict();
+
+export const expressPricingConfigSchema = z.object({
+  enabled: z.boolean(),
+  currency: z.literal("NGN"),
+  kgPerMetricTon: positivePricingNumber,
+  baseCharge: positivePricingNumber,
+  distanceRatePerKm: positivePricingNumber,
+  revenueTonRate: positivePricingNumber,
+  minimumChargeableRevenueTons: positivePricingNumber,
+  maxCargoWeightKg: positivePricingNumber,
+  pickupOtpTtlMinutes: positivePricingNumber,
+  packageTypes: z.record(
+    z.string().trim().min(1).max(100),
+    expressPackageTypeSchema,
+  ),
+}).strict();
+
 const positiveTrackingNumber = z.coerce
   .number()
   .finite()
