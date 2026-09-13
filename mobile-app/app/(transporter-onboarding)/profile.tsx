@@ -34,8 +34,12 @@ export default function TransporterProfileSetupScreen() {
   const handleContinue = async () => {
     const values = {
       transporterType,
-      companyName: companyName.trim(),
-      businessRegistrationNumber: businessRegistrationNumber.trim(),
+      ...(transporterType === "BUSINESS"
+        ? {
+            companyName: companyName.trim(),
+            businessRegistrationNumber: businessRegistrationNumber.trim(),
+          }
+        : {}),
       address: address.trim(),
       city: city.trim(),
       state: state.trim(),
@@ -51,8 +55,8 @@ export default function TransporterProfileSetupScreen() {
 
     if (transporterType === "BUSINESS") {
       requiredValues.push(
-        values.companyName,
-        values.businessRegistrationNumber,
+        companyName.trim(),
+        businessRegistrationNumber.trim(),
       );
     }
 
