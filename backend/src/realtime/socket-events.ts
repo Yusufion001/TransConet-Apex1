@@ -69,6 +69,20 @@ export function initializeSocketEvents(io: Server) {
     }
   });
 
+  eventBus.on("express", (event) => {
+    if (event.recipientId) {
+      io.to(`user:${event.recipientId}`).emit(
+        "express:offer",
+        event,
+      );
+      return;
+    }
+
+    if (event.eventType === "EXPRESS_GENERAL_BOARD_AVAILABLE") {
+      io.emit("express:board-available", event);
+    }
+  });
+
   eventBus.on("notification", (event) => {
     if (event.recipientId) {
       io.to(`user:${event.recipientId}`).emit(

@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../src/auth/auth.store";
 import { getTransporterWallet } from "../../src/api/wallet";
 import { getTransporterOnboardingStatus } from "../../src/api/transporter";
+import { listenForExpressOffers } from "../../src/realtime/express-realtime";
 
 function money(value: string | number | undefined) {
   if (value === undefined || value === null || value === "") return "₦0";
@@ -68,6 +69,7 @@ function TransporterDrawerContent(props: any) {
       {item("⌂  Home", "/(transporter)")}
       {item("▣  Assignments", "/(transporter)/bookings")}
       {item("⇄  Marketplace", "/(transporter)/marketplace")}
+      {item("⚡  Express", "/(transporter)/express")}
       {item("🚚  Fleet", "/(transporter)/vehicles")}
       {item("₦  Wallet", "/(transporter)/wallet")}
       {item("🔔  Notifications", "/(transporter)/notifications")}
@@ -150,6 +152,38 @@ export default function TransporterLayout() {
     };
   }, [user]);
 
+  React.useEffect(() => {
+    if (route !== "READY" || !user || user.role !== "TRANSPORTER") {
+      return;
+    }
+
+    let cancelled = false;
+    let unsubscribe: (() => void) | undefined;
+
+    void listenForExpressOffers((event) => {
+      if (cancelled || !event.data?.expressBookingId) {
+        return;
+      }
+
+      router.navigate(
+        `/(transporter)/express/${event.data.expressBookingId}` as never,
+      );
+    }).then((cleanup) => {
+      if (cancelled) {
+        cleanup();
+        return;
+      }
+      unsubscribe = cleanup;
+    }).catch((error) => {
+      console.error("Failed to subscribe to Express offers:", error);
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, [route, user]);
+
   if (!route) {
     return (
       <View style={styles.container}>
@@ -181,6 +215,7 @@ export default function TransporterLayout() {
       <Drawer.Screen name="index" options={{ title: "Home" }} />
       <Drawer.Screen name="bookings/index" options={{ title: "Assignments" }} />
       <Drawer.Screen name="marketplace/index" options={{ title: "Marketplace" }} />
+      <Drawer.Screen name="express/index" options={{ title: "Express" }} />
       <Drawer.Screen name="vehicles/index" options={{ title: "Fleet" }} />
       <Drawer.Screen name="wallet/index" options={{ title: "Wallet" }} />
       <Drawer.Screen name="notifications/index" options={{ title: "Notifications" }} />
@@ -189,6 +224,7 @@ export default function TransporterLayout() {
       <Drawer.Screen name="disputes" options={{ title: "Disputes" }} />
       <Drawer.Screen name="settings" options={{ title: "Settings" }} />
       <Drawer.Screen name="marketplace/[id]" options={{ drawerItemStyle: { display: "none" } }} />
+      <Drawer.Screen name="express/[id]" options={{ drawerItemStyle: { display: "none" } }} />
       <Drawer.Screen name="bookings/[id]" options={{ drawerItemStyle: { display: "none" } }} />
     </Drawer>
   );

@@ -1,6 +1,12 @@
 import test, { mock } from "node:test";
 import assert from "node:assert/strict";
 
+const prismaMock = {
+  expressBooking: {
+    findUnique: mock.fn<(...args: any[]) => any>(),
+  },
+};
+
 const routerUseMock = mock.fn();
 const routerGetMock = mock.fn();
 const routerPostMock = mock.fn();
@@ -10,6 +16,13 @@ const RouterMock = () => ({
   get: routerGetMock,
   post: routerPostMock,
 });
+
+mock.module(
+  new URL("../src/config/prisma.js", import.meta.url).href,
+  {
+    namedExports: { prisma: prismaMock },
+  },
+);
 
 mock.module("express", {
   namedExports: {
@@ -123,6 +136,27 @@ function getRoute(method: "get" | "post", path: string) {
 }
 
 test.beforeEach(() => {
+  prismaMock.expressBooking.findUnique.mock.resetCalls();
+  prismaMock.expressBooking.findUnique.mock.mockImplementation(async () => ({
+    id: "11111111-1111-4111-8111-111111111111",
+    status: "DISPATCHING",
+    packagingType: "BOX",
+    packageCount: 2,
+    weightKg: "500",
+    distanceKm: "10",
+    fare: "25000",
+    currency: "NGN",
+    booking: {
+      pickupLocation: "Lagos",
+      pickupLandmark: null,
+      destination: "Ibadan",
+      destinationLandmark: null,
+      scheduledDate: null,
+      cargoDescription: "Express cargo",
+      cargoWeight: "500",
+    },
+  }));
+
   calculateExpressFareMock.mock.resetCalls();
   processPaystackExpressWebhookMock.mock.resetCalls();
   createExpressBookingMock.mock.resetCalls();

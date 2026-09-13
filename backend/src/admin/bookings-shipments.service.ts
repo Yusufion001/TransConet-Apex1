@@ -39,6 +39,37 @@ const relatedInclude = {
       verificationStatus: true,
     },
   },
+  expressBooking: {
+    select: {
+      id: true,
+      bookingId: true,
+      status: true,
+      dispatchStage: true,
+      generalBoardPublishedAt: true,
+      packagingType: true,
+      packageCount: true,
+      weightKg: true,
+      volumeCbm: true,
+      chargeableRevenueTons: true,
+      distanceKm: true,
+      baseCharge: true,
+      distanceCharge: true,
+      revenueTonCharge: true,
+      packagingCharge: true,
+      fare: true,
+      currency: true,
+      kgPerMetricTon: true,
+      volumeCbmPerPackage: true,
+      distanceRatePerKm: true,
+      revenueTonRate: true,
+      minimumChargeableRevenueTons: true,
+      maxCargoWeightKg: true,
+      pickupOtpExpiresAt: true,
+      pickupVerifiedAt: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  },
 };
 
 export async function listAdminBookings(input: {
@@ -143,6 +174,44 @@ export async function listAdminBookings(input: {
       customer: booking.customer,
       transporter: booking.transporter,
       vehicle: booking.vehicle,
+      expressBooking: booking.expressBooking
+        ? {
+            ...booking.expressBooking,
+            weightKg: booking.expressBooking.weightKg.toString(),
+            volumeCbm: booking.expressBooking.volumeCbm.toString(),
+            chargeableRevenueTons:
+              booking.expressBooking.chargeableRevenueTons.toString(),
+            distanceKm: booking.expressBooking.distanceKm.toString(),
+            baseCharge: booking.expressBooking.baseCharge.toString(),
+            distanceCharge: booking.expressBooking.distanceCharge.toString(),
+            revenueTonCharge:
+              booking.expressBooking.revenueTonCharge.toString(),
+            packagingCharge: booking.expressBooking.packagingCharge.toString(),
+            fare: booking.expressBooking.fare.toString(),
+            kgPerMetricTon:
+              booking.expressBooking.kgPerMetricTon.toString(),
+            volumeCbmPerPackage:
+              booking.expressBooking.volumeCbmPerPackage.toString(),
+            distanceRatePerKm:
+              booking.expressBooking.distanceRatePerKm.toString(),
+            revenueTonRate:
+              booking.expressBooking.revenueTonRate.toString(),
+            minimumChargeableRevenueTons:
+              booking.expressBooking.minimumChargeableRevenueTons.toString(),
+            maxCargoWeightKg:
+              booking.expressBooking.maxCargoWeightKg.toString(),
+            generalBoardPublishedAt:
+              booking.expressBooking.generalBoardPublishedAt?.toISOString() ??
+              null,
+            pickupOtpExpiresAt:
+              booking.expressBooking.pickupOtpExpiresAt?.toISOString() ??
+              null,
+            pickupVerifiedAt:
+              booking.expressBooking.pickupVerifiedAt?.toISOString() ?? null,
+            createdAt: booking.expressBooking.createdAt.toISOString(),
+            updatedAt: booking.expressBooking.updatedAt.toISOString(),
+          }
+        : null,
       counts: booking._count,
     })),
 

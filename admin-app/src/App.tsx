@@ -748,6 +748,19 @@ function LiveOperations() {
         ]);
 
         if (
+          event.entityType === "EXPRESS_BOOKING" &&
+          event.bookingId
+        ) {
+          void loadOperations();
+
+          if (selectedTrip?.id === event.bookingId) {
+            void selectTripById(event.bookingId);
+          }
+
+          return;
+        }
+
+        if (
           event.entityType === "BOOKING" &&
           event.bookingId
         ) {
@@ -915,6 +928,11 @@ function LiveOperations() {
           value={loading ? "…" : String(summary?.inTransit ?? 0)}
           detail="Trips currently moving"
         />
+        <StatCard
+          label="Express Dispatching"
+          value={loading ? "…" : String(summary?.expressDispatching ?? 0)}
+          detail={`${summary?.expressNearby ?? 0} nearby · ${summary?.expressGeneralBoard ?? 0} on General Board`}
+        />
       </div>
 
       <div className="operations-toolbar">
@@ -938,6 +956,7 @@ function LiveOperations() {
               <option value="DRIVER_ARRIVING">Driver arriving</option>
               <option value="ARRIVED">Arrived</option>
               <option value="IN_TRANSIT">In transit</option>
+              <option value="EXPRESS_DISPATCHING">Express dispatching</option>
             </select>
           </label>
 
@@ -1002,17 +1021,23 @@ function LiveOperations() {
                     >
                       <td>
                         <span className="operation-status">
-                          {trip.status}
+                          {trip.expressBooking
+                            ? `EXPRESS · ${trip.expressBooking.dispatchStage}`
+                            : trip.status}
                         </span>
                       </td>
                       <td>
                         <strong>
                           {trip.vehicle?.registrationNumber ??
-                            "Unavailable"}
+                            (trip.expressBooking
+                              ? "Awaiting assignment"
+                              : "Unavailable")}
                         </strong>
                         <small>
                           {trip.vehicle?.vehicleType ??
-                            "Vehicle unavailable"}
+                            (trip.expressBooking
+                              ? "No vehicle assigned"
+                              : "Vehicle unavailable")}
                         </small>
                       </td>
                       <td>{customer}</td>
@@ -1072,8 +1097,50 @@ function LiveOperations() {
                 <>
                   <div className="trip-status-block">
                     <span>Status</span>
-                    <strong>{selectedTrip.status}</strong>
+                    <strong>
+                      {selectedTrip.expressBooking
+                        ? `EXPRESS · ${selectedTrip.expressBooking.dispatchStage}`
+                        : selectedTrip.status}
+                    </strong>
                   </div>
+
+                  {selectedTrip.expressBooking && (
+                    <div className="detail-section">
+                      <span>Express Dispatch</span>
+                      <strong>
+                        {selectedTrip.expressBooking.dispatchStage ===
+                        "GENERAL_BOARD"
+                          ? "General Express Board"
+                          : "Nearby Dispatch"}
+                      </strong>
+                      <small>
+                        {selectedTrip.expressBooking.dispatchStage ===
+                        "GENERAL_BOARD"
+                          ? "Nearby dispatch timeout elapsed; available to eligible transporters."
+                          : "Searching eligible nearby transporters first."}
+                      </small>
+                    </div>
+                  )}
+
+                  {selectedTrip.expressBooking && (
+                    <div className="detail-section">
+                      <span>Express Booking</span>
+                      <strong>
+                        {selectedTrip.expressBooking.bookingId}
+                      </strong>
+                      <small>
+                        {selectedTrip.expressBooking.packageCount} package
+                        {selectedTrip.expressBooking.packageCount === 1
+                          ? ""
+                          : "s"} · {selectedTrip.expressBooking.weightKg} kg ·{" "}
+                        {selectedTrip.expressBooking.distanceKm} km ·{" "}
+                        {selectedTrip.expressBooking.currency === "NGN"
+                          ? "₦"
+                          : `${selectedTrip.expressBooking.currency} `}
+                        {selectedTrip.expressBooking.fare}
+                      </small>
+                    </div>
+                  )}
 
                   <div className="detail-section">
                     <span>Vehicle</span>
@@ -1084,7 +1151,9 @@ function LiveOperations() {
                     <small>
                       {selectedTrip.vehicle
                         ? `${selectedTrip.vehicle.vehicleType} · ${selectedTrip.vehicle.vehicleClass}`
-                        : "Vehicle information unavailable"}
+                        : selectedTrip.expressBooking
+                          ? "Awaiting transporter and vehicle assignment"
+                          : "Vehicle information unavailable"}
                     </small>
                   </div>
 
@@ -1114,6 +1183,8 @@ function LiveOperations() {
                       selectedTrip.vehicle?.currentLongitude !== null &&
                       selectedTrip.vehicle?.currentLongitude !== undefined
                         ? `${Number(selectedTrip.vehicle.currentLatitude).toFixed(5)}, ${Number(selectedTrip.vehicle.currentLongitude).toFixed(5)}`
+                        : selectedTrip.expressBooking
+                        ? "No vehicle assigned yet"
                         : "No location available"}
                     </strong>
                   </div>
@@ -1130,7 +1201,11 @@ function LiveOperations() {
                     {trackingLoading ? (
                       <small>Loading tracking points…</small>
                     ) : tracking.length === 0 ? (
-                      <small>No tracking points available.</small>
+                      <small>
+                        {selectedTrip.expressBooking && !selectedTrip.vehicle
+                          ? "Tracking starts after Express dispatch assigns a transporter and vehicle."
+                          : "No tracking points available."}
+                      </small>
                     ) : (
                       <div className="tracking-list">
                         {tracking.slice(0, 8).map((point) => (

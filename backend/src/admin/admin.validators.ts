@@ -171,6 +171,10 @@ export const tripTrackingConfigSchema = z.object({
   arrivalGeofenceMeters: positiveTrackingNumber,
 }).strict();
 
+export const expressDispatchConfigSchema = z.object({
+  nearbyDispatchTimeoutSeconds: positiveTrackingNumber,
+}).strict();
+
 export const platformConfigSchema = z.object({
   value: z.unknown(),
   description: z.string().trim().max(1000).nullable().optional(),

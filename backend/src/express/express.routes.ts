@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { ExpressBookingStatus, ExpressDispatchStage } from "../../generated/prisma/client.js";
 import { z } from "zod";
 import {
   authenticate,
@@ -8,6 +9,7 @@ import {
 import { calculateExpressFare } from "./express-pricing.service.js";
 import { processPaystackExpressWebhook } from "./paystack-webhook.service.js";
 import { env } from "../config/env.js";
+import { prisma } from "../config/prisma.js";
 import { createExpressBooking } from "./express-booking.service.js";
 import {
   findExpressDispatchCandidates,
@@ -386,6 +388,108 @@ router.post(
 );
 
 router.get(
+  "/general-board",
+  authorize("TRANSPORTER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const expressBookings = await prisma.expressBooking.findMany({
+        where: {
+          status: ExpressBookingStatus.DISPATCHING,
+          dispatchStage: ExpressDispatchStage.GENERAL_BOARD,
+          generalBoardPublishedAt: {
+            not: null,
+          },
+          booking: {
+            paymentStatus: "SUCCESS",
+          },
+        },
+        orderBy: {
+          generalBoardPublishedAt: "asc",
+        },
+        select: {
+          id: true,
+          status: true,
+          dispatchStage: true,
+          generalBoardPublishedAt: true,
+          packagingType: true,
+          packageCount: true,
+          weightKg: true,
+          distanceKm: true,
+          fare: true,
+          currency: true,
+          booking: {
+            select: {
+              pickupLocation: true,
+              pickupLandmark: true,
+              destination: true,
+              destinationLandmark: true,
+              scheduledDate: true,
+              cargoDescription: true,
+              cargoWeight: true,
+            },
+          },
+        },
+      });
+
+      const board = [];
+
+      for (const expressBooking of expressBookings) {
+        const candidates = await findExpressDispatchCandidates(
+          expressBooking.id,
+        );
+
+        const offer = candidates.find(
+          (candidate) => candidate.transporterId === req.user!.id,
+        );
+
+        if (!offer) {
+          continue;
+        }
+
+        board.push({
+          expressBookingId: expressBooking.id,
+          status: expressBooking.status,
+          dispatchStage: expressBooking.dispatchStage,
+          vehicleId: offer.vehicleId,
+          transporterTier: offer.transporterTier,
+          distanceKm: offer.distanceKm,
+          pickupLocation: expressBooking.booking.pickupLocation,
+          pickupLandmark: expressBooking.booking.pickupLandmark,
+          destination: expressBooking.booking.destination,
+          destinationLandmark: expressBooking.booking.destinationLandmark,
+          scheduledDate: expressBooking.booking.scheduledDate,
+          cargoDescription: expressBooking.booking.cargoDescription,
+          cargoWeight: Number(
+            expressBooking.booking.cargoWeight ?? expressBooking.weightKg,
+          ),
+          packageCount: expressBooking.packageCount,
+          packagingType: expressBooking.packagingType,
+          fare: expressBooking.fare.toString(),
+          currency: expressBooking.currency,
+          generalBoardPublishedAt:
+            expressBooking.generalBoardPublishedAt,
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: board,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to retrieve General Express Board";
+
+      return res.status(500).json({
+        success: false,
+        message,
+      });
+    }
+  },
+);
+
+router.get(
   "/bookings/:expressBookingId/offer",
   authorize("TRANSPORTER"),
   async (req: AuthenticatedRequest, res) => {
@@ -408,13 +512,57 @@ router.get(
         });
       }
 
+      const expressBooking = await prisma.expressBooking.findUnique({
+        where: { id: expressBookingId },
+        select: {
+          id: true,
+          status: true,
+          packagingType: true,
+          packageCount: true,
+          weightKg: true,
+          distanceKm: true,
+          fare: true,
+          currency: true,
+          booking: {
+            select: {
+              pickupLocation: true,
+              pickupLandmark: true,
+              destination: true,
+              destinationLandmark: true,
+              scheduledDate: true,
+              cargoDescription: true,
+              cargoWeight: true,
+            },
+          },
+        },
+      });
+
+      if (!expressBooking) {
+        return res.status(404).json({
+          success: false,
+          message: "Express booking not found",
+        });
+      }
+
       return res.json({
         success: true,
         data: {
           expressBookingId,
+          status: expressBooking.status,
           vehicleId: offer.vehicleId,
           transporterTier: offer.transporterTier,
           distanceKm: offer.distanceKm,
+          pickupLocation: expressBooking.booking.pickupLocation,
+          pickupLandmark: expressBooking.booking.pickupLandmark,
+          destination: expressBooking.booking.destination,
+          destinationLandmark: expressBooking.booking.destinationLandmark,
+          scheduledDate: expressBooking.booking.scheduledDate,
+          cargoDescription: expressBooking.booking.cargoDescription,
+          cargoWeight: Number(expressBooking.booking.cargoWeight ?? expressBooking.weightKg),
+          packageCount: expressBooking.packageCount,
+          packagingType: expressBooking.packagingType,
+          fare: expressBooking.fare.toString(),
+          currency: expressBooking.currency,
         },
       });
     } catch (error) {

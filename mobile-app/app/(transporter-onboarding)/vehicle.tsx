@@ -18,6 +18,8 @@ import {
   type Vehicle,
 } from "../../src/api/transporter";
 
+const FUEL_TYPES = ["PETROL", "DIESEL"] as const;
+
 const VEHICLE_TYPES = [
   "Truck",
   "Van",
@@ -85,6 +87,7 @@ export default function TransporterVehicleScreen() {
 
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [vehicleType, setVehicleType] = useState("");
+  const [fuelType, setFuelType] = useState<(typeof FUEL_TYPES)[number] | "">("");
   const [vehicleBodyType, setVehicleBodyType] = useState("");
   const [vehicleClass, setVehicleClass] = useState("");
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -105,6 +108,7 @@ export default function TransporterVehicleScreen() {
           setVehicle(vehicles[0]);
           setRegistrationNumber(vehicles[0].registrationNumber);
           setVehicleType(vehicles[0].vehicleType);
+          setFuelType(vehicles[0].fuelType ?? "");
           setVehicleBodyType(vehicles[0].vehicleBodyType ?? "");
           setVehicleClass(vehicles[0].vehicleClass);
         }
@@ -132,12 +136,13 @@ export default function TransporterVehicleScreen() {
     if (
       !registration ||
       !vehicleType ||
+      !fuelType ||
       !vehicleBodyType ||
       !vehicleClass
     ) {
       Alert.alert(
         "Incomplete vehicle details",
-        "Please provide the registration number, vehicle type, vehicle body type, and vehicle class.",
+        "Please provide the registration number, vehicle type, fuel type, vehicle body type, and vehicle class.",
       );
       return;
     }
@@ -148,6 +153,7 @@ export default function TransporterVehicleScreen() {
       const createdVehicle = await createVehicle({
         registrationNumber: registration,
         vehicleType,
+        fuelType,
         vehicleBodyType,
         vehicleClass,
       });
@@ -237,6 +243,30 @@ export default function TransporterVehicleScreen() {
                   ]}
                 >
                   {type}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+
+          <Text style={styles.label}>Fuel type</Text>
+          <View style={styles.options}>
+            {FUEL_TYPES.map((fuelTypeOption) => (
+              <Pressable
+                key={fuelTypeOption}
+                onPress={() => setFuelType(fuelTypeOption)}
+                disabled={saving}
+                style={[
+                  styles.option,
+                  fuelType === fuelTypeOption && styles.optionSelected,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.optionText,
+                    fuelType === fuelTypeOption && styles.optionTextSelected,
+                  ]}
+                >
+                  {fuelTypeOption}
                 </Text>
               </Pressable>
             ))}

@@ -7,12 +7,31 @@ export type LiveTripSummary = {
   driverArriving: number;
   arrived: number;
   inTransit: number;
+  expressDispatching: number;
+  expressNearby: number;
+  expressGeneralBoard: number;
   synchronizedAt: string;
 };
 
 export type LiveTrip = {
   id: string;
   status: string;
+  expressBooking?: {
+    id: string;
+    bookingId: string;
+    status: string;
+    dispatchStage: "NEARBY" | "GENERAL_BOARD";
+    generalBoardPublishedAt: string | null;
+    packagingType: string;
+    packageCount: number;
+    weightKg: string;
+    distanceKm: string;
+    fare: string;
+    currency: string;
+    pickupVerifiedAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
   customer?: {
     id: string;
     firstName: string;

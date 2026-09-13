@@ -1,6 +1,11 @@
 import { prisma } from "../config/prisma.js";
 import { publishEvent } from "../realtime/event-bus.js";
-import { ExpressBookingStatus, UserRole } from "../../generated/prisma/client.js";
+import { getPlatformConfigValue } from "../admin/platform-config.service.js";
+import {
+  ExpressBookingStatus,
+  ExpressDispatchStage,
+  UserRole,
+} from "../../generated/prisma/client.js";
 
 const EXPRESS_PROVIDER = "PAYSTACK";
 
@@ -144,6 +149,85 @@ export async function findExpressDispatchCandidates(
     });
 }
 
+
+export async function promoteExpiredExpressBookingsToGeneralBoard() {
+  const config = await getPlatformConfigValue("EXPRESS_DISPATCH_CONFIG");
+
+  const configuredTimeout = Number(
+    (
+      config?.value as {
+        nearbyDispatchTimeoutSeconds?: unknown;
+      } | null
+    )?.nearbyDispatchTimeoutSeconds,
+  );
+
+  const timeoutSeconds =
+    Number.isFinite(configuredTimeout) && configuredTimeout > 0
+      ? configuredTimeout
+      : 300;
+
+  const cutoff = new Date(Date.now() - timeoutSeconds * 1000);
+
+  const expiredBookings = await prisma.expressBooking.findMany({
+    where: {
+      status: ExpressBookingStatus.DISPATCHING,
+      dispatchStage: ExpressDispatchStage.NEARBY,
+      generalBoardPublishedAt: null,
+      updatedAt: {
+        lte: cutoff,
+      },
+      booking: {
+        paymentStatus: "SUCCESS",
+      },
+    },
+    select: {
+      id: true,
+      bookingId: true,
+    },
+  });
+
+  let promotedCount = 0;
+
+  for (const expressBooking of expiredBookings) {
+    const updated = await prisma.expressBooking.updateMany({
+      where: {
+        id: expressBooking.id,
+        status: ExpressBookingStatus.DISPATCHING,
+        dispatchStage: ExpressDispatchStage.NEARBY,
+        generalBoardPublishedAt: null,
+      },
+      data: {
+        dispatchStage: ExpressDispatchStage.GENERAL_BOARD,
+        generalBoardPublishedAt: new Date(),
+      },
+    });
+
+    if (updated.count !== 1) {
+      continue;
+    }
+
+    promotedCount += 1;
+
+    publishEvent("express", {
+      eventType: "EXPRESS_GENERAL_BOARD_AVAILABLE",
+      module: "LIVE_TRIPS",
+      entityType: "EXPRESS_BOOKING",
+      entityId: expressBooking.id,
+      bookingId: expressBooking.bookingId,
+      data: {
+        expressBookingId: expressBooking.id,
+        status: ExpressBookingStatus.DISPATCHING,
+        dispatchStage: ExpressDispatchStage.GENERAL_BOARD,
+      },
+    });
+  }
+
+  return {
+    promotedCount,
+    timeoutSeconds,
+  };
+}
+
 export async function dispatchExpressBooking(expressBookingId: string) {
   const candidates = await findExpressDispatchCandidates(expressBookingId);
 
@@ -161,6 +245,8 @@ export async function dispatchExpressBooking(expressBookingId: string) {
     },
     data: {
       status: ExpressBookingStatus.DISPATCHING,
+      dispatchStage: "NEARBY",
+      generalBoardPublishedAt: null,
     },
   });
 
@@ -195,6 +281,24 @@ export async function dispatchExpressBooking(expressBookingId: string) {
       candidateCount: candidates.length,
     },
   });
+
+  for (const candidate of candidates) {
+    publishEvent("express", {
+      eventType: "EXPRESS_OFFER_AVAILABLE",
+      module: "LIVE_TRIPS",
+      entityType: "EXPRESS_BOOKING",
+      entityId: booking.id,
+      bookingId: booking.bookingId,
+      recipientId: candidate.transporterId,
+      data: {
+        expressBookingId: booking.id,
+        vehicleId: candidate.vehicleId,
+        transporterTier: candidate.transporterTier,
+        distanceKm: candidate.distanceKm,
+        status: booking.status,
+      },
+    });
+  }
 
   return {
     dispatched: true,

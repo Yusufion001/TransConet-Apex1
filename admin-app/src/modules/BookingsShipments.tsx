@@ -501,6 +501,71 @@ export default function BookingsShipments() {
                   </div>
                 </section>
 
+                {selected.expressBooking ? (
+                  <section className="panel">
+                    <div className="panel-header">
+                      <div>
+                        <h3>Express Booking</h3>
+                        <p>Express dispatch and pickup operational state</p>
+                      </div>
+                    </div>
+                    <div className="detail-grid">
+                      <DetailRow
+                        label="Express Booking ID"
+                        value={selected.expressBooking.bookingId}
+                      />
+                      <DetailRow
+                        label="Express Status"
+                        value={labelize(selected.expressBooking.status)}
+                      />
+                      <DetailRow
+                        label="Dispatch Stage"
+                        value={labelize(selected.expressBooking.dispatchStage)}
+                      />
+                      <DetailRow
+                        label="General Board Published"
+                        value={dateTime(selected.expressBooking.generalBoardPublishedAt)}
+                      />
+                      <DetailRow
+                        label="Packaging"
+                        value={labelize(selected.expressBooking.packagingType)}
+                      />
+                      <DetailRow
+                        label="Package Count"
+                        value={String(selected.expressBooking.packageCount)}
+                      />
+                      <DetailRow
+                        label="Cargo Weight"
+                        value={`${selected.expressBooking.weightKg} kg`}
+                      />
+                      <DetailRow
+                        label="Distance"
+                        value={`${selected.expressBooking.distanceKm} km`}
+                      />
+                      <DetailRow
+                        label="Express Fare"
+                        value={money(selected.expressBooking.fare)}
+                      />
+                      <DetailRow
+                        label="Pickup Verification"
+                        value={
+                          selected.expressBooking.pickupVerifiedAt
+                            ? `Verified ${dateTime(selected.expressBooking.pickupVerifiedAt)}`
+                            : "Not verified"
+                        }
+                      />
+                      <DetailRow
+                        label="Pickup OTP Expiry"
+                        value={dateTime(selected.expressBooking.pickupOtpExpiresAt)}
+                      />
+                      <DetailRow
+                        label="Express Created"
+                        value={dateTime(selected.expressBooking.createdAt)}
+                      />
+                    </div>
+                  </section>
+                ) : null}
+
                 <section className="panel">
                   <div className="panel-header">
                     <div>

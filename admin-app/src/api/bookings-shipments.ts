@@ -38,6 +38,36 @@ export type Vehicle = {
   verificationStatus?: string | null;
 };
 
+export type ExpressBooking = {
+  id: string;
+  bookingId: string;
+  status: string;
+  dispatchStage: "NEARBY" | "GENERAL_BOARD";
+  generalBoardPublishedAt: string | null;
+  packagingType: string;
+  packageCount: number;
+  weightKg: string;
+  volumeCbm: string;
+  chargeableRevenueTons: string;
+  distanceKm: string;
+  baseCharge: string;
+  distanceCharge: string;
+  revenueTonCharge: string;
+  packagingCharge: string;
+  fare: string;
+  currency: string;
+  kgPerMetricTon: string;
+  volumeCbmPerPackage: string;
+  distanceRatePerKm: string;
+  revenueTonRate: string;
+  minimumChargeableRevenueTons: string;
+  maxCargoWeightKg: string;
+  pickupOtpExpiresAt: string | null;
+  pickupVerifiedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Booking = {
   id: string;
   customerId: string;
@@ -76,6 +106,7 @@ export type Booking = {
   customer?: Person | null;
   transporter?: Person | null;
   vehicle?: Vehicle | null;
+  expressBooking?: ExpressBooking | null;
   counts?: {
     events: number;
     payments: number;

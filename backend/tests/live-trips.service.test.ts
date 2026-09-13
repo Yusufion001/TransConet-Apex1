@@ -7,6 +7,9 @@ const prismaMock = {
     findFirst: mock.fn<(...args: any[]) => any>(),
     count: mock.fn<(...args: any[]) => any>(),
   },
+  expressBooking: {
+    count: mock.fn<(...args: any[]) => any>(),
+  },
   trackingPoint: {
     findMany: mock.fn<(...args: any[]) => any>(),
   },
@@ -30,6 +33,7 @@ function resetMocks() {
     prismaMock.booking.findMany,
     prismaMock.booking.findFirst,
     prismaMock.booking.count,
+    prismaMock.expressBooking.count,
     prismaMock.trackingPoint.findMany,
   ]) {
     fn.mock.resetCalls();
@@ -55,11 +59,41 @@ test("getLiveTrips loads all live trips when no filters are supplied", async () 
 
   const args = prismaMock.booking.findMany.mock.calls[0]?.arguments[0];
 
-  assert.deepEqual(args.where.status, {
-    in: ["ASSIGNED", "ACCEPTED", "DRIVER_ARRIVING", "ARRIVED", "IN_TRANSIT"],
-  });
+  assert.deepEqual(args.where.OR, [
+    {
+      status: {
+        in: ["ASSIGNED", "ACCEPTED", "DRIVER_ARRIVING", "ARRIVED", "IN_TRANSIT"],
+      },
+    },
+    {
+      expressBooking: {
+        status: "DISPATCHING",
+      },
+    },
+  ]);
   assert.equal(args.orderBy.updatedAt, "desc");
   assert.equal(args.include.events.take, 10);
+});
+
+test("getLiveTrips includes Express dispatching in the unfiltered live query", async () => {
+  prismaMock.booking.findMany.mock.mockImplementation(async () => []);
+
+  await getLiveTrips();
+
+  const args = prismaMock.booking.findMany.mock.calls[0]?.arguments[0];
+
+  assert.deepEqual(args.where.OR, [
+    {
+      status: {
+        in: ["ASSIGNED", "ACCEPTED", "DRIVER_ARRIVING", "ARRIVED", "IN_TRANSIT"],
+      },
+    },
+    {
+      expressBooking: {
+        status: "DISPATCHING",
+      },
+    },
+  ]);
 });
 
 test("getLiveTrips filters by a valid live-trip status", async () => {
@@ -79,8 +113,31 @@ test("getLiveTrips ignores an invalid status and returns all live statuses", asy
 
   const args = prismaMock.booking.findMany.mock.calls[0]?.arguments[0];
 
-  assert.deepEqual(args.where.status, {
-    in: ["ASSIGNED", "ACCEPTED", "DRIVER_ARRIVING", "ARRIVED", "IN_TRANSIT"],
+  assert.deepEqual(args.where.OR, [
+    {
+      status: {
+        in: ["ASSIGNED", "ACCEPTED", "DRIVER_ARRIVING", "ARRIVED", "IN_TRANSIT"],
+      },
+    },
+    {
+      expressBooking: {
+        status: "DISPATCHING",
+      },
+    },
+  ]);
+});
+
+test("getLiveTrips filters explicitly for Express dispatching", async () => {
+  prismaMock.booking.findMany.mock.mockImplementation(async () => []);
+
+  await getLiveTrips({ status: "EXPRESS_DISPATCHING" });
+
+  const args = prismaMock.booking.findMany.mock.calls[0]?.arguments[0];
+
+  assert.deepEqual(args.where, {
+    expressBooking: {
+      status: "DISPATCHING",
+    },
   });
 });
 
@@ -114,9 +171,18 @@ test("getLiveTripById only returns a booking that is currently live", async () =
   const args = prismaMock.booking.findFirst.mock.calls[0]?.arguments[0];
 
   assert.equal(args.where.id, "booking-1");
-  assert.deepEqual(args.where.status, {
-    in: ["ASSIGNED", "ACCEPTED", "DRIVER_ARRIVING", "ARRIVED", "IN_TRANSIT"],
-  });
+  assert.deepEqual(args.where.OR, [
+    {
+      status: {
+        in: ["ASSIGNED", "ACCEPTED", "DRIVER_ARRIVING", "ARRIVED", "IN_TRANSIT"],
+      },
+    },
+    {
+      expressBooking: {
+        status: "DISPATCHING",
+      },
+    },
+  ]);
 });
 
 test("getLiveTripById returns null for a non-live booking", async () => {
@@ -132,6 +198,11 @@ test("getLiveTripSummary returns counts for every live-trip status", async () =>
 
   prismaMock.booking.count.mock.mockImplementation(async () => counts.shift());
 
+  const expressCounts = [7, 3, 4];
+  prismaMock.expressBooking.count.mock.mockImplementation(
+    async () => expressCounts.shift(),
+  );
+
   const result = await getLiveTripSummary();
 
   assert.deepEqual(
@@ -141,6 +212,9 @@ test("getLiveTripSummary returns counts for every live-trip status", async () =>
       driverArriving: result.driverArriving,
       arrived: result.arrived,
       inTransit: result.inTransit,
+      expressDispatching: result.expressDispatching,
+      expressNearby: result.expressNearby,
+      expressGeneralBoard: result.expressGeneralBoard,
       total: result.total,
     },
     {
@@ -149,12 +223,16 @@ test("getLiveTripSummary returns counts for every live-trip status", async () =>
       driverArriving: 3,
       arrived: 2,
       inTransit: 6,
-      total: 20,
+      expressDispatching: 7,
+      expressNearby: 3,
+      expressGeneralBoard: 4,
+      total: 27,
     },
   );
 
   assert.ok(result.synchronizedAt instanceof Date);
   assert.equal(prismaMock.booking.count.mock.calls.length, 5);
+  assert.equal(prismaMock.expressBooking.count.mock.calls.length, 3);
 });
 
 test("getLiveTripTracking returns tracking points in descending time order", async () => {
