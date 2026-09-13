@@ -188,7 +188,7 @@ export default function TransporterWallet() {
 
       Alert.alert(
         "Security code sent",
-        "A verification code has been sent to your verified phone number.",
+        "A verification code has been sent to your verified phone number and email address.",
       );
     },
 

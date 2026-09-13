@@ -1,9 +1,8 @@
+import { createHash, randomInt, timingSafeEqual } from "node:crypto";
 import { prisma } from "../config/prisma.js";
 import { env } from "../config/env.js";
-import {
-  sendPhoneOtp,
-  verifyPhoneOtp,
-} from "../services/termii.service.js";
+import { sendWithdrawalSecurityCodeEmail } from "../services/email.service.js";
+import { sendSms, verifyPhoneOtp } from "../services/termii.service.js";
 
 type WithdrawalSecurityPurpose =
   | "ADD_WITHDRAWAL_ACCOUNT"
@@ -11,10 +10,22 @@ type WithdrawalSecurityPurpose =
 
 const MAX_ATTEMPTS = 3;
 
-function purposeFromInput(
-  purpose: WithdrawalSecurityPurpose,
-) {
+function purposeFromInput(purpose: WithdrawalSecurityPurpose) {
   return purpose;
+}
+
+function hashSecurityCode(code: string) {
+  return createHash("sha256").update(code).digest("hex");
+}
+
+function codesMatch(storedHash: string, code: string) {
+  const actualHash = Buffer.from(hashSecurityCode(code), "hex");
+  const expectedHash = Buffer.from(storedHash, "hex");
+
+  return (
+    actualHash.length === expectedHash.length &&
+    timingSafeEqual(actualHash, expectedHash)
+  );
 }
 
 export async function createWithdrawalSecurityChallenge(
@@ -29,6 +40,8 @@ export async function createWithdrawalSecurityChallenge(
       role: true,
       phone: true,
       phoneVerifiedAt: true,
+      email: true,
+      emailVerifiedAt: true,
     },
   });
 
@@ -51,6 +64,16 @@ export async function createWithdrawalSecurityChallenge(
   if (!user.phoneVerifiedAt) {
     throw new Error(
       "Your phone number must be verified before managing withdrawal accounts",
+    );
+  }
+
+  if (!user.email) {
+    throw new Error("An email address is required for withdrawal security");
+  }
+
+  if (!user.emailVerifiedAt) {
+    throw new Error(
+      "Your email address must be verified before managing withdrawal accounts",
     );
   }
 
@@ -82,29 +105,59 @@ export async function createWithdrawalSecurityChallenge(
     );
   }
 
-  const otp = await sendPhoneOtp(user.phone);
+  const code = randomInt(100000, 1000000).toString();
+  const codeHash = hashSecurityCode(code);
 
+  const expiresInMinutes = env.TERMII_OTP_TTL_MINUTES;
   const expiresAt = new Date(
-    Date.now() + env.TERMII_OTP_TTL_MINUTES * 60 * 1000,
+    Date.now() + expiresInMinutes * 60 * 1000,
   );
 
-  const challenge =
-    await prisma.withdrawalSecurityChallenge.create({
-      data: {
-        userId,
-        purpose: purposeFromInput(purpose),
-        provider: "TERMII",
-        providerPinId: otp.pinId,
-        expiresAt,
-        attempts: 0,
-        maxAttempts: MAX_ATTEMPTS,
+  const challenge = await prisma.withdrawalSecurityChallenge.create({
+    data: {
+      userId,
+      purpose: purposeFromInput(purpose),
+      provider: "DUAL_CHANNEL",
+      providerPinId: null,
+      codeHash,
+      expiresAt,
+      attempts: 0,
+      maxAttempts: MAX_ATTEMPTS,
+    },
+    select: {
+      id: true,
+      purpose: true,
+      expiresAt: true,
+    },
+  });
+
+  try {
+    await Promise.all([
+      sendSms(
+        user.phone,
+        `Your TransConet withdrawal security code is ${code}. It expires in ${expiresInMinutes} minutes. Do not share this code.`,
+      ),
+      sendWithdrawalSecurityCodeEmail(
+        user.email,
+        code,
+        expiresInMinutes,
+      ),
+    ]);
+  } catch {
+    await prisma.withdrawalSecurityChallenge.updateMany({
+      where: {
+        id: challenge.id,
+        consumedAt: null,
       },
-      select: {
-        id: true,
-        purpose: true,
-        expiresAt: true,
+      data: {
+        consumedAt: new Date(),
       },
     });
+
+    throw new Error(
+      "Unable to deliver withdrawal security code. Please try again.",
+    );
+  }
 
   return {
     challengeId: challenge.id,
@@ -118,6 +171,10 @@ export async function verifyWithdrawalSecurityChallenge(
   challengeId: string,
   pin: string,
 ) {
+  if (!/^\d{6}$/.test(pin)) {
+    throw new Error("Invalid security verification code");
+  }
+
   const challenge =
     await prisma.withdrawalSecurityChallenge.findUnique({
       where: {
@@ -128,6 +185,7 @@ export async function verifyWithdrawalSecurityChallenge(
         userId: true,
         purpose: true,
         providerPinId: true,
+        codeHash: true,
         expiresAt: true,
         attempts: true,
         maxAttempts: true,
@@ -162,12 +220,20 @@ export async function verifyWithdrawalSecurityChallenge(
     },
   });
 
-  try {
-    await verifyPhoneOtp(
-      challenge.providerPinId,
-      pin,
-    );
-  } catch {
+  let verified = false;
+
+  if (challenge.codeHash) {
+    verified = codesMatch(challenge.codeHash, pin);
+  } else if (challenge.providerPinId) {
+    try {
+      await verifyPhoneOtp(challenge.providerPinId, pin);
+      verified = true;
+    } catch {
+      verified = false;
+    }
+  }
+
+  if (!verified) {
     throw new Error("Invalid security verification code");
   }
 

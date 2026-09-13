@@ -1143,8 +1143,9 @@ model WithdrawalSecurityChallenge {
   userId  String
   purpose WithdrawalSecurityChallengePurpose
 
-  provider      String
-  providerPinId String
+  provider      String?
+  providerPinId String?
+  codeHash      String?
 
   expiresAt   DateTime
   attempts    Int       @default(0)
