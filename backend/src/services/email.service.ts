@@ -29,8 +29,9 @@ export async function sendPasswordResetEmail(
   });
 
   if (result.error) {
-    throw new Error("Failed to send password reset email");
-  }
+  console.error("Password reset email failed:", result.error);
+  throw new Error("Failed to send password reset email");
+}
 
   return result.data;
 }
