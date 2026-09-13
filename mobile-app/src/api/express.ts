@@ -16,6 +16,17 @@ export type ExpressBookingStatus =
   | "CANCELLED"
   | "DISPUTED";
 
+export type ExpressConfigPackageType = {
+  volumeCbmPerPackage: number;
+};
+
+export type ExpressConfig = {
+  enabled: boolean;
+  currency: "NGN";
+  maxCargoWeightKg: number;
+  packageTypes: Record<string, ExpressConfigPackageType>;
+};
+
 export type ExpressQuoteInput = {
   weightKg: number;
   packageCount: number;
@@ -150,6 +161,14 @@ function createIdempotencyKey(): string {
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
   return `express-${Date.now()}-${randomPart}`;
+}
+
+export async function getExpressConfig(): Promise<ExpressConfig> {
+  const response = await apiClient.get<ApiResponse<ExpressConfig>>(
+    "/express/config",
+  );
+
+  return response.data.data;
 }
 
 export async function getExpressQuote(
