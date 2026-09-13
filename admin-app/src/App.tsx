@@ -1044,7 +1044,7 @@ function LiveOperations() {
                       <td>{transporter}</td>
                       <td>
                         {hasLocation
-                          ? `${trip.vehicle?.currentLatitude?.toFixed(4)}, ${trip.vehicle?.currentLongitude?.toFixed(4)}`
+                          ? `${Number(trip.vehicle?.currentLatitude).toFixed(4)}, ${Number(trip.vehicle?.currentLongitude).toFixed(4)}`
                           : "No location"}
                       </td>
                     </tr>
