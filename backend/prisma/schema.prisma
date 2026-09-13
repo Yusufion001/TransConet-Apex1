@@ -142,6 +142,11 @@ enum BookingStatus {
   DISPUTED
 }
 
+enum ExpressDispatchStage {
+  NEARBY
+  GENERAL_BOARD
+}
+
 enum ExpressBookingStatus {
   AWAITING_PAYMENT
   READY_FOR_DISPATCH
@@ -640,6 +645,8 @@ model ExpressBooking {
   id                    String   @id @default(uuid())
   bookingId             String   @unique
   status                ExpressBookingStatus @default(AWAITING_PAYMENT)
+  dispatchStage         ExpressDispatchStage @default(NEARBY)
+  generalBoardPublishedAt DateTime?
 
   packagingType         String
   packageCount          Int
@@ -674,6 +681,7 @@ model ExpressBooking {
   booking               Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   @@index([status])
+  @@index([dispatchStage])
   @@index([createdAt])
 }
 

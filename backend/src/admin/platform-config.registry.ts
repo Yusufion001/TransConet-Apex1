@@ -3,6 +3,7 @@ import {
   expressPricingConfigSchema,
   pricingConfigSchema,
   tripTrackingConfigSchema,
+  expressDispatchConfigSchema,
 } from "./admin.validators.js";
 import {
   marketplaceVisibilityConfigSchema,
@@ -13,6 +14,7 @@ export const PLATFORM_CONFIG_KEYS = {
   EXPRESS_PRICING_CONFIG: "EXPRESS_PRICING_CONFIG",
   MARKETPLACE_VISIBILITY_CONFIG: "MARKETPLACE_VISIBILITY_CONFIG",
   TRIP_TRACKING_CONFIG: "TRIP_TRACKING_CONFIG",
+  EXPRESS_DISPATCH_CONFIG: "EXPRESS_DISPATCH_CONFIG",
 } as const;
 
 export type PlatformConfigKey =
@@ -60,6 +62,14 @@ export const PLATFORM_CONFIG_REGISTRY: Record<
     editable: true,
     deletable: false,
     schema: tripTrackingConfigSchema,
+  },
+
+  EXPRESS_DISPATCH_CONFIG: {
+    key: PLATFORM_CONFIG_KEYS.EXPRESS_DISPATCH_CONFIG,
+    description: "Express nearby dispatch and General Express Board fallback configuration",
+    editable: true,
+    deletable: false,
+    schema: expressDispatchConfigSchema,
   },
 };
 

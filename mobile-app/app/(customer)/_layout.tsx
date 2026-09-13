@@ -70,6 +70,13 @@ export default function CustomerLayout() {
         }}
       />
       <Drawer.Screen
+        name="express/index"
+        options={{
+          drawerLabel: "Express Booking",
+          title: "Express Booking",
+        }}
+      />
+      <Drawer.Screen
         name="bookings/[id]"
         options={{
           drawerItemStyle: { display: "none" },

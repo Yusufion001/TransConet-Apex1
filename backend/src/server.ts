@@ -3,7 +3,10 @@ import { createServer } from "node:http";
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import { prisma } from "./config/prisma.js";
-import { ensureTripTrackingConfig } from "./admin/platform-config.service.js";
+import {
+  ensureExpressDispatchConfig,
+  ensureTripTrackingConfig,
+} from "./admin/platform-config.service.js";
 import { AdminModule } from "../generated/prisma/enums.js";
 import documentRoutes from "./documents/document.routes.js";
 import vehicleRoutes from "./vehicles/vehicle.routes.js";
@@ -11,6 +14,7 @@ import transporterRoutes from "./transporters/transporter.routes.js";
 import walletRoutes from "./wallet/wallet.routes.js";
 import bookingRoutes from "./bookings/booking.routes.js";
 import expressRoutes from "./express/express.routes.js";
+import { promoteExpiredExpressBookingsToGeneralBoard } from "./express/express-dispatch.service.js";
 import publicTrackingRoutes from "./realtime/public-tracking.routes.js";
 import marketplaceRoutes from "./marketplace/marketplace.routes.js";
 import messageRoutes from "./messages/message.routes.js";
@@ -420,12 +424,25 @@ io.on("connection", (socket) => {
     },
   );
 });
-void ensureTripTrackingConfig()
+void Promise.all([
+  ensureTripTrackingConfig(),
+  ensureExpressDispatchConfig(),
+])
   .then(() => {
     httpServer.listen(env.PORT, "0.0.0.0", () => {
       console.log(
         `TransConet API running on port ${env.PORT}`,
       );
+
+      void promoteExpiredExpressBookingsToGeneralBoard().catch((error) => {
+        console.error("Express dispatch worker initial run failed", error);
+      });
+
+      setInterval(() => {
+        void promoteExpiredExpressBookingsToGeneralBoard().catch((error) => {
+          console.error("Express dispatch worker failed", error);
+        });
+      }, 15_000);
     });
   })
   .catch((error) => {

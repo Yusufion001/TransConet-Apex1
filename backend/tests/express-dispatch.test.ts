@@ -252,7 +252,7 @@ test("Express dispatch moves a paid booking into dispatching", async () => {
     "DISPATCHING",
   );
 
-  assert.equal(publishEventMock.mock.callCount(), 1);
+  assert.equal(publishEventMock.mock.callCount(), 3);
 });
 
 test("Express acceptance rejects an inactive transporter", async () => {

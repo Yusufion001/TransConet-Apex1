@@ -11,6 +11,10 @@ const DEFAULT_TRIP_TRACKING_CONFIG = {
   arrivalGeofenceMeters: 100,
 };
 
+const DEFAULT_EXPRESS_DISPATCH_CONFIG = {
+  nearbyDispatchTimeoutSeconds: 300,
+};
+
 export async function ensureTripTrackingConfig() {
   return prisma.platformConfig.upsert({
     where: { key: "TRIP_TRACKING_CONFIG" },
@@ -19,6 +23,19 @@ export async function ensureTripTrackingConfig() {
       value: DEFAULT_TRIP_TRACKING_CONFIG,
       description:
         "Automatic trip arrival and pickup geofence configuration",
+    },
+    update: {},
+  });
+}
+
+export async function ensureExpressDispatchConfig() {
+  return prisma.platformConfig.upsert({
+    where: { key: "EXPRESS_DISPATCH_CONFIG" },
+    create: {
+      key: "EXPRESS_DISPATCH_CONFIG",
+      value: DEFAULT_EXPRESS_DISPATCH_CONFIG,
+      description:
+        "Express nearby dispatch and General Express Board fallback configuration",
     },
     update: {},
   });

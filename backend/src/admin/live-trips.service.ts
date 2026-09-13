@@ -8,24 +8,60 @@ const LIVE_TRIP_STATUSES = [
   "IN_TRANSIT",
 ] as const;
 
+const EXPRESS_LIVE_STATUS = "DISPATCHING" as const;
+const EXPRESS_FILTER_STATUS = "EXPRESS_DISPATCHING" as const;
+
+const expressLiveSelect = {
+  id: true,
+  bookingId: true,
+  status: true,
+  dispatchStage: true,
+  generalBoardPublishedAt: true,
+  packagingType: true,
+  packageCount: true,
+  weightKg: true,
+  distanceKm: true,
+  fare: true,
+  currency: true,
+  pickupVerifiedAt: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
 export async function getLiveTrips(filters?: {
   status?: string;
   transporterId?: string;
   vehicleId?: string;
 }) {
-  const status =
-    filters?.status &&
-    LIVE_TRIP_STATUSES.includes(
-      filters.status as (typeof LIVE_TRIP_STATUSES)[number],
+  const status = filters?.status;
+  const isExpressOnly = status === EXPRESS_FILTER_STATUS;
+  const normalStatus =
+    status && LIVE_TRIP_STATUSES.includes(
+      status as (typeof LIVE_TRIP_STATUSES)[number],
     )
-      ? filters.status
+      ? status
       : undefined;
 
   return prisma.booking.findMany({
     where: {
-      ...(status
-        ? { status: status as any }
-        : { status: { in: [...LIVE_TRIP_STATUSES] as any } }),
+      ...(isExpressOnly
+        ? {
+            expressBooking: {
+              status: EXPRESS_LIVE_STATUS,
+            },
+          }
+        : normalStatus
+          ? { status: normalStatus as any }
+          : {
+              OR: [
+                { status: { in: [...LIVE_TRIP_STATUSES] as any } },
+                {
+                  expressBooking: {
+                    status: EXPRESS_LIVE_STATUS,
+                  },
+                },
+              ],
+            }),
       ...(filters?.transporterId
         ? { transporterId: filters.transporterId }
         : {}),
@@ -69,6 +105,9 @@ export async function getLiveTrips(filters?: {
         },
         take: 10,
       },
+      expressBooking: {
+        select: expressLiveSelect,
+      },
     },
     orderBy: {
       updatedAt: "desc",
@@ -82,9 +121,18 @@ export async function getLiveTripById(
   return prisma.booking.findFirst({
     where: {
       id: bookingId,
-      status: {
-        in: [...LIVE_TRIP_STATUSES] as any,
-      },
+      OR: [
+        {
+          status: {
+            in: [...LIVE_TRIP_STATUSES] as any,
+          },
+        },
+        {
+          expressBooking: {
+            status: EXPRESS_LIVE_STATUS,
+          },
+        },
+      ],
     },
     include: {
       customer: {
@@ -106,6 +154,9 @@ export async function getLiveTripById(
         },
       },
       vehicle: true,
+      expressBooking: {
+        select: expressLiveSelect,
+      },
       events: {
         orderBy: {
           createdAt: "desc",
@@ -122,15 +173,35 @@ export async function getLiveTripSummary() {
     driverArriving,
     arrived,
     inTransit,
-  ] = await Promise.all(
-    LIVE_TRIP_STATUSES.map((status) =>
+    expressDispatching,
+    expressNearby,
+    expressGeneralBoard,
+  ] = await Promise.all([
+    ...LIVE_TRIP_STATUSES.map((status) =>
       prisma.booking.count({
         where: {
           status: status as any,
         },
       }),
     ),
-  );
+    prisma.expressBooking.count({
+      where: {
+        status: EXPRESS_LIVE_STATUS,
+      },
+    }),
+    prisma.expressBooking.count({
+      where: {
+        status: EXPRESS_LIVE_STATUS,
+        dispatchStage: "NEARBY",
+      },
+    }),
+    prisma.expressBooking.count({
+      where: {
+        status: EXPRESS_LIVE_STATUS,
+        dispatchStage: "GENERAL_BOARD",
+      },
+    }),
+  ]);
 
   return {
     total:
@@ -138,12 +209,16 @@ export async function getLiveTripSummary() {
       accepted +
       driverArriving +
       arrived +
-      inTransit,
+      inTransit +
+      expressDispatching,
     assigned,
     accepted,
     driverArriving,
     arrived,
     inTransit,
+    expressDispatching,
+    expressNearby,
+    expressGeneralBoard,
     synchronizedAt: new Date(),
   };
 }
@@ -163,9 +238,18 @@ export async function getLiveTripTracking(
   const booking = await prisma.booking.findFirst({
     where: {
       id: bookingId,
-      status: {
-        in: [...LIVE_TRIP_STATUSES] as any,
-      },
+      OR: [
+        {
+          status: {
+            in: [...LIVE_TRIP_STATUSES] as any,
+          },
+        },
+        {
+          expressBooking: {
+            status: EXPRESS_LIVE_STATUS,
+          },
+        },
+      ],
     },
     select: {
       id: true,
