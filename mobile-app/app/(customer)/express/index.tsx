@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { router } from "expo-router";
 import * as Location from "expo-location";
 import {
@@ -19,7 +19,9 @@ import {
 } from "../../../src/api/places";
 import {
   createExpressBooking,
+  getExpressConfig,
   getExpressQuote,
+  type ExpressConfig,
   type ExpressQuote,
 } from "../../../src/api/express";
 
@@ -54,6 +56,13 @@ export default function ExpressBookingScreen() {
   const [cargoDescription, setCargoDescription] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
 
+  const [expressConfig, setExpressConfig] =
+    useState<ExpressConfig | null>(null);
+  const [expressConfigLoading, setExpressConfigLoading] =
+    useState(true);
+  const [expressConfigError, setExpressConfigError] =
+    useState<string | null>(null);
+
   const [quote, setQuote] = useState<ExpressQuote | null>(null);
   const [quoteLoading, setQuoteLoading] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
@@ -63,6 +72,47 @@ export default function ExpressBookingScreen() {
     useState<"pickup" | "destination">("pickup");
   const [locationPickerCoordinate, setLocationPickerCoordinate] =
     useState<Coordinates | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadExpressConfig() {
+      setExpressConfigLoading(true);
+      setExpressConfigError(null);
+
+      try {
+        const config = await getExpressConfig();
+
+        if (!mounted) return;
+
+        setExpressConfig(config);
+
+        if (!config.enabled) {
+          setExpressConfigError(
+            "Express service is currently unavailable.",
+          );
+        }
+      } catch (error) {
+        if (!mounted) return;
+
+        setExpressConfigError(
+          error instanceof Error
+            ? error.message
+            : "Unable to load Express configuration.",
+        );
+      } finally {
+        if (mounted) {
+          setExpressConfigLoading(false);
+        }
+      }
+    }
+
+    void loadExpressConfig();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   async function resolveAddress(
     address: string,
@@ -255,20 +305,41 @@ export default function ExpressBookingScreen() {
   }
 
   async function getQuote() {
-    if (
-      !pickupLocation.trim() ||
-      !destination.trim() ||
-      !packagingType.trim()
-    ) {
+    if (expressConfigLoading) {
+      Alert.alert(
+        "Express configuration loading",
+        "Please wait while the Express service configuration loads.",
+      );
+      return;
+    }
+
+    if (expressConfigError || !expressConfig) {
+      Alert.alert(
+        "Express service unavailable",
+        expressConfigError ??
+          "Express pricing configuration is currently unavailable.",
+      );
+      return;
+    }
+
+    if (!pickupLocation.trim() || !destination.trim()) {
       Alert.alert(
         "Missing information",
-        "Enter pickup, destination, and packaging type before requesting an Express quote.",
+        "Enter pickup and destination before requesting an Express quote.",
       );
       return;
     }
 
     const numericWeight = Number(weightKg);
     const numericPackageCount = Number(packageCount);
+
+    if (!packagingType.trim()) {
+      Alert.alert(
+        "Packaging type required",
+        "Select a configured packaging type before requesting an Express quote.",
+      );
+      return;
+    }
 
     if (!Number.isFinite(numericWeight) || numericWeight <= 0) {
       Alert.alert(
@@ -285,6 +356,16 @@ export default function ExpressBookingScreen() {
       Alert.alert(
         "Invalid package count",
         "Package count must be a whole number greater than zero.",
+      );
+      return;
+    }
+
+    if (numericWeight > expressConfig.maxCargoWeightKg) {
+      Alert.alert(
+        "Cargo weight exceeds limit",
+        `The maximum Express cargo weight is ${expressConfig.maxCargoWeightKg.toLocaleString(
+          "en-NG",
+        )} kg.`,
       );
       return;
     }
@@ -615,21 +696,71 @@ export default function ExpressBookingScreen() {
           keyboardType="decimal-pad"
           style={styles.input}
         />
+        {expressConfig ? (
+          <Text style={styles.fieldHint}>
+            Maximum Express cargo weight:{" "}
+            {expressConfig.maxCargoWeightKg.toLocaleString("en-NG")} kg
+          </Text>
+        ) : null}
 
         <Text style={styles.label}>Packaging type</Text>
-        <TextInput
-          value={packagingType}
-          onChangeText={(value) => {
-            setPackagingType(value);
-            setQuote(null);
-          }}
-          placeholder="Enter the configured packaging type"
-          style={styles.input}
-        />
-        <Text style={styles.fieldHint}>
-          Packaging charges are determined by the active TransConet
-          pricing configuration.
-        </Text>
+
+        {expressConfigLoading ? (
+          <View style={styles.configLoading}>
+            <ActivityIndicator />
+            <Text style={styles.configLoadingText}>
+              Loading available packaging types...
+            </Text>
+          </View>
+        ) : expressConfigError ? (
+          <View style={styles.configError}>
+            <Text style={styles.configErrorText}>
+              {expressConfigError}
+            </Text>
+          </View>
+        ) : expressConfig &&
+          Object.keys(expressConfig.packageTypes).length > 0 ? (
+          <View style={styles.packageTypeGrid}>
+            {Object.keys(expressConfig.packageTypes).map((item) => {
+              const selected = packagingType === item;
+
+              return (
+                <Pressable
+                  key={item}
+                  onPress={() => {
+                    setPackagingType(item);
+                    setQuote(null);
+                  }}
+                  style={[
+                    styles.packageTypeOption,
+                    selected && styles.packageTypeOptionSelected,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.packageTypeText,
+                      selected && styles.packageTypeTextSelected,
+                    ]}
+                  >
+                    {item}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : (
+          <View style={styles.configError}>
+            <Text style={styles.configErrorText}>
+              No Express packaging types are currently configured.
+            </Text>
+          </View>
+        )}
+
+        {expressConfig && !expressConfigError ? (
+          <Text style={styles.fieldHint}>
+            Select one of the packaging types configured by TransConet.
+          </Text>
+        ) : null}
 
         <Text style={styles.label}>Scheduled date</Text>
         <TextInput
@@ -650,11 +781,21 @@ export default function ExpressBookingScreen() {
         />
 
         <Pressable
-          disabled={quoteLoading || bookingLoading}
+          disabled={
+            expressConfigLoading ||
+            !!expressConfigError ||
+            !expressConfig ||
+            quoteLoading ||
+            bookingLoading
+          }
           onPress={getQuote}
           style={[
             styles.primaryButton,
-            (quoteLoading || bookingLoading) &&
+            (expressConfigLoading ||
+              !!expressConfigError ||
+              !expressConfig ||
+              quoteLoading ||
+              bookingLoading) &&
               styles.buttonDisabled,
           ]}
         >
@@ -853,6 +994,58 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     color: "#667085",
+  },
+  packageTypeGrid: {
+    gap: 8,
+  },
+  packageTypeOption: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    backgroundColor: "#FFFFFF",
+  },
+  packageTypeOptionSelected: {
+    borderColor: "#175CD3",
+    backgroundColor: "#F5F9FF",
+  },
+  packageTypeText: {
+    color: "#475467",
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  packageTypeTextSelected: {
+    color: "#175CD3",
+    fontWeight: "800",
+  },
+  configLoading: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: "#D0D5DD",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  configLoadingText: {
+    color: "#667085",
+    fontSize: 13,
+  },
+  configError: {
+    borderWidth: 1,
+    borderColor: "#FECACA",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: "#FEF2F2",
+  },
+  configErrorText: {
+    color: "#B42318",
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "600",
   },
   suggestionsCard: {
     marginTop: 6,

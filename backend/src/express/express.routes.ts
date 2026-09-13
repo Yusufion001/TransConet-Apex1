@@ -6,7 +6,7 @@ import {
   authorize,
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
-import { calculateExpressFare } from "./express-pricing.service.js";
+import { calculateExpressFare, getExpressPricingConfig } from "./express-pricing.service.js";
 import { processPaystackExpressWebhook } from "./paystack-webhook.service.js";
 import { env } from "../config/env.js";
 import { prisma } from "../config/prisma.js";
@@ -203,6 +203,55 @@ router.post(
       return res.status(500).json({
         success: false,
         message: "Unable to create Express booking",
+      });
+    }
+  },
+);
+
+router.get(
+  "/config",
+  authorize("CUSTOMER"),
+  async (_req: AuthenticatedRequest, res) => {
+    try {
+      const config = await getExpressPricingConfig();
+
+      return res.json({
+        success: true,
+        data: {
+          enabled: config.enabled,
+          currency: config.currency,
+          maxCargoWeightKg: config.maxCargoWeightKg,
+          packageTypes: Object.fromEntries(
+            Object.entries(config.packageTypes).map(
+              ([packageType, packageConfig]) => [
+                packageType,
+                {
+                  volumeCbmPerPackage: packageConfig.volumeCbmPerPackage,
+                },
+              ],
+            ),
+          ),
+        },
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to load Express configuration";
+
+      if (
+        message === "Express pricing configuration is not configured" ||
+        message === "Express service is currently unavailable"
+      ) {
+        return res.status(503).json({
+          success: false,
+          message,
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        message: "Unable to load Express configuration",
       });
     }
   },
