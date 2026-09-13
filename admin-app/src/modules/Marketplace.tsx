@@ -16,7 +16,6 @@ import {
   type MarketplaceSummary,
   type MarketplacePricing,
   type MarketplacePricingConfig,
-  type MarketplaceCustomerPriceCategory,
     type MarketplaceLegacyPricingConfig,
   type MarketplaceCommissionRule,
   type MarketplaceCommissionRuleInput,
@@ -67,7 +66,7 @@ function isMarketplacePricingConfig(
       typeof value.fuel === "object" &&
       "prices" in value.fuel &&
       "vehicleProfiles" in value.fuel &&
-      "customerCategories" in value.fuel,
+      "vehicleYearCategories" in value.fuel,
   );
 }
 
@@ -95,12 +94,12 @@ type MarketplacePricingDraft = Omit<MarketplacePricingConfig, "fuel"> & {
         missingYearEfficiencyFactor: number | "";
       }
     >;
-    customerCategories: {
-      ECONOMY: { vehicleClass: string };
-      STANDARD: { vehicleClass: string };
-      PREMIUM: { vehicleClass: string };
+    vehicleYearCategories: {
+      PREMIUM: { minYear: number | "" };
+      STANDARD: { minYear: number | ""; maxYear: number | "" };
+      ECONOMY: { minYear: number | ""; maxYear: number | "" };
+      EXCLUDED: { maxYear: number | "" };
     };
-    defaultCustomerCategory: MarketplaceCustomerPriceCategory | "";
   };
 };
 
@@ -119,19 +118,6 @@ function normalizeMarketplacePricingDraft(
     if (value === "") return undefined;
     if (!Number.isFinite(value)) {
       throw new Error("Optional numeric value must be a valid number.");
-    }
-    return value;
-  };
-
-  const toCustomerPriceCategory = (
-    value: MarketplaceCustomerPriceCategory | "",
-  ): MarketplaceCustomerPriceCategory => {
-    if (
-      value !== "ECONOMY" &&
-      value !== "STANDARD" &&
-      value !== "PREMIUM"
-    ) {
-      throw new Error("A default customer pricing category must be selected.");
     }
     return value;
   };
@@ -199,14 +185,40 @@ function normalizeMarketplacePricingDraft(
           ],
         ),
       ),
-      customerCategories: {
-        ECONOMY: { ...config.fuel.customerCategories.ECONOMY },
-        STANDARD: { ...config.fuel.customerCategories.STANDARD },
-        PREMIUM: { ...config.fuel.customerCategories.PREMIUM },
+      vehicleYearCategories: {
+        PREMIUM: {
+          minYear: toRequiredNumber(
+            config.fuel.vehicleYearCategories.PREMIUM.minYear,
+            "Premium minimum year",
+          ),
+        },
+        STANDARD: {
+          minYear: toRequiredNumber(
+            config.fuel.vehicleYearCategories.STANDARD.minYear,
+            "Standard minimum year",
+          ),
+          maxYear: toRequiredNumber(
+            config.fuel.vehicleYearCategories.STANDARD.maxYear,
+            "Standard maximum year",
+          ),
+        },
+        ECONOMY: {
+          minYear: toRequiredNumber(
+            config.fuel.vehicleYearCategories.ECONOMY.minYear,
+            "Economy minimum year",
+          ),
+          maxYear: toRequiredNumber(
+            config.fuel.vehicleYearCategories.ECONOMY.maxYear,
+            "Economy maximum year",
+          ),
+        },
+        EXCLUDED: {
+          maxYear: toRequiredNumber(
+            config.fuel.vehicleYearCategories.EXCLUDED.maxYear,
+            "Excluded maximum year",
+          ),
+        },
       },
-      defaultCustomerCategory: toCustomerPriceCategory(
-        config.fuel.defaultCustomerCategory,
-      ),
     },
   };
 }
@@ -243,12 +255,22 @@ function createMarketplacePricingDraftFromConfig(
           ],
         ),
       ),
-      customerCategories: {
-        ECONOMY: { ...config.fuel.customerCategories.ECONOMY },
-        STANDARD: { ...config.fuel.customerCategories.STANDARD },
-        PREMIUM: { ...config.fuel.customerCategories.PREMIUM },
+      vehicleYearCategories: {
+        PREMIUM: {
+          minYear: config.fuel.vehicleYearCategories.PREMIUM.minYear,
+        },
+        STANDARD: {
+          minYear: config.fuel.vehicleYearCategories.STANDARD.minYear,
+          maxYear: config.fuel.vehicleYearCategories.STANDARD.maxYear,
+        },
+        ECONOMY: {
+          minYear: config.fuel.vehicleYearCategories.ECONOMY.minYear,
+          maxYear: config.fuel.vehicleYearCategories.ECONOMY.maxYear,
+        },
+        EXCLUDED: {
+          maxYear: config.fuel.vehicleYearCategories.EXCLUDED.maxYear,
+        },
       },
-      defaultCustomerCategory: config.fuel.defaultCustomerCategory,
     },
   };
 }
@@ -260,13 +282,63 @@ function validateMarketplacePricingDraft(
     return null;
   }
 
-  if (
-    config.fuel.defaultCustomerCategory !== "ECONOMY" &&
-    config.fuel.defaultCustomerCategory !== "STANDARD" &&
-    config.fuel.defaultCustomerCategory !== "PREMIUM"
-  ) {
-    return "A default customer pricing category must be selected.";
+  const yearCategories = config.fuel.vehicleYearCategories;
+
+  const validateYear = (value: number | "", field: string): string | null => {
+    if (
+      value === "" ||
+      !Number.isInteger(value) ||
+      value < 1900 ||
+      value > 2100
+    ) {
+      return `${field} must be a valid year between 1900 and 2100.`;
+    }
+    return null;
+  };
+
+  const premiumYearError = validateYear(
+    yearCategories.PREMIUM.minYear,
+    "Premium minimum year",
+  );
+  if (premiumYearError) return premiumYearError;
+
+  const standardMinError = validateYear(
+    yearCategories.STANDARD.minYear,
+    "Standard minimum year",
+  );
+  if (standardMinError) return standardMinError;
+
+  const standardMaxError = validateYear(
+    yearCategories.STANDARD.maxYear,
+    "Standard maximum year",
+  );
+  if (standardMaxError) return standardMaxError;
+
+  if (yearCategories.STANDARD.minYear > yearCategories.STANDARD.maxYear) {
+    return "Standard minimum year cannot be greater than maximum year.";
   }
+
+  const economyMinError = validateYear(
+    yearCategories.ECONOMY.minYear,
+    "Economy minimum year",
+  );
+  if (economyMinError) return economyMinError;
+
+  const economyMaxError = validateYear(
+    yearCategories.ECONOMY.maxYear,
+    "Economy maximum year",
+  );
+  if (economyMaxError) return economyMaxError;
+
+  if (yearCategories.ECONOMY.minYear > yearCategories.ECONOMY.maxYear) {
+    return "Economy minimum year cannot be greater than maximum year.";
+  }
+
+  const excludedMaxError = validateYear(
+    yearCategories.EXCLUDED.maxYear,
+    "Excluded maximum year",
+  );
+  if (excludedMaxError) return excludedMaxError;
 
   for (const fuelType of ["PETROL", "DIESEL"] as const) {
     const price = config.fuel.prices[fuelType].pricePerLitre;
@@ -386,12 +458,12 @@ function createMarketplacePricingDraft(
           },
         ]),
       ),
-      customerCategories: {
-        ECONOMY: { vehicleClass: "" },
-        STANDARD: { vehicleClass: "" },
-        PREMIUM: { vehicleClass: "" },
+      vehicleYearCategories: {
+        PREMIUM: { minYear: "" },
+        STANDARD: { minYear: "", maxYear: "" },
+        ECONOMY: { minYear: "", maxYear: "" },
+        EXCLUDED: { maxYear: "" },
       },
-      defaultCustomerCategory: "",
     },
   };
 }
@@ -1611,66 +1683,177 @@ export default function Marketplace() {
             </div>
 
             <div className="section-title">
-              <h3>Customer Indicative Pricing Categories</h3>
+              <h3>Vehicle Year Pricing Categories</h3>
               <span>
-                Configure which Admin-defined vehicle class represents each
-                customer-facing indicative pricing category.
+                Configure the vehicle model-year ranges used by fare calculation.
               </span>
             </div>
 
             <div className="detail-grid">
-              {(["ECONOMY", "STANDARD", "PREMIUM"] as const).map((category) => (
-                <label key={category}>
-                  <span>{labelize(category)} Vehicle Class</span>
-                  <select
-                    value={pricingForm.fuel.customerCategories[category].vehicleClass}
-                    onChange={(event) =>
-                      setPricingForm({
-                        ...pricingForm,
-                        fuel: {
-                          ...pricingForm.fuel,
-                          customerCategories: {
-                            ...pricingForm.fuel.customerCategories,
-                            [category]: {
-                              vehicleClass: event.target.value,
-                            },
-                          },
-                        },
-                      })
-                    }
-                  >
-                    <option value="">Select vehicle class</option>
-                    {Object.keys(pricingForm.fuel.vehicleProfiles).map(
-                      (vehicleClass) => (
-                        <option key={vehicleClass} value={vehicleClass}>
-                          {labelize(vehicleClass)}
-                        </option>
-                      ),
-                    )}
-                  </select>
-                </label>
-              ))}
-
               <label>
-                <span>Default Indicative Pricing Category</span>
-                <select
-                  value={pricingForm.fuel.defaultCustomerCategory}
+                <span>Premium Minimum Year</span>
+                <input
+                  type="number"
+                  min={1900}
+                  max={2100}
+                  value={pricingForm.fuel.vehicleYearCategories.PREMIUM.minYear}
                   onChange={(event) =>
                     setPricingForm({
                       ...pricingForm,
                       fuel: {
                         ...pricingForm.fuel,
-                        defaultCustomerCategory:
-                          event.target.value as MarketplaceCustomerPriceCategory | "",
+                        vehicleYearCategories: {
+                          ...pricingForm.fuel.vehicleYearCategories,
+                          PREMIUM: {
+                            minYear:
+                              event.target.value === ""
+                                ? ""
+                                : Number(event.target.value),
+                          },
+                        },
                       },
                     })
                   }
-                >
-                  <option value="">Select default category</option>
-                  <option value="ECONOMY">Economy</option>
-                  <option value="STANDARD">Standard</option>
-                  <option value="PREMIUM">Premium</option>
-                </select>
+                />
+              </label>
+
+              <label>
+                <span>Standard Minimum Year</span>
+                <input
+                  type="number"
+                  min={1900}
+                  max={2100}
+                  value={pricingForm.fuel.vehicleYearCategories.STANDARD.minYear}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      fuel: {
+                        ...pricingForm.fuel,
+                        vehicleYearCategories: {
+                          ...pricingForm.fuel.vehicleYearCategories,
+                          STANDARD: {
+                            ...pricingForm.fuel.vehicleYearCategories.STANDARD,
+                            minYear:
+                              event.target.value === ""
+                                ? ""
+                                : Number(event.target.value),
+                          },
+                        },
+                      },
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                <span>Standard Maximum Year</span>
+                <input
+                  type="number"
+                  min={1900}
+                  max={2100}
+                  value={pricingForm.fuel.vehicleYearCategories.STANDARD.maxYear}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      fuel: {
+                        ...pricingForm.fuel,
+                        vehicleYearCategories: {
+                          ...pricingForm.fuel.vehicleYearCategories,
+                          STANDARD: {
+                            ...pricingForm.fuel.vehicleYearCategories.STANDARD,
+                            maxYear:
+                              event.target.value === ""
+                                ? ""
+                                : Number(event.target.value),
+                          },
+                        },
+                      },
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                <span>Economy Minimum Year</span>
+                <input
+                  type="number"
+                  min={1900}
+                  max={2100}
+                  value={pricingForm.fuel.vehicleYearCategories.ECONOMY.minYear}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      fuel: {
+                        ...pricingForm.fuel,
+                        vehicleYearCategories: {
+                          ...pricingForm.fuel.vehicleYearCategories,
+                          ECONOMY: {
+                            ...pricingForm.fuel.vehicleYearCategories.ECONOMY,
+                            minYear:
+                              event.target.value === ""
+                                ? ""
+                                : Number(event.target.value),
+                          },
+                        },
+                      },
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                <span>Economy Maximum Year</span>
+                <input
+                  type="number"
+                  min={1900}
+                  max={2100}
+                  value={pricingForm.fuel.vehicleYearCategories.ECONOMY.maxYear}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      fuel: {
+                        ...pricingForm.fuel,
+                        vehicleYearCategories: {
+                          ...pricingForm.fuel.vehicleYearCategories,
+                          ECONOMY: {
+                            ...pricingForm.fuel.vehicleYearCategories.ECONOMY,
+                            maxYear:
+                              event.target.value === ""
+                                ? ""
+                                : Number(event.target.value),
+                          },
+                        },
+                      },
+                    })
+                  }
+                />
+              </label>
+
+              <label>
+                <span>Excluded Maximum Year</span>
+                <input
+                  type="number"
+                  min={1900}
+                  max={2100}
+                  value={pricingForm.fuel.vehicleYearCategories.EXCLUDED.maxYear}
+                  onChange={(event) =>
+                    setPricingForm({
+                      ...pricingForm,
+                      fuel: {
+                        ...pricingForm.fuel,
+                        vehicleYearCategories: {
+                          ...pricingForm.fuel.vehicleYearCategories,
+                          EXCLUDED: {
+                            maxYear:
+                              event.target.value === ""
+                                ? ""
+                                : Number(event.target.value),
+                          },
+                        },
+                      },
+                    })
+                  }
+                />
               </label>
             </div>
 

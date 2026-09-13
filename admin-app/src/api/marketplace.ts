@@ -121,12 +121,6 @@ export type MarketplaceVehicleFuelProfile = {
   missingYearEfficiencyFactor?: number;
 };
 
-export type MarketplaceCustomerPriceCategory = "ECONOMY" | "STANDARD" | "PREMIUM";
-
-export type MarketplaceCustomerPriceCategoryConfig = {
-  vehicleClass: string;
-};
-
 export type MarketplacePricingConfig = {
   baseRate: number;
   weightMultipliers: {
@@ -142,11 +136,12 @@ export type MarketplacePricingConfig = {
     enabled: boolean;
     prices: Record<MarketplaceFuelType, MarketplaceFuelPrice>;
     vehicleProfiles: Record<string, MarketplaceVehicleFuelProfile>;
-    customerCategories: Record<
-      MarketplaceCustomerPriceCategory,
-      MarketplaceCustomerPriceCategoryConfig
-    >;
-    defaultCustomerCategory: MarketplaceCustomerPriceCategory;
+    vehicleYearCategories: {
+      PREMIUM: { minYear: number };
+      STANDARD: { minYear: number; maxYear: number };
+      ECONOMY: { minYear: number; maxYear: number };
+      EXCLUDED: { maxYear: number };
+    };
   };
 };
 
