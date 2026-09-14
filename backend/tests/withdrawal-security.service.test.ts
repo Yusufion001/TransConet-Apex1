@@ -120,7 +120,7 @@ test("creates a dual-channel challenge with one hashed code", async () => {
   assert.notEqual(createArgs.data.codeHash, code);
 });
 
-test("rejects an unverified email", async () => {
+test("allows a phone-verified account when email is unverified", async () => {
   userFindUniqueMock.mock.mockImplementation(async () => ({
     id: "transporter-1",
     status: "ACTIVE",
@@ -131,13 +131,69 @@ test("rejects an unverified email", async () => {
     emailVerifiedAt: null,
   }));
 
+  challengeCreateMock.mock.mockImplementation(async ({ data }: any) => ({
+    id: "phone-only-challenge",
+    purpose: data.purpose,
+    expiresAt: data.expiresAt,
+  }));
+
+  const result = await createWithdrawalSecurityChallenge(
+    "transporter-1",
+    "ADD_WITHDRAWAL_ACCOUNT",
+  );
+
+  assert.equal(result.challengeId, "phone-only-challenge");
+  assert.equal(challengeCreateMock.mock.callCount(), 1);
+  assert.equal(sendSmsMock.mock.callCount(), 1);
+  assert.equal(sendWithdrawalSecurityCodeEmailMock.mock.callCount(), 1);
+});
+
+test("allows an email-verified account when phone is unverified", async () => {
+  userFindUniqueMock.mock.mockImplementation(async () => ({
+    id: "transporter-1",
+    status: "ACTIVE",
+    role: "TRANSPORTER",
+    phone: "+2348012345678",
+    phoneVerifiedAt: null,
+    email: "transporter@example.com",
+    emailVerifiedAt: new Date(),
+  }));
+
+  challengeCreateMock.mock.mockImplementation(async ({ data }: any) => ({
+    id: "email-only-challenge",
+    purpose: data.purpose,
+    expiresAt: data.expiresAt,
+  }));
+
+  const result = await createWithdrawalSecurityChallenge(
+    "transporter-1",
+    "ADD_WITHDRAWAL_ACCOUNT",
+  );
+
+  assert.equal(result.challengeId, "email-only-challenge");
+  assert.equal(challengeCreateMock.mock.callCount(), 1);
+  assert.equal(sendSmsMock.mock.callCount(), 1);
+  assert.equal(sendWithdrawalSecurityCodeEmailMock.mock.callCount(), 1);
+});
+
+test("rejects an account with neither phone nor email verification", async () => {
+  userFindUniqueMock.mock.mockImplementation(async () => ({
+    id: "transporter-1",
+    status: "ACTIVE",
+    role: "TRANSPORTER",
+    phone: "+2348012345678",
+    phoneVerifiedAt: null,
+    email: "transporter@example.com",
+    emailVerifiedAt: null,
+  }));
+
   await assert.rejects(
     () =>
       createWithdrawalSecurityChallenge(
         "transporter-1",
         "ADD_WITHDRAWAL_ACCOUNT",
       ),
-    /email address must be verified/i,
+    /account must be verified by phone or email/i,
   );
 
   assert.equal(challengeCreateMock.mock.callCount(), 0);
