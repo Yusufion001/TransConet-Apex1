@@ -120,8 +120,8 @@ export default function TransporterBookings() {
       ) : (
         bookings.map((booking) => (
           <Link
-            key={booking.id}
-            href={`/(transporter)/bookings/${booking.id}`}
+            key={booking.expressBookingId}
+            href={`/(transporter)/express/${booking.expressBookingId}`}
             asChild
           >
             <Pressable style={styles.card}>
@@ -153,7 +153,7 @@ export default function TransporterBookings() {
                 </View>
 
                 <Text style={styles.id}>
-                  #{booking.id.slice(0, 8).toUpperCase()}
+                  #{booking.expressBookingId.slice(0, 8).toUpperCase()}
                 </Text>
               </View>
 
@@ -181,11 +181,11 @@ export default function TransporterBookings() {
 
               <View style={styles.cardBottom}>
                 <Text style={styles.meta}>
-                  {booking.truckCategory.replace(/_/g, " ")}
+                  {booking.packagingType.replace(/_/g, " ")}
                 </Text>
 
                 <Text style={styles.meta}>
-                  {booking.cargoWeight} cargo
+                  {booking.cargoWeight} kg cargo
                 </Text>
 
                 <Text style={styles.open}>View →</Text>

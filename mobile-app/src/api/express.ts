@@ -125,6 +125,34 @@ export type ExpressGeneralBoardLoad = {
   generalBoardPublishedAt: string;
 };
 
+export type ExpressAssignment = {
+  bookingId: string;
+  expressBookingId: string;
+  status: ExpressBookingStatus;
+  dispatchStage: "NEARBY" | "GENERAL_BOARD";
+  pickupLocation: string;
+  pickupLandmark: string | null;
+  destination: string;
+  destinationLandmark: string | null;
+  scheduledDate: string | null;
+  cargoDescription: string | null;
+  cargoWeight: string;
+  packageCount: number;
+  packagingType: string;
+  fare: string;
+  currency: string;
+  paymentStatus: string;
+  paymentMethod: string;
+  acceptedAt: string | null;
+  arrivedAt: string | null;
+  pickedUpAt: string | null;
+  inTransitAt: string | null;
+  deliveredAt: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type ExpressAcceptanceResult = {
   bookingId: string;
   expressBookingId: string;

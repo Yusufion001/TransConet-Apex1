@@ -5,6 +5,7 @@ import { publishEvent } from "../realtime/event-bus.js";
 import { publishAdminEvent, publishBookingEvent } from "../realtime/realtime.service.js";
 import { createSettlement } from "../settlements/settlement.service.js";
 import { toBookingDto } from "./booking.dto.js";
+import { toExpressAssignmentDto } from "../express/express-assignment.dto.js";
 import { estimateIndicativeFare } from "../pricing/pricing.service.js";
 import { createBankTransferPayment } from "../payments/bank-transfer.service.js";
 
@@ -619,15 +620,19 @@ export async function getTransporterExpressAssignments(
         isNot: null,
       },
     },
+    include: {
+      expressBooking: true,
+    },
     orderBy: {
       createdAt: "desc",
     },
   });
 
-  return Promise.all(
-    bookings.map((booking) =>
-      enrichNegotiatedBookingDto(toBookingDto(booking)),
-    ),
+  return bookings.map((booking) =>
+    toExpressAssignmentDto({
+      ...booking.expressBooking!,
+      booking,
+    }),
   );
 }
 
