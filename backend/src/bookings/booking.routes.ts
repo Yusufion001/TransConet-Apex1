@@ -19,6 +19,8 @@ import {
   getBookingTrackingShareToken,
   getDeliveryConfirmationCode,
   getTransporterBookings,
+  getTransporterMarketplaceAssignments,
+  getTransporterExpressAssignments,
   assertBookingAccess,
   updateBookingStatus,
   uploadProofOfDelivery,
@@ -209,6 +211,64 @@ router.get(
         await getTransporterBookings(
           String(req.params.transporterId),
         );
+
+      res.json({
+        success: true,
+        data: bookings,
+      });
+    } catch (error) {
+      handleBookingRouteError(error, res);
+    }
+  },
+);
+
+router.get(
+  "/transporter/:transporterId/marketplace-assignments",
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (
+        req.user!.role !== "ADMIN" &&
+        (req.user!.role !== "TRANSPORTER" ||
+          req.user!.id !== String(req.params.transporterId))
+      ) {
+        return res.status(403).json({
+          success: false,
+          error: "Access denied",
+        });
+      }
+
+      const bookings = await getTransporterMarketplaceAssignments(
+        String(req.params.transporterId),
+      );
+
+      res.json({
+        success: true,
+        data: bookings,
+      });
+    } catch (error) {
+      handleBookingRouteError(error, res);
+    }
+  },
+);
+
+router.get(
+  "/transporter/:transporterId/express-assignments",
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      if (
+        req.user!.role !== "ADMIN" &&
+        (req.user!.role !== "TRANSPORTER" ||
+          req.user!.id !== String(req.params.transporterId))
+      ) {
+        return res.status(403).json({
+          success: false,
+          error: "Access denied",
+        });
+      }
+
+      const bookings = await getTransporterExpressAssignments(
+        String(req.params.transporterId),
+      );
 
       res.json({
         success: true,
