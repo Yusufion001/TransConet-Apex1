@@ -2,11 +2,10 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
-import {
-  acceptExpressBooking,
-  getExpressOffer,
-  verifyExpressPickup,
-} from "../../../src/api/express";
+import { verifyExpressPickup } from "../../../src/api/express";
+import type { ExpressAssignment } from "../../../src/api/express";
+import { getTransporterExpressAssignments } from "../../../src/api/transporter";
+import { useAuthStore } from "../../../src/auth/auth.store";
 
 function money(value: string, currency: string) {
   const amount = Number(value);
@@ -16,38 +15,61 @@ function money(value: string, currency: string) {
   return `${currency} ${value}`;
 }
 
-export default function ExpressOfferScreen() {
+export default function ExpressAssignmentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const expressBookingId = Array.isArray(id) ? id[0] : id;
+  const user = useAuthStore((state) => state.user);
 
-  const [accepted, setAccepted] = useState(false);
-  const [acceptLoading, setAcceptLoading] = useState(false);
   const [otp, setOtp] = useState("");
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [verified, setVerified] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const offerQuery = useQuery({
-    queryKey: ["express-offer", expressBookingId],
-    queryFn: () => getExpressOffer(expressBookingId!),
-    enabled: Boolean(expressBookingId) && !accepted,
+  const assignmentsQuery = useQuery({
+    queryKey: ["transporter-express-assignments", user?.id],
+    queryFn: () => getTransporterExpressAssignments(user!.id),
+    enabled: Boolean(user?.id && expressBookingId),
   });
 
-  if (offerQuery.isLoading) {
+  if (assignmentsQuery.isLoading) {
     return (
       <View style={styles.center}>
         <ActivityIndicator />
-        <Text style={styles.loadingText}>Loading Express offer...</Text>
+        <Text style={styles.loadingText}>Loading Express assignment...</Text>
       </View>
     );
   }
 
-  if (offerQuery.isError || !offerQuery.data) {
+  if (assignmentsQuery.isError) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorTitle}>Express offer unavailable</Text>
+        <Text style={styles.errorTitle}>Unable to load assignment</Text>
         <Text style={styles.errorText}>
-          This Express load is no longer available for you.
+          The Express assignment could not be loaded.
+        </Text>
+        <Pressable
+          style={styles.button}
+          onPress={() => void assignmentsQuery.refetch()}
+        >
+          <Text style={styles.buttonText}>Try Again</Text>
+        </Pressable>
+        <Pressable style={styles.button} onPress={() => router.back()}>
+          <Text style={styles.buttonText}>Go Back</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  const assignment = (assignmentsQuery.data ?? []).find(
+    (item) => item.expressBookingId === expressBookingId,
+  ) as ExpressAssignment | undefined;
+
+  if (!assignment) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorTitle}>Assignment unavailable</Text>
+        <Text style={styles.errorText}>
+          This Express booking is not currently assigned to you.
         </Text>
         <Pressable style={styles.button} onPress={() => router.back()}>
           <Text style={styles.buttonText}>Go Back</Text>
@@ -56,27 +78,7 @@ export default function ExpressOfferScreen() {
     );
   }
 
-  const offer = offerQuery.data;
-
-  const handleAccept = async () => {
-    if (acceptLoading || accepted) return;
-
-    setAcceptLoading(true);
-    setActionError(null);
-
-    try {
-      await acceptExpressBooking(offer.expressBookingId, offer.vehicleId);
-      setAccepted(true);
-    } catch (error) {
-      setActionError(
-        error instanceof Error
-          ? error.message
-          : "Unable to accept this Express load.",
-      );
-    } finally {
-      setAcceptLoading(false);
-    }
-  };
+  const displayStatus = verified ? "IN_TRANSIT" : assignment.status;
 
   const handleVerifyPickup = async () => {
     const normalizedOtp = otp.trim();
@@ -90,7 +92,7 @@ export default function ExpressOfferScreen() {
     setActionError(null);
 
     try {
-      await verifyExpressPickup(offer.expressBookingId, normalizedOtp);
+      await verifyExpressPickup(assignment.expressBookingId, normalizedOtp);
       setVerified(true);
     } catch (error) {
       setActionError(
@@ -103,56 +105,68 @@ export default function ExpressOfferScreen() {
     }
   };
 
+  const showPickupVerification =
+    !verified &&
+    (assignment.status === "ASSIGNED" ||
+      assignment.status === "PICKUP_VERIFICATION");
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Express Load</Text>
-      <Text style={styles.status}>NEARBY DISPATCH</Text>
+      <Text style={styles.title}>Express Assignment</Text>
+      <Text style={styles.status}>
+        {displayStatus.replace(/_/g, " ")}
+      </Text>
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Route</Text>
 
         <Text style={styles.label}>Pickup</Text>
-        <Text style={styles.value}>{offer.pickupLocation}</Text>
-        {offer.pickupLandmark ? (
-          <Text style={styles.detail}>{offer.pickupLandmark}</Text>
+        <Text style={styles.value}>{assignment.pickupLocation}</Text>
+        {assignment.pickupLandmark ? (
+          <Text style={styles.detail}>{assignment.pickupLandmark}</Text>
         ) : null}
 
         <Text style={styles.label}>Destination</Text>
-        <Text style={styles.value}>{offer.destination}</Text>
-        {offer.destinationLandmark ? (
-          <Text style={styles.detail}>{offer.destinationLandmark}</Text>
+        <Text style={styles.value}>{assignment.destination}</Text>
+        {assignment.destinationLandmark ? (
+          <Text style={styles.detail}>{assignment.destinationLandmark}</Text>
         ) : null}
-
-        <Text style={styles.distance}>
-          {offer.distanceKm.toFixed(1)} km from your current location
-        </Text>
       </View>
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Cargo</Text>
         <Text style={styles.value}>
-          {offer.cargoWeight.toLocaleString()} kg
+          {Number(assignment.cargoWeight).toLocaleString()} kg
         </Text>
         <Text style={styles.detail}>
-          {offer.packageCount} package{offer.packageCount === 1 ? "" : "s"} ·{" "}
-          {offer.packagingType}
+          {assignment.packageCount} package
+          {assignment.packageCount === 1 ? "" : "s"} ·{" "}
+          {assignment.packagingType.replace(/_/g, " ")}
         </Text>
-        {offer.cargoDescription ? (
-          <Text style={styles.detail}>{offer.cargoDescription}</Text>
+        {assignment.cargoDescription ? (
+          <Text style={styles.detail}>{assignment.cargoDescription}</Text>
         ) : null}
       </View>
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Trip Details</Text>
+
         <Text style={styles.label}>Scheduled</Text>
         <Text style={styles.value}>
-          {offer.scheduledDate
-            ? new Date(offer.scheduledDate).toLocaleString()
+          {assignment.scheduledDate
+            ? new Date(assignment.scheduledDate).toLocaleString()
             : "As soon as possible"}
         </Text>
 
         <Text style={styles.label}>Fare</Text>
-        <Text style={styles.fare}>{money(offer.fare, offer.currency)}</Text>
+        <Text style={styles.fare}>
+          {money(assignment.fare, assignment.currency)}
+        </Text>
+
+        <Text style={styles.label}>Payment</Text>
+        <Text style={styles.detail}>
+          {assignment.paymentStatus.replace(/_/g, " ")}
+        </Text>
       </View>
 
       {actionError ? (
@@ -161,41 +175,13 @@ export default function ExpressOfferScreen() {
         </View>
       ) : null}
 
-      {!accepted && !verified ? (
-        <Pressable
-          style={[
-            styles.acceptButton,
-            acceptLoading && styles.disabledButton,
-          ]}
-          disabled={acceptLoading}
-          onPress={() => void handleAccept()}
-        >
-          {acceptLoading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.acceptText}>Accept Express Load</Text>
-          )}
-        </Pressable>
-      ) : verified ? (
-        <View style={styles.verifiedBox}>
-          <Text style={styles.verifiedTitle}>PICKUP VERIFIED</Text>
-          <Text style={styles.verifiedText}>
-            The Express shipment is now in transit.
-          </Text>
-          <Pressable
-            style={styles.continueButton}
-            onPress={() => router.replace("/(transporter)/express-assignments")}
-          >
-            <Text style={styles.acceptText}>VIEW ASSIGNMENT</Text>
-          </Pressable>
-        </View>
-      ) : (
+      {showPickupVerification ? (
         <View style={styles.pickupCard}>
           <Text style={styles.sectionTitle}>PICKUP VERIFICATION</Text>
 
           <Text style={styles.pickupInstruction}>
-            The load has been assigned to you. At pickup, ask the customer for
-            the 6-digit Express pickup OTP.
+            This Express shipment is assigned to you. At pickup, ask the
+            customer for the 6-digit Express pickup OTP.
           </Text>
 
           <Text style={styles.otpLabel}>CUSTOMER OTP</Text>
@@ -226,6 +212,32 @@ export default function ExpressOfferScreen() {
               <Text style={styles.acceptText}>VERIFY PICKUP OTP</Text>
             )}
           </Pressable>
+        </View>
+      ) : verified ? (
+        <View style={styles.verifiedBox}>
+          <Text style={styles.verifiedTitle}>PICKUP VERIFIED</Text>
+          <Text style={styles.verifiedText}>
+            The Express shipment is now in transit.
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.verifiedBox}>
+          <Text style={styles.verifiedTitle}>
+            {displayStatus === "COMPLETED"
+              ? "DELIVERY COMPLETED"
+              : displayStatus === "CANCELLED"
+                ? "ASSIGNMENT CANCELLED"
+                : "ASSIGNMENT CONFIRMED"}
+          </Text>
+          <Text style={styles.verifiedText}>
+            {displayStatus === "ACTIVE" || displayStatus === "IN_TRANSIT"
+              ? "This Express shipment is currently in transit."
+              : displayStatus === "COMPLETED"
+                ? "This Express shipment has been completed."
+                : displayStatus === "CANCELLED"
+                  ? "This Express assignment is no longer active."
+                  : "This Express shipment is assigned to you."}
+          </Text>
         </View>
       )}
     </ScrollView>
