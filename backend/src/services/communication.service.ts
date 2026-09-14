@@ -259,6 +259,19 @@ export async function sendPaymentFailureSms(
   );
 }
 
+export async function sendExpressPickupOtp(
+  recipient: CommunicationRecipient,
+  otp: string,
+  expiresInMinutes: number,
+) {
+  await sendBoth(
+    recipient,
+    "Your TransConet Express pickup verification code",
+    `Hello ${recipient.firstName ?? "there"}, your TransConet Express pickup verification code is ${otp}. This code expires in ${expiresInMinutes} minutes. Do not share this code with anyone except the assigned TransConet transporter at pickup.`,
+    `Your TransConet Express pickup verification code is ${otp}. It expires in ${expiresInMinutes} minutes. Do not share this code except with the assigned TransConet transporter at pickup.`,
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /* Combined delivery helpers                                                  */
 /* -------------------------------------------------------------------------- */

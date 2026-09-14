@@ -3,6 +3,7 @@ import { prisma } from "../config/prisma.js";
 import { getExpressPricingConfig } from "./express-pricing.service.js";
 import { createShipmentEvent } from "../events/event.service.js";
 import { publishEvent } from "../realtime/event-bus.js";
+import { sendExpressPickupOtp } from "../services/communication.service.js";
 
 const OTP_LENGTH = 6;
 
@@ -30,6 +31,13 @@ export async function prepareExpressPickupVerification(
           cargoWeight: true,
           status: true,
           paymentStatus: true,
+          customer: {
+            select: {
+              firstName: true,
+              email: true,
+              phone: true,
+            },
+          },
         },
       },
     },
@@ -67,6 +75,18 @@ export async function prepareExpressPickupVerification(
       pickupOtpExpiresAt: expiresAt,
     },
   });
+
+  await Promise.allSettled([
+    sendExpressPickupOtp(
+      {
+        email: expressBooking.booking.customer.email,
+        phone: expressBooking.booking.customer.phone,
+        firstName: expressBooking.booking.customer.firstName,
+      },
+      otp,
+      config.pickupOtpTtlMinutes,
+    ),
+  ]);
 
   return {
     expressBookingId,
