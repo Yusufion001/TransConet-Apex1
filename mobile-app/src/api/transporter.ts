@@ -1,5 +1,6 @@
 import { apiClient } from "./client";
 import type { Booking } from "./bookings";
+import type { ExpressAssignment } from "./express";
 
 type ApiResponse<T> = {
   success: boolean;
@@ -156,8 +157,8 @@ export async function getTransporterMarketplaceAssignments(
 
 export async function getTransporterExpressAssignments(
   transporterId: string,
-): Promise<Booking[]> {
-  const response = await apiClient.get<ApiResponse<Booking[]>>(
+): Promise<ExpressAssignment[]> {
+  const response = await apiClient.get<ApiResponse<ExpressAssignment[]>>(
     `/bookings/transporter/${transporterId}/express-assignments`,
   );
 
