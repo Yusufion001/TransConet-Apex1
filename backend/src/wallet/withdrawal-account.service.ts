@@ -42,6 +42,7 @@ async function getVerifiedIdentityName(
       firstName: true,
       lastName: true,
       phoneVerifiedAt: true,
+      emailVerifiedAt: true,
       transporterProfile: {
         select: {
           companyName: true,
@@ -82,9 +83,12 @@ async function getVerifiedIdentityName(
     throw new Error("Transporter account is not active");
   }
 
-  if (!user.phoneVerifiedAt) {
+  const accountVerified =
+    Boolean(user.phoneVerifiedAt) || Boolean(user.emailVerifiedAt);
+
+  if (!accountVerified) {
     throw new Error(
-      "Your phone number must be verified before managing withdrawal accounts",
+      "Your account must be verified by phone or email before managing withdrawal accounts",
     );
   }
 

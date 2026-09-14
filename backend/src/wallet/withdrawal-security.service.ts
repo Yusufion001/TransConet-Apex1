@@ -61,19 +61,16 @@ export async function createWithdrawalSecurityChallenge(
     throw new Error("A phone number is required for withdrawal security");
   }
 
-  if (!user.phoneVerifiedAt) {
-    throw new Error(
-      "Your phone number must be verified before managing withdrawal accounts",
-    );
-  }
-
   if (!user.email) {
     throw new Error("An email address is required for withdrawal security");
   }
 
-  if (!user.emailVerifiedAt) {
+  const accountVerified =
+    Boolean(user.phoneVerifiedAt) || Boolean(user.emailVerifiedAt);
+
+  if (!accountVerified) {
     throw new Error(
-      "Your email address must be verified before managing withdrawal accounts",
+      "Your account must be verified by phone or email before managing withdrawal accounts",
     );
   }
 
