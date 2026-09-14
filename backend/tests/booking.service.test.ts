@@ -550,13 +550,29 @@ test("getCustomerBookings returns bookings ordered by creation time", async () =
 
   const result = await getCustomerBookings("customer-1");
 
-  assert.deepEqual(result, bookings.map(toBookingDto));
+  assert.deepEqual(
+    result,
+    bookings.map((booking) => ({
+      ...toBookingDto(booking),
+      expressBookingId: null,
+      expressBookingStatus: null,
+    })),
+  );
 
   const call =
     prismaMock.booking.findMany.mock.calls[0]?.arguments[0];
 
   assert.deepEqual(call.where, {
     customerId: "customer-1",
+  });
+
+  assert.deepEqual(call.include, {
+    expressBooking: {
+      select: {
+        id: true,
+        status: true,
+      },
+    },
   });
 
   assert.deepEqual(call.orderBy, {

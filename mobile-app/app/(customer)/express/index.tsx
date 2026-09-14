@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { router } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
 import * as Location from "expo-location";
 import {
   ActivityIndicator,
@@ -13,6 +14,8 @@ import {
   View,
 } from "react-native";
 import TransConetMap from "../../../src/components/maps/TransConetMap";
+import { getCustomerBookings } from "../../../src/api/bookings";
+import { useAuthStore } from "../../../src/auth/auth.store";
 import {
   autocompletePlaces,
   type PlaceSuggestion,
@@ -31,6 +34,7 @@ type Coordinates = {
 };
 
 export default function ExpressBookingScreen() {
+  const user = useAuthStore((state) => state.user);
   const [pickupLocation, setPickupLocation] = useState("");
   const [pickupLandmark, setPickupLandmark] = useState("");
   const [destination, setDestination] = useState("");
@@ -72,6 +76,33 @@ export default function ExpressBookingScreen() {
     useState<"pickup" | "destination">("pickup");
   const [locationPickerCoordinate, setLocationPickerCoordinate] =
     useState<Coordinates | null>(null);
+
+  const customerBookingsQuery = useQuery({
+    queryKey: ["customer-bookings", user?.id],
+    queryFn: () => getCustomerBookings(user!.id),
+    enabled: Boolean(user?.id),
+  });
+
+  useEffect(() => {
+    if (!customerBookingsQuery.data) return;
+
+    const activeExpressBooking = customerBookingsQuery.data.find(
+      (booking) =>
+        booking.expressBookingId &&
+        (booking.expressBookingStatus === "ASSIGNED" ||
+          booking.expressBookingStatus === "PICKUP_VERIFICATION" ||
+          booking.expressBookingStatus === "ACTIVE"),
+    );
+
+    if (!activeExpressBooking?.expressBookingId) return;
+
+    router.replace({
+      pathname: "/(customer)/express/[id]",
+      params: {
+        id: activeExpressBooking.expressBookingId,
+      },
+    });
+  }, [customerBookingsQuery.data]);
 
   useEffect(() => {
     let mounted = true;
