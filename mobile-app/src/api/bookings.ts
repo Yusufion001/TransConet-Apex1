@@ -1,4 +1,5 @@
 import { apiClient } from "./client";
+import type { ExpressBookingStatus } from "./express";
 import type { BookingRealtimeEvent } from "../realtime/booking-realtime";
 
 export type TruckCategory =
@@ -68,6 +69,8 @@ export type Booking = {
   deliveredAt: string | null;
   completedAt: string | null;
   proofOfDelivery: string | null;
+  expressBookingId: string | null;
+  expressBookingStatus: ExpressBookingStatus | null;
   createdAt: string;
   updatedAt: string;
 };

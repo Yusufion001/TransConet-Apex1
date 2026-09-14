@@ -557,15 +557,25 @@ export async function getCustomerBookings(
     where: {
       customerId,
     },
+    include: {
+      expressBooking: {
+        select: {
+          id: true,
+          status: true,
+        },
+      },
+    },
     orderBy: {
       createdAt: "desc",
     },
   });
 
   return Promise.all(
-    bookings.map((booking) =>
-      enrichNegotiatedBookingDto(toBookingDto(booking)),
-    ),
+    bookings.map(async (booking) => ({
+      ...(await enrichNegotiatedBookingDto(toBookingDto(booking))),
+      expressBookingId: booking.expressBooking?.id ?? null,
+      expressBookingStatus: booking.expressBooking?.status ?? null,
+    })),
   );
 }
 
