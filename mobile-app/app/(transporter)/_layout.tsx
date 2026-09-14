@@ -67,7 +67,8 @@ function TransporterDrawerContent(props: any) {
       <View style={styles.separator} />
 
       {item("⌂  Home", "/(transporter)")}
-      {item("▣  Assignments", "/(transporter)/bookings")}
+      {item("▣  Marketplace Assignments", "/(transporter)/marketplace-assignments")}
+      {item("▣  Express Assignments", "/(transporter)/express-assignments")}
       {item("⇄  Marketplace", "/(transporter)/marketplace")}
       {item("⚡  Express", "/(transporter)/express")}
       {item("🚚  Fleet", "/(transporter)/vehicles")}
@@ -213,7 +214,8 @@ export default function TransporterLayout() {
       }}
     >
       <Drawer.Screen name="index" options={{ title: "Home" }} />
-      <Drawer.Screen name="bookings/index" options={{ title: "Assignments" }} />
+      <Drawer.Screen name="marketplace-assignments/index" options={{ title: "Marketplace Assignments" }} />
+      <Drawer.Screen name="express-assignments/index" options={{ title: "Express Assignments" }} />
       <Drawer.Screen name="marketplace/index" options={{ title: "Marketplace" }} />
       <Drawer.Screen name="express/index" options={{ title: "Express" }} />
       <Drawer.Screen name="vehicles/index" options={{ title: "Fleet" }} />

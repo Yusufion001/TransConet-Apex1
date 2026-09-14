@@ -587,6 +587,50 @@ export async function getTransporterBookings(
   );
 }
 
+export async function getTransporterMarketplaceAssignments(
+  transporterId: string,
+) {
+  const bookings = await prisma.booking.findMany({
+    where: {
+      transporterId,
+      marketplaceRequest: {
+        isNot: null,
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return Promise.all(
+    bookings.map((booking) =>
+      enrichNegotiatedBookingDto(toBookingDto(booking)),
+    ),
+  );
+}
+
+export async function getTransporterExpressAssignments(
+  transporterId: string,
+) {
+  const bookings = await prisma.booking.findMany({
+    where: {
+      transporterId,
+      expressBooking: {
+        isNot: null,
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return Promise.all(
+    bookings.map((booking) =>
+      enrichNegotiatedBookingDto(toBookingDto(booking)),
+    ),
+  );
+}
+
 export async function uploadProofOfDelivery(
   bookingId: string,
   transporterId: string,

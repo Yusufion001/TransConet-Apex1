@@ -100,11 +100,19 @@ export default function TransporterHome() {
       <Text style={styles.sectionLabel}>QUICK ACCESS</Text>
 
       <View style={styles.grid}>
-        <Link href="/(transporter)/bookings" asChild>
+        <Link href="/(transporter)/marketplace-assignments" asChild>
           <Pressable style={styles.actionCard}>
             <Text style={styles.icon}>▣</Text>
-            <Text style={styles.actionTitle}>Assignments</Text>
-            <Text style={styles.actionText}>Manage accepted transport assignments.</Text>
+            <Text style={styles.actionTitle}>Marketplace Assignments</Text>
+            <Text style={styles.actionText}>Manage assigned Marketplace shipments.</Text>
+          </Pressable>
+        </Link>
+
+        <Link href="/(transporter)/express-assignments" asChild>
+          <Pressable style={styles.actionCard}>
+            <Text style={styles.icon}>⚡</Text>
+            <Text style={styles.actionTitle}>Express Assignments</Text>
+            <Text style={styles.actionText}>Manage assigned Express shipments.</Text>
           </Pressable>
         </Link>
 

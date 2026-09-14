@@ -144,6 +144,26 @@ export async function getTransporterBookings(
   return response.data.data;
 }
 
+export async function getTransporterMarketplaceAssignments(
+  transporterId: string,
+): Promise<Booking[]> {
+  const response = await apiClient.get<ApiResponse<Booking[]>>(
+    `/bookings/transporter/${transporterId}/marketplace-assignments`,
+  );
+
+  return response.data.data;
+}
+
+export async function getTransporterExpressAssignments(
+  transporterId: string,
+): Promise<Booking[]> {
+  const response = await apiClient.get<ApiResponse<Booking[]>>(
+    `/bookings/transporter/${transporterId}/express-assignments`,
+  );
+
+  return response.data.data;
+}
+
 export type TransporterType = "INDIVIDUAL" | "BUSINESS";
 
 export type TransporterProfile = {

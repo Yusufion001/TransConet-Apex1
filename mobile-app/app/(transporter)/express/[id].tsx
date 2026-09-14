@@ -184,7 +184,7 @@ export default function ExpressOfferScreen() {
           </Text>
           <Pressable
             style={styles.continueButton}
-            onPress={() => router.replace("/(transporter)/bookings")}
+            onPress={() => router.replace("/(transporter)/express-assignments")}
           >
             <Text style={styles.acceptText}>VIEW ASSIGNMENT</Text>
           </Pressable>
