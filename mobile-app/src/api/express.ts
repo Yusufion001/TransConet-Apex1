@@ -191,6 +191,60 @@ function createIdempotencyKey(): string {
   return `express-${Date.now()}-${randomPart}`;
 }
 
+export type ExpressBookingDetails = {
+  expressBookingId: string;
+  bookingId: string;
+  status: ExpressBookingStatus;
+  dispatchStage: string;
+  packagingType: string;
+  packageCount: number;
+  weightKg: string;
+  volumeCbm: string;
+  distanceKm: string;
+  fare: string;
+  currency: string;
+  booking: {
+    id: string;
+    customerId: string;
+    transporterId: string | null;
+    vehicleId: string | null;
+    cargoDescription: string | null;
+    pickupLocation: string;
+    pickupLandmark: string | null;
+    destination: string;
+    destinationLandmark: string | null;
+    pickupLatitude: string | null;
+    pickupLongitude: string | null;
+    destinationLatitude: string | null;
+    destinationLongitude: string | null;
+    scheduledDate: string | null;
+    cargoWeight: string | null;
+    status: string;
+    fare: string | null;
+    estimatedFare: string | null;
+    paymentStatus: string;
+    paymentMethod: string;
+    acceptedAt: string | null;
+    arrivedAt: string | null;
+    pickedUpAt: string | null;
+    inTransitAt: string | null;
+    deliveredAt: string | null;
+    completedAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
+export async function getExpressBookingDetails(
+  expressBookingId: string,
+): Promise<ExpressBookingDetails> {
+  const response = await apiClient.get<ApiResponse<ExpressBookingDetails>>(
+    `/express/bookings/${expressBookingId}`,
+  );
+
+  return response.data.data;
+}
+
 export async function getExpressConfig(): Promise<ExpressConfig> {
   const response = await apiClient.get<ApiResponse<ExpressConfig>>(
     "/express/config",

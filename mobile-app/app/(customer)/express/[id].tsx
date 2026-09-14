@@ -11,8 +11,10 @@ import {
   Text,
   View,
 } from "react-native";
-import { getBooking } from "../../../src/api/bookings";
-import { startExpressPickup } from "../../../src/api/express";
+import {
+  getExpressBookingDetails,
+  startExpressPickup,
+} from "../../../src/api/express";
 
 function money(value: string | number | null | undefined) {
   if (value == null) return "Pending";
@@ -67,7 +69,6 @@ export default function ExpressBookingDetails() {
   }>();
 
   const expressBookingId = String(params.id ?? "");
-  const bookingId = String(params.bookingId ?? "");
   const initialPaymentStatus = String(params.paymentStatus ?? "PENDING");
   const checkoutUrl = params.checkoutUrl
     ? String(params.checkoutUrl)
@@ -79,13 +80,14 @@ export default function ExpressBookingDetails() {
   const [pickupOtpExpiresAt, setPickupOtpExpiresAt] = useState<string | null>(null);
 
   const bookingQuery = useQuery({
-    queryKey: ["express-booking", bookingId],
-    queryFn: () => getBooking(bookingId),
-    enabled: Boolean(bookingId),
+    queryKey: ["express-booking", expressBookingId],
+    queryFn: () => getExpressBookingDetails(expressBookingId),
+    enabled: Boolean(expressBookingId),
     refetchInterval: 5000,
   });
 
-  const booking = bookingQuery.data;
+  const expressDetails = bookingQuery.data;
+  const booking = expressDetails?.booking;
 
   const currentPaymentStatus =
     booking?.paymentStatus ?? initialPaymentStatus;
@@ -175,7 +177,7 @@ export default function ExpressBookingDetails() {
     }
   }, [checkoutUrl, currentPaymentStatus, paymentLoading, refresh]);
 
-  if (!bookingId) {
+  if (!expressBookingId) {
     return (
       <View style={styles.center}>
         <Text style={styles.error}>

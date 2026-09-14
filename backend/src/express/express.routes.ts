@@ -209,6 +209,129 @@ router.post(
 );
 
 router.get(
+  "/bookings/:expressBookingId",
+  authorize("CUSTOMER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const expressBookingId = z.string().uuid().parse(
+        req.params.expressBookingId,
+      );
+
+      const expressBooking = await prisma.expressBooking.findUnique({
+        where: { id: expressBookingId },
+        select: {
+          id: true,
+          status: true,
+          dispatchStage: true,
+          packagingType: true,
+          packageCount: true,
+          weightKg: true,
+          volumeCbm: true,
+          distanceKm: true,
+          fare: true,
+          currency: true,
+          createdAt: true,
+          updatedAt: true,
+          booking: {
+            select: {
+              id: true,
+              customerId: true,
+              transporterId: true,
+              vehicleId: true,
+              cargoDescription: true,
+              pickupLocation: true,
+              pickupLandmark: true,
+              destination: true,
+              destinationLandmark: true,
+              pickupLatitude: true,
+              pickupLongitude: true,
+              destinationLatitude: true,
+              destinationLongitude: true,
+              scheduledDate: true,
+              cargoWeight: true,
+              status: true,
+              fare: true,
+              estimatedFare: true,
+              paymentStatus: true,
+              paymentMethod: true,
+              acceptedAt: true,
+              arrivedAt: true,
+              pickedUpAt: true,
+              inTransitAt: true,
+              deliveredAt: true,
+              completedAt: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
+      });
+
+      if (!expressBooking) {
+        return res.status(404).json({
+          success: false,
+          message: "Express booking not found",
+        });
+      }
+
+      if (expressBooking.booking.customerId !== req.user!.id) {
+        return res.status(403).json({
+          success: false,
+          message: "You do not have access to this Express booking",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          expressBookingId: expressBooking.id,
+          bookingId: expressBooking.booking.id,
+          status: expressBooking.status,
+          dispatchStage: expressBooking.dispatchStage,
+          packagingType: expressBooking.packagingType,
+          packageCount: expressBooking.packageCount,
+          weightKg: expressBooking.weightKg.toString(),
+          volumeCbm: expressBooking.volumeCbm.toString(),
+          distanceKm: expressBooking.distanceKm.toString(),
+          fare: expressBooking.fare.toString(),
+          currency: expressBooking.currency,
+          booking: {
+            ...expressBooking.booking,
+            pickupLatitude:
+              expressBooking.booking.pickupLatitude?.toString() ?? null,
+            pickupLongitude:
+              expressBooking.booking.pickupLongitude?.toString() ?? null,
+            destinationLatitude:
+              expressBooking.booking.destinationLatitude?.toString() ?? null,
+            destinationLongitude:
+              expressBooking.booking.destinationLongitude?.toString() ?? null,
+            cargoWeight: expressBooking.booking.cargoWeight?.toString() ?? null,
+            fare: expressBooking.booking.fare?.toString() ?? null,
+            estimatedFare:
+              expressBooking.booking.estimatedFare?.toString() ?? null,
+          },
+        },
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Express booking ID",
+          errors: error.flatten(),
+        });
+      }
+
+      console.error("Express booking details retrieval failed", error);
+
+      return res.status(500).json({
+        success: false,
+        message: "Unable to retrieve Express booking details",
+      });
+    }
+  },
+);
+
+router.get(
   "/config",
   authorize("CUSTOMER"),
   async (_req: AuthenticatedRequest, res) => {
