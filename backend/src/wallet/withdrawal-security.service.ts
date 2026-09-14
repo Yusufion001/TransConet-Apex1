@@ -131,19 +131,23 @@ export async function createWithdrawalSecurityChallenge(
     },
   });
 
-  try {
-    await Promise.all([
-      sendSms(
-        user.phone,
-        `Your TransConet withdrawal security code is ${code}. It expires in ${expiresInMinutes} minutes. Do not share this code.`,
-      ),
-      sendWithdrawalSecurityCodeEmail(
-        user.email,
-        code,
-        expiresInMinutes,
-      ),
-    ]);
-  } catch {
+  const deliveryResults = await Promise.allSettled([
+    sendSms(
+      user.phone,
+      `Your TransConet withdrawal security code is ${code}. It expires in ${expiresInMinutes} minutes. Do not share this code.`,
+    ),
+    sendWithdrawalSecurityCodeEmail(
+      user.email,
+      code,
+      expiresInMinutes,
+    ),
+  ]);
+
+  const successfulDeliveries = deliveryResults.filter(
+    (result) => result.status === "fulfilled",
+  ).length;
+
+  if (successfulDeliveries === 0) {
     await prisma.withdrawalSecurityChallenge.updateMany({
       where: {
         id: challenge.id,
@@ -155,7 +159,7 @@ export async function createWithdrawalSecurityChallenge(
     });
 
     throw new Error(
-      "Unable to deliver withdrawal security code. Please try again.",
+      "Unable to deliver withdrawal security code through SMS or email. Please try again.",
     );
   }
 

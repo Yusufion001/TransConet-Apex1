@@ -25,6 +25,16 @@ mock.module(
 
 const createShipmentEventMock = mock.fn<(...args: any[]) => any>();
 const publishEventMock = mock.fn<(...args: any[]) => any>();
+const sendExpressPickupOtpMock = mock.fn<(...args: any[]) => any>();
+
+mock.module(
+  new URL("../src/services/communication.service.js", import.meta.url).href,
+  {
+    namedExports: {
+      sendExpressPickupOtp: sendExpressPickupOtpMock,
+    },
+  },
+);
 
 mock.module(
   new URL("../src/events/event.service.js", import.meta.url).href,
@@ -67,6 +77,7 @@ function resetMocks() {
     getExpressPricingConfigMock,
     createShipmentEventMock,
     publishEventMock,
+    sendExpressPickupOtpMock,
   ]) {
     fn.mock.resetCalls();
   }
@@ -122,6 +133,11 @@ test("prepareExpressPickupVerification generates a customer pickup OTP", async (
       cargoWeight: "500",
       status: "ASSIGNED",
       paymentStatus: "SUCCESS",
+      customer: {
+        firstName: "Customer",
+        email: "customer@example.com",
+        phone: "+2348012345678",
+      },
     },
   }));
 
@@ -143,6 +159,19 @@ test("prepareExpressPickupVerification generates a customer pickup OTP", async (
   assert.equal(updateArgs.data.status, "PICKUP_VERIFICATION");
   assert.match(updateArgs.data.pickupOtpHash, /^[a-f0-9]{64}$/);
   assert.ok(updateArgs.data.pickupOtpExpiresAt instanceof Date);
+
+  assert.equal(sendExpressPickupOtpMock.mock.callCount(), 1);
+
+  const communicationArgs =
+    sendExpressPickupOtpMock.mock.calls[0]?.arguments as any;
+
+  assert.deepEqual(communicationArgs[0], {
+    email: "customer@example.com",
+    phone: "+2348012345678",
+    firstName: "Customer",
+  });
+  assert.match(communicationArgs[1], /^\d{6}$/);
+  assert.equal(communicationArgs[2], 15);
 });
 
 test("prepareExpressPickupVerification rejects another customer", async () => {

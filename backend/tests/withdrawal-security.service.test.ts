@@ -202,13 +202,61 @@ test("rejects a wrong local code and increments attempts", async () => {
   assert.equal(challengeUpdateManyMock.mock.callCount(), 0);
 });
 
-test("invalidates the challenge when delivery fails", async () => {
+test("keeps the challenge valid when SMS fails but email succeeds", async () => {
   sendSmsMock.mock.mockImplementation(async () => {
     throw new Error("SMS unavailable");
   });
 
   challengeCreateMock.mock.mockImplementation(async ({ data }: any) => ({
-    id: "challenge-2",
+    id: "challenge-sms-failed",
+    purpose: data.purpose,
+    expiresAt: data.expiresAt,
+  }));
+
+  const result = await createWithdrawalSecurityChallenge(
+    "transporter-1",
+    "ADD_WITHDRAWAL_ACCOUNT",
+  );
+
+  assert.equal(result.challengeId, "challenge-sms-failed");
+  assert.equal(sendSmsMock.mock.callCount(), 1);
+  assert.equal(sendWithdrawalSecurityCodeEmailMock.mock.callCount(), 1);
+  assert.equal(challengeUpdateManyMock.mock.callCount(), 0);
+});
+
+test("keeps the challenge valid when email fails but SMS succeeds", async () => {
+  sendWithdrawalSecurityCodeEmailMock.mock.mockImplementation(async () => {
+    throw new Error("Email unavailable");
+  });
+
+  challengeCreateMock.mock.mockImplementation(async ({ data }: any) => ({
+    id: "challenge-email-failed",
+    purpose: data.purpose,
+    expiresAt: data.expiresAt,
+  }));
+
+  const result = await createWithdrawalSecurityChallenge(
+    "transporter-1",
+    "ADD_WITHDRAWAL_ACCOUNT",
+  );
+
+  assert.equal(result.challengeId, "challenge-email-failed");
+  assert.equal(sendSmsMock.mock.callCount(), 1);
+  assert.equal(sendWithdrawalSecurityCodeEmailMock.mock.callCount(), 1);
+  assert.equal(challengeUpdateManyMock.mock.callCount(), 0);
+});
+
+test("invalidates the challenge when both delivery channels fail", async () => {
+  sendSmsMock.mock.mockImplementation(async () => {
+    throw new Error("SMS unavailable");
+  });
+
+  sendWithdrawalSecurityCodeEmailMock.mock.mockImplementation(async () => {
+    throw new Error("Email unavailable");
+  });
+
+  challengeCreateMock.mock.mockImplementation(async ({ data }: any) => ({
+    id: "challenge-both-failed",
     purpose: data.purpose,
     expiresAt: data.expiresAt,
   }));
@@ -219,15 +267,16 @@ test("invalidates the challenge when delivery fails", async () => {
         "transporter-1",
         "ADD_WITHDRAWAL_ACCOUNT",
       ),
-    /unable to deliver withdrawal security code/i,
+    /unable to deliver withdrawal security code through SMS or email/i,
   );
 
   assert.equal(challengeUpdateManyMock.mock.callCount(), 1);
+
   const args =
     challengeUpdateManyMock.mock.calls[0]?.arguments[0] as any;
 
   assert.deepEqual(args.where, {
-    id: "challenge-2",
+    id: "challenge-both-failed",
     consumedAt: null,
   });
 });

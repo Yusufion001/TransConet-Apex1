@@ -55,6 +55,7 @@ const processPaystackExpressWebhookMock = mock.fn();
 const createExpressBookingMock = mock.fn();
 const findExpressDispatchCandidatesMock = mock.fn();
 const acceptExpressBookingMock = mock.fn();
+const sendExpressPickupOtpMock = mock.fn();
 
 const envMock = {
   PAYSTACK_SECRET_KEY: "test-paystack-secret",
@@ -106,6 +107,15 @@ mock.module(
       findExpressDispatchCandidates:
         findExpressDispatchCandidatesMock,
       acceptExpressBooking: acceptExpressBookingMock,
+    },
+  },
+);
+
+mock.module(
+  new URL("../src/services/communication.service.js", import.meta.url).href,
+  {
+    namedExports: {
+      sendExpressPickupOtp: sendExpressPickupOtpMock,
     },
   },
 );
