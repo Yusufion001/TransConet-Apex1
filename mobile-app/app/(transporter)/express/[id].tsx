@@ -2,7 +2,10 @@ import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useQuery } from "@tanstack/react-query";
-import { verifyExpressPickup } from "../../../src/api/express";
+import {
+  verifyExpressDelivery,
+  verifyExpressPickup,
+} from "../../../src/api/express";
 import type { ExpressAssignment } from "../../../src/api/express";
 import { getTransporterExpressAssignments } from "../../../src/api/transporter";
 import { useAuthStore } from "../../../src/auth/auth.store";
@@ -24,6 +27,15 @@ export default function ExpressAssignmentScreen() {
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [verified, setVerified] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [deliveryOtp, setDeliveryOtp] = useState("");
+const [deliveryVerifyLoading, setDeliveryVerifyLoading] = useState(false);
+const [deliveryCompleted, setDeliveryCompleted] = useState(false);
+const [deliverySettlement, setDeliverySettlement] = useState<{
+  grossAmount: string;
+  commissionAmount: string;
+  netAmount: string;
+  currency: string;
+} | null>(null);
 
   const assignmentsQuery = useQuery({
     queryKey: ["transporter-express-assignments", user?.id],
@@ -78,9 +90,14 @@ export default function ExpressAssignmentScreen() {
     );
   }
 
-  const displayStatus = verified ? "IN_TRANSIT" : assignment.status;
+const displayStatus = deliveryCompleted
+  ? "COMPLETED"
+  : verified
+    ? "IN_TRANSIT"
+    : assignment.status;
 
-  const handleVerifyPickup = async () => {
+  const
+handleVerifyPickup = async () => {
     const normalizedOtp = otp.trim();
 
     if (verifyLoading || normalizedOtp.length !== 6) {
@@ -93,6 +110,7 @@ export default function ExpressAssignmentScreen() {
 
     try {
       await verifyExpressPickup(assignment.expressBookingId, normalizedOtp);
+      await assignmentsQuery.refetch();
       setVerified(true);
     } catch (error) {
       setActionError(
@@ -102,6 +120,44 @@ export default function ExpressAssignmentScreen() {
       );
     } finally {
       setVerifyLoading(false);
+    }
+  };
+
+  const handleVerifyDelivery = async () => {
+    const normalizedOtp = deliveryOtp.trim();
+
+    if (deliveryVerifyLoading || normalizedOtp.length !== 6) {
+      setActionError(
+        "Enter the 6-digit delivery OTP provided by the customer.",
+      );
+      return;
+    }
+
+    setDeliveryVerifyLoading(true);
+    setActionError(null);
+
+    try {
+      const result = await verifyExpressDelivery(
+        assignment.expressBookingId,
+        normalizedOtp,
+      );
+
+      setDeliveryCompleted(true);
+      setDeliveryOtp("");
+      setDeliverySettlement({
+        grossAmount: result.settlement.grossAmount,
+        commissionAmount: result.settlement.commissionAmount,
+        netAmount: result.settlement.netAmount,
+        currency: result.settlement.currency,
+      });
+    } catch (error) {
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : "Unable to verify the Express delivery OTP.",
+      );
+    } finally {
+      setDeliveryVerifyLoading(false);
     }
   };
 
@@ -212,6 +268,83 @@ export default function ExpressAssignmentScreen() {
               <Text style={styles.acceptText}>VERIFY PICKUP OTP</Text>
             )}
           </Pressable>
+        </View>
+      ) : displayStatus === "ACTIVE" && !deliveryCompleted ? (
+        <View style={styles.pickupCard}>
+          <Text style={styles.sectionTitle}>DELIVERY VERIFICATION</Text>
+
+          <Text style={styles.pickupInstruction}>
+            You have reached the destination. Ask the customer for the
+            6-digit Express delivery verification OTP before completing
+            the shipment.
+          </Text>
+
+          <Text style={styles.otpLabel}>CUSTOMER DELIVERY OTP</Text>
+
+          <TextInput
+            value={deliveryOtp}
+            onChangeText={(value) =>
+              setDeliveryOtp(value.replace(/\D/g, "").slice(0, 6))
+            }
+            keyboardType="number-pad"
+            maxLength={6}
+            placeholder="000000"
+            placeholderTextColor="#98A2B3"
+            style={styles.otpInput}
+          />
+
+          <Pressable
+            style={[
+              styles.acceptButton,
+              deliveryVerifyLoading && styles.disabledButton,
+            ]}
+            disabled={deliveryVerifyLoading}
+            onPress={() => void handleVerifyDelivery()}
+          >
+            {deliveryVerifyLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={styles.acceptText}>VERIFY DELIVERY OTP</Text>
+            )}
+          </Pressable>
+        </View>
+      ) : deliveryCompleted ? (
+        <View style={styles.verifiedBox}>
+          <Text style={styles.verifiedTitle}>DELIVERY COMPLETED</Text>
+
+          <Text style={styles.verifiedText}>
+            The customer delivery OTP was verified successfully. The
+            Express shipment is now completed and settlement has been
+            released.
+          </Text>
+
+          {deliverySettlement ? (
+            <>
+              <Text style={styles.label}>GROSS FARE</Text>
+              <Text style={styles.value}>
+                {money(
+                  deliverySettlement.grossAmount,
+                  deliverySettlement.currency,
+                )}
+              </Text>
+
+              <Text style={styles.label}>COMMISSION</Text>
+              <Text style={styles.detail}>
+                {money(
+                  deliverySettlement.commissionAmount,
+                  deliverySettlement.currency,
+                )}
+              </Text>
+
+              <Text style={styles.label}>NET SETTLEMENT</Text>
+              <Text style={styles.fare}>
+                {money(
+                  deliverySettlement.netAmount,
+                  deliverySettlement.currency,
+                )}
+              </Text>
+            </>
+          ) : null}
         </View>
       ) : verified ? (
         <View style={styles.verifiedBox}>

@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import {
   getExpressBookingDetails,
+  startExpressDelivery,
   startExpressPickup,
 } from "../../../src/api/express";
 
@@ -76,6 +77,9 @@ export default function ExpressBookingDetails() {
 
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [pickupLoading, setPickupLoading] = useState(false);
+  const [deliveryLoading, setDeliveryLoading] = useState(false);
+  const [deliveryCodeSent, setDeliveryCodeSent] = useState(false);
+  const [deliveryCodeExpiresAt, setDeliveryCodeExpiresAt] = useState<string | null>(null);
   const [pickupOtp, setPickupOtp] = useState<string | null>(null);
   const [pickupOtpExpiresAt, setPickupOtpExpiresAt] = useState<string | null>(null);
 
@@ -139,6 +143,47 @@ export default function ExpressBookingDetails() {
     pickupOtp,
     refresh,
     shipmentStatus,
+    transporterAssigned,
+  ]);
+
+  const handleStartDelivery = useCallback(async () => {
+    if (
+      deliveryLoading ||
+      deliveryCodeSent ||
+      expressDetails?.status !== "ACTIVE" ||
+      !transporterAssigned
+    ) {
+      return;
+    }
+
+    setDeliveryLoading(true);
+
+    try {
+      const result = await startExpressDelivery(expressBookingId);
+      setDeliveryCodeSent(true);
+      setDeliveryCodeExpiresAt(result.expiresAt);
+      await refresh();
+
+      Alert.alert(
+        "Delivery verification",
+        "A delivery verification code has been sent to your registered phone number and email. Give the code to your assigned transporter when they are ready to complete the delivery.",
+      );
+    } catch (error) {
+      Alert.alert(
+        "Delivery verification",
+        error instanceof Error
+          ? error.message
+          : "Unable to send the Express delivery verification code. Please try again.",
+      );
+    } finally {
+      setDeliveryLoading(false);
+    }
+  }, [
+    deliveryCodeSent,
+    deliveryLoading,
+    expressBookingId,
+    expressDetails?.status,
+    refresh,
     transporterAssigned,
   ]);
 
@@ -373,6 +418,60 @@ export default function ExpressBookingDetails() {
                 Give this OTP to your assigned transporter at pickup. The
                 shipment will move to IN TRANSIT after the transporter verifies
                 it.
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      {expressDetails.status === "ACTIVE" && transporterAssigned && (
+        <View style={styles.card}>
+          <Text style={styles.label}>EXPRESS DELIVERY VERIFICATION</Text>
+
+          {!deliveryCodeSent ? (
+            <>
+              <Text style={styles.dispatchText}>
+                Your Express shipment is now in transit. When your transporter
+                reaches the destination, generate a delivery verification code
+                and give it to the transporter.
+              </Text>
+
+              <Pressable
+                onPress={() => void handleStartDelivery()}
+                disabled={deliveryLoading}
+                style={[
+                  styles.pickupButton,
+                  deliveryLoading && styles.disabledButton,
+                ]}
+              >
+                {deliveryLoading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.pickupButtonText}>
+                    GENERATE DELIVERY CODE
+                  </Text>
+                )}
+              </Pressable>
+            </>
+          ) : (
+            <View style={styles.otpBox}>
+              <Text style={styles.otpTitle}>DELIVERY CODE SENT</Text>
+
+              {deliveryCodeExpiresAt && (
+                <Text style={styles.otpExpiry}>
+                  Expires:{" "}
+                  {new Date(deliveryCodeExpiresAt).toLocaleTimeString("en-NG", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </Text>
+              )}
+
+              <Text style={styles.otpInstruction}>
+                Check your registered SMS or email for the 6-digit delivery
+                verification code. Give that code to your assigned transporter
+                at the destination. The shipment will be completed and
+                settlement processed after successful verification.
               </Text>
             </View>
           )}

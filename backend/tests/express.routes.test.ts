@@ -116,6 +116,7 @@ mock.module(
   {
     namedExports: {
       sendExpressPickupOtp: sendExpressPickupOtpMock,
+              sendExpressDeliveryOtp: mock.fn(async () => undefined),
     },
   },
 );

@@ -675,6 +675,10 @@ model ExpressBooking {
   pickupOtpExpiresAt    DateTime?
   pickupVerifiedAt      DateTime?
 
+ deliveryOtpHash       String?
+ deliveryOtpExpiresAt  DateTime?
+ deliveryOtpVerifiedAt DateTime?
+
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 

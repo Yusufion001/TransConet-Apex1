@@ -272,6 +272,19 @@ export async function sendExpressPickupOtp(
   );
 }
 
+export async function sendExpressDeliveryOtp(
+  recipient: CommunicationRecipient,
+  otp: string,
+  expiresInMinutes: number,
+) {
+  await sendBoth(
+    recipient,
+    "Your TransConet Express delivery verification code",
+    `Hello ${recipient.firstName ?? "there"}, your TransConet Express delivery verification code is ${otp}. This code expires in ${expiresInMinutes} minutes. Do not share this code except with the assigned TransConet transporter at delivery.`,
+    `Your TransConet Express delivery verification code is ${otp}. It expires in ${expiresInMinutes} minutes. Do not share this code except with the assigned TransConet transporter at delivery.`,
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /* Combined delivery helpers                                                  */
 /* -------------------------------------------------------------------------- */
