@@ -2,9 +2,11 @@ import { Redirect, router } from "expo-router";
 import { Drawer } from "expo-router/drawer";
 import React from "react";
 import { Pressable, ScrollView, Text, View, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../src/auth/auth.store";
 import { getTransporterWallet } from "../../src/api/wallet";
+import { getUserNotifications } from "../../src/api/notifications";
 import { getTransporterOnboardingStatus } from "../../src/api/transporter";
 import { listenForExpressOffers } from "../../src/realtime/express-realtime";
 
@@ -33,6 +35,45 @@ function HeaderBalance() {
   );
 }
 
+function HeaderActions() {
+  const user = useAuthStore((state) => state.user);
+  const notificationsQuery = useQuery({
+    queryKey: ["transporter-header-notifications", user?.id],
+    queryFn: () => getUserNotifications(user!.id),
+    enabled: Boolean(user?.id),
+    refetchInterval: 30000,
+  });
+
+  const unreadCount =
+    notificationsQuery.data?.filter((notification) => !notification.read).length ?? 0;
+
+  return (
+    <View style={styles.headerActions}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={
+          unreadCount > 0
+            ? `Notifications, ${unreadCount} unread`
+            : "Notifications"
+        }
+        hitSlop={10}
+        style={styles.headerIconButton}
+        onPress={() => router.navigate("/(transporter)/notifications" as never)}
+      >
+        <Ionicons name="notifications-outline" size={24} color="#374151" />
+        {unreadCount > 0 && (
+          <View style={styles.notificationBadge}>
+            <Text style={styles.notificationBadgeText}>
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </Text>
+          </View>
+        )}
+      </Pressable>
+      <HeaderBalance />
+    </View>
+  );
+}
+
 function TransporterDrawerContent(props: any) {
   const signOut = useAuthStore((state) => state.signOut);
 
@@ -45,7 +86,11 @@ function TransporterDrawerContent(props: any) {
     router.replace("/(auth)/sign-in");
   };
 
-  const item = (label: string, path: string) => (
+  const item = (
+    label: string,
+    path: string,
+    icon: React.ComponentProps<typeof Ionicons>["name"],
+  ) => (
     <Pressable
       style={styles.menuItem}
       onPress={() => {
@@ -53,6 +98,7 @@ function TransporterDrawerContent(props: any) {
         go(path);
       }}
     >
+      <Ionicons name={icon} size={24} color="#4B5563" />
       <Text style={styles.menuLabel}>{label}</Text>
     </Pressable>
   );
@@ -66,27 +112,23 @@ function TransporterDrawerContent(props: any) {
 
       <View style={styles.separator} />
 
-      {item("⌂  Home", "/(transporter)")}
-      {item("▣  Marketplace Assignments", "/(transporter)/marketplace-assignments")}
-      {item("▣  Express Assignments", "/(transporter)/express-assignments")}
-      {item("⇄  Marketplace", "/(transporter)/marketplace")}
-      {item("⚡  Express", "/(transporter)/express")}
-      {item("🚚  Fleet", "/(transporter)/vehicles")}
-      {item("₦  Wallet", "/(transporter)/wallet")}
-      {item("🔔  Notifications", "/(transporter)/notifications")}
-      {item("👤  Account", "/(transporter)/account")}
-      {item("🆘  Support", "/(transporter)/support")}
-      {item("⚖  Disputes", "/(transporter)/disputes")}
+      {item("Home", "/(transporter)", "home-outline")}
+      {item("My Assignments", "/(transporter)/assignments", "briefcase-outline")}
+      {item("Browse Jobs", "/(transporter)/jobs", "search-outline")}
+      {item("Fleet", "/(transporter)/vehicles", "car-outline")}
+      {item("Wallet", "/(transporter)/wallet", "wallet-outline")}
+      {item("Support & Disputes", "/(transporter)/support", "help-circle-outline")}
 
       <View style={styles.separator} />
 
-      {item("⚙  Settings", "/(transporter)/settings")}
+      {item("Settings", "/(transporter)/settings", "settings-outline")}
 
       <Pressable
         style={styles.menuItem}
         onPress={() => void logout()}
       >
-        <Text style={styles.menuLabel}>↪  Sign Out</Text>
+        <Ionicons name="log-out-outline" size={24} color="#4B5563" />
+        <Text style={styles.menuLabel}>Sign Out</Text>
       </Pressable>
     </ScrollView>
   );
@@ -204,7 +246,7 @@ export default function TransporterLayout() {
         headerShown: true,
         headerTitle: "TRANSCONET",
         headerTitleAlign: "left",
-        headerRight: () => <HeaderBalance />,
+        headerRight: () => <HeaderActions />,
         drawerActiveTintColor: "#0B63CE",
         drawerInactiveTintColor: "#475467",
         drawerLabelStyle: {
@@ -214,16 +256,26 @@ export default function TransporterLayout() {
       }}
     >
       <Drawer.Screen name="index" options={{ title: "Home" }} />
-      <Drawer.Screen name="marketplace-assignments/index" options={{ title: "Marketplace Assignments" }} />
-      <Drawer.Screen name="express-assignments/index" options={{ title: "Express Assignments" }} />
-      <Drawer.Screen name="marketplace/index" options={{ title: "Marketplace" }} />
-      <Drawer.Screen name="express/index" options={{ title: "Express" }} />
+      <Drawer.Screen name="assignments/index" options={{ title: "My Assignments" }} />
+      <Drawer.Screen name="jobs/index" options={{ title: "Browse Jobs" }} />
+      <Drawer.Screen
+        name="assignments/marketplace"
+        options={{ drawerItemStyle: { display: "none" } }}
+      />
+      <Drawer.Screen
+        name="assignments/express"
+        options={{ drawerItemStyle: { display: "none" } }}
+      />
+      <Drawer.Screen name="marketplace-assignments/index" options={{ drawerItemStyle: { display: "none" } }} />
+      <Drawer.Screen name="express-assignments/index" options={{ drawerItemStyle: { display: "none" } }} />
+      <Drawer.Screen name="marketplace/index" options={{ drawerItemStyle: { display: "none" } }} />
+      <Drawer.Screen name="express/index" options={{ drawerItemStyle: { display: "none" } }} />
       <Drawer.Screen name="vehicles/index" options={{ title: "Fleet" }} />
       <Drawer.Screen name="wallet/index" options={{ title: "Wallet" }} />
-      <Drawer.Screen name="notifications/index" options={{ title: "Notifications" }} />
-      <Drawer.Screen name="account" options={{ title: "Account" }} />
-      <Drawer.Screen name="support" options={{ title: "Support" }} />
-      <Drawer.Screen name="disputes" options={{ title: "Disputes" }} />
+      <Drawer.Screen name="notifications/index" options={{ drawerItemStyle: { display: "none" } }} />
+      <Drawer.Screen name="account" options={{ drawerItemStyle: { display: "none" } }} />
+      <Drawer.Screen name="support" options={{ title: "Support & Disputes" }} />
+      <Drawer.Screen name="disputes" options={{ drawerItemStyle: { display: "none" } }} />
       <Drawer.Screen name="settings" options={{ title: "Settings" }} />
       <Drawer.Screen name="marketplace/[id]" options={{ drawerItemStyle: { display: "none" } }} />
       <Drawer.Screen name="express/[id]" options={{ drawerItemStyle: { display: "none" } }} />
@@ -262,6 +314,36 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "800",
     color: "#101828",
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  headerIconButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 4,
+    position: "relative",
+  },
+  notificationBadge: {
+    position: "absolute",
+    top: 2,
+    right: 0,
+    minWidth: 17,
+    height: 17,
+    paddingHorizontal: 4,
+    borderRadius: 9,
+    backgroundColor: "#DC2626",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  notificationBadgeText: {
+    fontSize: 10,
+    lineHeight: 12,
+    fontWeight: "800",
+    color: "#FFFFFF",
   },
   brand: {
     paddingHorizontal: 18,

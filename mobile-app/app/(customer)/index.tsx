@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { getUserNotifications } from "../../src/api/notifications";
 import {
   Image,
   Linking,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -28,6 +30,20 @@ export default function CustomerHome() {
 
   const bookings = bookingsQuery.data ?? [];
 
+  const notificationsQuery = useQuery({
+    queryKey: ["customer-notifications", user?.id],
+    queryFn: () => getUserNotifications(user!.id),
+    enabled: Boolean(user?.id),
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+    refetchOnMount: true,
+  });
+
+  const unreadNotificationCount =
+    notificationsQuery.data?.filter((notification) => !notification.read)
+      .length ?? 0;
+
+
   const advertisementsQuery = useQuery({
     queryKey: ["customer-home-advertisements"],
     queryFn: () => getAdvertisements("MOBILE_HOME"),
@@ -38,6 +54,7 @@ export default function CustomerHome() {
 
   const advertisements = advertisementsQuery.data ?? [];
   const [advertisementIndex, setAdvertisementIndex] = useState(0);
+  const [bookingChooserVisible, setBookingChooserVisible] = useState(false);
 
   useEffect(() => {
     if (advertisements.length <= 1) return;
@@ -107,11 +124,24 @@ export default function CustomerHome() {
 
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Notifications"
+              accessibilityLabel={
+                unreadNotificationCount > 0
+                  ? `Notifications, ${unreadNotificationCount} unread`
+                  : "Notifications"
+              }
               style={styles.notificationButton}
               onPress={() => router.push("/(customer)/notifications")}
             >
               <Text style={styles.notificationIcon}>🔔</Text>
+              {unreadNotificationCount > 0 ? (
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>
+                    {unreadNotificationCount > 99
+                      ? "99+"
+                      : unreadNotificationCount}
+                  </Text>
+                </View>
+              ) : null}
             </Pressable>
           </View>
 
@@ -185,30 +215,15 @@ export default function CustomerHome() {
           </Text>
 
           <View style={styles.serviceRow}>
-            <Link href="/(customer)/bookings/create" asChild>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Book Transport"
-                style={styles.serviceCard}
-              >
-                <Text style={styles.serviceIcon}>🚚</Text>
-                <Text style={styles.serviceTitle}>
-                  Book Transport
-                </Text>
-              </Pressable>
-            </Link>
-
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Logistics"
+              accessibilityLabel="Book Transport"
               style={styles.serviceCard}
-              onPress={() =>
-                router.push("/(customer)/bookings/create")
-              }
+              onPress={() => setBookingChooserVisible(true)}
             >
-              <Text style={styles.serviceIcon}>📦</Text>
+              <Text style={styles.serviceIcon}>🚚</Text>
               <Text style={styles.serviceTitle}>
-                Logistics
+                Book Transport
               </Text>
             </Pressable>
           </View>
@@ -263,6 +278,75 @@ export default function CustomerHome() {
         </View>
       </ScrollView>
 
+      <Modal
+        visible={bookingChooserVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setBookingChooserVisible(false)}
+      >
+        <View style={styles.bookingChooserOverlay}>
+          <View style={styles.bookingChooserCard}>
+            <Text style={styles.bookingChooserTitle}>
+              Choose booking type
+            </Text>
+
+            <Text style={styles.bookingChooserSubtitle}>
+              Select the service you want to use.
+            </Text>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Marketplace booking"
+              style={styles.bookingChooserOption}
+              onPress={() => {
+                setBookingChooserVisible(false);
+                router.push("/(customer)/bookings/create");
+              }}
+            >
+              <Text style={styles.bookingChooserIcon}>🚚</Text>
+              <View style={styles.bookingChooserText}>
+                <Text style={styles.bookingChooserOptionTitle}>
+                  Marketplace
+                </Text>
+                <Text style={styles.bookingChooserOptionDescription}>
+                  Request transport and receive transporter bids.
+                </Text>
+              </View>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Express booking"
+              style={styles.bookingChooserOption}
+              onPress={() => {
+                setBookingChooserVisible(false);
+                router.push("/(customer)/express/index");
+              }}
+            >
+              <Text style={styles.bookingChooserIcon}>⚡</Text>
+              <View style={styles.bookingChooserText}>
+                <Text style={styles.bookingChooserOptionTitle}>
+                  Express
+                </Text>
+                <Text style={styles.bookingChooserOptionDescription}>
+                  Fast dispatch through the Express service.
+                </Text>
+              </View>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close booking type chooser"
+              style={styles.bookingChooserCancel}
+              onPress={() => setBookingChooserVisible(false)}
+            >
+              <Text style={styles.bookingChooserCancelText}>
+                Cancel
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -313,6 +397,28 @@ const styles = StyleSheet.create({
 
   notificationIcon: {
     fontSize: 22,
+  },
+
+  notificationBadge: {
+    position: "absolute",
+    top: 3,
+    right: 1,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    borderRadius: 9,
+    backgroundColor: "#D92D20",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+
+  notificationBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "800",
+    lineHeight: 13,
   },
 
   brand: {
@@ -439,6 +545,75 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
+  bookingChooserOverlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+  },
+
+  bookingChooserCard: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    gap: 12,
+  },
+
+  bookingChooserTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#111827",
+  },
+
+  bookingChooserSubtitle: {
+    fontSize: 14,
+    color: "#667085",
+    marginBottom: 4,
+  },
+
+  bookingChooserOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+    borderRadius: 16,
+    padding: 16,
+    backgroundColor: "#FFFFFF",
+  },
+
+  bookingChooserIcon: {
+    fontSize: 28,
+  },
+
+  bookingChooserText: {
+    flex: 1,
+    gap: 3,
+  },
+
+  bookingChooserOptionTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#111827",
+  },
+
+  bookingChooserOptionDescription: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: "#667085",
+  },
+
+  bookingChooserCancel: {
+    alignItems: "center",
+    paddingVertical: 12,
+    marginTop: 2,
+  },
+
+  bookingChooserCancelText: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#475467",
+  },
   tripCard: {
     minHeight: 82,
     borderRadius: 16,

@@ -494,7 +494,10 @@ export default function TransporterWallet() {
           AVAILABLE EARNINGS
         </Text>
 
-        <Text style={styles.balance}>
+        <Text
+          style={[styles.balance, styles.greenAmount]}
+          numberOfLines={1}
+        >
           ₦{money(wallet.availableBalance)}
         </Text>
 
@@ -512,6 +515,7 @@ export default function TransporterWallet() {
         <SummaryCard
           label="Released"
           value={`₦${money(releasedEarnings)}`}
+          green
         />
 
         <SummaryCard
@@ -1097,17 +1101,22 @@ export default function TransporterWallet() {
 function SummaryCard({
   label,
   value,
+  green = false,
 }: {
   label: string;
   value: string;
+  green?: boolean;
 }) {
   return (
     <View style={styles.summaryCard}>
-      <Text style={styles.summaryLabel}>
+      <Text style={[styles.summaryLabel, green && styles.greenText]}>
         {label}
       </Text>
 
-      <Text style={styles.summaryValue}>
+      <Text
+        style={[styles.summaryValue, green && styles.greenText]}
+        numberOfLines={1}
+      >
         {value}
       </Text>
     </View>
@@ -1238,7 +1247,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "900",
     letterSpacing: 1.4,
-    color: "#98A2B3",
+    color: "#12B76A",
   },
 
   balance: {
@@ -1246,12 +1255,21 @@ const styles = StyleSheet.create({
     fontSize: 34,
     fontWeight: "900",
     color: "#FFFFFF",
+    flexShrink: 0,
   },
 
   currency: {
     marginTop: 4,
     color: "#D0D5DD",
     fontWeight: "700",
+  },
+
+  greenText: {
+    color: "#12B76A",
+  },
+
+  greenAmount: {
+    color: "#12B76A",
   },
 
   summaryGrid: {
@@ -1280,6 +1298,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#101828",
     fontWeight: "900",
+    flexShrink: 0,
   },
 
   card: {

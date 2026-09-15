@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { router } from "expo-router";
+import { TransporterAccountScreen } from "./account";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 function SettingsItem({
@@ -24,7 +26,7 @@ function SettingsItem({
   );
 }
 
-export default function TransporterSettings() {
+function TransporterSettings() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Pressable onPress={() => router.back()}>
@@ -152,3 +154,128 @@ const styles = StyleSheet.create({
     color: "#98A2B3",
   },
 });
+
+export { TransporterSettings };
+
+function TransporterSettingsAndAccount() {
+  const [activeTab, setActiveTab] = useState<"account" | "settings">("account");
+
+  return (
+    <View style={combinedStyles.screen}>
+      <View style={combinedStyles.header}>
+        <Text style={combinedStyles.eyebrow}>TRANSPORTER CONFIGURATION</Text>
+        <Text style={combinedStyles.title}>Settings</Text>
+        <Text style={combinedStyles.subtitle}>
+          Manage your account information and application preferences from one place.
+        </Text>
+      </View>
+
+      <View style={combinedStyles.tabs}>
+        <Pressable
+          style={[
+            combinedStyles.tab,
+            activeTab === "account" && combinedStyles.activeTab,
+          ]}
+          onPress={() => setActiveTab("account")}
+        >
+          <Text
+            style={[
+              combinedStyles.tabText,
+              activeTab === "account" && combinedStyles.activeTabText,
+            ]}
+          >
+            Account
+          </Text>
+        </Pressable>
+
+        <Pressable
+          style={[
+            combinedStyles.tab,
+            activeTab === "settings" && combinedStyles.activeTab,
+          ]}
+          onPress={() => setActiveTab("settings")}
+        >
+          <Text
+            style={[
+              combinedStyles.tabText,
+              activeTab === "settings" && combinedStyles.activeTabText,
+            ]}
+          >
+            App Settings
+          </Text>
+        </Pressable>
+      </View>
+
+      <View style={combinedStyles.content}>
+        {activeTab === "account" ? (
+          <TransporterAccountScreen />
+        ) : (
+          <TransporterSettings />
+        )}
+      </View>
+    </View>
+  );
+}
+
+const combinedStyles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#F5F7FA",
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 12,
+    backgroundColor: "#FFFFFF",
+  },
+  eyebrow: {
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.4,
+    color: "#0B63CE",
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#101828",
+    marginTop: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#667085",
+    marginTop: 5,
+  },
+  tabs: {
+    flexDirection: "row",
+    marginHorizontal: 20,
+    marginTop: 12,
+    marginBottom: 4,
+    padding: 4,
+    borderRadius: 12,
+    backgroundColor: "#EAECF0",
+  },
+  tab: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 42,
+    borderRadius: 9,
+  },
+  activeTab: {
+    backgroundColor: "#FFFFFF",
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#667085",
+  },
+  activeTabText: {
+    color: "#101828",
+  },
+  content: {
+    flex: 1,
+  },
+});
+
+export default TransporterSettingsAndAccount;

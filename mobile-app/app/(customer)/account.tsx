@@ -18,7 +18,6 @@ import { useAuthStore } from "../../src/auth/auth.store";
 export default function CustomerAccount() {
   const user = useAuthStore((state) => state.user);
   const updateProfile = useAuthStore((state) => state.updateProfile);
-  const signOut = useAuthStore((state) => state.signOut);
   const loading = useAuthStore((state) => state.loading);
 
   const [editing, setEditing] = useState(false);
@@ -75,27 +74,6 @@ export default function CustomerAccount() {
 
       Alert.alert("Update failed", message);
     }
-  };
-
-  const handleSignOut = () => {
-    Alert.alert(
-      "Sign out",
-      "Are you sure you want to sign out?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Sign out",
-          style: "destructive",
-          onPress: async () => {
-            await signOut();
-            router.replace("/(auth)/welcome");
-          },
-        },
-      ],
-    );
   };
 
   if (!user) {
@@ -243,22 +221,7 @@ export default function CustomerAccount() {
               </View>
             </View>
 
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Sign out"
-              disabled={loading}
-              onPress={handleSignOut}
-              style={({ pressed }) => [
-                styles.signOutButton,
-                pressed && styles.pressed,
-              ]}
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <Text style={styles.signOutText}>Sign out</Text>
-              )}
-            </Pressable>
+
           </>
         )}
       </ScrollView>

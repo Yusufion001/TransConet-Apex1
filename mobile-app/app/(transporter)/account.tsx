@@ -21,7 +21,7 @@ import {
 import { updateCurrentUser } from "../../src/api/auth";
 import { useAuthStore } from "../../src/auth/auth.store";
 
-export default function TransporterAccountScreen() {
+export function TransporterAccountScreen() {
   const user = useAuthStore((state) => state.user);
   const hydrate = useAuthStore((state) => state.hydrate);
   const queryClient = useQueryClient();
@@ -334,22 +334,30 @@ export default function TransporterAccountScreen() {
             keyboardType="phone-pad"
           />
 
-          <Pressable
-            onPress={() => void handleSavePersonal()}
-            disabled={savingPersonal}
-            style={[
-              styles.primaryButton,
-              savingPersonal && styles.buttonDisabled,
-            ]}
-          >
-            {savingPersonal ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.primaryButtonText}>
-                SAVE PERSONAL DETAILS
-              </Text>
-            )}
-          </Pressable>
+          {personalInformationLocked ? (
+            <Text style={styles.notice}>
+              Your verified personal information is locked after identity
+              verification. Contact the TransConet Admin Management platform
+              if a correction is required.
+            </Text>
+          ) : (
+            <Pressable
+              onPress={() => void handleSavePersonal()}
+              disabled={savingPersonal}
+              style={[
+                styles.primaryButton,
+                savingPersonal && styles.buttonDisabled,
+              ]}
+            >
+              {savingPersonal ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text style={styles.primaryButtonText}>
+                  SAVE PERSONAL DETAILS
+                </Text>
+              )}
+            </Pressable>
+          )}
         </View>
 
         <View style={styles.card}>
@@ -438,22 +446,6 @@ export default function TransporterAccountScreen() {
           </Pressable>
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.section}>ACCOUNT SECURITY</Text>
-
-          <Pressable
-            onPress={() => router.push("/(auth)/forgot-password")}
-            style={styles.securityButton}
-          >
-            <View style={styles.securityCopy}>
-              <Text style={styles.securityTitle}>Change password</Text>
-              <Text style={styles.securityText}>
-                Start the secure password reset process.
-              </Text>
-            </View>
-            <Text style={styles.arrow}>›</Text>
-          </Pressable>
-        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -681,32 +673,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: 0.6,
   },
-  securityButton: {
-    minHeight: 62,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: "#F2F4F7",
-  },
-  securityCopy: {
-    flex: 1,
-  },
-  securityTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#344054",
-  },
-  securityText: {
-    marginTop: 4,
-    fontSize: 12,
-    color: "#667085",
-  },
-  arrow: {
-    marginLeft: 12,
-    fontSize: 25,
-    color: "#98A2B3",
-  },
   loadingText: {
     marginTop: 12,
     fontSize: 14,
@@ -726,3 +692,5 @@ const styles = StyleSheet.create({
     color: "#667085",
   },
 });
+
+export default TransporterAccountScreen;
