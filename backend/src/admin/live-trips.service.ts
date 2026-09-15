@@ -8,7 +8,12 @@ const LIVE_TRIP_STATUSES = [
   "IN_TRANSIT",
 ] as const;
 
-const EXPRESS_LIVE_STATUS = "DISPATCHING" as const;
+const EXPRESS_LIVE_STATUSES = [
+  "DISPATCHING",
+  "ASSIGNED",
+  "PICKUP_VERIFICATION",
+  "ACTIVE",
+] as const;
 const EXPRESS_FILTER_STATUS = "EXPRESS_DISPATCHING" as const;
 
 const expressLiveSelect = {
@@ -47,7 +52,7 @@ export async function getLiveTrips(filters?: {
       ...(isExpressOnly
         ? {
             expressBooking: {
-              status: EXPRESS_LIVE_STATUS,
+              status: { in: [...EXPRESS_LIVE_STATUSES] },
             },
           }
         : normalStatus
@@ -57,7 +62,7 @@ export async function getLiveTrips(filters?: {
                 { status: { in: [...LIVE_TRIP_STATUSES] as any } },
                 {
                   expressBooking: {
-                    status: EXPRESS_LIVE_STATUS,
+                    status: { in: [...EXPRESS_LIVE_STATUSES] },
                   },
                 },
               ],
@@ -129,7 +134,7 @@ export async function getLiveTripById(
         },
         {
           expressBooking: {
-            status: EXPRESS_LIVE_STATUS,
+            status: { in: [...EXPRESS_LIVE_STATUSES] },
           },
         },
       ],
@@ -186,18 +191,18 @@ export async function getLiveTripSummary() {
     ),
     prisma.expressBooking.count({
       where: {
-        status: EXPRESS_LIVE_STATUS,
+        status: { in: [...EXPRESS_LIVE_STATUSES] },
       },
     }),
     prisma.expressBooking.count({
       where: {
-        status: EXPRESS_LIVE_STATUS,
+        status: { in: [...EXPRESS_LIVE_STATUSES] },
         dispatchStage: "NEARBY",
       },
     }),
     prisma.expressBooking.count({
       where: {
-        status: EXPRESS_LIVE_STATUS,
+        status: { in: [...EXPRESS_LIVE_STATUSES] },
         dispatchStage: "GENERAL_BOARD",
       },
     }),
@@ -246,7 +251,7 @@ export async function getLiveTripTracking(
         },
         {
           expressBooking: {
-            status: EXPRESS_LIVE_STATUS,
+            status: { in: [...EXPRESS_LIVE_STATUSES] },
           },
         },
       ],

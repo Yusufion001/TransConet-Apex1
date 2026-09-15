@@ -9,6 +9,10 @@ import {
 import type { ExpressAssignment } from "../../../src/api/express";
 import { getTransporterExpressAssignments } from "../../../src/api/transporter";
 import { useAuthStore } from "../../../src/auth/auth.store";
+import {
+  startTransporterLocationTracking,
+  stopTransporterLocationTracking,
+} from "../../../src/realtime/location-publisher";
 
 function money(value: string, currency: string) {
   const amount = Number(value);
@@ -110,6 +114,7 @@ handleVerifyPickup = async () => {
 
     try {
       await verifyExpressPickup(assignment.expressBookingId, normalizedOtp);
+      await startTransporterLocationTracking(assignment.bookingId);
       await assignmentsQuery.refetch();
       setVerified(true);
     } catch (error) {
@@ -141,6 +146,8 @@ handleVerifyPickup = async () => {
         assignment.expressBookingId,
         normalizedOtp,
       );
+
+      await stopTransporterLocationTracking();
 
       setDeliveryCompleted(true);
       setDeliveryOtp("");

@@ -265,6 +265,7 @@ router.get(
               arrivedAt: true,
               pickedUpAt: true,
               inTransitAt: true,
+              trackingShareToken: true,
               deliveredAt: true,
               completedAt: true,
               createdAt: true,
