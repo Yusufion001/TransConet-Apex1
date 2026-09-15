@@ -197,12 +197,14 @@ export async function registerUser(input: {
     const passwordHash =
       await bcrypt.hash(input.password, 12);
 
+  const normalizedEmail = input.email.trim().toLowerCase();
+
   const existing =
     await prisma.user.findFirst({
       where: {
         OR: [
-          ...(input.email
-            ? [{ email: input.email }]
+          ...(normalizedEmail
+            ? [{ email: normalizedEmail }]
             : []),
           ...(input.phone
             ? [{ phone: input.phone }]
@@ -222,7 +224,7 @@ export async function registerUser(input: {
       data: {
         firstName: input.firstName,
         lastName: input.lastName,
-        email: input.email,
+        email: normalizedEmail,
         phone: input.phone,
         passwordHash,
         role: input.role,
