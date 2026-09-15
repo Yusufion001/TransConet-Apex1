@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
     "@react-navigation/native": "^7.3.17",
     "@shopify/react-native-skia": "2.6.2",
     "@tanstack/react-query": "^5.101.4",

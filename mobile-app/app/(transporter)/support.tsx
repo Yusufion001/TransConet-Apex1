@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Pressable as TabPressable, StyleSheet as TabStyleSheet, Text as TabText, View as TabView } from "react-native";
+import TransporterDisputes from "./disputes";
 import {
   ActivityIndicator,
   Alert,
@@ -35,7 +37,7 @@ function formatDate(value?: string | null) {
   return Number.isNaN(date.getTime()) ? "" : date.toLocaleString();
 }
 
-export default function TransporterSupport() {
+function TransporterSupport() {
   const user = useAuthStore((state) => state.user);
 
   const [category, setCategory] = useState("");
@@ -422,3 +424,126 @@ const styles = StyleSheet.create({
     color: "#667085",
   },
 });
+
+function TransporterSupportDisputes() {
+  const [activeTab, setActiveTab] = useState<"support" | "disputes">("support");
+
+  return (
+    <TabView style={combinedStyles.screen}>
+      <TabView style={combinedStyles.header}>
+        <TabText style={combinedStyles.eyebrow}>TRANSPORTER SERVICES</TabText>
+        <TabText style={combinedStyles.title}>Support & Disputes</TabText>
+        <TabText style={combinedStyles.subtitle}>
+          Get help or manage assignment disputes from one place.
+        </TabText>
+      </TabView>
+
+      <TabView style={combinedStyles.tabs}>
+        <TabPressable
+          style={[
+            combinedStyles.tab,
+            activeTab === "support" && combinedStyles.activeTab,
+          ]}
+          onPress={() => setActiveTab("support")}
+        >
+          <TabText
+            style={[
+              combinedStyles.tabText,
+              activeTab === "support" && combinedStyles.activeTabText,
+            ]}
+          >
+            Support
+          </TabText>
+        </TabPressable>
+
+        <TabPressable
+          style={[
+            combinedStyles.tab,
+            activeTab === "disputes" && combinedStyles.activeTab,
+          ]}
+          onPress={() => setActiveTab("disputes")}
+        >
+          <TabText
+            style={[
+              combinedStyles.tabText,
+              activeTab === "disputes" && combinedStyles.activeTabText,
+            ]}
+          >
+            Disputes
+          </TabText>
+        </TabPressable>
+      </TabView>
+
+      <TabView style={combinedStyles.content}>
+        {activeTab === "support" ? (
+          <TransporterSupport />
+        ) : (
+          <TransporterDisputes />
+        )}
+      </TabView>
+    </TabView>
+  );
+}
+
+const combinedStyles = TabStyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#F5F7FA",
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 12,
+    backgroundColor: "#FFFFFF",
+  },
+  eyebrow: {
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.4,
+    color: "#0B63CE",
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#101828",
+    marginTop: 4,
+  },
+  subtitle: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#667085",
+    marginTop: 5,
+  },
+  tabs: {
+    flexDirection: "row",
+    marginHorizontal: 20,
+    marginTop: 12,
+    marginBottom: 4,
+    padding: 4,
+    borderRadius: 12,
+    backgroundColor: "#EAECF0",
+  },
+  tab: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 42,
+    borderRadius: 9,
+  },
+  activeTab: {
+    backgroundColor: "#FFFFFF",
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#667085",
+  },
+  activeTabText: {
+    color: "#101828",
+  },
+  content: {
+    flex: 1,
+  },
+});
+
+export default TransporterSupportDisputes;

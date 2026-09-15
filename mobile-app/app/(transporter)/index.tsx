@@ -100,27 +100,23 @@ export default function TransporterHome() {
       <Text style={styles.sectionLabel}>QUICK ACCESS</Text>
 
       <View style={styles.grid}>
-        <Link href="/(transporter)/marketplace-assignments" asChild>
+        <Link href="/(transporter)/assignments" asChild>
           <Pressable style={styles.actionCard}>
             <Text style={styles.icon}>▣</Text>
-            <Text style={styles.actionTitle}>Marketplace Assignments</Text>
-            <Text style={styles.actionText}>Manage assigned Marketplace shipments.</Text>
+            <Text style={styles.actionTitle}>My Assignments</Text>
+            <Text style={styles.actionText}>
+              Manage Marketplace and Express shipments from one place.
+            </Text>
           </Pressable>
         </Link>
 
-        <Link href="/(transporter)/express-assignments" asChild>
-          <Pressable style={styles.actionCard}>
-            <Text style={styles.icon}>⚡</Text>
-            <Text style={styles.actionTitle}>Express Assignments</Text>
-            <Text style={styles.actionText}>Manage assigned Express shipments.</Text>
-          </Pressable>
-        </Link>
-
-        <Link href="/(transporter)/marketplace" asChild>
+        <Link href="/(transporter)/jobs" asChild>
           <Pressable style={styles.actionCard}>
             <Text style={styles.icon}>⇄</Text>
-            <Text style={styles.actionTitle}>Marketplace</Text>
-            <Text style={styles.actionText}>Find opportunities and submit bids.</Text>
+            <Text style={styles.actionTitle}>Browse Jobs</Text>
+            <Text style={styles.actionText}>
+              Find Marketplace and Express transport opportunities.
+            </Text>
           </Pressable>
         </Link>
       </View>
@@ -129,7 +125,7 @@ export default function TransporterHome() {
         <Text style={styles.operationsLabel}>TRANSPORTER OPERATIONS</Text>
         <Text style={styles.operationsTitle}>Manage every part of your transport operation</Text>
         <Text style={styles.operationsText}>
-          Use ☰ above to access Fleet, Wallet, Notifications, Account and Settings. Accepted bids become assignments, and negotiated assignments may create a separate TransConet commission obligation.
+          Use the drawer to access Fleet, Wallet, Support & Disputes, and Settings. Notifications are available from the bell in the top bar. Manage assignments and browse jobs from their consolidated screens.
         </Text>
       </View>
     </ScrollView>
