@@ -334,3 +334,54 @@ export async function verifyExpressPickup(
 
   return response.data.data;
 }
+
+export type ExpressDeliveryStartResult = {
+  expressBookingId: string;
+  status: "ACTIVE";
+  expiresAt: string;
+};
+
+export type ExpressDeliveryVerificationResult = {
+  expressBookingId: string;
+  booking: {
+    id: string;
+    status: string;
+    transporterId: string | null;
+    vehicleId: string | null;
+    deliveredAt: string | null;
+    completedAt: string | null;
+    updatedAt: string;
+  };
+  settlement: {
+    id: string;
+    grossAmount: string;
+    commissionAmount: string;
+    netAmount: string;
+    currency: string;
+    status: string;
+  };
+};
+
+export async function startExpressDelivery(
+  expressBookingId: string,
+): Promise<ExpressDeliveryStartResult> {
+  const response =
+    await apiClient.post<ApiResponse<ExpressDeliveryStartResult>>(
+      `/express/bookings/${expressBookingId}/delivery/start`,
+    );
+
+  return response.data.data;
+}
+
+export async function verifyExpressDelivery(
+  expressBookingId: string,
+  otp: string,
+): Promise<ExpressDeliveryVerificationResult> {
+  const response =
+    await apiClient.post<ApiResponse<ExpressDeliveryVerificationResult>>(
+      `/express/bookings/${expressBookingId}/delivery/verify`,
+      { otp },
+    );
+
+  return response.data.data;
+}

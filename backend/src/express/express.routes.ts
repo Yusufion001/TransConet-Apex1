@@ -15,7 +15,14 @@ import {
   findExpressDispatchCandidates,
   acceptExpressBooking,
 } from "./express-dispatch.service.js";
-import { prepareExpressPickupVerification, verifyExpressPickup } from "./express-pickup.service.js";
+import {
+  prepareExpressPickupVerification,
+  verifyExpressPickup,
+} from "./express-pickup.service.js";
+import {
+  prepareExpressDeliveryVerification,
+  verifyExpressDelivery,
+} from "./express-delivery.service.js";
 
 const router = Router();
 
@@ -554,6 +561,124 @@ router.post(
       return res.status(500).json({
         success: false,
         message: "Unable to verify Express pickup",
+      });
+    }
+  },
+);
+
+router.post(
+  "/bookings/:expressBookingId/delivery/start",
+  authorize("CUSTOMER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const expressBookingId = z.string().uuid().parse(
+        req.params.expressBookingId,
+      );
+
+      const result = await prepareExpressDeliveryVerification(
+        expressBookingId,
+        req.user!.id,
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Express delivery verification request",
+          errors: error.flatten(),
+        });
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to prepare Express delivery verification";
+
+      if (
+        message.includes("not found") ||
+        message.includes("do not have access") ||
+        message.includes("must be ACTIVE") ||
+        message.includes("No transporter") ||
+        message.includes("payment")
+      ) {
+        return res.status(409).json({
+          success: false,
+          message,
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        message: "Unable to prepare Express delivery verification",
+      });
+    }
+  },
+);
+
+router.post(
+  "/bookings/:expressBookingId/delivery/verify",
+  authorize("TRANSPORTER"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const expressBookingId = z.string().uuid().parse(
+        req.params.expressBookingId,
+      );
+
+      const schema = z.object({
+        otp: z.string().trim().regex(/^\d{6}$/),
+      }).strict();
+
+      const { otp } = schema.parse(req.body);
+
+      const result = await verifyExpressDelivery(
+        expressBookingId,
+        req.user!.id,
+        otp,
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Express delivery verification request",
+          errors: error.flatten(),
+        });
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to verify Express delivery";
+
+      if (
+        message.includes("not found") ||
+        message.includes("not active") ||
+        message.includes("not assigned") ||
+        message.includes("unavailable") ||
+        message.includes("expired") ||
+        message.includes("Invalid delivery") ||
+        message.includes("payment") ||
+        message.includes("settlement") ||
+        message.includes("wallet") ||
+        message.includes("vehicle")
+      ) {
+        return res.status(409).json({
+          success: false,
+          message,
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        message: "Unable to verify Express delivery",
       });
     }
   },
