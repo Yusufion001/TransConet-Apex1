@@ -33,6 +33,7 @@ router.get("/summary", async (_req, res) => {
       data: summary,
     });
   } catch (error) {
+    console.error("[Admin Live Trips] SUMMARY FAILED:", error);
     return res.status(500).json({
       success: false,
       error: "Failed to load live trip summary",
@@ -52,6 +53,7 @@ router.get(
       data: trips,
     });
   } catch (error) {
+    console.error("[Admin Live Trips] LIST FAILED:", error);
     return res.status(500).json({
       success: false,
       error: "Failed to load live trips",
@@ -82,6 +84,7 @@ router.get(
       data: tracking,
     });
   } catch (error) {
+    console.error("[Admin Live Trips] TRACKING FAILED:", error);
     return res.status(500).json({
       success: false,
       error: "Failed to load live trip tracking",
@@ -110,6 +113,7 @@ router.get(
       data: trip,
     });
   } catch (error) {
+    console.error("[Admin Live Trips] DETAIL FAILED:", error);
     return res.status(500).json({
       success: false,
       error: "Failed to load live trip",
