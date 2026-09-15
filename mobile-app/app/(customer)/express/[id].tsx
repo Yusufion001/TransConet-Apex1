@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
 import {
@@ -11,6 +11,10 @@ import {
   Text,
   View,
 } from "react-native";
+import TransConetMap, {
+  type MapCoordinate,
+} from "../../../src/components/maps/TransConetMap";
+import { joinBookingRealtime } from "../../../src/realtime/booking-realtime";
 import {
   getExpressBookingDetails,
   startExpressDelivery,
@@ -82,6 +86,14 @@ export default function ExpressBookingDetails() {
   const [deliveryCodeExpiresAt, setDeliveryCodeExpiresAt] = useState<string | null>(null);
   const [pickupOtp, setPickupOtp] = useState<string | null>(null);
   const [pickupOtpExpiresAt, setPickupOtpExpiresAt] = useState<string | null>(null);
+  const [trackingCoordinate, setTrackingCoordinate] =
+    useState<MapCoordinate | null>(null);
+  const [trackingRegion, setTrackingRegion] = useState({
+    latitude: 6.5244,
+    longitude: 3.3792,
+    latitudeDelta: 0.08,
+    longitudeDelta: 0.08,
+  });
 
   const bookingQuery = useQuery({
     queryKey: ["express-booking", expressBookingId],
@@ -107,6 +119,87 @@ export default function ExpressBookingDetails() {
   const refresh = useCallback(async () => {
     await bookingQuery.refetch();
   }, [bookingQuery.refetch]);
+
+  useEffect(() => {
+    const bookingId = booking?.id;
+
+    if (!bookingId || expressDetails?.status !== "ACTIVE") {
+      setTrackingCoordinate(null);
+      return;
+    }
+
+    let cleanup: (() => void) | undefined;
+    let cancelled = false;
+
+    void joinBookingRealtime(bookingId, {
+      onVehicleLocation: (location) => {
+        if (cancelled) return;
+
+        const coordinate = {
+          latitude: location.latitude,
+          longitude: location.longitude,
+        };
+
+        setTrackingCoordinate(coordinate);
+        setTrackingRegion((current) => ({
+          ...current,
+          latitude: location.latitude,
+          longitude: location.longitude,
+        }));
+      },
+      onBookingActivity: () => {
+        void refresh();
+      },
+      onAccessDenied: (message) => {
+        if (!cancelled) {
+          Alert.alert("Realtime tracking", message);
+        }
+      },
+    })
+      .then((unsubscribe) => {
+        if (cancelled) {
+          unsubscribe();
+        } else {
+          cleanup = unsubscribe;
+        }
+      })
+      .catch(() => {
+        // REST polling remains available if realtime is unavailable.
+      });
+
+    return () => {
+      cancelled = true;
+      cleanup?.();
+    };
+  }, [booking?.id, expressDetails?.status, refresh]);
+
+  const trackingPickupCoordinate = useMemo<MapCoordinate | null>(() => {
+    if (
+      booking?.pickupLatitude == null ||
+      booking?.pickupLongitude == null
+    ) {
+      return null;
+    }
+
+    return {
+      latitude: Number(booking.pickupLatitude),
+      longitude: Number(booking.pickupLongitude),
+    };
+  }, [booking?.pickupLatitude, booking?.pickupLongitude]);
+
+  const trackingDestinationCoordinate = useMemo<MapCoordinate | null>(() => {
+    if (
+      booking?.destinationLatitude == null ||
+      booking?.destinationLongitude == null
+    ) {
+      return null;
+    }
+
+    return {
+      latitude: Number(booking.destinationLatitude),
+      longitude: Number(booking.destinationLongitude),
+    };
+  }, [booking?.destinationLatitude, booking?.destinationLongitude]);
 
   const handleStartPickup = useCallback(async () => {
     if (
@@ -478,6 +571,71 @@ export default function ExpressBookingDetails() {
         </View>
       )}
 
+      {expressDetails.status === "ACTIVE" && (
+        <View style={styles.card}>
+          <Text style={styles.label}>LIVE EXPRESS TRACKING</Text>
+
+          {trackingCoordinate ? (
+            <>
+              <View style={styles.liveMap}>
+                <TransConetMap
+                  region={trackingRegion}
+                  markers={[
+                    ...(trackingPickupCoordinate
+                      ? [
+                          {
+                            id: "pickup",
+                            coordinate: trackingPickupCoordinate,
+                            title: "Pickup",
+                            description: booking?.pickupLocation,
+                          },
+                        ]
+                      : []),
+                    ...(trackingDestinationCoordinate
+                      ? [
+                          {
+                            id: "destination",
+                            coordinate: trackingDestinationCoordinate,
+                            title: "Destination",
+                            description: booking?.destination,
+                          },
+                        ]
+                      : []),
+                    {
+                      id: "transporter",
+                      coordinate: trackingCoordinate,
+                      title: "Transporter",
+                      description: "Live Express transporter location",
+                    },
+                  ]}
+                  routeCoordinates={[
+                    ...(trackingPickupCoordinate
+                      ? [trackingPickupCoordinate]
+                      : []),
+                    ...(trackingDestinationCoordinate
+                      ? [trackingDestinationCoordinate]
+                      : []),
+                  ]}
+                  animatedMarkerId="transporter"
+                  interactive={false}
+                />
+              </View>
+              <Text style={styles.trackingHint}>
+                Your Express shipment is in transit. The transporter location
+                updates automatically until delivery verification is completed.
+              </Text>
+            </>
+          ) : (
+            <View style={styles.trackingWaitingBox}>
+              <ActivityIndicator size="small" />
+              <Text style={styles.trackingWaitingText}>
+                Waiting for the transporter&apos;s live location...
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
+
       <View style={styles.card}>
         <Text style={styles.label}>DISPATCH</Text>
 
@@ -680,6 +838,30 @@ const styles = StyleSheet.create({
     color: "#475467",
     fontSize: 14,
     marginTop: 7,
+  },
+  liveMap: {
+    height: 280,
+    borderRadius: 14,
+    overflow: "hidden",
+    marginTop: 4,
+  },
+  trackingHint: {
+    color: "#475467",
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 10,
+  },
+  trackingWaitingBox: {
+    backgroundColor: "#EEF6FF",
+    borderRadius: 12,
+    padding: 18,
+    alignItems: "center",
+  },
+  trackingWaitingText: {
+    color: "#475467",
+    fontSize: 13,
+    marginTop: 10,
+    textAlign: "center",
   },
   dispatchBox: {
     backgroundColor: "#EEF6FF",

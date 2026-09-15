@@ -228,6 +228,7 @@ export type ExpressBookingDetails = {
     arrivedAt: string | null;
     pickedUpAt: string | null;
     inTransitAt: string | null;
+    trackingShareToken: string | null;
     deliveredAt: string | null;
     completedAt: string | null;
     createdAt: string;

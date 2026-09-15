@@ -14,7 +14,6 @@ import {
   View,
 } from "react-native";
 import TransConetMap from "../../../src/components/maps/TransConetMap";
-import { getCustomerBookings } from "../../../src/api/bookings";
 import { useAuthStore } from "../../../src/auth/auth.store";
 import {
   autocompletePlaces,
@@ -76,33 +75,6 @@ export default function ExpressBookingScreen() {
     useState<"pickup" | "destination">("pickup");
   const [locationPickerCoordinate, setLocationPickerCoordinate] =
     useState<Coordinates | null>(null);
-
-  const customerBookingsQuery = useQuery({
-    queryKey: ["customer-bookings", user?.id],
-    queryFn: () => getCustomerBookings(user!.id),
-    enabled: Boolean(user?.id),
-  });
-
-  useEffect(() => {
-    if (!customerBookingsQuery.data) return;
-
-    const activeExpressBooking = customerBookingsQuery.data.find(
-      (booking) =>
-        booking.expressBookingId &&
-        (booking.expressBookingStatus === "ASSIGNED" ||
-          booking.expressBookingStatus === "PICKUP_VERIFICATION" ||
-          booking.expressBookingStatus === "ACTIVE"),
-    );
-
-    if (!activeExpressBooking?.expressBookingId) return;
-
-    router.replace({
-      pathname: "/(customer)/express/[id]",
-      params: {
-        id: activeExpressBooking.expressBookingId,
-      },
-    });
-  }, [customerBookingsQuery.data]);
 
   useEffect(() => {
     let mounted = true;
