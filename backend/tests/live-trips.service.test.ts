@@ -67,7 +67,14 @@ test("getLiveTrips loads all live trips when no filters are supplied", async () 
     },
     {
       expressBooking: {
-        status: "DISPATCHING",
+        status: {
+          in: [
+            "DISPATCHING",
+            "ASSIGNED",
+            "PICKUP_VERIFICATION",
+            "ACTIVE",
+          ],
+        },
       },
     },
   ]);
@@ -90,7 +97,14 @@ test("getLiveTrips includes Express dispatching in the unfiltered live query", a
     },
     {
       expressBooking: {
-        status: "DISPATCHING",
+        status: {
+          in: [
+            "DISPATCHING",
+            "ASSIGNED",
+            "PICKUP_VERIFICATION",
+            "ACTIVE",
+          ],
+        },
       },
     },
   ]);
@@ -121,7 +135,14 @@ test("getLiveTrips ignores an invalid status and returns all live statuses", asy
     },
     {
       expressBooking: {
-        status: "DISPATCHING",
+        status: {
+          in: [
+            "DISPATCHING",
+            "ASSIGNED",
+            "PICKUP_VERIFICATION",
+            "ACTIVE",
+          ],
+        },
       },
     },
   ]);
@@ -136,7 +157,14 @@ test("getLiveTrips filters explicitly for Express dispatching", async () => {
 
   assert.deepEqual(args.where, {
     expressBooking: {
-      status: "DISPATCHING",
+      status: {
+        in: [
+          "DISPATCHING",
+          "ASSIGNED",
+          "PICKUP_VERIFICATION",
+          "ACTIVE",
+        ],
+      },
     },
   });
 });
@@ -179,7 +207,14 @@ test("getLiveTripById only returns a booking that is currently live", async () =
     },
     {
       expressBooking: {
-        status: "DISPATCHING",
+        status: {
+          in: [
+            "DISPATCHING",
+            "ASSIGNED",
+            "PICKUP_VERIFICATION",
+            "ACTIVE",
+          ],
+        },
       },
     },
   ]);
