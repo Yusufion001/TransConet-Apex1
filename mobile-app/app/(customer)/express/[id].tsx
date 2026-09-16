@@ -338,9 +338,33 @@ export default function ExpressBookingDetails() {
   }
 
   if (!booking) {
+    const queryError = bookingQuery.error as
+      | (Error & {
+          response?: {
+            status?: number;
+            data?: unknown;
+          };
+        })
+      | null;
+
+    const errorStatus = queryError?.response?.status;
+    const errorMessage =
+      queryError instanceof Error
+        ? queryError.message
+        : "Unknown error while loading Express booking.";
+
     return (
       <View style={styles.center}>
-        <Text style={styles.error}>Express shipment not found.</Text>
+        <Text style={styles.error}>Unable to load Express shipment.</Text>
+        <Text style={styles.error}>
+          {errorStatus ? `HTTP status: ${errorStatus}` : "HTTP status: unknown"}
+        </Text>
+        <Text style={styles.error}>
+          {errorMessage}
+        </Text>
+        <Text style={styles.error}>
+          Express ID: {expressBookingId}
+        </Text>
         <Pressable onPress={() => void refresh()} style={styles.button}>
           <Text style={styles.buttonText}>Try Again</Text>
         </Pressable>
