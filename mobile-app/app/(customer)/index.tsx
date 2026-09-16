@@ -234,7 +234,7 @@ export default function CustomerHome() {
               accessibilityRole="button"
               accessibilityLabel="Express booking"
               style={styles.serviceCard}
-              onPress={() => router.push("/(customer)/express/index")}
+              onPress={() => router.push("/(customer)/express")}
             >
               <Text style={styles.serviceIcon}>⚡</Text>
               <Text style={styles.serviceTitle}>

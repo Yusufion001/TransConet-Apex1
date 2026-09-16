@@ -86,7 +86,7 @@ function CustomerDrawerContent(props: any) {
 
         {menuItem(
           "Express Booking",
-          "/(customer)/express/index",
+          "/(customer)/express",
           "flash-outline",
         )}
 
