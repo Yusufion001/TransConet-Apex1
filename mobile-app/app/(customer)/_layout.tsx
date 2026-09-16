@@ -85,6 +85,12 @@ function CustomerDrawerContent(props: any) {
         )}
 
         {menuItem(
+          "Express Booking",
+          "/(customer)/express/index",
+          "flash-outline",
+        )}
+
+        {menuItem(
           "Support & Disputes",
           "/(customer)/support-disputes",
           "chatbubbles-outline",

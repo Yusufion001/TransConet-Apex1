@@ -3,7 +3,6 @@ import { getUserNotifications } from "../../src/api/notifications";
 import {
   Image,
   Linking,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -54,7 +53,6 @@ export default function CustomerHome() {
 
   const advertisements = advertisementsQuery.data ?? [];
   const [advertisementIndex, setAdvertisementIndex] = useState(0);
-  const [bookingChooserVisible, setBookingChooserVisible] = useState(false);
 
   useEffect(() => {
     if (advertisements.length <= 1) return;
@@ -217,13 +215,25 @@ export default function CustomerHome() {
           <View style={styles.serviceRow}>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Book Transport"
+              accessibilityLabel="Marketplace booking"
               style={styles.serviceCard}
-              onPress={() => setBookingChooserVisible(true)}
+              onPress={() => router.push("/(customer)/bookings/create")}
             >
               <Text style={styles.serviceIcon}>🚚</Text>
               <Text style={styles.serviceTitle}>
-                Book Transport
+                Marketplace
+              </Text>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Express booking"
+              style={styles.serviceCard}
+              onPress={() => router.push("/(customer)/express/index")}
+            >
+              <Text style={styles.serviceIcon}>⚡</Text>
+              <Text style={styles.serviceTitle}>
+                Express Booking
               </Text>
             </Pressable>
           </View>
@@ -278,75 +288,7 @@ export default function CustomerHome() {
         </View>
       </ScrollView>
 
-      <Modal
-        visible={bookingChooserVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setBookingChooserVisible(false)}
-      >
-        <View style={styles.bookingChooserOverlay}>
-          <View style={styles.bookingChooserCard}>
-            <Text style={styles.bookingChooserTitle}>
-              Choose booking type
-            </Text>
 
-            <Text style={styles.bookingChooserSubtitle}>
-              Select the service you want to use.
-            </Text>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Marketplace booking"
-              style={styles.bookingChooserOption}
-              onPress={() => {
-                setBookingChooserVisible(false);
-                router.push("/(customer)/bookings/create");
-              }}
-            >
-              <Text style={styles.bookingChooserIcon}>🚚</Text>
-              <View style={styles.bookingChooserText}>
-                <Text style={styles.bookingChooserOptionTitle}>
-                  Marketplace
-                </Text>
-                <Text style={styles.bookingChooserOptionDescription}>
-                  Request transport and receive transporter bids.
-                </Text>
-              </View>
-            </Pressable>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Express booking"
-              style={styles.bookingChooserOption}
-              onPress={() => {
-                setBookingChooserVisible(false);
-                router.push("/(customer)/express/index");
-              }}
-            >
-              <Text style={styles.bookingChooserIcon}>⚡</Text>
-              <View style={styles.bookingChooserText}>
-                <Text style={styles.bookingChooserOptionTitle}>
-                  Express
-                </Text>
-                <Text style={styles.bookingChooserOptionDescription}>
-                  Fast dispatch through the Express service.
-                </Text>
-              </View>
-            </Pressable>
-
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Close booking type chooser"
-              style={styles.bookingChooserCancel}
-              onPress={() => setBookingChooserVisible(false)}
-            >
-              <Text style={styles.bookingChooserCancelText}>
-                Cancel
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -545,75 +487,7 @@ const styles = StyleSheet.create({
     color: "#111827",
   },
 
-  bookingChooserOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0, 0, 0, 0.45)",
-  },
 
-  bookingChooserCard: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    gap: 12,
-  },
-
-  bookingChooserTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#111827",
-  },
-
-  bookingChooserSubtitle: {
-    fontSize: 14,
-    color: "#667085",
-    marginBottom: 4,
-  },
-
-  bookingChooserOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    borderWidth: 1,
-    borderColor: "#E4E7EC",
-    borderRadius: 16,
-    padding: 16,
-    backgroundColor: "#FFFFFF",
-  },
-
-  bookingChooserIcon: {
-    fontSize: 28,
-  },
-
-  bookingChooserText: {
-    flex: 1,
-    gap: 3,
-  },
-
-  bookingChooserOptionTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#111827",
-  },
-
-  bookingChooserOptionDescription: {
-    fontSize: 13,
-    lineHeight: 18,
-    color: "#667085",
-  },
-
-  bookingChooserCancel: {
-    alignItems: "center",
-    paddingVertical: 12,
-    marginTop: 2,
-  },
-
-  bookingChooserCancelText: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#475467",
-  },
   tripCard: {
     minHeight: 82,
     borderRadius: 16,
