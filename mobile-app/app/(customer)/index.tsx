@@ -94,6 +94,11 @@ export default function CustomerHome() {
   const trip = activeBooking ?? bookings[0] ?? null;
 
   const handleTripPress = () => {
+    if (trip?.expressBookingId) {
+      router.push(`/(customer)/express/${trip.expressBookingId}`);
+      return;
+    }
+
     if (trip?.id) {
       router.push(`/(customer)/bookings/${trip.id}`);
       return;
