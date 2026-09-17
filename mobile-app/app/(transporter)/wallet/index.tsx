@@ -284,16 +284,33 @@ export default function TransporterWallet() {
     [bookingsQuery.data],
   );
 
-  const paymentTransactions = useMemo(
+  const earningsTransactions = useMemo(
     () =>
       transactions.filter(
         (item) =>
-          item.transactionType === "PAYMENT_PENDING" ||
-          item.transactionType ===
-            "SETTLEMENT_RELEASED",
+          item.transactionType === "SETTLEMENT_RELEASED",
       ),
     [transactions],
   );
+
+  const pendingPayments = useMemo(() => {
+    const releasedBookingIds = new Set(
+      transactions
+        .filter(
+          (item) =>
+            item.transactionType === "SETTLEMENT_RELEASED" &&
+            item.bookingId,
+        )
+        .map((item) => item.bookingId),
+    );
+
+    return transactions.filter(
+      (item) =>
+        item.transactionType === "PAYMENT_PENDING" &&
+        (!item.bookingId ||
+          !releasedBookingIds.has(item.bookingId)),
+    );
+  }, [transactions]);
 
   const startAccountSecurity = (
     purpose: WithdrawalSecurityPurpose,
@@ -834,10 +851,10 @@ export default function TransporterWallet() {
           EARNINGS TRANSACTIONS
         </Text>
 
-        {transactions.length === 0 ? (
+        {earningsTransactions.length === 0 ? (
           <Empty text="No earnings transactions recorded yet." />
         ) : (
-          transactions.map((transaction) => (
+          earningsTransactions.map((transaction) => (
             <TransactionRow
               key={transaction.id}
               transaction={transaction}
@@ -848,7 +865,7 @@ export default function TransporterWallet() {
 
       <View style={styles.card}>
         <Text style={styles.section}>
-          COMPLETED TRIPS
+          COMPLETED JOBS
         </Text>
 
         {completedTrips.length === 0 ? (
@@ -903,13 +920,13 @@ export default function TransporterWallet() {
 
       <View style={styles.card}>
         <Text style={styles.section}>
-          PAYMENT HISTORY
+          PENDING PAYMENTS
         </Text>
 
-        {paymentTransactions.length === 0 ? (
-          <Empty text="No payment history recorded yet." />
+        {pendingPayments.length === 0 ? (
+          <Empty text="No pending payments." />
         ) : (
-          paymentTransactions.map((transaction) => (
+          pendingPayments.map((transaction) => (
             <TransactionRow
               key={`payment-${transaction.id}`}
               transaction={transaction}
