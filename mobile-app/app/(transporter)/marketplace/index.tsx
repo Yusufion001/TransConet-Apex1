@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -7,9 +8,15 @@ import {
   Text,
   View,
 } from "react-native";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { getMarketplaceLoads } from "../../../src/api/transporter";
+import {
+  getMarketplaceDiscoveryConfig,
+  getMarketplaceLoads,
+} from "../../../src/api/transporter";
+import {
+  listenForMarketplaceDiscoveryUpdates,
+} from "../../../src/realtime/marketplace-realtime";
 
 function formatDate(value?: string | null) {
   if (!value) return "Schedule not specified";
@@ -24,10 +31,77 @@ function formatDate(value?: string | null) {
 }
 
 export default function TransporterMarketplace() {
-  const query = useQuery({
-    queryKey: ["transporter-marketplace"],
-    queryFn: () => getMarketplaceLoads(),
+  const queryClient = useQueryClient();
+
+  const [selectedRadiusKm, setSelectedRadiusKm] = useState<
+    number | undefined
+  >(undefined);
+
+  const discoveryConfigQuery = useQuery({
+    queryKey: ["transporter-marketplace-discovery-config"],
+    queryFn: getMarketplaceDiscoveryConfig,
   });
+
+  useEffect(() => {
+    const defaultRadiusKm = discoveryConfigQuery.data?.defaultRadiusKm;
+
+    if (
+      selectedRadiusKm === undefined &&
+      typeof defaultRadiusKm === "number" &&
+      Number.isFinite(defaultRadiusKm) &&
+      defaultRadiusKm > 0
+    ) {
+      setSelectedRadiusKm(defaultRadiusKm);
+    }
+  }, [discoveryConfigQuery.data?.defaultRadiusKm, selectedRadiusKm]);
+
+  const query = useQuery({
+    queryKey: ["transporter-marketplace", selectedRadiusKm],
+    queryFn: () => getMarketplaceLoads(selectedRadiusKm),
+    enabled:
+      discoveryConfigQuery.isSuccess &&
+      selectedRadiusKm !== undefined,
+    refetchInterval:
+      discoveryConfigQuery.data?.marketplaceRefreshSeconds ?? false,
+  });
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    let cancelled = false;
+
+    void listenForMarketplaceDiscoveryUpdates(() => {
+      void queryClient.invalidateQueries({
+        queryKey: ["transporter-marketplace"],
+      });
+    })
+      .then((cleanup) => {
+        if (cancelled) {
+          cleanup();
+          return;
+        }
+
+        unsubscribe = cleanup;
+      })
+      .catch(() => {
+        // Marketplace data remains available through the existing query/manual refresh.
+      });
+
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
+  }, [queryClient]);
+
+  const nextRadiusKm =
+    discoveryConfigQuery.data && selectedRadiusKm !== undefined
+      ? discoveryConfigQuery.data.radiusRingsKm
+          .filter(
+            (radiusKm) =>
+              radiusKm > selectedRadiusKm &&
+              radiusKm <= discoveryConfigQuery.data.maxRadiusKm,
+          )
+          .sort((a, b) => a - b)[0]
+      : undefined;
 
   if (query.isLoading) {
     return (
@@ -75,6 +149,26 @@ export default function TransporterMarketplace() {
       <Text style={styles.subtitle}>
         Discover transport opportunities that match your operational capacity.
       </Text>
+
+      {nextRadiusKm !== undefined ? (
+        <View style={styles.discoveryCard}>
+          <View>
+            <Text style={styles.discoveryLabel}>DISCOVERY RANGE</Text>
+            <Text style={styles.discoveryText}>
+              Searching within {selectedRadiusKm} km
+            </Text>
+          </View>
+
+          <Pressable
+            onPress={() => setSelectedRadiusKm(nextRadiusKm)}
+            style={styles.discoveryButton}
+          >
+            <Text style={styles.discoveryButtonText}>
+              Expand to {nextRadiusKm} km
+            </Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       <View style={styles.statusCard}>
         <View style={styles.statusRow}>
@@ -212,6 +306,40 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     color: "#667085",
+  },
+  discoveryCard: {
+    padding: 16,
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#E4E7EC",
+  },
+  discoveryLabel: {
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.3,
+    color: "#98A2B3",
+  },
+  discoveryText: {
+    marginTop: 5,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#344054",
+  },
+  discoveryButton: {
+    marginTop: 12,
+    minHeight: 44,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#0B63CE",
+  },
+  discoveryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "800",
   },
   statusCard: {
     padding: 18,

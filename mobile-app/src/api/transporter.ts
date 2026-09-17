@@ -99,6 +99,21 @@ export type Vehicle = {
   updatedAt?: string | null;
 };
 
+export type MarketplaceDiscoveryConfig = {
+  defaultRadiusKm: number;
+  radiusRingsKm: number[];
+  maxRadiusKm: number;
+  marketplaceRefreshSeconds: number | null;
+};
+
+export async function getMarketplaceDiscoveryConfig(): Promise<MarketplaceDiscoveryConfig> {
+  const response = await apiClient.get<
+    ApiResponse<MarketplaceDiscoveryConfig>
+  >("/marketplace/discovery-config");
+
+  return response.data.data;
+}
+
 export async function getMarketplaceLoads(
   radiusKm?: number,
 ): Promise<MarketplaceLoad[]> {

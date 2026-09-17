@@ -548,6 +548,7 @@ model Vehicle {
   availabilityStatus VehicleAvailabilityStatus @default(UNAVAILABLE)
   currentLatitude    Decimal?                  @db.Decimal(10, 7)
   currentLongitude   Decimal?                  @db.Decimal(10, 7)
+  marketplaceLocationUpdatedAt DateTime?
   createdAt          DateTime                  @default(now())
   updatedAt          DateTime                  @updatedAt
   marketplaceBids    MarketplaceBid[]

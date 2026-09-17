@@ -17,6 +17,7 @@ import expressRoutes from "./express/express.routes.js";
 import { promoteExpiredExpressBookingsToGeneralBoard } from "./express/express-dispatch.service.js";
 import publicTrackingRoutes from "./realtime/public-tracking.routes.js";
 import marketplaceRoutes from "./marketplace/marketplace.routes.js";
+import { updateMarketplaceVehicleLocation } from "./marketplace/marketplace-location.service.js";
 import messageRoutes from "./messages/message.routes.js";
 import notificationRoutes from "./notifications/notification.routes.js";
 import supportRoutes from "./support/support.routes.js";
@@ -140,6 +141,10 @@ io.use(async (socket, next) => {
 
     socket.data.user = user;
     socket.join(`user:${user.id}`);
+
+    if (user.role === "TRANSPORTER") {
+      socket.join("marketplace:transporters");
+    }
 
     if (user.role === "ADMIN") {
       if (!user.adminProfile || user.adminProfile.status !== "ACTIVE") {
@@ -351,6 +356,54 @@ io.on("connection", (socket) => {
       `${socket.id} left booking ${bookingId}`,
     );
   });
+  socket.on(
+    "vehicle-marketplace-location-update",
+    async (data: {
+      vehicleId: string;
+      latitude: number;
+      longitude: number;
+    }) => {
+      try {
+        const user = socket.data.user;
+
+        if (!user) {
+          socket.emit("vehicle:access-denied", {
+            error: "Authentication required",
+          });
+          return;
+        }
+
+        if (
+          user.role !== "TRANSPORTER" ||
+          !data ||
+          typeof data.vehicleId !== "string" ||
+          !isValidCoordinates(data.latitude, data.longitude)
+        ) {
+          socket.emit("vehicle:update-rejected", {
+            error: "Invalid marketplace vehicle location",
+          });
+          return;
+        }
+
+        const location = await updateMarketplaceVehicleLocation({
+          transporterId: user.id,
+          vehicleId: data.vehicleId,
+          latitude: data.latitude,
+          longitude: data.longitude,
+        });
+
+        socket.emit("vehicle:marketplace-location-updated", location);
+      } catch (error) {
+        socket.emit("vehicle:update-rejected", {
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to update marketplace vehicle location",
+        });
+      }
+    },
+  );
+
   socket.on(
     "vehicle-location-update",
     async (data: {
