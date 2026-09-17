@@ -22,11 +22,43 @@ import {
   selectMarketplaceBid,
 } from "./marketplace.service.js";
 import { getVisibleMarketplaceLoads } from "./visibility.service.js";
+import { getMarketplaceVisibilityConfig } from "./visibility.policy.js";
 
 const router = Router();
 
 router.use(authenticate);
 
+
+router.get(
+  "/discovery-config",
+  authorize("TRANSPORTER"),
+  async (_req: AuthenticatedRequest, res) => {
+    try {
+      const config = await getMarketplaceVisibilityConfig();
+
+      return res.json({
+        success: true,
+        data: {
+          defaultRadiusKm: config.defaultRadiusKm,
+          radiusRingsKm: config.radiusRingsKm ?? [],
+          maxRadiusKm: config.maxRadiusKm,
+          marketplaceRefreshSeconds:
+            config.marketplaceRefreshSeconds ?? null,
+        },
+      });
+    } catch (error) {
+      console.error(
+        "Failed to load marketplace discovery configuration:",
+        error,
+      );
+
+      return res.status(500).json({
+        success: false,
+        error: "Failed to load marketplace discovery configuration",
+      });
+    }
+  },
+);
 
 router.get(
   "/loads",

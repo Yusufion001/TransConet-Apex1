@@ -1242,6 +1242,71 @@ export default function Subscriptions() {
               </div>
 
               <div className="subscription-visibility-card">
+                <span>Discovery Expansion</span>
+
+                <label>
+                  Radius stages (km)
+                  <input
+                    type="text"
+                    placeholder="e.g. 1,5,10,25,50"
+                    value={
+                      visibilityConfig.radiusRingsKm?.join(",") ?? ""
+                    }
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      const stages = value
+                        .split(",")
+                        .map((item) => Number(item.trim()))
+                        .filter((item) => Number.isFinite(item) && item > 0);
+
+                      setVisibilityConfig({
+                        ...visibilityConfig,
+                        radiusRingsKm: value.trim() ? stages : undefined,
+                      });
+                    }}
+                  />
+                </label>
+
+                <label>
+                  Location freshness (seconds)
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={visibilityConfig.locationFreshnessSeconds ?? ""}
+                    onChange={(event) =>
+                      setVisibilityConfig({
+                        ...visibilityConfig,
+                        locationFreshnessSeconds:
+                          event.target.value === ""
+                            ? undefined
+                            : Number(event.target.value),
+                      })
+                    }
+                  />
+                </label>
+
+                <label>
+                  Marketplace refresh (seconds)
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={visibilityConfig.marketplaceRefreshSeconds ?? ""}
+                    onChange={(event) =>
+                      setVisibilityConfig({
+                        ...visibilityConfig,
+                        marketplaceRefreshSeconds:
+                          event.target.value === ""
+                            ? undefined
+                            : Number(event.target.value),
+                      })
+                    }
+                  />
+                </label>
+              </div>
+
+              <div className="subscription-visibility-card">
                 <span>Subscription Visibility Boost</span>
 
                 {(

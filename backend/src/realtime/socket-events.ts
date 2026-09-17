@@ -40,6 +40,20 @@ export function initializeSocketEvents(io: Server) {
       event,
     );
 
+    if (
+      event.eventType === "VEHICLE_AVAILABILITY_UPDATED" ||
+      event.eventType === "MARKETPLACE_VEHICLE_LOCATION_UPDATED"
+    ) {
+      io.to("marketplace:transporters").emit(
+        "marketplace:discovery-updated",
+        {
+          eventId: event.eventId,
+          eventType: event.eventType,
+          timestamp: event.timestamp,
+        },
+      );
+    }
+
     io.to("administration").emit(
       "admin:activity",
       event,
@@ -49,6 +63,26 @@ export function initializeSocketEvents(io: Server) {
       io.to(`admin:${event.module}`).emit(
         "admin:module-event",
         event,
+      );
+    }
+  });
+
+  eventBus.on("marketplace", (event) => {
+    const discoveryEvents = new Set([
+      "LOAD_POSTED",
+      "MARKETPLACE_REQUEST_CANCELLED",
+      "BID_SELECTED",
+      "MARKETPLACE_REQUEST_AGREED",
+    ]);
+
+    if (discoveryEvents.has(event.eventType)) {
+      io.to("marketplace:transporters").emit(
+        "marketplace:discovery-updated",
+        {
+          eventId: event.eventId,
+          eventType: event.eventType,
+          timestamp: event.timestamp,
+        },
       );
     }
   });

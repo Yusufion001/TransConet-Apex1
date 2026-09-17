@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { z } from "zod";
 import {
+  marketplaceVisibilityConfigSchema,
+} from "../marketplace/visibility.policy.js";
+import {
   authenticate,
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
@@ -13,46 +16,7 @@ import {
 
 const router = Router();
 
-const visibilityConfigSchema = z
-  .object({
-    geographicScope: z.enum(["RADIUS", "NATIONWIDE"]),
-
-    defaultRadiusKm: z.coerce.number().finite().positive(),
-    maxRadiusKm: z.coerce.number().finite().positive(),
-
-    subscriptionBoosts: z
-      .object({
-        FREE: z.coerce.number().finite().positive(),
-        SILVER: z.coerce.number().finite().positive(),
-        GOLD: z.coerce.number().finite().positive(),
-        PLATINUM: z.coerce.number().finite().positive(),
-        ENTERPRISE: z.coerce.number().finite().positive(),
-      })
-      .strict(),
-
-    tierScores: z
-      .object({
-        TIER_1: z.coerce.number().finite().positive(),
-        TIER_2: z.coerce.number().finite().positive(),
-      })
-      .strict(),
-
-    requireApprovedTransporter: z.boolean(),
-    requireApprovedVehicle: z.boolean(),
-    requireAvailableVehicle: z.boolean(),
-    requireVehicleLocation: z.boolean(),
-  })
-  .strict()
-  .superRefine((config, ctx) => {
-    if (config.maxRadiusKm < config.defaultRadiusKm) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["maxRadiusKm"],
-        message:
-          "Maximum radius cannot be less than default radius",
-      });
-    }
-  });
+const visibilityConfigSchema = marketplaceVisibilityConfigSchema;
 
 router.use(authenticate);
 router.use(requireAdmin);

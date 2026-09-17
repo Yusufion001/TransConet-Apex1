@@ -123,7 +123,12 @@ test("marketplace router registers all required endpoints", () => {
     routerGetMock.mock.calls.map(
       (call) => call.arguments[0],
     ),
-    ["/loads", "/requests", "/requests/:id"],
+      [
+        "/discovery-config",
+        "/loads",
+        "/requests",
+        "/requests/:id",
+      ],
   );
 
   assert.deepEqual(

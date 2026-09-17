@@ -11,6 +11,15 @@ export const marketplaceVisibilityConfigSchema = z
 
     maxRadiusKm: positiveNumber,
 
+    radiusRingsKm: z
+      .array(positiveNumber)
+      .min(1)
+      .optional(),
+
+    locationFreshnessSeconds: positiveNumber.optional(),
+
+    marketplaceRefreshSeconds: positiveNumber.optional(),
+
     subscriptionBoosts: z
       .object({
         FREE: positiveNumber,
@@ -46,41 +55,36 @@ export const marketplaceVisibilityConfigSchema = z
           "Maximum radius cannot be less than default radius",
       });
     }
+
+    if (config.radiusRingsKm) {
+      for (let index = 0; index < config.radiusRingsKm.length; index += 1) {
+        if (config.radiusRingsKm[index] > config.maxRadiusKm) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["radiusRingsKm", index],
+            message: "Radius stages cannot exceed maximum radius",
+          });
+          break;
+        }
+
+        if (
+          index > 0 &&
+          config.radiusRingsKm[index] <= config.radiusRingsKm[index - 1]
+        ) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["radiusRingsKm", index],
+            message: "Radius stages must be strictly ascending",
+          });
+          break;
+        }
+      }
+    }
   });
 
 export type MarketplaceVisibilityConfig = z.infer<
   typeof marketplaceVisibilityConfigSchema
 >;
-
-const DEFAULT_MARKETPLACE_VISIBILITY_CONFIG: MarketplaceVisibilityConfig =
-  {
-    geographicScope: "RADIUS",
-
-    defaultRadiusKm: 100,
-
-    maxRadiusKm: 500,
-
-    subscriptionBoosts: {
-      FREE: 1,
-      SILVER: 2,
-      GOLD: 3,
-      PLATINUM: 4,
-      ENTERPRISE: 5,
-    },
-
-    tierScores: {
-      TIER_1: 1,
-      TIER_2: 2,
-    },
-
-    requireApprovedTransporter: true,
-
-    requireApprovedVehicle: true,
-
-    requireAvailableVehicle: true,
-
-    requireVehicleLocation: true,
-  };
 
 type ConfigRow = {
   value: unknown;
@@ -97,14 +101,18 @@ export async function getMarketplaceVisibilityConfig(): Promise<MarketplaceVisib
   const value = rows[0]?.value;
 
   if (!value || typeof value !== "object") {
-    return DEFAULT_MARKETPLACE_VISIBILITY_CONFIG;
+    throw new Error(
+      "Marketplace visibility configuration is missing from PlatformConfig",
+    );
   }
 
   const parsed =
     marketplaceVisibilityConfigSchema.safeParse(value);
 
   if (!parsed.success) {
-    return DEFAULT_MARKETPLACE_VISIBILITY_CONFIG;
+    throw new Error(
+      "Marketplace visibility configuration in PlatformConfig is invalid",
+    );
   }
 
   return parsed.data;

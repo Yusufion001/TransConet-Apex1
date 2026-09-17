@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { isMarketplaceVehicleCompatible } from "./marketplace.compatibility.js";
 import {
   getMarketplaceVisibilityConfig,
 } from "./visibility.policy.js";
@@ -152,8 +153,10 @@ export async function getVisibleMarketplaceLoads(
             id: true,
             vehicleClass: true,
             vehicleType: true,
+          year: true,
             currentLatitude: true,
             currentLongitude: true,
+          marketplaceLocationUpdatedAt: true,
           },
         },
 
@@ -243,6 +246,8 @@ export async function getVisibleMarketplaceLoads(
         bookingId: true,
         cargoDescription: true,
         truckCategory: true,
+                                                  preferredVehicleYearMin: true,
+                                                  preferredVehicleYearMax: true,
         cargoCategory: true,
         cargoWeight: true,
         pickupLocation: true,
@@ -281,9 +286,18 @@ export async function getVisibleMarketplaceLoads(
        * this load.
        */
       const matchingVehicles =
-        transporter.vehicles.filter(
-          (vehicle) =>
-            vehicle.vehicleClass === load.truckCategory,
+        transporter.vehicles.filter((vehicle) =>
+          isMarketplaceVehicleCompatible(
+            {
+              vehicleClass: vehicle.vehicleClass,
+              year: vehicle.year,
+            },
+            {
+              truckCategory: load.truckCategory,
+              preferredVehicleYearMin: load.preferredVehicleYearMin,
+              preferredVehicleYearMax: load.preferredVehicleYearMax,
+            },
+          ),
         );
 
       if (matchingVehicles.length === 0) {
@@ -302,6 +316,29 @@ export async function getVisibleMarketplaceLoads(
               vehicle.currentLongitude,
             ),
           )
+          .filter((vehicle) => {
+            if (
+              visibilityPolicy.locationFreshnessSeconds ===
+              undefined
+            ) {
+              return true;
+            }
+
+            if (!vehicle.marketplaceLocationUpdatedAt) {
+              return false;
+            }
+
+            const locationAgeSeconds =
+              (now.getTime() -
+                vehicle.marketplaceLocationUpdatedAt.getTime()) /
+              1000;
+
+            return (
+              Number.isFinite(locationAgeSeconds) &&
+              locationAgeSeconds <=
+                visibilityPolicy.locationFreshnessSeconds
+            );
+          })
           .map((vehicle) => {
             const distance =
               distanceKm(

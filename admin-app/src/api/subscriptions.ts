@@ -94,6 +94,9 @@ export type MarketplaceVisibilityConfig = {
   geographicScope: "RADIUS" | "NATIONWIDE";
   defaultRadiusKm: number;
   maxRadiusKm: number;
+  radiusRingsKm?: number[];
+  locationFreshnessSeconds?: number;
+  marketplaceRefreshSeconds?: number;
   subscriptionBoosts: {
     FREE: number;
     SILVER: number;
