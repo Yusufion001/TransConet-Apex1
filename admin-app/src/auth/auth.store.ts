@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import { apiClient } from "../api/client";
-import type { AdminSession, AdminUser, LoginResponse } from "./auth.types";
+import type {
+  AdminSession,
+  AdminUser,
+  LoginResponse,
+  LoginResult,
+} from "./auth.types";
 
 const ACCESS_TOKEN_KEY = "transconet_admin_access_token";
 const REFRESH_TOKEN_KEY = "transconet_admin_refresh_token";
@@ -13,7 +18,8 @@ type AuthState = {
   isAuthenticated: boolean;
   isLoading: boolean;
 
-  login: (identifier: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<LoginResult>;
+  establishSession: (session: AdminSession) => void;
   logout: () => void;
   clearLocalSession: () => void;
   restore: () => void;
@@ -33,6 +39,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       isLoading: false,
     });
   },
+
   user: null,
   accessToken: null,
   refreshToken: null,
@@ -45,8 +52,20 @@ export const useAuthStore = create<AuthState>((set) => ({
       password,
     });
 
-    const session: AdminSession = response.data.data;
+    const result: LoginResult = response.data.data;
 
+    if (result.requiresMfa) {
+      return result;
+    }
+
+    const session: AdminSession = result;
+
+    useAuthStore.getState().establishSession(session);
+
+    return session;
+  },
+
+  establishSession: (session) => {
     if (session.user.role !== "ADMIN") {
       throw new Error("Administrator access required");
     }
@@ -67,6 +86,8 @@ export const useAuthStore = create<AuthState>((set) => ({
 
     if (session.refreshToken) {
       localStorage.setItem(REFRESH_TOKEN_KEY, session.refreshToken);
+    } else {
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
     }
 
     localStorage.setItem(USER_KEY, JSON.stringify(session.user));

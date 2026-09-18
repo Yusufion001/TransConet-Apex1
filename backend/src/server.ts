@@ -68,6 +68,7 @@ import {
   canAccessBooking,
   canUpdateVehicleLocation,
   isValidCoordinates,
+  isValidGpsMetadata,
 } from "./realtime/socket-authorization.js";
 import {
   applySecurityFoundation,
@@ -139,17 +140,19 @@ io.use(async (socket, next) => {
       return next(new Error("Account is not active"));
     }
 
+    if (
+      user.role === "ADMIN" &&
+      (!user.adminProfile || user.adminProfile.status !== "ACTIVE")
+    ) {
+      return next(new Error("Administrator account is not active"));
+    }
+
     socket.data.user = user;
     socket.join(`user:${user.id}`);
 
     if (user.role === "TRANSPORTER") {
       socket.join("marketplace:transporters");
-    }
-
-    if (user.role === "ADMIN") {
-      if (!user.adminProfile || user.adminProfile.status !== "ACTIVE") {
-        return next(new Error("Administrator account is not active"));
-      }
+      socket.join("express:transporters");
     }
 
     next();
@@ -250,6 +253,40 @@ app.get("/health", (_req, res) => {
   });
 });
 
+const REALTIME_LOCATION_MIN_INTERVAL_MS = 5_000;
+
+const tripLocationLastAcceptedAt = new Map<string, number>();
+const marketplaceLocationLastAcceptedAt = new Map<string, number>();
+
+function allowRealtimeLocationUpdate(
+  store: Map<string, number>,
+  key: string,
+  now = Date.now(),
+) {
+  const lastAcceptedAt = store.get(key);
+
+  if (
+    lastAcceptedAt !== undefined &&
+    now - lastAcceptedAt < REALTIME_LOCATION_MIN_INTERVAL_MS
+  ) {
+    return false;
+  }
+
+  store.set(key, now);
+  return true;
+}
+
+function pruneRealtimeLocationStore(
+  store: Map<string, number>,
+  now = Date.now(),
+) {
+  for (const [key, timestamp] of store) {
+    if (now - timestamp >= REALTIME_LOCATION_MIN_INTERVAL_MS * 2) {
+      store.delete(key);
+    }
+  }
+}
+
 io.on("connection", (socket) => {
   console.log(`Realtime client connected: ${socket.id}`);
   socket.on("join-booking", async (bookingId: string) => {
@@ -283,10 +320,26 @@ io.on("connection", (socket) => {
 
   socket.on("join-administration", () => {
     const user = socket.data.user;
+    const admin = user?.adminProfile;
 
-    if (user?.role !== "ADMIN" || !user.adminProfile) {
+    if (
+      user?.role !== "ADMIN" ||
+      !admin ||
+      admin.status !== "ACTIVE"
+    ) {
       socket.emit("admin:access-denied", {
         error: "Administrator access required",
+      });
+      return;
+    }
+
+    const allowed =
+      admin.isSuperAdministrator ||
+      admin.administratorType === "SUPER_ADMIN";
+
+    if (!allowed) {
+      socket.emit("admin:access-denied", {
+        error: "Global administration access required",
       });
       return;
     }
@@ -377,10 +430,26 @@ io.on("connection", (socket) => {
           user.role !== "TRANSPORTER" ||
           !data ||
           typeof data.vehicleId !== "string" ||
+          data.vehicleId.length === 0 ||
           !isValidCoordinates(data.latitude, data.longitude)
         ) {
           socket.emit("vehicle:update-rejected", {
             error: "Invalid marketplace vehicle location",
+          });
+          return;
+        }
+
+        const marketplaceRateKey =
+          `${user.id}:${data.vehicleId}`;
+
+        if (
+          !allowRealtimeLocationUpdate(
+            marketplaceLocationLastAcceptedAt,
+            marketplaceRateKey,
+          )
+        ) {
+          socket.emit("vehicle:update-rejected", {
+            error: "Location update rate limit exceeded",
           });
           return;
         }
@@ -427,13 +496,34 @@ io.on("connection", (socket) => {
         if (
           !data ||
           typeof data.bookingId !== "string" ||
+          data.bookingId.length === 0 ||
           !isValidCoordinates(
             data.latitude,
             data.longitude,
+          ) ||
+          !isValidGpsMetadata(
+            data.speed,
+            data.heading,
+            data.accuracy,
           )
         ) {
           socket.emit("vehicle:update-rejected", {
-            error: "Invalid vehicle location",
+            error: "Invalid vehicle location or GPS metadata",
+          });
+          return;
+        }
+
+        const tripRateKey =
+          `${user.id}:${data.bookingId}`;
+
+        if (
+          !allowRealtimeLocationUpdate(
+            tripLocationLastAcceptedAt,
+            tripRateKey,
+          )
+        ) {
+          socket.emit("vehicle:update-rejected", {
+            error: "Location update rate limit exceeded",
           });
           return;
         }
@@ -477,6 +567,22 @@ io.on("connection", (socket) => {
     },
   );
 });
+
+const realtimeLocationCleanupInterval = setInterval(() => {
+  const now = Date.now();
+
+  pruneRealtimeLocationStore(
+    tripLocationLastAcceptedAt,
+    now,
+  );
+  pruneRealtimeLocationStore(
+    marketplaceLocationLastAcceptedAt,
+    now,
+  );
+}, 60_000);
+
+realtimeLocationCleanupInterval.unref();
+
 void Promise.all([
   ensureTripTrackingConfig(),
   ensureExpressDispatchConfig(),

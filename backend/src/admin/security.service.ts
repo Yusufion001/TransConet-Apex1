@@ -1,5 +1,9 @@
 import { prisma } from "../config/prisma.js";
 import { publishEvent } from "../realtime/event-bus.js";
+import {
+  beginAdministratorMfaEnrollment,
+  disableAdministratorMfa,
+} from "./admin-mfa.service.js";
 
 export async function getSecurityOverview() {
   const [
@@ -203,33 +207,65 @@ export async function setAdministratorTwoFactor(
     throw new Error("Administrator profile not found");
   }
 
-  const updated = await prisma.adminProfile.update({
-    where: { userId },
-    data: {
-      twoFactorEnabled: enabled,
-    },
-  });
+  if (enabled) {
+    if (existing.twoFactorEnabled) {
+      return existing;
+    }
+
+    const enrollment = await beginAdministratorMfaEnrollment(userId);
+
+    await prisma.auditLog.create({
+      data: {
+        administratorId,
+        affectedUserId: userId,
+        action: "ADMINISTRATOR_2FA_ENROLLMENT_STARTED",
+        previousValue: {
+          twoFactorEnabled: existing.twoFactorEnabled,
+        },
+        newValue: {
+          twoFactorEnabled: false,
+        },
+      },
+    });
+
+    publishEvent("admin", {
+      eventType: "ADMINISTRATOR_2FA_ENROLLMENT_STARTED",
+      module: "SECURITY_CENTER",
+      entityType: "ADMINISTRATOR",
+      entityId: userId,
+      actorId: administratorId,
+      data: {
+        userId,
+        expiresAt: enrollment.expiresAt,
+      },
+    });
+
+    return {
+      ...existing,
+      twoFactorEnabled: false,
+      enrollmentStarted: true,
+      expiresAt: enrollment.expiresAt,
+    };
+  }
+
+  const updated = await disableAdministratorMfa(userId);
 
   await prisma.auditLog.create({
     data: {
       administratorId,
       affectedUserId: userId,
-      action: enabled
-        ? "ADMINISTRATOR_2FA_ENABLED"
-        : "ADMINISTRATOR_2FA_DISABLED",
+      action: "ADMINISTRATOR_2FA_DISABLED",
       previousValue: {
         twoFactorEnabled: existing.twoFactorEnabled,
       },
       newValue: {
-        twoFactorEnabled: enabled,
+        twoFactorEnabled: false,
       },
     },
   });
 
   publishEvent("admin", {
-    eventType: enabled
-      ? "ADMINISTRATOR_2FA_ENABLED"
-      : "ADMINISTRATOR_2FA_DISABLED",
+    eventType: "ADMINISTRATOR_2FA_DISABLED",
     module: "SECURITY_CENTER",
     entityType: "ADMINISTRATOR",
     entityId: userId,
@@ -237,5 +273,8 @@ export async function setAdministratorTwoFactor(
     data: updated,
   });
 
-  return updated;
+  return {
+    ...existing,
+    twoFactorEnabled: false,
+  };
 }

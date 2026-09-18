@@ -21,6 +21,10 @@ import {
 } from "./communication.service.js";
 import { toUserDto } from "../users/user.dto.js";
 import { startCustomerVerification } from "../customers/customer-verification.service.js";
+import {
+  createAdministratorMfaChallenge,
+  verifyAdministratorMfaChallenge,
+} from "../admin/admin-mfa.service.js";
 
 type UserRole = "CUSTOMER" | "TRANSPORTER" | "ADMIN";
 
@@ -389,7 +393,6 @@ export async function loginUser(
 
   /*
    * Only ACTIVE accounts may authenticate.
-   *
    * PENDING accounts must complete the required
    * verification/activation flow before login.
    * BLOCKED and SUSPENDED accounts are also denied.
@@ -430,12 +433,12 @@ export async function loginUser(
     /*
      * Failed administrator authentication is tracked separately
      * from normal customer/transporter authentication.
-     *
      * Five consecutive failures produce a 15-minute lock.
      */
     if (user.role === "ADMIN" && user.adminProfile) {
       const administrator = user.adminProfile;
-      const failedAttempts = administrator.failedLoginAttempts + 1;
+      const failedAttempts =
+        administrator.failedLoginAttempts + 1;
       const shouldLock = failedAttempts >= 5;
 
       await prisma.adminProfile.update({
@@ -452,6 +455,35 @@ export async function loginUser(
     }
 
     throw new Error("Invalid credentials");
+  }
+
+  /*
+   * Password authentication is complete at this point.
+   * MFA-enabled administrators receive a short-lived challenge
+   * instead of an authenticated session. No access or refresh
+   * token is issued until the second factor succeeds.
+   */
+  if (user.role === "ADMIN") {
+    const mfa = await prisma.adminMfa.findUnique({
+      where: {
+        userId: user.id,
+      },
+      select: {
+        enabled: true,
+      },
+    });
+
+    if (mfa?.enabled) {
+      const challenge = await createAdministratorMfaChallenge(
+        user.id,
+      );
+
+      return {
+        requiresMfa: true as const,
+        challengeId: challenge.challenge,
+        expiresAt: challenge.expiresAt,
+      };
+    }
   }
 
   await prisma.user.update({
@@ -478,6 +510,80 @@ export async function loginUser(
   }
 
   return {
+    requiresMfa: false as const,
+    user: toUserDto(user),
+    ...await issueTokens(
+      user.id,
+      user.role,
+    ),
+  };
+}
+
+export async function verifyAdministratorMfaLogin(
+  challenge: string,
+  code: string,
+) {
+  const { userId } = await verifyAdministratorMfaChallenge(
+    challenge,
+    code,
+  );
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+    include: {
+      customerProfile: true,
+      transporterProfile: true,
+      adminProfile: true,
+    },
+  });
+
+  if (!user || user.role !== "ADMIN") {
+    throw new Error("Invalid MFA challenge");
+  }
+
+  if (user.status !== "ACTIVE") {
+    throw new Error("This account is not active");
+  }
+
+  if (
+    !user.adminProfile ||
+    user.adminProfile.status !== "ACTIVE"
+  ) {
+    throw new Error("Administrator account is not active");
+  }
+
+  if (
+    user.adminProfile.lockedUntil &&
+    user.adminProfile.lockedUntil > new Date()
+  ) {
+    throw new Error("Administrator account is temporarily locked");
+  }
+
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      lastLoginAt: new Date(),
+    },
+  });
+
+  await prisma.adminProfile.update({
+    where: {
+      userId: user.id,
+    },
+    data: {
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+      lastLoginAt: new Date(),
+      lastActionAt: new Date(),
+    },
+  });
+
+  return {
+    requiresMfa: false as const,
     user: toUserDto(user),
     ...await issueTokens(
       user.id,

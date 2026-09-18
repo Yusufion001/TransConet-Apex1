@@ -14,6 +14,9 @@ const prismaMock = {
     create: mock.fn<(...args: any[]) => any>(),
     update: mock.fn<(...args: any[]) => any>(),
   },
+  refreshSession: {
+    updateMany: mock.fn<(...args: any[]) => any>(),
+  },
   auditLog: {
     create: mock.fn<(...args: any[]) => any>(),
   },
@@ -416,6 +419,20 @@ test("changeAdministratorStatus suspends a normal administrator and writes an au
     prismaMock.adminProfile.update.mock.calls.length,
     1,
   );
+
+  assert.equal(
+    prismaMock.refreshSession.updateMany.mock.calls.length,
+    1,
+  );
+
+  const refreshSessionCall =
+    prismaMock.refreshSession.updateMany.mock.calls[0]?.arguments[0];
+
+  assert.deepEqual(refreshSessionCall.where, {
+    userId: "admin-2",
+    revokedAt: null,
+  });
+  assert.ok(refreshSessionCall.data.revokedAt instanceof Date);
 
   assert.equal(
     prismaMock.auditLog.create.mock.calls.length,

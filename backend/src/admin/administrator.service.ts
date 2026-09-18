@@ -403,6 +403,18 @@ export async function changeAdministratorStatus(
       },
     });
 
+    if (status !== AdminStatus.ACTIVE) {
+      await tx.refreshSession.updateMany({
+        where: {
+          userId,
+          revokedAt: null,
+        },
+        data: {
+          revokedAt: new Date(),
+        },
+      });
+    }
+
     await tx.auditLog.create({
       data: {
         administratorId: creatorId,

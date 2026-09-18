@@ -330,3 +330,111 @@ test("recordVehicleLocation does not publish an event when the transaction fails
 
   assert.equal(publishEventMock.mock.calls.length, 0);
 });
+
+
+test("recordVehicleLocation rejects invalid coordinates before opening a transaction", async () => {
+  await assert.rejects(
+    recordVehicleLocation({
+      transporterId: "transporter-1",
+      bookingId: "booking-1",
+      latitude: 91,
+      longitude: 3.3792,
+    }),
+    { message: "Invalid vehicle location coordinates" },
+  );
+
+  assert.equal(prismaMock.$transaction.mock.calls.length, 0);
+  assert.equal(prismaMock.booking.findUnique.mock.calls.length, 0);
+  assert.equal(publishEventMock.mock.calls.length, 0);
+});
+
+test("recordVehicleLocation rejects invalid GPS speed", async () => {
+  await assert.rejects(
+    recordVehicleLocation({
+      transporterId: "transporter-1",
+      bookingId: "booking-1",
+      latitude: 6.5244,
+      longitude: 3.3792,
+      speed: -1,
+    }),
+    { message: "Invalid vehicle GPS metadata" },
+  );
+
+  assert.equal(prismaMock.$transaction.mock.calls.length, 0);
+  assert.equal(publishEventMock.mock.calls.length, 0);
+});
+
+test("recordVehicleLocation rejects invalid GPS heading", async () => {
+  await assert.rejects(
+    recordVehicleLocation({
+      transporterId: "transporter-1",
+      bookingId: "booking-1",
+      latitude: 6.5244,
+      longitude: 3.3792,
+      heading: 361,
+    }),
+    { message: "Invalid vehicle GPS metadata" },
+  );
+
+  assert.equal(prismaMock.$transaction.mock.calls.length, 0);
+  assert.equal(publishEventMock.mock.calls.length, 0);
+});
+
+test("recordVehicleLocation rejects invalid GPS accuracy", async () => {
+  await assert.rejects(
+    recordVehicleLocation({
+      transporterId: "transporter-1",
+      bookingId: "booking-1",
+      latitude: 6.5244,
+      longitude: 3.3792,
+      accuracy: -1,
+    }),
+    { message: "Invalid vehicle GPS metadata" },
+  );
+
+  assert.equal(prismaMock.$transaction.mock.calls.length, 0);
+  assert.equal(publishEventMock.mock.calls.length, 0);
+});
+
+test("recordVehicleLocation accepts GPS metadata at configured boundaries", async () => {
+  prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
+    id: "booking-boundary",
+    status: "IN_TRANSIT",
+    transporterId: "transporter-1",
+    vehicleId: "vehicle-boundary",
+    vehicle: {
+      id: "vehicle-boundary",
+      transporterId: "transporter-1",
+    },
+  }));
+
+  prismaMock.vehicle.update.mock.mockImplementation(async () => ({
+    id: "vehicle-boundary",
+  }));
+
+  prismaMock.trackingPoint.create.mock.mockImplementation(
+    async ({ data }: any) => ({
+      id: "tracking-boundary",
+      ...data,
+    }),
+  );
+
+  const result = await recordVehicleLocation({
+    transporterId: "transporter-1",
+    bookingId: "booking-boundary",
+    latitude: 90,
+    longitude: -180,
+    speed: 100,
+    heading: 360,
+    accuracy: 10_000,
+  });
+
+  assert.equal(result.latitude, 90);
+  assert.equal(result.longitude, -180);
+  assert.equal(result.speed, 100);
+  assert.equal(result.heading, 360);
+  assert.equal(result.accuracy, 10_000);
+  assert.equal(prismaMock.vehicle.update.mock.calls.length, 1);
+  assert.equal(prismaMock.trackingPoint.create.mock.calls.length, 1);
+  assert.equal(publishEventMock.mock.calls.length, 1);
+});

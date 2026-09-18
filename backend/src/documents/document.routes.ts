@@ -96,8 +96,37 @@ router.post(
     try {
       const input = documentCreateSchema.parse(req.body);
 
+      if (!input.storagePath || input.fileUrl) {
+        return res.status(400).json({
+          success: false,
+          error: "A server-generated storage path is required",
+        });
+      }
+
+      const expectedPrefix = `${req.user!.id}/${input.type}/`;
+      const relativePath = input.storagePath.startsWith(expectedPrefix)
+        ? input.storagePath.slice(expectedPrefix.length)
+        : "";
+
+      const lastDot = relativePath.lastIndexOf(".");
+      const fileId = lastDot >= 0 ? relativePath.slice(0, lastDot) : relativePath;
+      const extension = lastDot >= 0 ? relativePath.slice(lastDot) : "";
+
+      const validPath =
+        input.storagePath.startsWith(expectedPrefix) &&
+        z.string().uuid().safeParse(fileId).success &&
+        (extension === "" || /^\.[a-z0-9]+$/.test(extension));
+
+      if (!validPath) {
+        return res.status(403).json({
+          success: false,
+          error: "Invalid document storage path",
+        });
+      }
+
       const document = await createDocument({
-        ...input,
+        type: input.type,
+        storagePath: input.storagePath,
         userId: req.user!.id,
       });
 

@@ -113,7 +113,7 @@ export function initializeSocketEvents(io: Server) {
     }
 
     if (event.eventType === "EXPRESS_GENERAL_BOARD_AVAILABLE") {
-      io.emit("express:board-available", event);
+      io.to("express:transporters").emit("express:board-available", event);
     }
   });
 

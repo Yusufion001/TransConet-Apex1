@@ -2,6 +2,10 @@ import { prisma } from "../config/prisma.js";
 import { updateBookingStatus } from "../bookings/booking.service.js";
 import { tripTrackingConfigSchema } from "../admin/admin.validators.js";
 import { publishEvent } from "./event-bus.js";
+import {
+  isValidCoordinates,
+  isValidGpsMetadata,
+} from "./socket-authorization.js";
 
 const DEFAULT_TRIP_TRACKING_CONFIG = {
   driverArrivingDistanceKm: 3,
@@ -74,6 +78,20 @@ export async function recordVehicleLocation(input: {
   heading?: number;
   accuracy?: number;
 }) {
+  if (!isValidCoordinates(input.latitude, input.longitude)) {
+    throw new Error("Invalid vehicle location coordinates");
+  }
+
+  if (
+    !isValidGpsMetadata(
+      input.speed,
+      input.heading,
+      input.accuracy,
+    )
+  ) {
+    throw new Error("Invalid vehicle GPS metadata");
+  }
+
   const result = await prisma.$transaction(async (tx) => {
     const booking = await tx.booking.findUnique({
       where: {

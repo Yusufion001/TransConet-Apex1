@@ -508,6 +508,39 @@ test("updateBookingStatus accepts an assigned booking", async () => {
   );
 });
 
+test("updateBookingStatus revokes tracking token when a booking is cancelled", async () => {
+  prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
+    id: "booking-1",
+    status: "ACCEPTED",
+    transporterId: "transporter-1",
+    vehicleId: "vehicle-1",
+  }));
+
+  let updatedData: Record<string, unknown> | undefined;
+
+  const updatedBooking = makeBooking({
+    status: "CANCELLED",
+    transporterId: "transporter-1",
+    vehicleId: "vehicle-1",
+    trackingShareToken: null,
+  });
+
+  prismaMock.booking.update.mock.mockImplementation(
+    async (args: { data: Record<string, unknown> }) => {
+      updatedData = args.data;
+      return updatedBooking;
+    },
+  );
+
+  const result = await updateBookingStatus(
+    "booking-1",
+    "CANCELLED",
+  );
+
+  assert.equal(result.status, "CANCELLED");
+  assert.equal(updatedData?.trackingShareToken, null);
+});
+
 test("updateBookingStatus rejects an invalid status transition", async () => {
   prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
     id: "booking-1",
@@ -693,8 +726,13 @@ test("confirmDelivery completes delivery and creates a settlement", async () => 
     }),
   );
 
+  let completionUpdateData: Record<string, unknown> | undefined;
+
   prismaMock.booking.updateMany.mock.mockImplementation(
-    async () => ({ count: 1 }),
+    async (args: { data: Record<string, unknown> }) => {
+      completionUpdateData = args.data;
+      return { count: 1 };
+    },
   );
 
   prismaMock.payment.findFirst.mock.mockImplementation(
@@ -743,6 +781,7 @@ test("confirmDelivery completes delivery and creates a settlement", async () => 
     prismaMock.booking.updateMany.mock.calls.length,
     1,
   );
+  assert.equal(completionUpdateData?.trackingShareToken, null);
 
   assert.equal(
     prismaMock.payment.findFirst.mock.calls.length,

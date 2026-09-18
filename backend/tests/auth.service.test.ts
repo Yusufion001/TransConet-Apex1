@@ -3,6 +3,18 @@ import assert from "node:assert/strict";
 import bcrypt from "bcryptjs";
 import { createHash } from "node:crypto";
 
+mock.module(new URL("../src/config/env.js", import.meta.url).href, {
+  namedExports: {
+    env: {
+      JWT_ACCESS_SECRET: "test-access-secret",
+      JWT_REFRESH_SECRET: "test-refresh-secret",
+      TERMII_OTP_TTL_MINUTES: 10,
+      ADMIN_MFA_ENCRYPTION_KEY:
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    },
+  },
+});
+
 const prismaMock = {
   user: {
     findFirst: mock.fn<(...args: any[]) => any>(),
@@ -13,6 +25,17 @@ const prismaMock = {
   },
   adminProfile: {
     update: mock.fn<(...args: any[]) => any>(),
+  },
+  adminMfa: {
+    findUnique: mock.fn<(...args: any[]) => any>(),
+    update: mock.fn<(...args: any[]) => any>(),
+  },
+  adminMfaChallenge: {
+    deleteMany: mock.fn<(...args: any[]) => any>(),
+    create: mock.fn<(...args: any[]) => any>(),
+    findUnique: mock.fn<(...args: any[]) => any>(),
+    update: mock.fn<(...args: any[]) => any>(),
+    updateMany: mock.fn<(...args: any[]) => any>(),
   },
   refreshSession: {
     create: mock.fn<(...args: any[]) => any>(),
@@ -50,6 +73,17 @@ const verifyPhoneOtpMock =
 
 const sendSmsMock =
   mock.fn<(...args: any[]) => any>();
+
+const verifyMfaTotpMock =
+  mock.fn<(...args: any[]) => any>();
+
+mock.module("otplib", {
+  namedExports: {
+    generateSecret: mock.fn(() => "TESTSECRET123456"),
+    generateURI: mock.fn(() => "otpauth://totp/TransConet:test@example.com"),
+    verify: verifyMfaTotpMock,
+  },
+});
 
 mock.module(new URL("../src/services/termii.service.js", import.meta.url).href, {
   namedExports: {
@@ -97,6 +131,7 @@ mock.module(
 const {
   registerUser,
   loginUser,
+  verifyAdministratorMfaLogin,
   forgotPassword,
   resetPassword,
   refreshAccessToken,
@@ -106,6 +141,12 @@ const {
   verifyPhoneVerificationOtp,
 } = await import("../src/services/auth.service.js");
 
+const { encryptAdminMfaSecret } =
+  await import("../src/admin/admin-mfa-crypto.js");
+
+const TEST_ENCRYPTED_MFA_SECRET =
+  encryptAdminMfaSecret("TESTSECRET123456");
+
 function resetMocks() {
   for (const fn of [
     prismaMock.user.findFirst,
@@ -114,6 +155,13 @@ function resetMocks() {
     prismaMock.user.update,
     prismaMock.user.updateMany,
     prismaMock.adminProfile.update,
+    prismaMock.adminMfa.findUnique,
+    prismaMock.adminMfa.update,
+    prismaMock.adminMfaChallenge.deleteMany,
+    prismaMock.adminMfaChallenge.create,
+    prismaMock.adminMfaChallenge.findUnique,
+    prismaMock.adminMfaChallenge.update,
+    prismaMock.adminMfaChallenge.updateMany,
     prismaMock.refreshSession.create,
     prismaMock.refreshSession.findUnique,
     prismaMock.refreshSession.updateMany,
@@ -128,6 +176,7 @@ function resetMocks() {
     sendPhoneOtpMock,
     verifyPhoneOtpMock,
     sendSmsMock,
+    verifyMfaTotpMock,
   ]) {
     fn.mock.resetCalls();
   }
@@ -135,6 +184,47 @@ function resetMocks() {
 
 test.beforeEach(() => {
   resetMocks();
+
+  prismaMock.adminMfa.findUnique.mock.mockImplementation(async () => null);
+
+  prismaMock.adminMfaChallenge.deleteMany.mock.mockImplementation(
+    async () => ({ count: 0 }),
+  );
+
+  prismaMock.adminMfaChallenge.create.mock.mockImplementation(
+    async ({ data }: any) => ({
+      id: "mfa-challenge-1",
+      userId: data.userId,
+      challengeHash: data.challengeHash,
+      expiresAt: data.expiresAt,
+      attempts: data.attempts,
+      maxAttempts: data.maxAttempts,
+    }),
+  );
+
+  prismaMock.adminMfaChallenge.findUnique.mock.mockImplementation(
+    async () => null,
+  );
+
+  prismaMock.adminMfaChallenge.update.mock.mockImplementation(
+    async () => ({
+      id: "mfa-challenge-1",
+    }),
+  );
+
+  prismaMock.adminMfaChallenge.updateMany.mock.mockImplementation(
+    async () => ({
+      count: 1,
+    }),
+  );
+
+  prismaMock.adminMfa.update.mock.mockImplementation(async () => ({
+    userId: "admin-1",
+  }));
+
+  verifyMfaTotpMock.mock.mockImplementation(async () => ({
+    valid: true,
+  }));
 
   prismaMock.refreshSession.create.mock.mockImplementation(async () => ({
     id: "session-1",
@@ -934,6 +1024,118 @@ test("refreshAccessToken detects reuse of a revoked token and revokes its family
   assert.equal(
     prismaMock.refreshSession.create.mock.calls.length,
     0,
+  );
+});
+
+test("loginUser requires MFA before issuing administrator tokens", async () => {
+  const passwordHash =
+    await bcrypt.hash("Password123!", 4);
+
+  prismaMock.user.findFirst.mock.mockImplementation(async () => ({
+    id: "admin-mfa-1",
+    email: "mfa-admin@example.com",
+    phone: null,
+    passwordHash,
+    role: "ADMIN",
+    status: "ACTIVE",
+    customerProfile: null,
+    transporterProfile: null,
+    adminProfile: {
+      status: "ACTIVE",
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+    },
+  }));
+
+  prismaMock.adminMfa.findUnique.mock.mockImplementation(async () => ({
+    enabled: true,
+  }));
+
+  const result = await loginUser(
+    "mfa-admin@example.com",
+    "Password123!",
+  );
+
+  assert.equal(result.requiresMfa, true);
+  assert.equal(typeof result.challengeId, "string");
+  assert.ok(result.expiresAt instanceof Date);
+  assert.equal("accessToken" in result, false);
+  assert.equal("refreshToken" in result, false);
+
+  assert.equal(
+    prismaMock.refreshSession.create.mock.calls.length,
+    0,
+  );
+
+  assert.equal(
+    prismaMock.adminMfaChallenge.create.mock.calls.length,
+    1,
+  );
+});
+
+test("verifyAdministratorMfaLogin issues tokens after valid MFA", async () => {
+  prismaMock.adminMfaChallenge.findUnique.mock.mockImplementation(async () => ({
+    id: "mfa-challenge-1",
+    userId: "admin-mfa-1",
+    challengeHash: "challenge-hash",
+    expiresAt: new Date(Date.now() + 60_000),
+    attempts: 0,
+    maxAttempts: 5,
+    consumedAt: null,
+  }));
+
+  prismaMock.adminMfa.findUnique.mock.mockImplementation(async () => ({
+    enabled: true,
+    secretCiphertext: TEST_ENCRYPTED_MFA_SECRET,
+  }));
+
+  prismaMock.user.findUnique.mock.mockImplementation(async () => ({
+    id: "admin-mfa-1",
+    email: "mfa-admin@example.com",
+    phone: null,
+    passwordHash: null,
+    role: "ADMIN",
+    status: "ACTIVE",
+    customerProfile: null,
+    transporterProfile: null,
+    adminProfile: {
+      status: "ACTIVE",
+      failedLoginAttempts: 3,
+      lockedUntil: null,
+    },
+    profilePhoto: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastLoginAt: null,
+  }));
+
+  verifyMfaTotpMock.mock.mockImplementation(async () => ({
+    valid: true,
+  }));
+
+  const result = await verifyAdministratorMfaLogin(
+    "test-challenge",
+    "123456",
+  );
+
+  assert.equal(result.requiresMfa, false);
+  assert.equal(result.user.id, "admin-mfa-1");
+  assert.equal(typeof result.accessToken, "string");
+  assert.equal(typeof result.refreshToken, "string");
+
+  assert.equal(
+    prismaMock.adminMfaChallenge.updateMany.mock.calls.length,
+    1,
+  );
+
+  assert.equal(
+    prismaMock.adminMfa.update.mock.calls.length,
+    1,
+  );
+
+  assert.equal(
+    prismaMock.refreshSession.create.mock.calls.length,
+    1,
   );
 });
 

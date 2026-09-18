@@ -5,6 +5,11 @@ import {
   getAdministratorSecurity,
   unlockAdministrator,
   setAdministratorTwoFactor,
+  getAdministratorMfaStatus,
+  beginAdministratorMfaEnrollment,
+  verifyAdministratorMfaEnrollment,
+  type AdministratorMfaStatus,
+  type AdministratorMfaEnrollment,
   type SecurityAuditLog,
   type SecurityOverview,
   type SecurityAdministrator,
@@ -65,6 +70,11 @@ export default function SecurityCenter() {
   const [administrators, setAdministrators] = useState<Administrator[]>([]);
   const [selectedAdministrator, setSelectedAdministrator] =
     useState<SecurityAdministrator | null>(null);
+  const [myMfaStatus, setMyMfaStatus] =
+    useState<AdministratorMfaStatus | null>(null);
+  const [myMfaEnrollment, setMyMfaEnrollment] =
+    useState<AdministratorMfaEnrollment | null>(null);
+  const [myMfaCode, setMyMfaCode] = useState("");
 
   const [search, setSearch] = useState("");
   const [actionFilter, setActionFilter] = useState("");
@@ -76,6 +86,8 @@ export default function SecurityCenter() {
   const [administratorsLoading, setAdministratorsLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [mfaLoading, setMfaLoading] = useState(true);
+  const [mfaActionLoading, setMfaActionLoading] = useState(false);
   const [error, setError] = useState("");
 
   async function loadOverview() {
@@ -122,6 +134,79 @@ export default function SecurityCenter() {
       setError("Unable to load administrator security directory.");
     } finally {
       setAdministratorsLoading(false);
+    }
+  }
+
+  async function loadMyMfaStatus() {
+    try {
+      setMfaLoading(true);
+
+      const data = await getAdministratorMfaStatus();
+
+      setMyMfaStatus(data);
+
+      if (!data.enrollmentStarted) {
+        setMyMfaEnrollment(null);
+        setMyMfaCode("");
+      }
+    } catch {
+      setError("Unable to load your MFA security status.");
+    } finally {
+      setMfaLoading(false);
+    }
+  }
+
+  async function startMyMfaEnrollment() {
+    try {
+      setMfaActionLoading(true);
+      setError("");
+
+      const data = await beginAdministratorMfaEnrollment();
+
+      setMyMfaEnrollment(data);
+      setMyMfaCode("");
+      await loadMyMfaStatus();
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to start MFA enrollment.",
+      );
+    } finally {
+      setMfaActionLoading(false);
+    }
+  }
+
+  async function verifyMyMfaEnrollment() {
+    if (!myMfaEnrollment) return;
+
+    const code = myMfaCode.trim();
+
+    if (!/^\d{6}$/.test(code)) {
+      setError("Enter the 6-digit authenticator code.");
+      return;
+    }
+
+    try {
+      setMfaActionLoading(true);
+      setError("");
+
+      await verifyAdministratorMfaEnrollment(code);
+
+      setMyMfaEnrollment(null);
+      setMyMfaCode("");
+      await loadMyMfaStatus();
+      await loadOverview();
+      await loadAdministrators();
+      await loadLogs();
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to verify MFA enrollment.",
+      );
+    } finally {
+      setMfaActionLoading(false);
     }
   }
 
@@ -225,6 +310,7 @@ export default function SecurityCenter() {
   useEffect(() => {
     void loadOverview();
     void loadAdministrators();
+    void loadMyMfaStatus();
   }, []);
 
   useEffect(() => {
@@ -487,6 +573,99 @@ export default function SecurityCenter() {
           </div>
           <b className="security-control-status">Active</b>
         </div>
+      </div>
+
+      <div className="section-title">
+        <h3>My MFA Security</h3>
+        <span>
+          Manage multi-factor authentication for the administrator account currently signed in
+        </span>
+      </div>
+
+      <div className="panel security-directory">
+        {mfaLoading ? (
+          <div className="customer-state">
+            Loading your MFA security status…
+          </div>
+        ) : myMfaStatus?.enabled ? (
+          <div className="security-mfa-panel">
+            <div>
+              <strong>Two-factor authentication is enabled</strong>
+              <p>
+                Your administrator account requires an authenticator code
+                after password verification during sign-in.
+              </p>
+              <small>
+                Last verified: {formatDate(myMfaStatus.lastVerifiedAt)}
+              </small>
+            </div>
+            <b className="security-control-status">Protected</b>
+          </div>
+        ) : myMfaEnrollment ? (
+          <div className="security-mfa-panel">
+            <div>
+              <strong>Complete MFA enrollment</strong>
+              <p>
+                Add this account to your authenticator app, then enter the
+                current 6-digit code to enable MFA.
+              </p>
+
+              <div className="security-mfa-secret">
+                <span>Setup key</span>
+                <code>{myMfaEnrollment.secret}</code>
+              </div>
+
+              <small>
+                Enrollment expires: {formatDate(myMfaEnrollment.expiresAt)}
+              </small>
+
+              <div className="security-mfa-verify">
+                <input
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  value={myMfaCode}
+                  onChange={(event) =>
+                    setMyMfaCode(
+                      event.target.value.replace(/\D/g, "").slice(0, 6),
+                    )
+                  }
+                  placeholder="6-digit code"
+                  aria-label="Authenticator code"
+                />
+                <button
+                  type="button"
+                  className="primary-button"
+                  disabled={mfaActionLoading || myMfaCode.length !== 6}
+                  onClick={() => void verifyMyMfaEnrollment()}
+                >
+                  {mfaActionLoading
+                    ? "Verifying…"
+                    : "Verify & Enable MFA"}
+                </button>
+              </div>
+            </div>
+            <b className="security-control-status">Pending Setup</b>
+          </div>
+        ) : (
+          <div className="security-mfa-panel">
+            <div>
+              <strong>Two-factor authentication is not enabled</strong>
+              <p>
+                Protect this administrator account with a time-based
+                authenticator code in addition to the password.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="primary-button"
+              disabled={mfaActionLoading}
+              onClick={() => void startMyMfaEnrollment()}
+            >
+              {mfaActionLoading ? "Starting…" : "Set Up MFA"}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="section-title">
