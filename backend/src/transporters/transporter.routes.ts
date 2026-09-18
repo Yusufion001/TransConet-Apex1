@@ -111,7 +111,15 @@ router.get("/:id", async (req: AuthenticatedRequest, res) => {
   }
 });
 
-router.patch("/:id/profile", async (req: AuthenticatedRequest, res) => {
+router.patch(
+  "/:id/profile",
+  (req: AuthenticatedRequest, res, next) => {
+    if (req.user?.role === "ADMIN") {
+      return requireAdminModule("TRANSPORTER_MANAGEMENT")(req, res, next);
+    }
+    next();
+  },
+  async (req: AuthenticatedRequest, res) => {
   try {
     const transporterId = String(req.params.id);
 
