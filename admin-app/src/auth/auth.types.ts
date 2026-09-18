@@ -20,12 +20,21 @@ export type AdminUser = {
 };
 
 export type AdminSession = {
+  requiresMfa: false;
   accessToken: string;
   refreshToken?: string;
   user: AdminUser;
 };
 
+export type AdminMfaChallenge = {
+  requiresMfa: true;
+  challengeId: string;
+  expiresAt: string;
+};
+
+export type LoginResult = AdminSession | AdminMfaChallenge;
+
 export type LoginResponse = {
   success: boolean;
-  data: AdminSession;
+  data: LoginResult;
 };

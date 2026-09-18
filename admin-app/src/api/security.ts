@@ -119,3 +119,52 @@ export async function setAdministratorTwoFactor(
 
   return response.data.data;
 }
+
+export type AdministratorMfaStatus = {
+  enabled: boolean;
+  enrollmentStarted: boolean;
+  enrolledAt: string | null;
+  enrollmentExpiresAt: string | null;
+  lastVerifiedAt: string | null;
+};
+
+export type AdministratorMfaEnrollment = {
+  userId: string;
+  secret: string;
+  otpauthUri: string;
+  expiresAt: string;
+};
+
+export async function getAdministratorMfaStatus(): Promise<AdministratorMfaStatus> {
+  const response = await apiClient.get<
+    ApiResponse<AdministratorMfaStatus>
+  >("/auth/mfa/status");
+
+  return response.data.data;
+}
+
+export async function beginAdministratorMfaEnrollment(): Promise<AdministratorMfaEnrollment> {
+  const response = await apiClient.post<
+    ApiResponse<AdministratorMfaEnrollment>
+  >("/auth/mfa/enroll");
+
+  return response.data.data;
+}
+
+export async function verifyAdministratorMfaEnrollment(
+  code: string,
+): Promise<{
+  userId: string;
+  enabled: boolean;
+  enrolledAt: string;
+}> {
+  const response = await apiClient.post<
+    ApiResponse<{
+      userId: string;
+      enabled: boolean;
+      enrolledAt: string;
+    }>
+  >("/auth/mfa/verify-enrollment", { code });
+
+  return response.data.data;
+}

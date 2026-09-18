@@ -31,6 +31,7 @@ const envSchema = z.object({
   TERMII_CHANNEL: z.enum(["generic", "dnd"]).default("generic"),
   TERMII_OTP_TTL_MINUTES: z.coerce.number().int().min(1).max(60).default(10),
   WALLET_ENCRYPTION_KEY: z.string().min(64),
+  ADMIN_MFA_ENCRYPTION_KEY: z.string().min(64),
   WALLET_ACCOUNT_CHANGE_COOLDOWN_HOURS: z.coerce
     .number()
     .int()

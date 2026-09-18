@@ -402,6 +402,8 @@ model User {
   customerProfile    CustomerProfile?
   transporterProfile TransporterProfile?
   adminProfile       AdminProfile?
+  adminMfa           AdminMfa?
+  adminMfaChallenges AdminMfaChallenge[]
   verifications      Verification[]
 
   adminInvitations AdminInvitation[] @relation("AdminInvitationUser")
@@ -526,6 +528,36 @@ model AdminProfile {
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AdminMfa {
+  userId            String   @id
+  secretCiphertext  String
+  enabled           Boolean  @default(false)
+  enrolledAt        DateTime?
+  enrollmentExpiresAt DateTime?
+  lastVerifiedAt    DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AdminMfaChallenge {
+  id             String   @id @default(uuid())
+  userId         String
+  challengeHash  String   @unique
+  expiresAt      DateTime
+  attempts       Int      @default(0)
+  maxAttempts    Int      @default(5)
+  consumedAt     DateTime?
+  createdAt      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+  @@index([consumedAt])
 }
 
 model Vehicle {

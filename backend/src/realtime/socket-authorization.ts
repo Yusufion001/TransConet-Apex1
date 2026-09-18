@@ -91,3 +91,27 @@ export function isValidCoordinates(
     longitude <= 180
   );
 }
+
+export function isValidGpsMetadata(
+  speed: unknown,
+  heading: unknown,
+  accuracy: unknown,
+) {
+  return (
+    (speed === undefined ||
+      (typeof speed === "number" &&
+        Number.isFinite(speed) &&
+        speed >= 0 &&
+        speed <= 100)) &&
+    (heading === undefined ||
+      (typeof heading === "number" &&
+        Number.isFinite(heading) &&
+        heading >= 0 &&
+        heading <= 360)) &&
+    (accuracy === undefined ||
+      (typeof accuracy === "number" &&
+        Number.isFinite(accuracy) &&
+        accuracy >= 0 &&
+        accuracy <= 10_000))
+  );
+}

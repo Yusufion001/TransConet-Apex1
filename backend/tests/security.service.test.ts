@@ -14,6 +14,17 @@ const prismaMock = {
 };
 
 const publishEventMock = mock.fn<(...args: any[]) => any>();
+const beginAdministratorMfaEnrollmentMock =
+  mock.fn<(...args: any[]) => any>();
+const disableAdministratorMfaMock =
+  mock.fn<(...args: any[]) => any>();
+
+mock.module(new URL("../src/admin/admin-mfa.service.js", import.meta.url).href, {
+  namedExports: {
+    beginAdministratorMfaEnrollment: beginAdministratorMfaEnrollmentMock,
+    disableAdministratorMfa: disableAdministratorMfaMock,
+  },
+});
 
 mock.module(new URL("../src/config/prisma.js", import.meta.url).href, {
   namedExports: {
@@ -281,28 +292,38 @@ test("setAdministratorTwoFactor rejects a missing administrator", async () => {
     { message: "Administrator profile not found" },
   );
 
+  assert.equal(
+    beginAdministratorMfaEnrollmentMock.mock.calls.length,
+    0,
+  );
+  assert.equal(
+    disableAdministratorMfaMock.mock.calls.length,
+    0,
+  );
   assert.equal(prismaMock.adminProfile.update.mock.calls.length, 0);
   assert.equal(prismaMock.auditLog.create.mock.calls.length, 0);
   assert.equal(publishEventMock.mock.calls.length, 0);
 });
 
-test("setAdministratorTwoFactor enables 2FA and records the security change", async () => {
+test("setAdministratorTwoFactor starts enrollment without enabling 2FA", async () => {
   const existing = {
     userId: "admin-2",
     twoFactorEnabled: false,
   };
 
-  const updated = {
+  const enrollment = {
     userId: "admin-2",
-    twoFactorEnabled: true,
+    secret: "MUST-NOT-BE-RETURNED",
+    otpauthUri: "otpauth://totp/TransConet:test@example.com",
+    expiresAt: new Date("2026-09-18T13:00:00.000Z"),
   };
 
   prismaMock.adminProfile.findUnique.mock.mockImplementation(
     async () => existing,
   );
 
-  prismaMock.adminProfile.update.mock.mockImplementation(
-    async () => updated,
+  beginAdministratorMfaEnrollmentMock.mock.mockImplementation(
+    async () => enrollment,
   );
 
   const result = await setAdministratorTwoFactor(
@@ -311,67 +332,91 @@ test("setAdministratorTwoFactor enables 2FA and records the security change", as
     "super-admin-1",
   );
 
-  assert.deepEqual(result, updated);
+  assert.equal(result.twoFactorEnabled, false);
+  assert.equal(result.enrollmentStarted, true);
+  assert.equal(result.expiresAt, enrollment.expiresAt);
 
-  assert.deepEqual(
-    prismaMock.adminProfile.update.mock.calls[0]?.arguments[0],
-    {
-      where: { userId: "admin-2" },
-      data: {
-        twoFactorEnabled: true,
-      },
-    },
+  assert.equal(
+    beginAdministratorMfaEnrollmentMock.mock.calls.length,
+    1,
   );
+  assert.deepEqual(
+    beginAdministratorMfaEnrollmentMock.mock.calls[0]?.arguments,
+    ["admin-2"],
+  );
+
+  assert.equal(prismaMock.adminProfile.update.mock.calls.length, 0);
 
   const auditArgs =
     prismaMock.auditLog.create.mock.calls[0]?.arguments[0];
 
   assert.equal(
     auditArgs.data.action,
-    "ADMINISTRATOR_2FA_ENABLED",
+    "ADMINISTRATOR_2FA_ENROLLMENT_STARTED",
   );
-  assert.equal(auditArgs.data.affectedUserId, "admin-2");
-  assert.equal(
-    auditArgs.data.previousValue.twoFactorEnabled,
-    false,
-  );
-  assert.equal(
-    auditArgs.data.newValue.twoFactorEnabled,
-    true,
-  );
+  assert.deepEqual(auditArgs.data.previousValue, {
+    twoFactorEnabled: false,
+  });
+  assert.deepEqual(auditArgs.data.newValue, {
+    twoFactorEnabled: false,
+  });
 
   const eventArgs = publishEventMock.mock.calls[0]?.arguments;
-
   assert.equal(eventArgs[0], "admin");
-  assert.equal(eventArgs[1].eventType, "ADMINISTRATOR_2FA_ENABLED");
-  assert.equal(eventArgs[1].module, "SECURITY_CENTER");
+  assert.equal(
+    eventArgs[1].eventType,
+    "ADMINISTRATOR_2FA_ENROLLMENT_STARTED",
+  );
   assert.equal(eventArgs[1].entityId, "admin-2");
+  assert.equal(eventArgs[1].actorId, "super-admin-1");
+  assert.deepEqual(eventArgs[1].data, {
+    userId: "admin-2",
+    expiresAt: enrollment.expiresAt,
+  });
+
+  assert.equal(
+    result.secret,
+    undefined,
+  );
+  assert.equal(
+    result.otpauthUri,
+    undefined,
+  );
 });
 
-test("setAdministratorTwoFactor disables 2FA and publishes the correct event", async () => {
+test("setAdministratorTwoFactor disables MFA through the MFA service", async () => {
   const existing = {
     userId: "admin-2",
     twoFactorEnabled: true,
   };
 
-  const updated = {
+  const disabled = {
     userId: "admin-2",
-    twoFactorEnabled: false,
+    enabled: false,
   };
 
   prismaMock.adminProfile.findUnique.mock.mockImplementation(
     async () => existing,
   );
 
-  prismaMock.adminProfile.update.mock.mockImplementation(
-    async () => updated,
+  disableAdministratorMfaMock.mock.mockImplementation(
+    async () => disabled,
   );
 
-  await setAdministratorTwoFactor(
+  const result = await setAdministratorTwoFactor(
     "admin-2",
     false,
     "super-admin-1",
   );
+
+  assert.equal(result.twoFactorEnabled, false);
+
+  assert.deepEqual(
+    disableAdministratorMfaMock.mock.calls[0]?.arguments,
+    ["admin-2"],
+  );
+
+  assert.equal(prismaMock.adminProfile.update.mock.calls.length, 0);
 
   const auditArgs =
     prismaMock.auditLog.create.mock.calls[0]?.arguments[0];
@@ -380,10 +425,20 @@ test("setAdministratorTwoFactor disables 2FA and publishes the correct event", a
     auditArgs.data.action,
     "ADMINISTRATOR_2FA_DISABLED",
   );
+  assert.deepEqual(auditArgs.data.previousValue, {
+    twoFactorEnabled: true,
+  });
+  assert.deepEqual(auditArgs.data.newValue, {
+    twoFactorEnabled: false,
+  });
 
   const eventArgs = publishEventMock.mock.calls[0]?.arguments;
-
-  assert.equal(eventArgs[1].eventType, "ADMINISTRATOR_2FA_DISABLED");
-  assert.equal(eventArgs[1].module, "SECURITY_CENTER");
+  assert.equal(eventArgs[0], "admin");
+  assert.equal(
+    eventArgs[1].eventType,
+    "ADMINISTRATOR_2FA_DISABLED",
+  );
+  assert.equal(eventArgs[1].entityId, "admin-2");
+  assert.equal(eventArgs[1].actorId, "super-admin-1");
 });
 

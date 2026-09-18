@@ -422,7 +422,11 @@ export async function updateBookingStatus(
           ? {
               trackingShareToken: randomBytes(32).toString("hex"),
             }
-          : {}),
+          : status === "CANCELLED"
+            ? {
+                trackingShareToken: null,
+              }
+            : {}),
       },
     });
 
@@ -790,6 +794,7 @@ export async function confirmDelivery(
       data: {
         status: "COMPLETED",
         completedAt: new Date(),
+        trackingShareToken: null,
       },
     });
 

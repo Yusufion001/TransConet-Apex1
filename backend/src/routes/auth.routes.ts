@@ -5,6 +5,11 @@ import { z } from "zod";
 import { getUserById } from "../users/user.service.js";
 import { acceptAdminInvitation } from "../admin/admin-invitation.service.js";
 import {
+  beginAdministratorMfaEnrollment,
+  completeAdministratorMfaEnrollment,
+  getAdministratorMfaStatus,
+} from "../admin/admin-mfa.service.js";
+import {
   forgotPassword,
   loginUser,
   logoutUser,
@@ -16,6 +21,7 @@ import {
   sendPhoneVerificationOtp,
   resendPhoneVerificationOtp,
   verifyPhoneVerificationOtp,
+  verifyAdministratorMfaLogin,
 } from "../services/auth.service.js";
 
 const router = Router();
@@ -48,6 +54,22 @@ const passwordResetLimiter = rateLimit({
     return res.status(429).json({
       success: false,
       error: "Too many password reset requests. Please try again later.",
+    });
+  },
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator(req) {
+    return ipKeyGenerator(req.ip ?? "unknown");
+  },
+  handler(_req, res) {
+    return res.status(429).json({
+      success: false,
+      error: "Too many login attempts. Please try again later.",
     });
   },
 });
@@ -174,6 +196,15 @@ const phoneVerificationSchema = z.object({
 const phoneOtpSchema = z.object({
   phoneVerificationToken: z.string().min(1),
   pin: z.string().regex(/^\d{6}$/, "Verification code must be 6 digits"),
+});
+
+const administratorMfaSchema = z.object({
+  challenge: z.string().min(1).max(200),
+  code: z.string().regex(/^\d{6}$/, "MFA code must be 6 digits"),
+});
+
+const administratorMfaEnrollmentSchema = z.object({
+  code: z.string().regex(/^\d{6}$/, "MFA code must be 6 digits"),
 });
 
 router.post("/register", async (req, res) => {
@@ -337,7 +368,126 @@ router.get("/me", authenticate, async (req: AuthenticatedRequest, res) => {
   }
 });
 
-router.post("/login", async (req, res) => {
+router.post(
+  "/mfa/enroll",
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const result = await beginAdministratorMfaEnrollment(req.user!.id);
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "MFA enrollment failed";
+
+      return res.status(403).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
+
+router.get(
+  "/mfa/status",
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const result = await getAdministratorMfaStatus(req.user!.id);
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to retrieve MFA status";
+
+      return res.status(403).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
+
+router.post(
+  "/mfa/verify-enrollment",
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const input = administratorMfaEnrollmentSchema.parse(req.body);
+
+      const result = await completeAdministratorMfaEnrollment(
+        req.user!.id,
+        input.code,
+      );
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : "MFA enrollment verification failed";
+
+      return res.status(400).json({
+        success: false,
+        error: message,
+      });
+    }
+  },
+);
+
+router.post(
+  "/verify-mfa",
+  loginLimiter,
+  async (req, res) => {
+    try {
+      const input = administratorMfaSchema.parse(req.body);
+
+      const result = await verifyAdministratorMfaLogin(
+        input.challenge,
+        input.code,
+      );
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          success: false,
+          error: error.issues,
+        });
+      }
+
+      return res.status(401).json({
+        success: false,
+        error: "Invalid or expired MFA challenge",
+      });
+    }
+  },
+);
+
+router.post("/login", loginLimiter, async (req, res) => {
   try {
     const input = loginSchema.parse(req.body);
 
