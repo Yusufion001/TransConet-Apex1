@@ -15,6 +15,7 @@ import {
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
+import { requireAdminModule } from "../middleware/admin-module.middleware.js";
 import { prisma } from "../config/prisma.js";
 import { supabaseStorageService } from "../storage/supabase-storage.service.js";
 import {
@@ -35,6 +36,34 @@ const customerIdParamsSchema = z.object({
 const transporterIdParamsSchema = z.object({
   transporterId: z.string().uuid(),
 });
+
+function validateUserEvidencePaths(
+  userId: string,
+  bookingId: string,
+  evidence:
+    | {
+        media?: Array<{
+          storagePath: string;
+          type: "IMAGE" | "VIDEO";
+          fileName: string;
+          mimeType: string;
+        }>;
+      }
+    | undefined,
+) {
+  for (const media of evidence?.media ?? []) {
+    const escapedUserId = userId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const escapedBookingId = bookingId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    const pattern = new RegExp(
+      `^${escapedUserId}/DISPUTE_EVIDENCE/${escapedBookingId}/[0-9a-fA-F-]{36}(?:\\.[a-z0-9]+)?$`,
+    );
+
+    if (!pattern.test(media.storagePath)) {
+      throw new Error("Invalid dispute evidence storage path");
+    }
+  }
+}
 
 const transporterDisputeCreateSchema = z.object({
   bookingId: z.string().uuid(),
@@ -137,10 +166,24 @@ router.post("/evidence/upload-url", async (req: AuthenticatedRequest, res) => {
   }
 });
 
-router.post("/", async (req: AuthenticatedRequest, res) => {
+router.post(
+  "/",
+  (req: AuthenticatedRequest, res, next) => {
+    if (req.user?.role === "ADMIN") {
+      return requireAdminModule("DISPUTES")(req, res, next);
+    }
+    return next();
+  },
+  async (req: AuthenticatedRequest, res) => {
   try {
     if (req.user!.role === "TRANSPORTER") {
       const input = transporterDisputeCreateSchema.parse(req.body);
+
+      validateUserEvidencePaths(
+        req.user!.id,
+        input.bookingId,
+        input.evidence,
+      );
 
       const dispute = await createTransporterDispute({
         bookingId: input.bookingId,
@@ -180,6 +223,12 @@ router.post("/", async (req: AuthenticatedRequest, res) => {
             }).optional(),
           }).parse(req.body)
         : disputeCreateSchema.parse(req.body);
+
+    validateUserEvidencePaths(
+      req.user!.id,
+      input.bookingId,
+      input.evidence,
+    );
 
     const dispute = await createDispute({
       ...input,
@@ -321,6 +370,7 @@ router.get(
 router.patch(
   "/:id/status",
   requireAdmin,
+  requireAdminModule("DISPUTES"),
   async (req: AuthenticatedRequest, res) => {
     try {
       const params = disputeIdParamsSchema.parse(req.params);

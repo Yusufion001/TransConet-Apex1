@@ -131,6 +131,9 @@ function resetMocks() {
     role: "TRANSPORTER",
     status: "ACTIVE",
     transporterTier: "TIER_1",
+    transporterProfile: {
+      verificationStatus: "APPROVED",
+    },
   }));
 
   bookingMock.update.mock.mockImplementation(
@@ -261,6 +264,30 @@ test("Express acceptance rejects an inactive transporter", async () => {
     role: "TRANSPORTER",
     status: "SUSPENDED",
     transporterTier: "TIER_1",
+  }));
+
+  await assert.rejects(
+    () =>
+      acceptExpressBooking(
+        "express-1",
+        "transporter-tier1",
+        "vehicle-tier1",
+      ),
+    /not eligible for Express/i,
+  );
+
+  assert.equal(expressBookingMock.updateMany.mock.callCount(), 0);
+});
+
+test("Express acceptance rejects an unapproved transporter", async () => {
+  userMock.findUnique.mock.mockImplementationOnce(async () => ({
+    id: "transporter-tier1",
+    role: "TRANSPORTER",
+    status: "ACTIVE",
+    transporterTier: "TIER_1",
+    transporterProfile: {
+      verificationStatus: "PENDING",
+    },
   }));
 
   await assert.rejects(

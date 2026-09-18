@@ -15,6 +15,7 @@ import {
   authorize,
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
+import { requireAdminModule } from "../middleware/admin-module.middleware.js";
 import {
   createTransporterProfileSchema,
   updateTransporterProfileSchema,
@@ -110,7 +111,15 @@ router.get("/:id", async (req: AuthenticatedRequest, res) => {
   }
 });
 
-router.patch("/:id/profile", async (req: AuthenticatedRequest, res) => {
+router.patch(
+  "/:id/profile",
+  (req: AuthenticatedRequest, res, next) => {
+    if (req.user?.role === "ADMIN") {
+      return requireAdminModule("TRANSPORTER_MANAGEMENT")(req, res, next);
+    }
+    next();
+  },
+  async (req: AuthenticatedRequest, res) => {
   try {
     const transporterId = String(req.params.id);
 
@@ -220,7 +229,7 @@ router.post(
 
 router.patch(
   "/:id/verification",
-  authorize("ADMIN"),
+  requireAdminModule("TRANSPORTER_MANAGEMENT"),
   async (req: AuthenticatedRequest, res) => {
     try {
       const input = updateTransporterVerificationSchema.safeParse(req.body);

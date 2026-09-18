@@ -355,13 +355,19 @@ export async function acceptExpressBooking(
         role: true,
         status: true,
         transporterTier: true,
+        transporterProfile: {
+          select: {
+            verificationStatus: true,
+          },
+        },
       },
     });
 
     if (
       !transporter ||
       transporter.role !== UserRole.TRANSPORTER ||
-      transporter.status !== "ACTIVE"
+      transporter.status !== "ACTIVE" ||
+      transporter.transporterProfile?.verificationStatus !== "APPROVED"
     ) {
       throw new Error("Transporter is not eligible for Express");
     }

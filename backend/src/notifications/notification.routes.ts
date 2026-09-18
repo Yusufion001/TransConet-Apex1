@@ -15,6 +15,7 @@ import {
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
+import { requireAdminModule } from "../middleware/admin-module.middleware.js";
 import { toNotificationDto } from "./notification.dto.js";
 
 const router = Router();
@@ -23,7 +24,7 @@ router.use(authenticate);
 
 router.post(
   "/",
-  authorize("ADMIN"),
+  requireAdminModule("NOTIFICATION_CENTER"),
   async (req: AuthenticatedRequest, res) => {
     try {
       const input = notificationCreateSchema.parse(req.body);
