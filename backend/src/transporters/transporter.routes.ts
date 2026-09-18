@@ -15,6 +15,7 @@ import {
   authorize,
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
+import { requireAdminModule } from "../middleware/admin-module.middleware.js";
 import {
   createTransporterProfileSchema,
   updateTransporterProfileSchema,
@@ -220,7 +221,7 @@ router.post(
 
 router.patch(
   "/:id/verification",
-  authorize("ADMIN"),
+  requireAdminModule("TRANSPORTER_MANAGEMENT"),
   async (req: AuthenticatedRequest, res) => {
     try {
       const input = updateTransporterVerificationSchema.safeParse(req.body);
