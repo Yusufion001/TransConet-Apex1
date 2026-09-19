@@ -340,6 +340,14 @@ export async function changeTransporterVerification(
       data: { verificationStatus },
     });
 
+    if (verificationStatus === "APPROVED") {
+      await tx.wallet.upsert({
+        where: { transporterId },
+        update: {},
+        create: { transporterId },
+      });
+    }
+
     await tx.auditLog.create({
       data: {
         administratorId,
