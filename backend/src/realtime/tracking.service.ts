@@ -118,6 +118,7 @@ export async function recordVehicleLocation(input: {
     }
 
     if (
+      booking.status !== "ASSIGNED" &&
       booking.status !== "ACCEPTED" &&
       booking.status !== "DRIVER_ARRIVING" &&
       booking.status !== "ARRIVED" &&

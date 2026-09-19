@@ -156,10 +156,50 @@ test("recordVehicleLocation rejects a missing booking", async () => {
   assert.equal(publishEventMock.mock.calls.length, 0);
 });
 
-test("recordVehicleLocation rejects a booking that is not in transit", async () => {
+test("recordVehicleLocation accepts an assigned booking", async () => {
+  prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
+    id: "booking-assigned",
+    status: "ASSIGNED",
+    transporterId: "transporter-1",
+    vehicleId: "vehicle-assigned",
+    pickupLatitude: 6.5244,
+    pickupLongitude: 3.3792,
+    vehicle: {
+      id: "vehicle-assigned",
+      transporterId: "transporter-1",
+    },
+  }));
+
+  prismaMock.vehicle.update.mock.mockImplementation(async () => ({
+    id: "vehicle-assigned",
+  }));
+
+  prismaMock.trackingPoint.create.mock.mockImplementation(
+    async ({ data }: any) => ({
+      id: "tracking-assigned",
+      ...data,
+    }),
+  );
+
+  const result = await recordVehicleLocation({
+    transporterId: "transporter-1",
+    bookingId: "booking-assigned",
+    latitude: 6.5245,
+    longitude: 3.3793,
+  });
+
+  assert.equal(result.bookingId, "booking-assigned");
+  assert.equal(result.vehicleId, "vehicle-assigned");
+  assert.equal(result.status, "ASSIGNED");
+  assert.equal(prismaMock.vehicle.update.mock.calls.length, 1);
+  assert.equal(prismaMock.trackingPoint.create.mock.calls.length, 1);
+  assert.equal(publishEventMock.mock.calls.length, 1);
+});
+
+test("recordVehicleLocation rejects a booking that is not in an active trip status", async () => {
   prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
     id: "booking-1",
-    status: "ASSIGNED",
+    status: "REQUESTED",
     transporterId: "transporter-1",
     vehicleId: "vehicle-1",
     vehicle: {
