@@ -1212,8 +1212,8 @@ function LiveOperations() {
                           <div className="tracking-row" key={point.id}>
                             <div>
                               <strong>
-                                {point.latitude.toFixed(5)},{" "}
-                                {point.longitude.toFixed(5)}
+                                {Number(point.latitude).toFixed(5)},{" "}
+                                {Number(point.longitude).toFixed(5)}
                               </strong>
                               <small>
                                 {new Date(
