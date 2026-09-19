@@ -28,6 +28,10 @@ type TransConetMapProps = {
   onPinChange?: (coordinate: MapCoordinate) => void;
   interactive?: boolean;
   animatedMarkerId?: string;
+  animatedMarkerHeading?: number | null;
+  onUserMapInteraction?: () => void;
+  followCoordinate?: MapCoordinate | null;
+  followEnabled?: boolean;
 };
 
 export default function TransConetMap({
@@ -38,16 +42,46 @@ export default function TransConetMap({
   onPinChange,
   interactive = true,
   animatedMarkerId,
+  animatedMarkerHeading,
+  onUserMapInteraction,
+  followCoordinate,
+  followEnabled = false,
 }: TransConetMapProps) {
   const hasRoute = useMemo(
     () => routeCoordinates.length > 1,
     [routeCoordinates],
   );
 
+  const mapRef = useRef<MapView | null>(null);
+
+  useEffect(() => {
+    if (!followEnabled || !followCoordinate) {
+      return;
+    }
+
+    mapRef.current?.animateToRegion(
+      {
+        ...region,
+        latitude: followCoordinate.latitude,
+        longitude: followCoordinate.longitude,
+      },
+      700,
+    );
+  }, [
+    followCoordinate?.latitude,
+    followCoordinate?.longitude,
+    followEnabled,
+    region,
+  ]);
+
   const animatedCoordinate = useRef(
     new AnimatedRegion({
-      latitude: markers.find((marker) => marker.id === animatedMarkerId)?.coordinate.latitude ?? region.latitude,
-      longitude: markers.find((marker) => marker.id === animatedMarkerId)?.coordinate.longitude ?? region.longitude,
+      latitude:
+        markers.find((marker) => marker.id === animatedMarkerId)?.coordinate
+          .latitude ?? region.latitude,
+      longitude:
+        markers.find((marker) => marker.id === animatedMarkerId)?.coordinate
+          .longitude ?? region.longitude,
       latitudeDelta: 0,
       longitudeDelta: 0,
     }),
@@ -73,6 +107,10 @@ export default function TransConetMap({
   }, [animatedCoordinate, animatedMarkerId, markers]);
 
   const handleMapPress = (event: MapPressEvent) => {
+    if (interactive) {
+      onUserMapInteraction?.();
+    }
+
     if (!interactive || !onPinChange) {
       return;
     }
@@ -83,9 +121,11 @@ export default function TransConetMap({
   return (
     <View style={styles.container}>
       <MapView
+        ref={mapRef}
         style={StyleSheet.absoluteFill}
-        region={region}
+        initialRegion={region}
         onPress={handleMapPress}
+        onPanDrag={interactive ? onUserMapInteraction : undefined}
         scrollEnabled={interactive}
         zoomEnabled={interactive}
         rotateEnabled={interactive}
@@ -110,6 +150,12 @@ export default function TransConetMap({
                 coordinate={animatedCoordinate as any}
                 title={marker.title}
                 description={marker.description}
+                rotation={
+                  marker.id === animatedMarkerId &&
+                  animatedMarkerHeading != null
+                    ? animatedMarkerHeading
+                    : 0
+                }
               />
             );
           }
