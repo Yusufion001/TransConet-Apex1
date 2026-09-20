@@ -532,6 +532,15 @@ test("updateBookingStatus revokes tracking token when a booking is cancelled", a
     },
   );
 
+  let expressUpdateArgs: Record<string, any> | undefined;
+
+  prismaMock.expressBooking.updateMany.mock.mockImplementation(
+    async (args: Record<string, any>) => {
+      expressUpdateArgs = args;
+      return { count: 1 };
+    },
+  );
+
   const result = await updateBookingStatus(
     "booking-1",
     "CANCELLED",
@@ -539,6 +548,17 @@ test("updateBookingStatus revokes tracking token when a booking is cancelled", a
 
   assert.equal(result.status, "CANCELLED");
   assert.equal(updatedData?.trackingShareToken, null);
+
+  assert.equal(
+    prismaMock.expressBooking.updateMany.mock.calls.length,
+    1,
+  );
+  assert.equal(expressUpdateArgs?.where?.bookingId, "booking-1");
+  assert.deepEqual(expressUpdateArgs?.where?.status?.notIn, [
+    "COMPLETED",
+    "CANCELLED",
+  ]);
+  assert.equal(expressUpdateArgs?.data?.status, "CANCELLED");
 });
 
 test("updateBookingStatus rejects an invalid status transition", async () => {
