@@ -153,6 +153,38 @@ export async function findExpressDispatchCandidates(
 }
 
 
+export async function retryReadyExpressBookings() {
+  const readyBookings = await prisma.expressBooking.findMany({
+    where: {
+      status: ExpressBookingStatus.READY_FOR_DISPATCH,
+      booking: {
+        paymentStatus: "SUCCESS",
+      },
+    },
+    select: {
+      id: true,
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+  });
+
+  let dispatchedCount = 0;
+
+  for (const expressBooking of readyBookings) {
+    const result = await dispatchExpressBooking(expressBooking.id);
+
+    if (result.dispatched) {
+      dispatchedCount += 1;
+    }
+  }
+
+  return {
+    checkedCount: readyBookings.length,
+    dispatchedCount,
+  };
+}
+
 export async function promoteExpiredExpressBookingsToGeneralBoard() {
   const config = await getPlatformConfigValue("EXPRESS_DISPATCH_CONFIG");
 

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 const expressBookingMock = {
   findUnique: mock.fn<(...args: any[]) => any>(),
+  findMany: mock.fn<(...args: any[]) => any>(),
   updateMany: mock.fn<(...args: any[]) => any>(),
 };
 
@@ -48,12 +49,14 @@ mock.module(
 const {
   findExpressDispatchCandidates,
   dispatchExpressBooking,
+  retryReadyExpressBookings,
   acceptExpressBooking,
 } = await import("../src/express/express-dispatch.service.js");
 
 function resetMocks() {
   for (const fn of [
     expressBookingMock.findUnique,
+    expressBookingMock.findMany,
     expressBookingMock.updateMany,
     vehicleMock.findMany,
     vehicleMock.findUnique,
@@ -164,6 +167,60 @@ function resetMocks() {
 }
 
 test.beforeEach(resetMocks);
+
+test("Express dispatch worker retries paid READY_FOR_DISPATCH bookings", async () => {
+  let dispatchLookupCount = 0;
+
+  expressBookingMock.findMany.mock.mockImplementationOnce(async () => [
+    {
+      id: "express-1",
+    },
+  ]);
+
+  expressBookingMock.findUnique.mock.mockImplementation(async () => {
+    dispatchLookupCount += 1;
+
+    if (dispatchLookupCount === 2) {
+      return {
+        id: "express-1",
+        bookingId: "booking-1",
+        status: "DISPATCHING",
+      };
+    }
+
+    return {
+      id: "express-1",
+      bookingId: "booking-1",
+      status: "READY_FOR_DISPATCH",
+      booking: {
+        pickupLatitude: "6.5244",
+        pickupLongitude: "3.3792",
+        cargoWeight: "500",
+        fare: "25000",
+        paymentStatus: "SUCCESS",
+      },
+    };
+  });
+
+  const result = await retryReadyExpressBookings();
+
+  assert.equal(result.checkedCount, 1);
+  assert.equal(result.dispatchedCount, 1);
+  assert.equal(expressBookingMock.updateMany.mock.callCount(), 1);
+  assert.equal(publishEventMock.mock.callCount(), 3);
+
+  const query =
+    expressBookingMock.findMany.mock.calls[0]?.arguments[0] as any;
+
+  assert.equal(
+    query.where.status,
+    "READY_FOR_DISPATCH",
+  );
+  assert.equal(
+    query.where.booking.paymentStatus,
+    "SUCCESS",
+  );
+});
 
 test("Express dispatch candidates prioritize Tier 1 and exclude insufficient capacity", async () => {
   const candidates = await findExpressDispatchCandidates("express-1");

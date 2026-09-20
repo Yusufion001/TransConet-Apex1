@@ -14,7 +14,10 @@ import transporterRoutes from "./transporters/transporter.routes.js";
 import walletRoutes from "./wallet/wallet.routes.js";
 import bookingRoutes from "./bookings/booking.routes.js";
 import expressRoutes from "./express/express.routes.js";
-import { promoteExpiredExpressBookingsToGeneralBoard } from "./express/express-dispatch.service.js";
+import {
+  promoteExpiredExpressBookingsToGeneralBoard,
+  retryReadyExpressBookings,
+} from "./express/express-dispatch.service.js";
 import publicTrackingRoutes from "./realtime/public-tracking.routes.js";
 import marketplaceRoutes from "./marketplace/marketplace.routes.js";
 import { updateMarketplaceVehicleLocation } from "./marketplace/marketplace-location.service.js";
@@ -593,11 +596,19 @@ void Promise.all([
         `TransConet API running on port ${env.PORT}`,
       );
 
+      void retryReadyExpressBookings().catch((error) => {
+        console.error("Express READY_FOR_DISPATCH retry worker initial run failed", error);
+      });
+
       void promoteExpiredExpressBookingsToGeneralBoard().catch((error) => {
         console.error("Express dispatch worker initial run failed", error);
       });
 
       setInterval(() => {
+        void retryReadyExpressBookings().catch((error) => {
+          console.error("Express READY_FOR_DISPATCH retry worker failed", error);
+        });
+
         void promoteExpiredExpressBookingsToGeneralBoard().catch((error) => {
           console.error("Express dispatch worker failed", error);
         });
