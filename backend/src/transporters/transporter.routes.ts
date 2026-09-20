@@ -54,6 +54,12 @@ router.post("/", authorize("TRANSPORTER"), async (req: AuthenticatedRequest, res
 
 router.get(
   "/:id/onboarding",
+  (req: AuthenticatedRequest, res, next) => {
+    if (req.user?.role === "ADMIN") {
+      return requireAdminModule("TRANSPORTER_MANAGEMENT")(req, res, next);
+    }
+    next();
+  },
   async (req: AuthenticatedRequest, res) => {
     try {
       const transporterId = String(req.params.id);
@@ -83,7 +89,15 @@ router.get(
   },
 );
 
-router.get("/:id", async (req: AuthenticatedRequest, res) => {
+router.get(
+  "/:id",
+  (req: AuthenticatedRequest, res, next) => {
+    if (req.user?.role === "ADMIN") {
+      return requireAdminModule("TRANSPORTER_MANAGEMENT")(req, res, next);
+    }
+    next();
+  },
+  async (req: AuthenticatedRequest, res) => {
   try {
     if (
       req.user!.role !== "ADMIN" &&
@@ -161,7 +175,15 @@ router.patch(
   }
 });
 
-router.get("/:id/vehicles", async (req: AuthenticatedRequest, res) => {
+router.get(
+  "/:id/vehicles",
+  (req: AuthenticatedRequest, res, next) => {
+    if (req.user?.role === "ADMIN") {
+      return requireAdminModule("TRANSPORTER_MANAGEMENT")(req, res, next);
+    }
+    next();
+  },
+  async (req: AuthenticatedRequest, res) => {
   try {
     if (
       req.user!.role !== "ADMIN" &&

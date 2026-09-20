@@ -10,6 +10,7 @@ const vehicleMock = {
   findMany: mock.fn<(...args: any[]) => any>(),
   findUnique: mock.fn<(...args: any[]) => any>(),
   update: mock.fn<(...args: any[]) => any>(),
+  updateMany: mock.fn<(...args: any[]) => any>(),
 };
 
 const userMock = {
@@ -57,6 +58,7 @@ function resetMocks() {
     vehicleMock.findMany,
     vehicleMock.findUnique,
     vehicleMock.update,
+    vehicleMock.updateMany,
     userMock.findUnique,
     bookingMock.update,
     prismaMock.$transaction,
@@ -150,6 +152,10 @@ function resetMocks() {
     }),
   );
 
+  vehicleMock.updateMany.mock.mockImplementation(async () => ({
+    count: 1,
+  }));
+
   prismaMock.$transaction.mock.mockImplementation(
     async (callback: any) => callback(prismaMock),
   );
@@ -167,6 +173,17 @@ test("Express dispatch candidates prioritize Tier 1 and exclude insufficient cap
   assert.equal(candidates[0]?.vehicleId, "vehicle-tier1");
   assert.equal(candidates[1]?.transporterTier, "TIER_2");
   assert.equal(candidates[1]?.vehicleId, "vehicle-tier2");
+});
+
+test("Express dispatch candidate query requires an approved transporter profile", async () => {
+  await findExpressDispatchCandidates("express-1");
+
+  const call = vehicleMock.findMany.mock.calls[0]?.arguments[0] as any;
+
+  assert.deepEqual(
+    call.where.transporter.transporterProfile,
+    { verificationStatus: "APPROVED" },
+  );
 });
 
 test("Express dispatch candidates remain available while dispatching", async () => {
@@ -364,6 +381,41 @@ test("Express acceptance is atomic when another transporter has already accepted
 
   assert.equal(bookingMock.update.mock.callCount(), 0);
   assert.equal(vehicleMock.update.mock.callCount(), 0);
+  assert.equal(vehicleMock.updateMany.mock.callCount(), 0);
+});
+
+test("Express acceptance rejects a vehicle that was reserved concurrently", async () => {
+  expressBookingMock.updateMany.mock.mockImplementationOnce(async () => ({
+    count: 1,
+  }));
+  vehicleMock.updateMany.mock.mockImplementationOnce(async () => ({
+    count: 0,
+  }));
+
+  await assert.rejects(
+    () =>
+      acceptExpressBooking(
+        "express-1",
+        "transporter-tier1",
+        "vehicle-tier1",
+      ),
+    /already been reserved/i,
+  );
+
+  assert.equal(bookingMock.update.mock.callCount(), 1);
+
+  const claimCall =
+    expressBookingMock.updateMany.mock.calls[0]?.arguments[0] as any;
+
+  assert.equal(claimCall.data.status, "ASSIGNED");
+
+  const reservationCall =
+    vehicleMock.updateMany.mock.calls[0]?.arguments[0] as any;
+
+  assert.equal(reservationCall.where.id, "vehicle-tier1");
+  assert.equal(reservationCall.where.transporterId, "transporter-tier1");
+  assert.equal(reservationCall.where.availabilityStatus, "AVAILABLE");
+  assert.equal(reservationCall.where.verificationStatus, "APPROVED");
 });
 
 test("Express acceptance assigns the booking and reserves the vehicle", async () => {
@@ -390,7 +442,8 @@ test("Express acceptance assigns the booking and reserves the vehicle", async ()
   );
 
   assert.equal(bookingMock.update.mock.callCount(), 1);
-  assert.equal(vehicleMock.update.mock.callCount(), 1);
+  assert.equal(vehicleMock.update.mock.callCount(), 0);
+  assert.equal(vehicleMock.updateMany.mock.callCount(), 1);
 
   const bookingUpdate =
     bookingMock.update.mock.calls[0]?.arguments[0] as any;
@@ -399,7 +452,11 @@ test("Express acceptance assigns the booking and reserves the vehicle", async ()
   assert.equal(bookingUpdate.data.vehicleId, "vehicle-tier1");
 
   const vehicleUpdate =
-    vehicleMock.update.mock.calls[0]?.arguments[0] as any;
+    vehicleMock.updateMany.mock.calls[0]?.arguments[0] as any;
 
+  assert.equal(vehicleUpdate.where.id, "vehicle-tier1");
+  assert.equal(vehicleUpdate.where.transporterId, "transporter-tier1");
+  assert.equal(vehicleUpdate.where.availabilityStatus, "AVAILABLE");
+  assert.equal(vehicleUpdate.where.verificationStatus, "APPROVED");
   assert.equal(vehicleUpdate.data.availabilityStatus, "ON_TRIP");
 });

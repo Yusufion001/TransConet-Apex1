@@ -1,3 +1,8 @@
+import {
+  startMarketplaceVehicleLocationTracking,
+  stopMarketplaceVehicleLocationTracking,
+} from "../../../src/realtime/location-publisher";
+
 import { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -193,7 +198,38 @@ export default function TransporterFleet() {
       vehicleId: string;
       availabilityStatus: "AVAILABLE" | "UNAVAILABLE";
     }) => {
-      return updateVehicleAvailability(vehicleId, availabilityStatus);
+      const updatedVehicle = await updateVehicleAvailability(
+        vehicleId,
+        availabilityStatus,
+      );
+
+      if (availabilityStatus === "AVAILABLE") {
+        try {
+          await startMarketplaceVehicleLocationTracking(
+            vehicleId,
+          );
+        } catch (error) {
+          try {
+            await updateVehicleAvailability(
+              vehicleId,
+              "UNAVAILABLE",
+            );
+          } catch (rollbackError) {
+            console.warn(
+              "Failed to roll back vehicle availability after marketplace location failure:",
+              rollbackError,
+            );
+          }
+
+          throw error;
+        }
+      } else {
+        await stopMarketplaceVehicleLocationTracking(
+          vehicleId,
+        );
+      }
+
+      return updatedVehicle;
     },
     onSuccess: () => {
       refreshVehicles();

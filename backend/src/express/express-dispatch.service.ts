@@ -87,6 +87,9 @@ export async function findExpressDispatchCandidates(
       transporter: {
         role: UserRole.TRANSPORTER,
         status: "ACTIVE",
+        transporterProfile: {
+          verificationStatus: "APPROVED",
+        },
       },
     },
     select: {
@@ -435,14 +438,21 @@ export async function acceptExpressBooking(
       },
     });
 
-    await tx.vehicle.update({
+    const reservedVehicle = await tx.vehicle.updateMany({
       where: {
         id: vehicleId,
+        transporterId,
+        availabilityStatus: "AVAILABLE",
+        verificationStatus: "APPROVED",
       },
       data: {
         availabilityStatus: "ON_TRIP",
       },
     });
+
+    if (reservedVehicle.count !== 1) {
+      throw new Error("Vehicle has already been reserved");
+    }
 
     return {
       booking,

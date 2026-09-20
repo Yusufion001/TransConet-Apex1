@@ -254,7 +254,13 @@ export default function TransporterMarketplace() {
             <Pressable
               style={styles.bidButton}
               onPress={() =>
-                router.push(`/(transporter)/marketplace/${load.id}`)
+                router.push({
+                  pathname: "/(transporter)/marketplace/[id]",
+                  params: {
+                    id: load.id,
+                    radiusKm: String(selectedRadiusKm),
+                  },
+                })
               }
             >
               <Text style={styles.bidButtonText}>View Opportunity</Text>

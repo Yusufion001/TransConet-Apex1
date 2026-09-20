@@ -804,8 +804,9 @@ model MarketplaceBid {
   transporterId String
   vehicleId     String
 
-  amount  Decimal @db.Decimal(14, 2)
-  message String?
+  amount   Decimal @db.Decimal(14, 2)
+  radiusKm Float?
+  message  String?
 
   status MarketplaceBidStatus @default(PENDING)
 

@@ -28,6 +28,8 @@ const prismaMock = {
     findUnique: mock.fn<(...args: any[]) => any>(),
   },
 
+  $queryRaw: mock.fn<(...args: any[]) => any>(),
+
   vehicle: {
     findUnique: mock.fn<(...args: any[]) => any>(),
     update: mock.fn<(...args: any[]) => any>(),
@@ -69,6 +71,18 @@ mock.module(new URL("../src/pricing/pricing.service.js", import.meta.url).href, 
   },
 });
 
+const getMarketplaceVisibilityConfigMock =
+  mock.fn<(...args: any[]) => any>();
+
+mock.module(
+  new URL("../src/marketplace/visibility.policy.js", import.meta.url).href,
+  {
+    namedExports: {
+      getMarketplaceVisibilityConfig: getMarketplaceVisibilityConfigMock,
+    },
+  },
+);
+
 const {
   createMarketplaceRequest,
   createMarketplaceBid,
@@ -95,6 +109,7 @@ function resetMocks() {
     prismaMock.marketplaceBid.updateMany,
 
     prismaMock.user.findUnique,
+    prismaMock.$queryRaw,
 
     prismaMock.vehicle.findUnique,
     prismaMock.vehicle.update,
@@ -106,6 +121,7 @@ function resetMocks() {
 
     publishEventMock,
     estimateIndicativeFareMock,
+    getMarketplaceVisibilityConfigMock,
   ]) {
     fn.mock.resetCalls();
   }
@@ -124,6 +140,30 @@ test.beforeEach(() => {
     }),
   );
 
+  getMarketplaceVisibilityConfigMock.mock.mockImplementation(
+    async () => ({
+      geographicScope: "RADIUS",
+      defaultRadiusKm: 30,
+      maxRadiusKm: 50,
+      subscriptionBoosts: {
+        FREE: 5,
+        SILVER: 4,
+        GOLD: 3,
+        PLATINUM: 2,
+        ENTERPRISE: 1,
+      },
+      tierScores: {
+        TIER_1: 1,
+        TIER_2: 2,
+      },
+      requireApprovedTransporter: true,
+      requireApprovedVehicle: true,
+      requireAvailableVehicle: true,
+      requireVehicleLocation: true,
+      locationFreshnessSeconds: 60,
+    }),
+  );
+
   prismaMock.marketplaceBid.findMany.mock.mockImplementation(
     async () => [],
   );
@@ -135,6 +175,14 @@ test.beforeEach(() => {
   prismaMock.marketplaceRequest.findMany.mock.mockImplementation(
     async () => [],
   );
+
+  prismaMock.marketplaceRequest.findFirst.mock.mockImplementation(
+    async () => null,
+  );
+
+  prismaMock.$queryRaw.mock.mockImplementation(
+    async () => [],
+  );
 });
 
 test("marketplace test harness loads successfully", () => {
@@ -142,6 +190,36 @@ test("marketplace test harness loads successfully", () => {
   assert.equal(typeof createMarketplaceBid, "function");
   assert.equal(typeof withdrawMarketplaceBid, "function");
   assert.equal(typeof selectMarketplaceBid, "function");
+});
+
+test("createMarketplaceRequest rejects a second active customer request", async () => {
+  prismaMock.marketplaceRequest.findFirst.mock.mockImplementationOnce(
+    async () => ({
+      id: "existing-request",
+      status: "OPEN",
+    }),
+  );
+
+  await assert.rejects(
+    () =>
+      createMarketplaceRequest({
+        customerId: "customer-1",
+        pickupLocation: "Lagos",
+        destination: "Abuja",
+        pickupLatitude: 6.5244,
+        pickupLongitude: 3.3792,
+        destinationLatitude: 9.0765,
+        destinationLongitude: 7.3986,
+        cargoWeight: 2000,
+        truckCategory: "MEDIUM_TRUCK",
+      }),
+    /active marketplace request/i,
+  );
+
+  assert.equal(
+    prismaMock.marketplaceRequest.create.mock.calls.length,
+    0,
+  );
 });
 
 test("createMarketplaceRequest creates an OPEN marketplace load", async () => {
@@ -250,6 +328,10 @@ test("createMarketplaceBid creates a pending bid for an approved transporter veh
       id: "request-1",
       status: "OPEN",
       truckCategory: "MEDIUM_TRUCK",
+      preferredVehicleYearMin: null,
+      preferredVehicleYearMax: null,
+      pickupLatitude: 6.5244,
+      pickupLongitude: 3.3792,
       scheduledDate: null,
       customerId: "customer-1",
     }),
@@ -272,8 +354,12 @@ test("createMarketplaceBid creates a pending bid for an approved transporter veh
       transporterId: "transporter-1",
       vehicleType: "MEDIUM_TRUCK",
       vehicleClass: "MEDIUM_TRUCK",
+      year: 2024,
       verificationStatus: "APPROVED",
       availabilityStatus: "AVAILABLE",
+      currentLatitude: 6.5244,
+      currentLongitude: 3.3792,
+      marketplaceLocationUpdatedAt: new Date(),
     }),
   );
 
@@ -337,12 +423,16 @@ test("createMarketplaceBid creates a pending bid for an approved transporter veh
   );
 });
 
-test("createMarketplaceBid rejects a duplicate transporter bid", async () => {
+test("createMarketplaceBid rejects a vehicle without marketplace GPS", async () => {
   prismaMock.marketplaceRequest.findUnique.mock.mockImplementation(
     async () => ({
       id: "request-1",
       status: "OPEN",
       truckCategory: "MEDIUM_TRUCK",
+      preferredVehicleYearMin: null,
+      preferredVehicleYearMax: null,
+      pickupLatitude: 6.5244,
+      pickupLongitude: 3.3792,
       scheduledDate: null,
       customerId: "customer-1",
     }),
@@ -365,8 +455,180 @@ test("createMarketplaceBid rejects a duplicate transporter bid", async () => {
       transporterId: "transporter-1",
       vehicleType: "MEDIUM_TRUCK",
       vehicleClass: "MEDIUM_TRUCK",
+      year: 2024,
       verificationStatus: "APPROVED",
       availabilityStatus: "AVAILABLE",
+      currentLatitude: null,
+      currentLongitude: null,
+      marketplaceLocationUpdatedAt: null,
+    }),
+  );
+
+  await assert.rejects(
+    createMarketplaceBid({
+      requestId: "request-1",
+      transporterId: "transporter-1",
+      vehicleId: "vehicle-1",
+      amount: 140000,
+    }),
+    {
+      message: "Vehicle location is required for marketplace bidding",
+    },
+  );
+
+  assert.equal(prismaMock.marketplaceBid.create.mock.calls.length, 0);
+});
+
+test("createMarketplaceBid rejects stale marketplace GPS", async () => {
+  prismaMock.marketplaceRequest.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "request-1",
+      status: "OPEN",
+      truckCategory: "MEDIUM_TRUCK",
+      preferredVehicleYearMin: null,
+      preferredVehicleYearMax: null,
+      pickupLatitude: 6.5244,
+      pickupLongitude: 3.3792,
+      scheduledDate: null,
+      customerId: "customer-1",
+    }),
+  );
+
+  prismaMock.user.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "transporter-1",
+      role: "TRANSPORTER",
+      status: "ACTIVE",
+      transporterProfile: {
+        verificationStatus: "APPROVED",
+      },
+    }),
+  );
+
+  prismaMock.vehicle.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "vehicle-1",
+      transporterId: "transporter-1",
+      vehicleType: "MEDIUM_TRUCK",
+      vehicleClass: "MEDIUM_TRUCK",
+      year: 2024,
+      verificationStatus: "APPROVED",
+      availabilityStatus: "AVAILABLE",
+      currentLatitude: 6.5244,
+      currentLongitude: 3.3792,
+      marketplaceLocationUpdatedAt: new Date(Date.now() - 61_000),
+    }),
+  );
+
+  await assert.rejects(
+    createMarketplaceBid({
+      requestId: "request-1",
+      transporterId: "transporter-1",
+      vehicleId: "vehicle-1",
+      amount: 140000,
+    }),
+    {
+      message: "Vehicle marketplace location is stale",
+    },
+  );
+
+  assert.equal(prismaMock.marketplaceBid.create.mock.calls.length, 0);
+});
+
+test("createMarketplaceBid rejects a vehicle outside the marketplace radius", async () => {
+  prismaMock.marketplaceRequest.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "request-1",
+      status: "OPEN",
+      truckCategory: "MEDIUM_TRUCK",
+      preferredVehicleYearMin: null,
+      preferredVehicleYearMax: null,
+      pickupLatitude: 6.5244,
+      pickupLongitude: 3.3792,
+      scheduledDate: null,
+      customerId: "customer-1",
+    }),
+  );
+
+  prismaMock.user.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "transporter-1",
+      role: "TRANSPORTER",
+      status: "ACTIVE",
+      transporterProfile: {
+        verificationStatus: "APPROVED",
+      },
+    }),
+  );
+
+  prismaMock.vehicle.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "vehicle-1",
+      transporterId: "transporter-1",
+      vehicleType: "MEDIUM_TRUCK",
+      vehicleClass: "MEDIUM_TRUCK",
+      year: 2024,
+      verificationStatus: "APPROVED",
+      availabilityStatus: "AVAILABLE",
+      currentLatitude: 7.5,
+      currentLongitude: 8.0,
+      marketplaceLocationUpdatedAt: new Date(),
+    }),
+  );
+
+  await assert.rejects(
+    createMarketplaceBid({
+      requestId: "request-1",
+      transporterId: "transporter-1",
+      vehicleId: "vehicle-1",
+      amount: 140000,
+    }),
+    {
+      message: "Vehicle is outside the marketplace radius",
+    },
+  );
+
+  assert.equal(prismaMock.marketplaceBid.create.mock.calls.length, 0);
+});
+
+test("createMarketplaceBid rejects a duplicate transporter bid", async () => {
+  prismaMock.marketplaceRequest.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "request-1",
+      status: "OPEN",
+      truckCategory: "MEDIUM_TRUCK",
+      preferredVehicleYearMin: null,
+      preferredVehicleYearMax: null,
+      pickupLatitude: 6.5244,
+      pickupLongitude: 3.3792,
+      scheduledDate: null,
+      customerId: "customer-1",
+    }),
+  );
+
+  prismaMock.user.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "transporter-1",
+      role: "TRANSPORTER",
+      status: "ACTIVE",
+      transporterProfile: {
+        verificationStatus: "APPROVED",
+      },
+    }),
+  );
+
+  prismaMock.vehicle.findUnique.mock.mockImplementation(
+    async () => ({
+      id: "vehicle-1",
+      transporterId: "transporter-1",
+      vehicleType: "MEDIUM_TRUCK",
+      vehicleClass: "MEDIUM_TRUCK",
+      year: 2024,
+      verificationStatus: "APPROVED",
+      availabilityStatus: "AVAILABLE",
+      currentLatitude: 6.5244,
+      currentLongitude: 3.3792,
+      marketplaceLocationUpdatedAt: new Date(),
     }),
   );
 
@@ -562,6 +824,7 @@ test("selectMarketplaceBid selects the bid, reserves the vehicle, rejects compet
     vehicleId: "vehicle-1",
     amount: 140000,
     message: "Ready for this shipment",
+    radiusKm: 30,
     status: "PENDING",
     expiresAt: null,
   };
@@ -583,6 +846,9 @@ test("selectMarketplaceBid selects the bid, reserves the vehicle, rejects compet
     vehicleClass: "MEDIUM_TRUCK",
     verificationStatus: "APPROVED",
     availabilityStatus: "AVAILABLE",
+    currentLatitude: 6.5244,
+    currentLongitude: 3.3792,
+    marketplaceLocationUpdatedAt: new Date(),
   };
 
   const booking = {
@@ -767,6 +1033,7 @@ test("selectMarketplaceBid rejects selection when the vehicle cannot be reserved
       vehicleId: "vehicle-1",
       amount: 140000,
       message: "Ready for this shipment",
+      radiusKm: 30,
       status: "PENDING",
       expiresAt: null,
     }),
@@ -792,6 +1059,9 @@ test("selectMarketplaceBid rejects selection when the vehicle cannot be reserved
       vehicleClass: "MEDIUM_TRUCK",
       verificationStatus: "APPROVED",
       availabilityStatus: "AVAILABLE",
+      currentLatitude: 6.5244,
+      currentLongitude: 3.3792,
+      marketplaceLocationUpdatedAt: new Date(),
     }),
   );
 
@@ -921,6 +1191,7 @@ test(
         vehicleId: "vehicle-1",
         amount: 140000,
         message: null,
+        radiusKm: 30,
         status: "PENDING",
         expiresAt: new Date(Date.now() - 60000),
       }),
@@ -982,6 +1253,7 @@ test(
         vehicleId: "vehicle-1",
         amount: 140000,
         message: null,
+        radiusKm: 30,
         status: "PENDING",
         expiresAt: null,
       }),
@@ -1007,6 +1279,9 @@ test(
         vehicleClass: "MEDIUM_TRUCK",
         verificationStatus: "APPROVED",
         availabilityStatus: "AVAILABLE",
+        currentLatitude: 6.5244,
+        currentLongitude: 3.3792,
+        marketplaceLocationUpdatedAt: new Date(),
       }),
     );
 

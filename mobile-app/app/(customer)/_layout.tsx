@@ -130,6 +130,7 @@ function CustomerDrawerContent(props: any) {
 export default function CustomerLayout() {
   return (
     <Drawer
+      backBehavior="history"
       drawerContent={(props) => <CustomerDrawerContent {...props} />}
       screenOptions={{
         headerShown: false,
