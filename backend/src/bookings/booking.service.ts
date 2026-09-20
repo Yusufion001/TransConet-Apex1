@@ -430,6 +430,20 @@ export async function updateBookingStatus(
       },
     });
 
+    if (status === "CANCELLED") {
+      await tx.expressBooking.updateMany({
+        where: {
+          bookingId: booking.id,
+          status: {
+            notIn: ["COMPLETED", "CANCELLED"],
+          },
+        },
+        data: {
+          status: "CANCELLED",
+        },
+      });
+    }
+
     if (status === "CANCELLED" && booking.vehicleId) {
       await tx.vehicle.update({
         where: { id: booking.vehicleId },
