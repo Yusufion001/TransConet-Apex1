@@ -185,6 +185,7 @@ router.post(
         message.includes("maximum load") ||
         message.includes("required") ||
         message.includes("Invalid idempotency") ||
+        message.includes("active Express request") ||
         message.includes("already been used") ||
         message.includes("not configured") ||
         message.includes("currently unavailable") ||

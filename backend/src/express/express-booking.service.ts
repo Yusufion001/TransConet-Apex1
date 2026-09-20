@@ -236,14 +236,36 @@ export async function createExpressBooking(
       },
     });
   } catch (error) {
-    await prisma.payment.updateMany({
-      where: {
-        id: created.payment.id,
-        status: "PENDING",
-      },
-      data: {
-        status: "FAILED",
-      },
+    await prisma.$transaction(async (tx) => {
+      await tx.payment.updateMany({
+        where: {
+          id: created.payment.id,
+          status: "PENDING",
+        },
+        data: {
+          status: "FAILED",
+        },
+      });
+
+      await tx.booking.update({
+        where: {
+          id: created.booking.id,
+        },
+        data: {
+          status: "CANCELLED",
+          paymentStatus: "FAILED",
+        },
+      });
+
+      await tx.expressBooking.updateMany({
+        where: {
+          id: created.expressBooking.id,
+          status: "AWAITING_PAYMENT",
+        },
+        data: {
+          status: "CANCELLED",
+        },
+      });
     });
 
     throw error;
