@@ -60,6 +60,7 @@ export const createMarketplaceBidSchema = z.object({
   amount: positiveNumber,
   message: z.string().trim().max(1000).optional(),
   expiresAt: z.coerce.date().optional(),
+  radiusKm: positiveNumber.optional(),
 }).strict();
 
 export const withdrawMarketplaceBidSchema = z.object({}).strict();

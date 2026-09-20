@@ -76,6 +76,7 @@ export type MarketplaceBid = {
   amount: number;
   message?: string;
   expiresAt?: string;
+  radiusKm?: number;
 };
 
 export type Vehicle = {

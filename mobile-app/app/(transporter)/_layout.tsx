@@ -241,6 +241,7 @@ export default function TransporterLayout() {
 
   return (
     <Drawer
+      backBehavior="history"
       drawerContent={(props) => <TransporterDrawerContent {...props} />}
       screenOptions={{
         headerShown: true,

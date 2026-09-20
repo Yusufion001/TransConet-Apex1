@@ -30,7 +30,20 @@ function formatDate(value?: string | null) {
 }
 
 export default function MarketplaceOpportunity() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, radiusKm } = useLocalSearchParams<{
+    id: string;
+    radiusKm?: string;
+  }>();
+
+  const parsedRadiusKm =
+    typeof radiusKm === "string" ? Number(radiusKm) : undefined;
+
+  const effectiveRadiusKm =
+    parsedRadiusKm !== undefined &&
+    Number.isFinite(parsedRadiusKm) &&
+    parsedRadiusKm > 0
+      ? parsedRadiusKm
+      : undefined;
   const user = useAuthStore((state) => state.user);
 
   const [amount, setAmount] = useState("");
@@ -44,9 +57,14 @@ export default function MarketplaceOpportunity() {
   });
 
   const query = useQuery({
-    queryKey: ["transporter-marketplace", "detail", id],
+    queryKey: [
+      "transporter-marketplace",
+      "detail",
+      id,
+      effectiveRadiusKm,
+    ],
     queryFn: async () => {
-      const loads = await getMarketplaceLoads();
+      const loads = await getMarketplaceLoads(effectiveRadiusKm);
       return loads.find((load) => load.id === id) ?? null;
     },
     enabled: Boolean(id),
@@ -58,6 +76,7 @@ export default function MarketplaceOpportunity() {
         vehicleId: selectedVehicleId,
         amount: Number(amount),
         message: message.trim() || undefined,
+        radiusKm: effectiveRadiusKm,
       }),
     onSuccess: () => {
       router.back();

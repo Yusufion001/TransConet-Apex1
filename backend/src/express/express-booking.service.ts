@@ -125,6 +125,29 @@ export async function createExpressBooking(
       };
     }
 
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${data.customerId}, 0))`;
+
+    const activeExpressBooking = await tx.expressBooking.findFirst({
+      where: {
+        booking: {
+          customerId: data.customerId,
+        },
+        status: {
+          notIn: ["COMPLETED", "CANCELLED"],
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (activeExpressBooking) {
+      throw new Error(
+        "Customer already has an active Express request",
+      );
+    }
+
     const distanceCharge = quote.distanceCharge;
     const baseCharge = quote.baseCharge;
     const revenueTonCharge = quote.revenueTonCharge;

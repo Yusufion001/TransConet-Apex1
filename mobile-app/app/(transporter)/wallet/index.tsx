@@ -10,7 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { router } from "expo-router";
+import { router, usePathname } from "expo-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createWithdrawalAccount,
@@ -114,6 +114,19 @@ function isAccountUsable(account: WithdrawalAccount) {
 
 export default function TransporterWallet() {
   const user = useAuthStore((state) => state.user);
+  const pathname = usePathname();
+
+  const walletMode =
+    pathname.endsWith("/wallet/earnings")
+      ? "earnings"
+      : pathname.endsWith("/wallet/completed")
+        ? "completed"
+        : pathname.endsWith("/wallet/withdrawals")
+          ? "withdrawals"
+          : "hub";
+
+  const [selectedCompletedJobId, setSelectedCompletedJobId] =
+    useState<string | null>(null);
 
   const [amount, setAmount] = useState("");
   const [selectedAccountId, setSelectedAccountId] =
@@ -498,15 +511,75 @@ export default function TransporterWallet() {
       </Text>
 
       <Text style={styles.title}>
-        Earnings & History
+        {walletMode === "hub" ? "Wallet" : walletMode === "earnings" ? "Wallet & Earnings" : walletMode === "completed" ? "Completed Jobs & Payments" : "Withdrawals"}
       </Text>
 
-      <Text style={styles.subtitle}>
+      {walletMode === "hub" && (
+            <View style={styles.walletHubCard}>
+              <Text style={styles.walletHubTitle}>WALLET</Text>
+              <Text style={styles.walletHubSubtitle}>
+                Choose what you want to manage.
+              </Text>
+
+              <Pressable
+                style={styles.walletNavigationCard}
+                onPress={() =>
+                  router.push("/(transporter)/wallet/earnings" as never)
+                }
+              >
+                <View style={styles.walletNavigationMain}>
+                  <Text style={styles.walletNavigationTitle}>
+                    Wallet & Earnings
+                  </Text>
+                  <Text style={styles.walletNavigationText}>
+                    Balance and released earnings transactions
+                  </Text>
+                </View>
+                <Text style={styles.walletNavigationArrow}>›</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.walletNavigationCard}
+                onPress={() =>
+                  router.push("/(transporter)/wallet/completed" as never)
+                }
+              >
+                <View style={styles.walletNavigationMain}>
+                  <Text style={styles.walletNavigationTitle}>
+                    Completed Jobs & Payments
+                  </Text>
+                  <Text style={styles.walletNavigationText}>
+                    Completed jobs and pending payments
+                  </Text>
+                </View>
+                <Text style={styles.walletNavigationArrow}>›</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.walletNavigationCard}
+                onPress={() =>
+                  router.push("/(transporter)/wallet/withdrawals" as never)
+                }
+              >
+                <View style={styles.walletNavigationMain}>
+                  <Text style={styles.walletNavigationTitle}>
+                    Withdrawals
+                  </Text>
+                  <Text style={styles.walletNavigationText}>
+                    Withdrawal accounts, history and requests
+                  </Text>
+                </View>
+                <Text style={styles.walletNavigationArrow}>›</Text>
+              </Pressable>
+            </View>
+          )}
+
+          <Text style={styles.subtitle}>
         Track released earnings, pending payments,
         completed trips and withdrawals.
       </Text>
 
-      <View style={styles.balanceCard}>
+      <View style={[styles.balanceCard, walletMode !== "earnings" && styles.hiddenSection]}>
         <Text style={styles.balanceLabel}>
           AVAILABLE EARNINGS
         </Text>
@@ -541,7 +614,7 @@ export default function TransporterWallet() {
         />
       </View>
 
-      <View style={styles.card}>
+      <View style={[styles.card, walletMode !== "withdrawals" && styles.hiddenSection]}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionHeaderMain}>
             <Text style={styles.section}>
@@ -693,7 +766,7 @@ export default function TransporterWallet() {
         </View>
       </View>
 
-      {accountMode && (
+      {walletMode === "withdrawals" && accountMode && (
         <View style={styles.card}>
           <View style={styles.securityHeader}>
             <View style={styles.securityIcon}>
@@ -846,7 +919,7 @@ export default function TransporterWallet() {
         </View>
       )}
 
-      <View style={styles.card}>
+      <View style={[styles.card, walletMode !== "earnings" && styles.hiddenSection]}>
         <Text style={styles.section}>
           EARNINGS TRANSACTIONS
         </Text>
@@ -863,7 +936,7 @@ export default function TransporterWallet() {
         )}
       </View>
 
-      <View style={styles.card}>
+      <View style={[styles.card, walletMode !== "completed" && styles.hiddenSection]}>
         <Text style={styles.section}>
           COMPLETED JOBS
         </Text>
@@ -872,12 +945,19 @@ export default function TransporterWallet() {
           <Empty text="No completed trips yet." />
         ) : (
           completedTrips.map((booking) => (
+            <React.Fragment key={booking.id}>
             <Pressable
               key={booking.id}
-              style={styles.tripRow}
+              style={[
+                styles.tripRow,
+                selectedCompletedJobId === booking.id &&
+                  styles.selectedTripRow,
+              ]}
               onPress={() =>
-                router.push(
-                  `/(transporter)/bookings/${booking.id}` as never,
+                setSelectedCompletedJobId(
+                  selectedCompletedJobId === booking.id
+                    ? null
+                    : booking.id,
                 )
               }
             >
@@ -913,12 +993,117 @@ export default function TransporterWallet() {
                   {booking.paymentStatus}
                 </Text>
               </View>
-            </Pressable>
+              </Pressable>
+
+            {selectedCompletedJobId === booking.id && (
+              <View style={styles.completedJobDetailCard}>
+                <Text style={styles.completedJobDetailTitle}>
+                  COMPLETED JOB DETAILS
+                </Text>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Shipment ID</Text>
+                  <Text style={styles.detailValue}>{booking.id}</Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Route</Text>
+                  <Text style={styles.detailValue}>
+                    {booking.pickupLocation} → {booking.destination}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Cargo</Text>
+                  <Text style={styles.detailValue}>
+                    {booking.cargoDescription || "Not specified"}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Cargo category</Text>
+                  <Text style={styles.detailValue}>
+                    {booking.cargoCategory || "Not specified"}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Cargo weight</Text>
+                  <Text style={styles.detailValue}>
+                    {booking.cargoWeight || "Not specified"}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Truck category</Text>
+                  <Text style={styles.detailValue}>
+                    {booking.truckCategory}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Fare</Text>
+                  <Text style={styles.detailValue}>
+                    ₦
+                    {money(
+                      booking.fare ??
+                        booking.estimatedFare ??
+                        "0",
+                    )}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Payment status</Text>
+                  <Text style={styles.detailValue}>
+                    {booking.paymentStatus}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Payment method</Text>
+                  <Text style={styles.detailValue}>
+                    {booking.paymentMethod}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Scheduled</Text>
+                  <Text style={styles.detailValue}>
+                    {booking.scheduledDate
+                      ? formatDate(booking.scheduledDate)
+                      : "Not specified"}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Completed</Text>
+                  <Text style={styles.detailValue}>
+                    {formatDate(
+                      booking.completedAt ??
+                        booking.updatedAt,
+                    )}
+                  </Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>
+                    Proof of delivery
+                  </Text>
+                  <Text style={styles.detailValue}>
+                    {booking.proofOfDelivery
+                      ? "Available"
+                      : "Not available"}
+                  </Text>
+                </View>
+              </View>
+            )}
+            </React.Fragment>
           ))
         )}
       </View>
 
-      <View style={styles.card}>
+      <View style={[styles.card, walletMode !== "completed" && styles.hiddenSection]}>
         <Text style={styles.section}>
           PENDING PAYMENTS
         </Text>
@@ -935,7 +1120,7 @@ export default function TransporterWallet() {
         )}
       </View>
 
-      <View style={styles.card}>
+      <View style={[styles.card, walletMode !== "withdrawals" && styles.hiddenSection]}>
         <Text style={styles.section}>
           WITHDRAWAL HISTORY
         </Text>
@@ -976,7 +1161,7 @@ export default function TransporterWallet() {
         )}
       </View>
 
-      <View style={styles.card}>
+      <View style={[styles.card, walletMode !== "withdrawals" && styles.hiddenSection]}>
         <Text style={styles.section}>
           REQUEST WITHDRAWAL
         </Text>
@@ -1209,6 +1394,97 @@ function Empty({ text }: { text: string }) {
 }
 
 const styles = StyleSheet.create({
+  hiddenSection: {
+    display: "none",
+  },
+
+  walletHubCard: {
+    marginBottom: 16,
+  },
+
+  walletHubTitle: {
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    marginBottom: 4,
+  },
+
+  walletHubSubtitle: {
+    fontSize: 13,
+    marginBottom: 12,
+  },
+
+  walletNavigationCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 10,
+  },
+
+  walletNavigationMain: {
+    flex: 1,
+    paddingRight: 12,
+  },
+
+  walletNavigationTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    marginBottom: 4,
+  },
+
+  walletNavigationText: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+
+  walletNavigationArrow: {
+    fontSize: 28,
+    fontWeight: "400",
+  },
+
+  selectedTripRow: {
+    borderWidth: 2,
+  },
+
+  completedJobDetailCard: {
+    marginTop: -4,
+    marginBottom: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderRadius: 12,
+  },
+
+  completedJobDetailTitle: {
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 0.7,
+    marginBottom: 10,
+  },
+
+  detailRow: {
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
+  detailLabel: {
+    flex: 0.9,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
+  detailValue: {
+    flex: 1.4,
+    fontSize: 12,
+    textAlign: "right",
+  },
+
+
   container: {
     flexGrow: 1,
     padding: 20,

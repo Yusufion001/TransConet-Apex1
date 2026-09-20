@@ -2,6 +2,13 @@ import { prisma } from "../config/prisma.js";
 import { publishEvent } from "../realtime/event-bus.js";
 import { estimateIndicativeFare } from "../pricing/pricing.service.js";
 import { calculateCommission } from "../settlements/commission.service.js";
+import {
+  hasValidMarketplaceCoordinates,
+  isMarketplaceVehicleCompatible,
+  isMarketplaceVehicleLocationFresh,
+  marketplaceDistanceKm,
+} from "./marketplace.compatibility.js";
+import { getMarketplaceVisibilityConfig } from "./visibility.policy.js";
 
 
 async function expireMarketplaceLifecycle() {
@@ -161,25 +168,48 @@ export async function createMarketplaceRequest(data: {
     destinationLongitude: data.destinationLongitude,
   });
 
-  const request = await prisma.marketplaceRequest.create({
-    data: {
-      customerId: data.customerId,
-      pickupLocation: data.pickupLocation,
-      destination: data.destination,
-      pickupLatitude: data.pickupLatitude,
-      pickupLongitude: data.pickupLongitude,
-      destinationLatitude: data.destinationLatitude,
-      destinationLongitude: data.destinationLongitude,
-      cargoDescription: data.cargoDescription,
-      truckCategory: data.truckCategory,
-      preferredVehicleYearMin: data.preferredVehicleYearMin,
-      preferredVehicleYearMax: data.preferredVehicleYearMax,
-      cargoCategory: data.cargoCategory,
-      cargoWeight: data.cargoWeight,
-      scheduledDate: data.scheduledDate,
-      estimatedFare: pricing.estimatedFare,
-      status: "OPEN",
-    },
+  const request = await prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${data.customerId}, 0))`;
+
+    const activeRequest = await tx.marketplaceRequest.findFirst({
+      where: {
+        customerId: data.customerId,
+        status: {
+          in: ["OPEN", "BIDDING_CLOSED"],
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (activeRequest) {
+      throw new Error(
+        "Customer already has an active marketplace request",
+      );
+    }
+
+    return tx.marketplaceRequest.create({
+      data: {
+        customerId: data.customerId,
+        pickupLocation: data.pickupLocation,
+        destination: data.destination,
+        pickupLatitude: data.pickupLatitude,
+        pickupLongitude: data.pickupLongitude,
+        destinationLatitude: data.destinationLatitude,
+        destinationLongitude: data.destinationLongitude,
+        cargoDescription: data.cargoDescription,
+        truckCategory: data.truckCategory,
+        preferredVehicleYearMin: data.preferredVehicleYearMin,
+        preferredVehicleYearMax: data.preferredVehicleYearMax,
+        cargoCategory: data.cargoCategory,
+        cargoWeight: data.cargoWeight,
+        scheduledDate: data.scheduledDate,
+        estimatedFare: pricing.estimatedFare,
+        status: "OPEN",
+      },
+    });
   });
 
   publishEvent("marketplace", {
@@ -445,6 +475,7 @@ export async function createMarketplaceBid(data: {
   amount: number;
   message?: string;
   expiresAt?: Date;
+  radiusKm?: number;
 }) {
   await expireMarketplaceLifecycle();
 
@@ -458,6 +489,8 @@ export async function createMarketplaceBid(data: {
       preferredVehicleYearMax: true,
       scheduledDate: true,
       customerId: true,
+      pickupLatitude: true,
+      pickupLongitude: true,
     },
   });
 
@@ -512,6 +545,9 @@ export async function createMarketplaceBid(data: {
       year: true,
       verificationStatus: true,
       availabilityStatus: true,
+      currentLatitude: true,
+      currentLongitude: true,
+      marketplaceLocationUpdatedAt: true,
     },
   });
 
@@ -532,34 +568,136 @@ export async function createMarketplaceBid(data: {
   }
 
   if (
-    request.truckCategory &&
-    vehicle.vehicleClass !== request.truckCategory
+    !isMarketplaceVehicleCompatible(
+      {
+        vehicleClass: vehicle.vehicleClass,
+        year: vehicle.year,
+      },
+      {
+        truckCategory: request.truckCategory,
+        preferredVehicleYearMin: request.preferredVehicleYearMin,
+        preferredVehicleYearMax: request.preferredVehicleYearMax,
+      },
+    )
   ) {
-    throw new Error("Vehicle does not match requested truck category");
+    if (
+      request.truckCategory &&
+      vehicle.vehicleClass !== request.truckCategory
+    ) {
+      throw new Error("Vehicle does not match requested truck category");
+    }
+
+    throw new Error(
+      "Vehicle does not match requested vehicle year requirements",
+    );
   }
 
+  const visibilityPolicy =
+    await getMarketplaceVisibilityConfig();
+
+  const effectiveRadiusKm =
+    visibilityPolicy.geographicScope === "RADIUS"
+      ? data.radiusKm ?? visibilityPolicy.defaultRadiusKm
+      : null;
+
   if (
-    request.preferredVehicleYearMin !== null ||
-    request.preferredVehicleYearMax !== null
+    visibilityPolicy.geographicScope === "RADIUS" &&
+    (effectiveRadiusKm === null ||
+      !Number.isFinite(effectiveRadiusKm) ||
+      effectiveRadiusKm <= 0 ||
+      effectiveRadiusKm > visibilityPolicy.maxRadiusKm)
   ) {
-    if (vehicle.year === null) {
+    throw new Error(
+      "Marketplace radius exceeds the configured maximum",
+    );
+  }
+
+  if (visibilityPolicy.requireVehicleLocation) {
+    if (
+      !hasValidMarketplaceCoordinates(
+        vehicle.currentLatitude,
+        vehicle.currentLongitude,
+      )
+    ) {
       throw new Error(
-        "Vehicle year is required for this marketplace request",
+        "Vehicle location is required for marketplace bidding",
       );
     }
 
     if (
-      request.preferredVehicleYearMin !== null &&
-      vehicle.year < request.preferredVehicleYearMin
+      !isMarketplaceVehicleLocationFresh(
+        {
+          currentLatitude:
+            vehicle.currentLatitude === null
+              ? null
+              : Number(vehicle.currentLatitude),
+          currentLongitude:
+            vehicle.currentLongitude === null
+              ? null
+              : Number(vehicle.currentLongitude),
+          marketplaceLocationUpdatedAt:
+            vehicle.marketplaceLocationUpdatedAt,
+        },
+        visibilityPolicy.locationFreshnessSeconds,
+      )
     ) {
-      throw new Error("Vehicle year is below the customer's preferred range");
+      throw new Error(
+        "Vehicle marketplace location is stale",
+      );
+    }
+  }
+
+  if (
+    visibilityPolicy.geographicScope === "RADIUS"
+  ) {
+    const radiusKm = effectiveRadiusKm;
+
+    if (
+      radiusKm === null ||
+      !Number.isFinite(radiusKm) ||
+      radiusKm <= 0 ||
+      radiusKm > visibilityPolicy.maxRadiusKm
+    ) {
+      throw new Error(
+        "Marketplace radius exceeds the configured maximum",
+      );
+    }
+    if (
+      !hasValidMarketplaceCoordinates(
+        request.pickupLatitude,
+        request.pickupLongitude,
+      )
+    ) {
+      throw new Error(
+        "Marketplace request pickup location is invalid",
+      );
     }
 
     if (
-      request.preferredVehicleYearMax !== null &&
-      vehicle.year > request.preferredVehicleYearMax
+      !hasValidMarketplaceCoordinates(
+        vehicle.currentLatitude,
+        vehicle.currentLongitude,
+      )
     ) {
-      throw new Error("Vehicle year is above the customer's preferred range");
+      throw new Error(
+        "Vehicle location is required for marketplace bidding",
+      );
+    }
+
+    const distanceKm = marketplaceDistanceKm(
+      Number(request.pickupLatitude),
+      Number(request.pickupLongitude),
+      Number(vehicle.currentLatitude),
+      Number(vehicle.currentLongitude),
+    );
+
+    if (
+      !Number.isFinite(distanceKm) ||
+      distanceKm > radiusKm
+    ) {
+      throw new Error(
+        "Vehicle is outside the marketplace radius",
+      );
     }
   }
 
@@ -574,6 +712,7 @@ export async function createMarketplaceBid(data: {
         transporterId: data.transporterId,
         vehicleId: data.vehicleId,
         amount: data.amount,
+        radiusKm: effectiveRadiusKm,
         message: data.message,
         expiresAt: data.expiresAt,
         status: "PENDING",
@@ -726,6 +865,7 @@ export async function selectMarketplaceBid(
         transporterId: true,
         vehicleId: true,
         amount: true,
+        radiusKm: true,
         message: true,
         status: true,
         expiresAt: true,
@@ -798,6 +938,9 @@ export async function selectMarketplaceBid(
         year: true,
         verificationStatus: true,
         availabilityStatus: true,
+        currentLatitude: true,
+        currentLongitude: true,
+        marketplaceLocationUpdatedAt: true,
       },
     });
 
@@ -852,6 +995,87 @@ export async function selectMarketplaceBid(
           );
         }
       }
+    const selectionVisibilityPolicy =
+      await getMarketplaceVisibilityConfig();
+
+    if (selectionVisibilityPolicy.requireVehicleLocation) {
+      if (
+        !hasValidMarketplaceCoordinates(
+          vehicle.currentLatitude,
+          vehicle.currentLongitude,
+        )
+      ) {
+        throw new Error(
+          "Selected vehicle location is required for marketplace selection",
+        );
+      }
+
+      if (
+        !isMarketplaceVehicleLocationFresh(
+          {
+            currentLatitude:
+              vehicle.currentLatitude === null
+                ? null
+                : Number(vehicle.currentLatitude),
+            currentLongitude:
+              vehicle.currentLongitude === null
+                ? null
+                : Number(vehicle.currentLongitude),
+            marketplaceLocationUpdatedAt:
+              vehicle.marketplaceLocationUpdatedAt,
+          },
+          selectionVisibilityPolicy.locationFreshnessSeconds,
+        )
+      ) {
+        throw new Error(
+          "Selected vehicle marketplace location is stale",
+        );
+      }
+    }
+
+    if (selectionVisibilityPolicy.geographicScope === "RADIUS") {
+      if (
+        !hasValidMarketplaceCoordinates(
+          request.pickupLatitude,
+          request.pickupLongitude,
+        )
+      ) {
+        throw new Error(
+          "Marketplace request pickup location is invalid",
+        );
+      }
+
+      const selectionRadiusKm =
+        bid.radiusKm ??
+        selectionVisibilityPolicy.defaultRadiusKm;
+
+      if (
+        !Number.isFinite(selectionRadiusKm) ||
+        selectionRadiusKm <= 0 ||
+        selectionRadiusKm > selectionVisibilityPolicy.maxRadiusKm
+      ) {
+        throw new Error(
+          "Marketplace radius exceeds the configured maximum",
+        );
+      }
+
+      const distanceKm = marketplaceDistanceKm(
+        Number(request.pickupLatitude),
+        Number(request.pickupLongitude),
+        Number(vehicle.currentLatitude),
+        Number(vehicle.currentLongitude),
+      );
+
+      if (
+        !Number.isFinite(distanceKm) ||
+        distanceKm > selectionRadiusKm
+      ) {
+        throw new Error(
+          "Selected vehicle is outside the marketplace radius",
+        );
+      }
+    }
+
     /*
      * Claim the marketplace request first.
      *
