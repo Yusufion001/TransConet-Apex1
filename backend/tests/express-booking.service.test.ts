@@ -10,6 +10,8 @@ const bookingCreateMock = mock.fn<(...args: any[]) => any>();
 const expressBookingCreateMock = mock.fn<(...args: any[]) => any>();
 const paymentCreateMock = mock.fn<(...args: any[]) => any>();
 const paymentUpdateManyMock = mock.fn<(...args: any[]) => any>();
+const bookingUpdateMock = mock.fn<(...args: any[]) => any>();
+const expressBookingUpdateManyMock = mock.fn<(...args: any[]) => any>();
 const transactionMock = mock.fn<(...args: any[]) => any>();
 
 const prismaMock = {
@@ -98,6 +100,8 @@ function resetMocks() {
     expressBookingCreateMock,
     paymentCreateMock,
     paymentUpdateManyMock,
+    bookingUpdateMock,
+    expressBookingUpdateManyMock,
     transactionMock,
     calculateExpressFareMock,
     initializePaystackPaymentMock,
@@ -143,13 +147,16 @@ function resetMocks() {
         findFirst: paymentFindFirstMock,
         create: paymentCreateMock,
         update: paymentUpdateMock,
+        updateMany: paymentUpdateManyMock,
       },
       booking: {
         create: bookingCreateMock,
+        update: bookingUpdateMock,
       },
       expressBooking: {
         findFirst: expressBookingFindFirstMock,
         create: expressBookingCreateMock,
+        updateMany: expressBookingUpdateManyMock,
       },
       $queryRaw: queryRawMock,
     }),
@@ -222,6 +229,45 @@ test("createExpressBooking allows a customer with only completed or cancelled Ex
   assert.equal(bookingCreateMock.mock.calls.length, 1);
   assert.equal(expressBookingCreateMock.mock.calls.length, 1);
   assert.equal(paymentCreateMock.mock.calls.length, 1);
+});
+
+test("createExpressBooking cleans up records when Paystack initialization fails", async () => {
+  initializePaystackPaymentMock.mock.mockImplementationOnce(
+    async () => {
+      throw new Error("Paystack initialization failed");
+    },
+  );
+
+  await assert.rejects(
+    () =>
+      createExpressBooking(
+        input,
+        "failed-paystack-idempotency-key",
+      ),
+    /Paystack initialization failed/,
+  );
+
+  assert.equal(paymentUpdateManyMock.mock.calls.length, 1);
+  assert.equal(bookingUpdateMock.mock.calls.length, 1);
+  assert.equal(expressBookingUpdateManyMock.mock.calls.length, 1);
+
+  assert.deepEqual(bookingUpdateMock.mock.calls[0].arguments[0], {
+    where: { id: "booking-1" },
+    data: {
+      status: "CANCELLED",
+      paymentStatus: "FAILED",
+    },
+  });
+
+  assert.deepEqual(expressBookingUpdateManyMock.mock.calls[0].arguments[0], {
+    where: {
+      id: "express-1",
+      status: "AWAITING_PAYMENT",
+    },
+    data: {
+      status: "CANCELLED",
+    },
+  });
 });
 
 test("createExpressBooking preserves idempotent replay before active-request enforcement", async () => {
