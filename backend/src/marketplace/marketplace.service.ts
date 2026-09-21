@@ -169,7 +169,7 @@ export async function createMarketplaceRequest(data: {
   });
 
   const request = await prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${data.customerId}, 0))`;
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${data.customerId}, 0)) IS NULL AS locked`;
 
     const activeRequest = await tx.marketplaceRequest.findFirst({
       where: {
