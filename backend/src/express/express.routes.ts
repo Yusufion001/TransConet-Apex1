@@ -208,6 +208,8 @@ router.post(
         });
       }
 
+      console.error("Express booking creation failed", error);
+
       return res.status(500).json({
         success: false,
         message: "Unable to create Express booking",
