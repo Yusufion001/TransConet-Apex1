@@ -6,13 +6,8 @@ import {
   Text,
   View,
 } from "react-native";
-import TransConetMap, {
-  type MapCoordinate,
-} from "../maps/TransConetMap";
-import {
-  calculateRoute,
-  type RouteResult,
-} from "../../api/routing";
+import TransConetMap, { type MapCoordinate } from "../maps/TransConetMap";
+import { calculateRoute, type RouteResult } from "../../api/routing";
 
 type LiveLocation = {
   latitude: number;
@@ -54,9 +49,7 @@ function formatDuration(seconds: number) {
   const hours = Math.floor(minutes / 60);
   const remainder = minutes % 60;
 
-  return remainder
-    ? `${hours} hr ${remainder} min`
-    : `${hours} hr`;
+  return remainder ? `${hours} hr ${remainder} min` : `${hours} hr`;
 }
 
 function formatUpdatedAt(value?: string | null) {
@@ -84,33 +77,102 @@ export default function CustomerLiveTracking({
   const [routeLoading, setRouteLoading] = useState(false);
   const [routeError, setRouteError] = useState<string | null>(null);
   const [followingVehicle, setFollowingVehicle] = useState(true);
+  const [acceptedVehicleLocation, setAcceptedVehicleLocation] =
+    useState<LiveLocation | null>(null);
   const lastRouteRequestAt = useRef(0);
+  const lastRouteCoordinate = useRef<MapCoordinate | null>(null);
+  const lastRecordedAtMs = useRef(0);
+
+  useEffect(() => {
+    if (!vehicleLocation) {
+      return;
+    }
+
+    const latitude = Number(vehicleLocation.latitude);
+    const longitude = Number(vehicleLocation.longitude);
+
+    if (
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      return;
+    }
+
+    const hasRecordedAt = Boolean(vehicleLocation.recordedAt);
+    const recordedAtMs = hasRecordedAt
+      ? Date.parse(vehicleLocation.recordedAt as string)
+      : 0;
+
+    // Reject malformed timestamps when the backend supplied one.
+    if (hasRecordedAt && !Number.isFinite(recordedAtMs)) {
+      return;
+    }
+
+    // A transporter location should not arrive materially in the future.
+    if (hasRecordedAt && recordedAtMs > Date.now() + 30_000) {
+      return;
+    }
+
+    // Realtime delivery can arrive out of order. Never move the customer
+    // marker backwards in time.
+    if (
+      hasRecordedAt &&
+      lastRecordedAtMs.current > 0 &&
+      recordedAtMs < lastRecordedAtMs.current
+    ) {
+      return;
+    }
+
+    if (hasRecordedAt) {
+      lastRecordedAtMs.current = recordedAtMs;
+    }
+
+    setAcceptedVehicleLocation({
+      ...vehicleLocation,
+      latitude,
+      longitude,
+      recordedAt: vehicleLocation.recordedAt ?? new Date().toISOString(),
+    });
+  }, [vehicleLocation]);
+
+  useEffect(() => {
+    if (!enabled) {
+      setFollowingVehicle(true);
+      setAcceptedVehicleLocation(null);
+      lastRecordedAtMs.current = 0;
+      lastRouteCoordinate.current = null;
+    }
+  }, [enabled]);
 
   const vehicleCoordinate = useMemo<MapCoordinate | null>(() => {
-    if (!vehicleLocation) return null;
+    if (!acceptedVehicleLocation) return null;
 
     return {
-      latitude: Number(vehicleLocation.latitude),
-      longitude: Number(vehicleLocation.longitude),
+      latitude: acceptedVehicleLocation.latitude,
+      longitude: acceptedVehicleLocation.longitude,
     };
-  }, [vehicleLocation]);
+  }, [acceptedVehicleLocation]);
 
   const mapRegion = useMemo(
     () => ({
       latitude:
         followingVehicle && vehicleCoordinate
           ? vehicleCoordinate.latitude
-          : pickup?.latitude ??
+          : (pickup?.latitude ??
             destination?.latitude ??
             vehicleCoordinate?.latitude ??
-            6.5244,
+            6.5244),
       longitude:
         followingVehicle && vehicleCoordinate
           ? vehicleCoordinate.longitude
-          : pickup?.longitude ??
+          : (pickup?.longitude ??
             destination?.longitude ??
             vehicleCoordinate?.longitude ??
-            3.3792,
+            3.3792),
       latitudeDelta: 0.06,
       longitudeDelta: 0.06,
     }),
@@ -132,11 +194,22 @@ export default function CustomerLiveTracking({
     const elapsed = now - lastRouteRequestAt.current;
     const throttleMs = 15000;
 
+    const previous = lastRouteCoordinate.current;
+    const movedMeaningfully =
+      !previous ||
+      Math.abs(routeOrigin.latitude - previous.latitude) > 0.0007 ||
+      Math.abs(routeOrigin.longitude - previous.longitude) > 0.0007;
+
+    if (previous && !movedMeaningfully) {
+      return;
+    }
+
     if (elapsed < throttleMs) {
       return;
     }
 
     lastRouteRequestAt.current = now;
+    lastRouteCoordinate.current = routeOrigin;
     setRouteLoading(true);
     setRouteError(null);
 
@@ -204,9 +277,9 @@ export default function CustomerLiveTracking({
           <Text style={styles.status}>{status.replaceAll("_", " ")}</Text>
         </View>
 
-        {vehicleLocation ? (
+        {acceptedVehicleLocation ? (
           <Text style={styles.updated}>
-            {formatUpdatedAt(vehicleLocation.recordedAt)}
+            {formatUpdatedAt(acceptedVehicleLocation.recordedAt)}
           </Text>
         ) : null}
       </View>
@@ -216,11 +289,10 @@ export default function CustomerLiveTracking({
           region={mapRegion}
           markers={markers}
           routeCoordinates={route?.coordinates}
-          animatedMarkerId={
-            vehicleCoordinate ? "tracking-vehicle" : undefined
-          }
-          animatedMarkerHeading={vehicleLocation?.heading}
+          animatedMarkerId={vehicleCoordinate ? "tracking-vehicle" : undefined}
+          animatedMarkerHeading={acceptedVehicleLocation?.heading}
           onUserMapInteraction={() => setFollowingVehicle(false)}
+          onMapGestureStart={() => setFollowingVehicle(false)}
           followCoordinate={vehicleCoordinate}
           followEnabled={followingVehicle}
           interactive
@@ -267,20 +339,21 @@ export default function CustomerLiveTracking({
         <View style={styles.metric}>
           <Text style={styles.metricLabel}>GPS</Text>
           <Text style={styles.metricValue}>
-            {vehicleLocation ? "CONNECTED" : "WAITING"}
+            {acceptedVehicleLocation ? "CONNECTED" : "WAITING"}
           </Text>
         </View>
       </View>
 
-      {vehicleLocation?.speed != null ? (
+      {acceptedVehicleLocation?.speed != null ? (
         <View style={styles.vehicleRow}>
           <Text style={styles.vehicleText}>
-            Current speed: {Number(vehicleLocation.speed).toFixed(0)}
+            Current speed: {Number(acceptedVehicleLocation.speed).toFixed(0)}
           </Text>
 
-          {vehicleLocation.accuracy != null ? (
+          {acceptedVehicleLocation.accuracy != null ? (
             <Text style={styles.vehicleSubtext}>
-              GPS accuracy ±{Number(vehicleLocation.accuracy).toFixed(0)}m
+              GPS accuracy ±
+              {Number(acceptedVehicleLocation.accuracy).toFixed(0)}m
             </Text>
           ) : null}
         </View>
@@ -343,7 +416,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   mapContainer: {
-    height: 330,
+    height: 460,
     position: "relative",
   },
   recenterButton: {
