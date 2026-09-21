@@ -49,7 +49,16 @@ async function paystackRequest<T>(
   const body = (await response.json()) as T;
 
   if (!response.ok) {
-    throw new Error("Paystack API request failed");
+    const message =
+      typeof body === "object" &&
+      body !== null &&
+      "message" in body &&
+      typeof body.message === "string" &&
+      body.message.trim()
+        ? body.message.trim()
+        : `Paystack API request failed (HTTP ${response.status})`;
+
+    throw new Error(message);
   }
 
   return body;
