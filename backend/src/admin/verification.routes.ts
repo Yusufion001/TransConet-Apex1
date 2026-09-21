@@ -15,6 +15,9 @@ import {
   getApprovedTransporterVerifications,
   approveTransporterVerification,
   rejectTransporterVerification,
+  getPendingCustomerVerifications,
+  getApprovedCustomerVerifications,
+  getFailedCustomerVerifications,
 } from "./verification.service.js";
 import { prisma } from "../config/prisma.js";
 import { supabaseStorageService } from "../storage/supabase-storage.service.js";
@@ -125,6 +128,46 @@ router.get("/:id/document-url", async (req, res) => {
     return res.status(500).json({
       success: false,
       error: "Server error",
+    });
+  }
+});
+
+
+router.get("/customer-verifications/pending", async (_req, res) => {
+  try {
+    const verifications = await getPendingCustomerVerifications();
+    return res.json({ success: true, data: verifications });
+  } catch (error) {
+    console.error("ADMIN_CUSTOMER_VERIFICATIONS_PENDING_ERROR", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to load customer verifications",
+    });
+  }
+});
+
+router.get("/customer-verifications/approved", async (_req, res) => {
+  try {
+    const verifications = await getApprovedCustomerVerifications();
+    return res.json({ success: true, data: verifications });
+  } catch (error) {
+    console.error("ADMIN_CUSTOMER_VERIFICATIONS_APPROVED_ERROR", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to load approved customer verifications",
+    });
+  }
+});
+
+router.get("/customer-verifications/failed", async (_req, res) => {
+  try {
+    const verifications = await getFailedCustomerVerifications();
+    return res.json({ success: true, data: verifications });
+  } catch (error) {
+    console.error("ADMIN_CUSTOMER_VERIFICATIONS_FAILED_ERROR", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to load failed customer verifications",
     });
   }
 });

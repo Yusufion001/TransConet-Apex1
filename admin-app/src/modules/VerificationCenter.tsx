@@ -3,14 +3,18 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   approveTransporterVerification,
   approveVerificationDocument,
+  getApprovedCustomerVerifications,
+  getFailedCustomerVerifications,
   getApprovedTransporterVerifications,
+  getPendingCustomerVerifications,
   getPendingTransporterVerifications,
   getPendingVerificationDocuments,
   getVerifiedVerificationDocuments,
   getVerificationDocumentUrl,
   rejectTransporterVerification,
   rejectVerificationDocument,
-  type DocumentStatus,
+  type CustomerVerification,
+  type CustomerVerificationType,
   type DocumentType,
   type TransporterVerification,
   type TransporterVerificationType,
@@ -26,8 +30,8 @@ const DOCUMENT_TYPES: DocumentType[] = [
   "OTHER",
 ];
 
-type ViewFilter = "PENDING" | "VERIFIED";
-type CenterMode = "DOCUMENTS" | "TRANSPORTER";
+type ViewFilter = "PENDING" | "VERIFIED" | "FAILED";
+type CenterMode = "CUSTOMER" | "DOCUMENTS" | "TRANSPORTER";
 
 const TRANSPORTER_VERIFICATION_TYPES: TransporterVerificationType[] = [
   "NIN",
@@ -39,6 +43,27 @@ function transporterVerificationLabel(type: TransporterVerificationType) {
   if (type === "NIN") return "NIN";
   if (type === "DRIVERS_LICENSE") return "Driver's License";
   return "Business Registration";
+}
+
+const CUSTOMER_VERIFICATION_TYPES: CustomerVerificationType[] = [
+  "NIN",
+  "DRIVERS_LICENSE",
+];
+
+function customerVerificationLabel(type: CustomerVerificationType) {
+  return type === "NIN" ? "NIN" : "Driver's License";
+}
+
+function customerOwner(verification: CustomerVerification) {
+  const user = verification.user;
+
+  if (!user) return verification.userId;
+
+  const name = [user.firstName, user.lastName]
+    .filter(Boolean)
+    .join(" ");
+
+  return name || user.email || user.phone || verification.userId;
 }
 
 function transporterOwner(verification: TransporterVerification) {
@@ -73,7 +98,7 @@ function documentTypeLabel(type: DocumentType) {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 }
 
-function statusClass(status: DocumentStatus) {
+function statusClass(status: string) {
   return `verification-status verification-status-${status.toLowerCase()}`;
 }
 
@@ -95,6 +120,17 @@ export default function VerificationCenter() {
   const [pending, setPending] = useState<VerificationDocument[]>([]);
   const [verified, setVerified] = useState<VerificationDocument[]>([]);
 
+  const [pendingCustomer, setPendingCustomer] = useState<
+    CustomerVerification[]
+  >([]);
+  const [approvedCustomer, setApprovedCustomer] = useState<
+    CustomerVerification[]
+  >([]);
+
+  const [failedCustomer, setFailedCustomer] = useState<
+    CustomerVerification[]
+  >([]);
+
   const [pendingTransporter, setPendingTransporter] = useState<
     TransporterVerification[]
   >([]);
@@ -105,7 +141,7 @@ export default function VerificationCenter() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<
-    DocumentType | TransporterVerificationType | "ALL"
+    DocumentType | CustomerVerificationType | TransporterVerificationType | "ALL"
   >("ALL");
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -123,29 +159,44 @@ export default function VerificationCenter() {
       const [
         pendingDocuments,
         verifiedDocuments,
+        pendingCustomerVerifications,
+        approvedCustomerVerifications,
+        failedCustomerVerifications,
         pendingTransporterVerifications,
         approvedTransporterVerifications,
       ] = await Promise.all([
         getPendingVerificationDocuments(),
         getVerifiedVerificationDocuments(),
+        getPendingCustomerVerifications(),
+        getApprovedCustomerVerifications(),
+        getFailedCustomerVerifications(),
         getPendingTransporterVerifications(),
         getApprovedTransporterVerifications(),
       ]);
 
       setPending(pendingDocuments);
       setVerified(verifiedDocuments);
+      setPendingCustomer(pendingCustomerVerifications);
+      setApprovedCustomer(approvedCustomerVerifications);
+      setFailedCustomer(failedCustomerVerifications);
       setPendingTransporter(pendingTransporterVerifications);
       setApprovedTransporter(approvedTransporterVerifications);
 
       setSelectedId((current) => {
         const currentList =
-          mode === "TRANSPORTER"
+          mode === "CUSTOMER"
             ? view === "PENDING"
-              ? pendingTransporterVerifications
-              : approvedTransporterVerifications
-            : view === "PENDING"
-              ? pendingDocuments
-              : verifiedDocuments;
+              ? pendingCustomerVerifications
+              : view === "VERIFIED"
+                ? approvedCustomerVerifications
+                : failedCustomerVerifications
+            : mode === "TRANSPORTER"
+              ? view === "PENDING"
+                ? pendingTransporterVerifications
+                : approvedTransporterVerifications
+              : view === "PENDING"
+                ? pendingDocuments
+                : verifiedDocuments;
 
         if (current && currentList.some((item) => item.id === current)) {
           return current;
@@ -170,8 +221,17 @@ export default function VerificationCenter() {
 
   const currentDocuments = view === "PENDING" ? pending : verified;
 
+  const currentCustomerVerifications =
+    view === "PENDING"
+      ? pendingCustomer
+      : view === "VERIFIED"
+        ? approvedCustomer
+        : failedCustomer;
+
   const filteredDocuments = useMemo(() => {
     const query = search.trim().toLowerCase();
+
+    if (mode === "CUSTOMER") return [];
 
     return currentDocuments.filter((document) => {
       if (typeFilter !== "ALL" && document.type !== typeFilter) {
@@ -195,7 +255,55 @@ export default function VerificationCenter() {
 
       return haystack.includes(query);
     });
-  }, [currentDocuments, search, typeFilter]);
+  }, [currentDocuments, mode, search, typeFilter]);
+
+  const filteredCustomerVerifications = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return currentCustomerVerifications.filter((verification) => {
+      if (
+        typeFilter !== "ALL" &&
+        CUSTOMER_VERIFICATION_TYPES.includes(
+          typeFilter as CustomerVerificationType,
+        ) &&
+        verification.type !== typeFilter
+      ) {
+        return false;
+      }
+
+      if (!query) return true;
+
+      const haystack = [
+        customerOwner(verification),
+        verification.user?.email ?? "",
+        verification.user?.phone ?? "",
+        verification.type,
+        verification.providerStatus,
+        verification.adminStatus,
+        verification.verificationProvider,
+        verification.verificationNumber,
+        verification.externalVerificationId ?? "",
+        verification.user?.customerProfile?.customerType ?? "",
+        verification.user?.customerProfile?.verificationStatus ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(query);
+    });
+  }, [currentCustomerVerifications, search, typeFilter]);
+
+  const selectedCustomerVerification =
+    mode === "CUSTOMER"
+      ? currentCustomerVerifications.find(
+          (verification) => verification.id === selectedId,
+        )
+      : undefined;
+
+  const selectedDocument =
+    mode === "DOCUMENTS"
+      ? currentDocuments.find((document) => document.id === selectedId)
+      : undefined;
 
   const currentTransporterVerifications =
     view === "PENDING" ? pendingTransporter : approvedTransporter;
@@ -230,13 +338,6 @@ export default function VerificationCenter() {
     });
   }, [currentTransporterVerifications, search, typeFilter]);
 
-  const selectedDocument =
-    mode === "DOCUMENTS"
-      ? currentDocuments.find(
-          (document) => document.id === selectedId,
-        )
-      : undefined;
-
   const selectedTransporterVerification =
     mode === "TRANSPORTER"
       ? currentTransporterVerifications.find(
@@ -268,6 +369,20 @@ export default function VerificationCenter() {
 
     const transporterRecords = [...uniqueTransporter.values()];
 
+    const allCustomer = [
+      ...pendingCustomer,
+      ...approvedCustomer,
+      ...failedCustomer,
+    ];
+
+    const uniqueCustomer = new Map<string, CustomerVerification>();
+
+    for (const verification of allCustomer) {
+      uniqueCustomer.set(verification.id, verification);
+    }
+
+    const customerRecords = [...uniqueCustomer.values()];
+
     return {
       total: records.length,
       pending: pending.length,
@@ -278,6 +393,10 @@ export default function VerificationCenter() {
       rejected: records.filter(
         (document) => document.status === "REJECTED",
       ).length,
+    customerTotal: customerRecords.length,
+    customerPending: pendingCustomer.length,
+    customerApproved: approvedCustomer.length,
+      customerFailed: failedCustomer.length,
       transporterTotal: transporterRecords.length,
       transporterPending: pendingTransporter.length,
       transporterApproved: approvedTransporter.length,
@@ -288,6 +407,9 @@ export default function VerificationCenter() {
   }, [
     pending,
     verified,
+      pendingCustomer,
+      approvedCustomer,
+    failedCustomer,
     pendingTransporter,
     approvedTransporter,
   ]);
@@ -584,6 +706,21 @@ export default function VerificationCenter() {
       <div className="verification-tabs">
         <button
           type="button"
+          className={mode === "CUSTOMER" ? "active" : ""}
+          onClick={() => {
+            setMode("CUSTOMER");
+            setTypeFilter("ALL");
+            setSelectedId(currentCustomerVerifications[0]?.id ?? null);
+            setShowRejectForm(false);
+            setActionError("");
+          }}
+        >
+          Customer Verification
+          <span>{metrics.customerTotal}</span>
+        </button>
+
+        <button
+          type="button"
           className={mode === "DOCUMENTS" ? "active" : ""}
           onClick={() => {
             setMode("DOCUMENTS");
@@ -621,35 +758,82 @@ export default function VerificationCenter() {
         </button>
       </div>
 
+      {mode === "CUSTOMER" && (
+        <div className="verification-tabs">
+          <button
+            type="button"
+            className={view === "PENDING" ? "active" : ""}
+            onClick={() => {
+              setView("PENDING");
+              setSelectedId(pendingCustomer[0]?.id ?? null);
+              setShowRejectForm(false);
+              setActionError("");
+            }}
+          >
+            Pending
+            <span>{metrics.customerPending}</span>
+          </button>
+
+          <button
+            type="button"
+            className={view === "VERIFIED" ? "active" : ""}
+            onClick={() => {
+              setView("VERIFIED");
+              setSelectedId(approvedCustomer[0]?.id ?? null);
+              setShowRejectForm(false);
+              setActionError("");
+            }}
+          >
+            Verified
+            <span>{metrics.customerApproved}</span>
+          </button>
+
+          <button
+            type="button"
+            className={view === "FAILED" ? "active" : ""}
+            onClick={() => {
+              setView("FAILED");
+              setSelectedId(failedCustomer[0]?.id ?? null);
+              setShowRejectForm(false);
+              setActionError("");
+            }}
+          >
+            Failed
+            <span>{metrics.customerFailed}</span>
+          </button>
+        </div>
+      )}
+
       {mode === "DOCUMENTS" && (
-      <div className="verification-tabs">
-        <button
-          type="button"
-          className={view === "PENDING" ? "active" : ""}
-          onClick={() => {
-            setView("PENDING");
-            setSelectedId(pending[0]?.id ?? null);
-            setShowRejectForm(false);
-          }}
-        >
-          Pending review
-          <span>{pending.length}</span>
-        </button>
+        <div className="verification-tabs">
+          <button
+            type="button"
+            className={view === "PENDING" ? "active" : ""}
+            onClick={() => {
+              setView("PENDING");
+              setSelectedId(pending[0]?.id ?? null);
+              setShowRejectForm(false);
+              setActionError("");
+            }}
+          >
+            Pending review
+            <span>{pending.length}</span>
+          </button>
 
-        <button
-          type="button"
-          className={view === "VERIFIED" ? "active" : ""}
-          onClick={() => {
-            setView("VERIFIED");
-            setSelectedId(verified[0]?.id ?? null);
-            setShowRejectForm(false);
-          }}
-        >
-          Verified
-          <span>{verified.length}</span>
-        </button>
-      </div>
-
+          <button
+            type="button"
+            className={view === "VERIFIED" ? "active" : ""}
+            onClick={() => {
+              setView("VERIFIED");
+              setSelectedId(verified[0]?.id ?? null);
+              setShowRejectForm(false);
+              setActionError("");
+            }}
+          >
+            Verified
+            <span>{verified.length}</span>
+          </button>
+        </div>
       )}
 
       {mode === "TRANSPORTER" && (
@@ -686,7 +870,130 @@ export default function VerificationCenter() {
 
       <div className="verification-workspace">
         <div className="verification-directory">
-          {mode === "DOCUMENTS" ? (
+          {mode === "CUSTOMER" ? (
+            <>
+              <div className="verification-directory-header">
+                <div>
+                  <h2>
+                    {view === "PENDING"
+                      ? "Customer verifications awaiting provider result"
+                      : view === "VERIFIED"
+                        ? "Verified customer verifications"
+                        : "Failed customer verifications"}
+                  </h2>
+                  <span>{filteredCustomerVerifications.length} records</span>
+                </div>
+
+                <div className="verification-filters">
+                  <input
+                    value={search}
+                    onChange={(event) => setSearch(event.target.value)}
+                    placeholder="Search customer, email or identification"
+                    aria-label="Search customer verification records"
+                  />
+
+                  <select
+                    value={typeFilter}
+                    onChange={(event) =>
+                      setTypeFilter(
+                        event.target.value as CustomerVerificationType | "ALL",
+                      )
+                    }
+                    aria-label="Filter customer verifications by identification type"
+                  >
+                    <option value="ALL">All identification types</option>
+                    {CUSTOMER_VERIFICATION_TYPES.map((type) => (
+                      <option key={type} value={type}>
+                        {customerVerificationLabel(type)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {filteredCustomerVerifications.length === 0 ? (
+                <div className="verification-empty">
+                  No customer verification records match the current view.
+                </div>
+              ) : (
+                <div className="verification-table-wrap">
+                  <table className="verification-table">
+                    <thead>
+                      <tr>
+                        <th>Customer</th>
+                        <th>Identification</th>
+                        <th>Provider</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {filteredCustomerVerifications.map((verification) => (
+                        <tr
+                          key={verification.id}
+                          className={
+                            verification.id === selectedId
+                              ? "verification-row-selected"
+                              : ""
+                          }
+                          onClick={() => {
+                            setSelectedId(verification.id);
+                            setShowRejectForm(false);
+                            setActionError("");
+                          }}
+                        >
+                          <td>
+                            <strong>{customerOwner(verification)}</strong>
+                            <span>
+                              {verification.user?.email ??
+                                verification.user?.phone ??
+                                verification.userId}
+                            </span>
+                          </td>
+
+                          <td>
+                            <strong>
+                              {customerVerificationLabel(verification.type)}
+                            </strong>
+                            <span>
+                              {verification.verificationNumber}
+                            </span>
+                          </td>
+
+                          <td>
+                            <strong>
+                              {verification.verificationProvider}
+                            </strong>
+                            <span>
+                              {verification.externalVerificationId ??
+                                "No external reference"}
+                            </span>
+                          </td>
+
+                          <td>
+                            <span
+                              className={statusClass(
+                                verification.providerStatus,
+                              )}
+                            >
+                              {verification.providerStatus}
+                            </span>
+                          </td>
+
+                          <td>
+                            <strong>
+                              {formatDate(verification.createdAt)}
+                            </strong>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          ) : mode === "DOCUMENTS" ? (
           <>
           <div className="verification-directory-header">
             <div>
@@ -943,7 +1250,137 @@ export default function VerificationCenter() {
         </div>
 
         <aside className="verification-detail">
-          {mode === "DOCUMENTS" ? (
+          {mode === "CUSTOMER" ? (
+            !selectedCustomerVerification ? (
+              <div className="verification-empty">
+                Select a customer verification record to inspect it.
+              </div>
+            ) : (
+              <>
+                <div className="verification-detail-header">
+                  <span className="module-eyebrow">
+                    CUSTOMER VERIFICATION
+                  </span>
+
+                  <h2>{customerOwner(selectedCustomerVerification)}</h2>
+
+                  <span
+                    className={statusClass(
+                      selectedCustomerVerification.providerStatus,
+                    )}
+                  >
+                    {selectedCustomerVerification.providerStatus}
+                  </span>
+                </div>
+
+                <div className="verification-detail-grid">
+                  <div>
+                    <span>Identification</span>
+                    <strong>
+                      {customerVerificationLabel(
+                        selectedCustomerVerification.type,
+                      )}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Identification number</span>
+                    <strong>
+                      {selectedCustomerVerification.verificationNumber}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Customer</span>
+                    <strong>{customerOwner(selectedCustomerVerification)}</strong>
+                  </div>
+
+                  <div>
+                    <span>Email</span>
+                    <strong>
+                      {selectedCustomerVerification.user?.email ?? "—"}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Phone</span>
+                    <strong>
+                      {selectedCustomerVerification.user?.phone ?? "—"}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Verification provider</span>
+                    <strong>
+                      {selectedCustomerVerification.verificationProvider}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Provider status</span>
+                    <strong>
+                      {selectedCustomerVerification.providerStatus}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>External verification ID</span>
+                    <strong>
+                      {selectedCustomerVerification.externalVerificationId ??
+                        "—"}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Provider verification date</span>
+                    <strong>
+                      {formatDate(selectedCustomerVerification.verifiedAt)}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Submitted</span>
+                    <strong>
+                      {formatDate(selectedCustomerVerification.createdAt)}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Customer profile status</span>
+                    <strong>
+                      {selectedCustomerVerification.user?.customerProfile
+                        ?.verificationStatus ?? "—"}
+                    </strong>
+                  </div>
+                </div>
+
+                <div className="verification-document-panel">
+                  <div>
+                    <span>Verification source</span>
+                    <strong>
+                      Youverify
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Administrative action</span>
+                    <strong>
+                      Provider result is authoritative
+                    </strong>
+                  </div>
+                </div>
+
+                {selectedCustomerVerification.providerResponse && (
+                  <div className="verification-rejection">
+                    <span>Provider response</span>
+                    <strong>
+                      Provider response available for audit
+                    </strong>
+                  </div>
+                )}
+              </>
+            )
+          ) : mode === "DOCUMENTS" ? (
           !selectedDocument ? (
             <div className="verification-empty">
               Select a verification record to inspect it.

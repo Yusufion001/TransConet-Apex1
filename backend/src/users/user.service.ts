@@ -71,6 +71,13 @@ export async function updateUser(
   },
 ) {
   if (data.firstName !== undefined || data.lastName !== undefined || data.phone !== undefined) {
+    const targetUser = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        role: true,
+      },
+    });
+
     const approvedIdentityVerification = await prisma.verification.findFirst({
       where: {
         userId: id,
@@ -78,8 +85,12 @@ export async function updateUser(
           in: ["NIN", "DRIVERS_LICENSE"],
         },
         providerStatus: "SUCCESS",
-        adminStatus: "APPROVED",
-        adminApproved: true,
+        ...(targetUser?.role === "CUSTOMER"
+          ? {}
+          : {
+              adminStatus: "APPROVED",
+              adminApproved: true,
+            }),
       },
       select: {
         id: true,

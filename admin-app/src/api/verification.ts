@@ -125,6 +125,64 @@ export type TransporterVerification = {
   };
 };
 
+
+export type CustomerVerificationType = "NIN" | "DRIVERS_LICENSE";
+
+export type CustomerVerification = {
+  id: string;
+  userId: string;
+  type: CustomerVerificationType;
+  verificationNumber: string;
+  verificationProvider: string;
+  externalVerificationId?: string | null;
+  providerStatus: VerificationProviderStatus;
+  providerResponse?: unknown;
+  verifiedAt?: string | null;
+  adminStatus: VerificationAdminStatus;
+  adminApproved: boolean;
+  adminApprovedAt?: string | null;
+  reviewedBy?: string | null;
+  rejectionReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    role?: string | null;
+    customerProfile?: {
+      customerType?: "INDIVIDUAL" | "BUSINESS" | null;
+      verificationStatus?: string | null;
+    } | null;
+  };
+};
+
+export async function getPendingCustomerVerifications() {
+  const response = await apiClient.get<
+    ApiResponse<CustomerVerification[]>
+  >("/admin/verification/customer-verifications/pending");
+
+  return response.data.data;
+}
+
+export async function getApprovedCustomerVerifications() {
+  const response = await apiClient.get<
+    ApiResponse<CustomerVerification[]>
+  >("/admin/verification/customer-verifications/approved");
+
+  return response.data.data;
+}
+
+export async function getFailedCustomerVerifications() {
+  const response = await apiClient.get<
+    ApiResponse<CustomerVerification[]>
+  >("/admin/verification/customer-verifications/failed");
+
+  return response.data.data;
+}
+
 export async function getPendingTransporterVerifications() {
   const response = await apiClient.get<
     ApiResponse<TransporterVerification[]>
