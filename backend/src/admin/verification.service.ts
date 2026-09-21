@@ -16,6 +16,126 @@ function isTransporterVerificationType(
   return (TRANSPORTER_VERIFICATION_TYPES as readonly string[]).includes(value);
 }
 
+
+const CUSTOMER_VERIFICATION_TYPES = [
+  "NIN",
+  "DRIVERS_LICENSE",
+] as const;
+
+type CustomerVerificationType =
+  (typeof CUSTOMER_VERIFICATION_TYPES)[number];
+
+function isCustomerVerificationType(
+  value: string,
+): value is CustomerVerificationType {
+  return (CUSTOMER_VERIFICATION_TYPES as readonly string[]).includes(value);
+}
+
+export async function getPendingCustomerVerifications() {
+  return prisma.verification.findMany({
+    where: {
+      providerStatus: "PENDING",
+      type: {
+        in: [...CUSTOMER_VERIFICATION_TYPES],
+      },
+      user: {
+        role: "CUSTOMER",
+      },
+    },
+    orderBy: {
+      createdAt: "asc",
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          role: true,
+          customerProfile: {
+            select: {
+              customerType: true,
+              verificationStatus: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+export async function getApprovedCustomerVerifications() {
+  return prisma.verification.findMany({
+    where: {
+      providerStatus: "SUCCESS",
+      type: {
+        in: [...CUSTOMER_VERIFICATION_TYPES],
+      },
+      user: {
+        role: "CUSTOMER",
+      },
+    },
+    orderBy: {
+      verifiedAt: "desc",
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          role: true,
+          customerProfile: {
+            select: {
+              customerType: true,
+              verificationStatus: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+export async function getFailedCustomerVerifications() {
+  return prisma.verification.findMany({
+    where: {
+      providerStatus: "FAILED",
+      type: {
+        in: [...CUSTOMER_VERIFICATION_TYPES],
+      },
+      user: {
+        role: "CUSTOMER",
+      },
+    },
+    orderBy: {
+      updatedAt: "desc",
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          role: true,
+          customerProfile: {
+            select: {
+              customerType: true,
+              verificationStatus: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
 export async function getPendingTransporterVerifications() {
   return prisma.verification.findMany({
     where: {

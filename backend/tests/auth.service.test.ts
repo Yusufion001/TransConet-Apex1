@@ -26,6 +26,9 @@ const prismaMock = {
   adminProfile: {
     update: mock.fn<(...args: any[]) => any>(),
   },
+  customerProfile: {
+    update: mock.fn<(...args: any[]) => any>(),
+  },
   adminMfa: {
     findUnique: mock.fn<(...args: any[]) => any>(),
     update: mock.fn<(...args: any[]) => any>(),
@@ -156,6 +159,7 @@ function resetMocks() {
     prismaMock.user.update,
     prismaMock.user.updateMany,
     prismaMock.adminProfile.update,
+    prismaMock.customerProfile.update,
     prismaMock.adminMfa.findUnique,
     prismaMock.adminMfa.update,
     prismaMock.adminMfaChallenge.deleteMany,

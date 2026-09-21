@@ -116,20 +116,40 @@ export async function startCustomerVerification(
 
   const providerStatus = getProviderStatus(providerResponse);
 
-  const verification = await prisma.verification.create({
-    data: {
-      userId: input.userId,
-      type: input.type,
-      verificationNumber,
-      verificationProvider: "YOUVERIFY",
-      externalVerificationId,
-      providerStatus,
-      providerResponse: providerResponse as any,
-      verifiedAt:
-        providerStatus === "SUCCESS" ? new Date() : null,
-      adminStatus: "PENDING",
-      adminApproved: false,
-    },
+  const customerVerificationStatus =
+    providerStatus === "SUCCESS"
+      ? "APPROVED"
+      : providerStatus === "FAILED"
+        ? "REJECTED"
+        : "PENDING";
+
+  const verification = await prisma.$transaction(async (tx) => {
+    const createdVerification = await tx.verification.create({
+      data: {
+        userId: input.userId,
+        type: input.type,
+        verificationNumber,
+        verificationProvider: "YOUVERIFY",
+        externalVerificationId,
+        providerStatus,
+        providerResponse: providerResponse as any,
+        verifiedAt:
+          providerStatus === "SUCCESS" ? new Date() : null,
+        adminStatus: "PENDING",
+        adminApproved: false,
+      },
+    });
+
+    await tx.customerProfile.update({
+      where: {
+        userId: input.userId,
+      },
+      data: {
+        verificationStatus: customerVerificationStatus,
+      },
+    });
+
+    return createdVerification;
   });
 
   publishEvent("admin", {

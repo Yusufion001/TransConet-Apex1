@@ -233,6 +233,18 @@ export async function getPendingDocuments() {
     where: {
       status: "PENDING",
     },
+    include: {
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          role: true,
+        },
+      },
+    },
     orderBy: {
       createdAt: "asc",
     },
@@ -243,6 +255,18 @@ export async function getVerifiedDocuments() {
   return prisma.document.findMany({
     where: {
       status: "APPROVED",
+    },
+    include: {
+      user: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+          role: true,
+        },
+      },
     },
     orderBy: {
       verifiedAt: "desc",
