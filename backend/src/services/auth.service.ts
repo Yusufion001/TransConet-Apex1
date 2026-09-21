@@ -295,7 +295,7 @@ export async function registerUser(input: {
       hashToken(verificationToken);
 
     const verificationExpiresAt =
-      new Date(Date.now() + 30 * 60 * 1000);
+      new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     await prisma.emailVerification.upsert({
       where: {
@@ -948,12 +948,15 @@ export async function verifyEmail(token: string) {
 }
 
 export async function resendEmailVerification(identifier: string) {
+  const normalizedIdentifier = identifier.trim();
+  const emailIdentifier = normalizedIdentifier.toLowerCase();
+
   const user =
     await prisma.user.findFirst({
       where: {
         OR: [
-          { email: identifier },
-          { phone: identifier },
+          { email: emailIdentifier },
+          { phone: normalizedIdentifier },
         ],
       },
     });
@@ -976,7 +979,7 @@ export async function resendEmailVerification(identifier: string) {
     hashToken(verificationToken);
 
   const expiresAt =
-    new Date(Date.now() + 30 * 60 * 1000);
+    new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   await prisma.emailVerification.upsert({
     where: {
