@@ -130,6 +130,7 @@ mock.module(
 
 const {
   registerUser,
+  resendEmailVerification,
   loginUser,
   verifyAdministratorMfaLogin,
   forgotPassword,
@@ -1220,6 +1221,80 @@ test("refreshAccessToken detects a rotation race and revokes the refresh-token f
 
   assert.equal(
     prismaMock.refreshSession.create.mock.calls.length,
+    0,
+  );
+});
+
+
+test("resendEmailVerification normalizes email identifiers and replaces the verification token", async () => {
+  prismaMock.user.findFirst.mock.mockImplementation(async () => ({
+    id: "pending-user-1",
+    email: "pending@example.com",
+    emailVerifiedAt: null,
+  }));
+
+  const result = await resendEmailVerification(
+    "  Pending@Example.COM  ",
+  );
+
+  assert.deepEqual(result, {
+    message:
+      "If an eligible account exists, a verification email has been sent.",
+  });
+
+  const lookup =
+    prismaMock.user.findFirst.mock.calls[0]?.arguments[0];
+
+  assert.deepEqual(lookup.where.OR, [
+    { email: "pending@example.com" },
+    { phone: "Pending@Example.COM" },
+  ]);
+
+  const upsert =
+    prismaMock.emailVerification.upsert.mock.calls[0]?.arguments[0];
+
+  assert.equal(upsert.where.userId, "pending-user-1");
+  assert.equal(typeof upsert.update.tokenHash, "string");
+  assert.equal(upsert.update.tokenHash.length, 64);
+  assert.equal(upsert.update.consumedAt, null);
+  assert.equal(upsert.update.attempts.increment, 1);
+  assert.ok(upsert.update.expiresAt instanceof Date);
+
+  const lifetime =
+    upsert.update.expiresAt.getTime() - Date.now();
+
+  assert.ok(
+    lifetime > 23 * 60 * 60 * 1000 &&
+      lifetime <= 24 * 60 * 60 * 1000,
+  );
+
+  const emailCall =
+    sendEmailVerificationEmailMock.mock.calls[0]?.arguments;
+
+  assert.equal(emailCall?.[0], "pending@example.com");
+  assert.equal(typeof emailCall?.[1], "string");
+  assert.match(emailCall?.[1], /^[a-f0-9]{64}$/);
+});
+
+test("resendEmailVerification keeps the generic response for unknown accounts", async () => {
+  prismaMock.user.findFirst.mock.mockImplementation(async () => null);
+
+  const result = await resendEmailVerification(
+    "unknown@example.com",
+  );
+
+  assert.deepEqual(result, {
+    message:
+      "If an eligible account exists, a verification email has been sent.",
+  });
+
+  assert.equal(
+    prismaMock.emailVerification.upsert.mock.calls.length,
+    0,
+  );
+
+  assert.equal(
+    sendEmailVerificationEmailMock.mock.calls.length,
     0,
   );
 });

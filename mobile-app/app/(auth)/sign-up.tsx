@@ -148,7 +148,12 @@ export default function SignUpScreen() {
       }
 
       if (result.requiresEmailVerification) {
-        router.replace("/(auth)/verify-email");
+        router.replace({
+          pathname: "/(auth)/verify-email",
+          params: {
+            identifier: trimmedEmail,
+          },
+        });
         return;
       }
 
