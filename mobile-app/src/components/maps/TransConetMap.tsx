@@ -31,6 +31,7 @@ type TransConetMapProps = {
   animatedMarkerId?: string;
   animatedMarkerHeading?: number | null;
   onUserMapInteraction?: () => void;
+  onMapGestureStart?: () => void;
   followCoordinate?: MapCoordinate | null;
   followEnabled?: boolean;
   fitCoordinates?: MapCoordinate[];
@@ -49,6 +50,7 @@ export default function TransConetMap({
   animatedMarkerId,
   animatedMarkerHeading,
   onUserMapInteraction,
+  onMapGestureStart,
   followCoordinate,
   followEnabled = false,
   fitCoordinates = [],
@@ -75,22 +77,53 @@ export default function TransConetMap({
   ).current;
 
   const previousFitKey = useRef("");
+  const previousAnimatedCoordinate = useRef<MapCoordinate | null>(null);
 
   useEffect(() => {
     if (!animatedMarker) {
+      previousAnimatedCoordinate.current = null;
       return;
     }
 
-    animatedCoordinate
-      .timing({
-        latitude: animatedMarker.coordinate.latitude,
-        longitude: animatedMarker.coordinate.longitude,
+    const next = animatedMarker.coordinate;
+    const previous = previousAnimatedCoordinate.current;
+
+    if (!previous) {
+      animatedCoordinate.setValue({
+        latitude: next.latitude,
+        longitude: next.longitude,
         latitudeDelta: 0,
         longitudeDelta: 0,
-        duration: 900,
+      });
+      previousAnimatedCoordinate.current = next;
+      return;
+    }
+
+    const latitudeDelta = next.latitude - previous.latitude;
+    const longitudeDelta = next.longitude - previous.longitude;
+    const distanceDegrees = Math.sqrt(
+      latitudeDelta * latitudeDelta + longitudeDelta * longitudeDelta,
+    );
+
+    // GPS updates normally arrive around every 5–10 seconds. Keep the
+    // animation below the update interval so the marker does not lag badly.
+    const duration = Math.max(
+      450,
+      Math.min(1200, Math.round(500 + distanceDegrees * 900000)),
+    );
+
+    animatedCoordinate
+      .timing({
+        latitude: next.latitude,
+        longitude: next.longitude,
+        latitudeDelta: 0,
+        longitudeDelta: 0,
+        duration,
         useNativeDriver: false,
       } as any)
       .start();
+
+    previousAnimatedCoordinate.current = next;
   }, [animatedCoordinate, animatedMarker]);
 
   useEffect(() => {
@@ -179,7 +212,23 @@ export default function TransConetMap({
         style={StyleSheet.absoluteFill}
         initialRegion={region}
         onPress={handleMapPress}
-        onPanDrag={interactive ? onUserMapInteraction : undefined}
+        onRegionChangeStart={
+          interactive
+            ? (_region, details) => {
+                if (details?.isGesture) {
+                  onMapGestureStart?.();
+                  onUserMapInteraction?.();
+                }
+              }
+            : undefined
+        }
+        onPanDrag={
+          interactive
+            ? () => {
+                onUserMapInteraction?.();
+              }
+            : undefined
+        }
         scrollEnabled={interactive}
         zoomEnabled={interactive}
         rotateEnabled={interactive}
@@ -211,9 +260,7 @@ export default function TransConetMap({
                 title={marker.title}
                 description={marker.description}
                 rotation={
-                  animatedMarkerHeading != null
-                    ? animatedMarkerHeading
-                    : 0
+                  animatedMarkerHeading != null ? animatedMarkerHeading : 0
                 }
                 flat
                 anchor={{ x: 0.5, y: 0.5 }}
