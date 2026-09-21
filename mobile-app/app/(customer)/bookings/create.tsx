@@ -173,6 +173,8 @@ const [destinationLandmark, setDestinationLandmark] = useState("");
   }
 
   async function openPickupLocationPicker() {
+    setLocationPickerType("pickup");
+
     if (pickupCoordinates) {
       setLocationPickerCoordinate(pickupCoordinates);
       setLocationPickerVisible(true);
@@ -692,6 +694,8 @@ void searchPlaceSuggestions(value, "destination");
                 },
               ]}
               routeCoordinates={route.coordinates}
+              fitCoordinates={route.coordinates}
+              fitToCoordinatesOnChange
               interactive={false}
             />
           </View>

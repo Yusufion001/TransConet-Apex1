@@ -3,6 +3,7 @@ import MapView, {
   AnimatedRegion,
   Marker,
   Polyline,
+  PROVIDER_GOOGLE,
   type MapPressEvent,
   type Region,
 } from "react-native-maps";
@@ -32,6 +33,10 @@ type TransConetMapProps = {
   onUserMapInteraction?: () => void;
   followCoordinate?: MapCoordinate | null;
   followEnabled?: boolean;
+  fitCoordinates?: MapCoordinate[];
+  fitToCoordinatesOnChange?: boolean;
+  showsUserLocation?: boolean;
+  showsMyLocationButton?: boolean;
 };
 
 export default function TransConetMap({
@@ -46,65 +51,113 @@ export default function TransConetMap({
   onUserMapInteraction,
   followCoordinate,
   followEnabled = false,
+  fitCoordinates = [],
+  fitToCoordinatesOnChange = false,
+  showsUserLocation = false,
+  showsMyLocationButton = false,
 }: TransConetMapProps) {
-  const hasRoute = useMemo(
-    () => routeCoordinates.length > 1,
-    [routeCoordinates],
-  );
-
   const mapRef = useRef<MapView | null>(null);
 
-  useEffect(() => {
-    if (!followEnabled || !followCoordinate) {
-      return;
-    }
+  const hasRoute = routeCoordinates.length > 1;
 
-    mapRef.current?.animateToRegion(
-      {
-        ...region,
-        latitude: followCoordinate.latitude,
-        longitude: followCoordinate.longitude,
-      },
-      700,
-    );
-  }, [
-    followCoordinate?.latitude,
-    followCoordinate?.longitude,
-    followEnabled,
-    region,
-  ]);
+  const animatedMarker = useMemo(
+    () => markers.find((marker) => marker.id === animatedMarkerId),
+    [animatedMarkerId, markers],
+  );
 
   const animatedCoordinate = useRef(
     new AnimatedRegion({
-      latitude:
-        markers.find((marker) => marker.id === animatedMarkerId)?.coordinate
-          .latitude ?? region.latitude,
-      longitude:
-        markers.find((marker) => marker.id === animatedMarkerId)?.coordinate
-          .longitude ?? region.longitude,
+      latitude: animatedMarker?.coordinate.latitude ?? region.latitude,
+      longitude: animatedMarker?.coordinate.longitude ?? region.longitude,
       latitudeDelta: 0,
       longitudeDelta: 0,
     }),
   ).current;
 
-  useEffect(() => {
-    const animatedMarker = markers.find(
-      (marker) => marker.id === animatedMarkerId,
-    );
+  const previousFitKey = useRef("");
 
+  useEffect(() => {
     if (!animatedMarker) {
       return;
     }
 
-    animatedCoordinate.timing({
-      latitude: animatedMarker.coordinate.latitude,
-      longitude: animatedMarker.coordinate.longitude,
-      latitudeDelta: 0,
-      longitudeDelta: 0,
-      duration: 900,
-      useNativeDriver: false,
-    } as any).start();
-  }, [animatedCoordinate, animatedMarkerId, markers]);
+    animatedCoordinate
+      .timing({
+        latitude: animatedMarker.coordinate.latitude,
+        longitude: animatedMarker.coordinate.longitude,
+        latitudeDelta: 0,
+        longitudeDelta: 0,
+        duration: 900,
+        useNativeDriver: false,
+      } as any)
+      .start();
+  }, [animatedCoordinate, animatedMarker]);
+
+  useEffect(() => {
+    if (!followEnabled || !followCoordinate || !interactive) {
+      return;
+    }
+
+    mapRef.current?.animateCamera(
+      {
+        center: {
+          latitude: followCoordinate.latitude,
+          longitude: followCoordinate.longitude,
+        },
+      },
+      {
+        duration: 650,
+      },
+    );
+  }, [
+    followCoordinate?.latitude,
+    followCoordinate?.longitude,
+    followEnabled,
+    interactive,
+  ]);
+
+  useEffect(() => {
+    if (!fitToCoordinatesOnChange || fitCoordinates.length < 2) {
+      return;
+    }
+
+    const validCoordinates = fitCoordinates.filter(
+      (coordinate) =>
+        Number.isFinite(coordinate.latitude) &&
+        Number.isFinite(coordinate.longitude),
+    );
+
+    if (validCoordinates.length < 2) {
+      return;
+    }
+
+    const fitKey = validCoordinates
+      .map(
+        (coordinate) =>
+          `${coordinate.latitude.toFixed(5)},${coordinate.longitude.toFixed(5)}`,
+      )
+      .join("|");
+
+    if (fitKey === previousFitKey.current) {
+      return;
+    }
+
+    previousFitKey.current = fitKey;
+
+    const timer = setTimeout(() => {
+      mapRef.current?.fitToCoordinates(validCoordinates, {
+        edgePadding: {
+          top: 70,
+          right: 45,
+          bottom: 90,
+          left: 45,
+        },
+        animated: true,
+      });
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [fitCoordinates, fitToCoordinatesOnChange]);
 
   const handleMapPress = (event: MapPressEvent) => {
     if (interactive) {
@@ -122,6 +175,7 @@ export default function TransConetMap({
     <View style={styles.container}>
       <MapView
         ref={mapRef}
+        provider={PROVIDER_GOOGLE}
         style={StyleSheet.absoluteFill}
         initialRegion={region}
         onPress={handleMapPress}
@@ -130,11 +184,17 @@ export default function TransConetMap({
         zoomEnabled={interactive}
         rotateEnabled={interactive}
         pitchEnabled={interactive}
+        showsUserLocation={showsUserLocation}
+        showsMyLocationButton={showsMyLocationButton && interactive}
+        toolbarEnabled={false}
+        loadingEnabled
+        moveOnMarkerPress={false}
       >
         {pinCoordinate ? (
           <Marker
             coordinate={pinCoordinate}
             draggable={interactive && Boolean(onPinChange)}
+            onDragStart={interactive ? onUserMapInteraction : undefined}
             onDragEnd={(event) => {
               onPinChange?.(event.nativeEvent.coordinate);
             }}
@@ -151,11 +211,12 @@ export default function TransConetMap({
                 title={marker.title}
                 description={marker.description}
                 rotation={
-                  marker.id === animatedMarkerId &&
                   animatedMarkerHeading != null
                     ? animatedMarkerHeading
                     : 0
                 }
+                flat
+                anchor={{ x: 0.5, y: 0.5 }}
               />
             );
           }
@@ -173,7 +234,9 @@ export default function TransConetMap({
         {hasRoute ? (
           <Polyline
             coordinates={routeCoordinates}
-            strokeWidth={4}
+            strokeWidth={5}
+            lineCap="round"
+            lineJoin="round"
           />
         ) : null}
       </MapView>
