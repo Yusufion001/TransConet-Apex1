@@ -125,7 +125,7 @@ export async function createExpressBooking(
       };
     }
 
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${data.customerId}, 0))`;
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${data.customerId}, 0)) IS NULL AS locked`;
 
     const activeExpressBooking = await tx.expressBooking.findFirst({
       where: {
