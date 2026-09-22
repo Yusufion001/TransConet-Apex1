@@ -128,10 +128,37 @@ export async function updateVehicle(
     (data.vehicleBodyType !== undefined &&
       data.vehicleBodyType !== existingVehicle.vehicleBodyType);
 
-  if (identityChanged && existingVehicle.availabilityStatus === "ON_TRIP") {
-    throw new Error(
-      "Vehicle details cannot be replaced while the vehicle is on a trip",
-    );
+  if (identityChanged) {
+    if (existingVehicle.availabilityStatus === "ON_TRIP") {
+      throw new Error(
+        "Vehicle details cannot be replaced while the vehicle is on a trip",
+      );
+    }
+
+    const activeBooking = await prisma.booking.findFirst({
+      where: {
+        vehicleId: id,
+        status: {
+          in: [
+            "ASSIGNED",
+            "ACCEPTED",
+            "DRIVER_ARRIVING",
+            "ARRIVED",
+            "IN_TRANSIT",
+          ],
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+
+    if (activeBooking) {
+      throw new Error(
+        "Vehicle details cannot be replaced while the vehicle is assigned to an active trip",
+      );
+    }
   }
 
   let vehicle;

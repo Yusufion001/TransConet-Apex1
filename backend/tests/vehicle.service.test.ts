@@ -2,6 +2,9 @@ import test, { mock } from "node:test";
 import assert from "node:assert/strict";
 
 const prismaMock = {
+  booking: {
+    findFirst: mock.fn<(...args: any[]) => any>(),
+  },
   vehicle: {
     create: mock.fn<(...args: any[]) => any>(),
     findUnique: mock.fn<(...args: any[]) => any>(),
@@ -32,6 +35,7 @@ const {
 
 function resetMocks() {
   for (const fn of [
+    prismaMock.booking.findFirst,
     prismaMock.vehicle.create,
     prismaMock.vehicle.findUnique,
     prismaMock.vehicle.update,
@@ -254,7 +258,42 @@ test("updateVehicle replaces core vehicle details while preserving the vehicle I
   assert.equal(publishAdminEventMock.mock.calls.length, 1);
 });
 
+test("updateVehicle rejects replacement while an active booking references the vehicle", async () => {
+  prismaMock.booking.findFirst.mock.mockImplementation(async () => null);
+  prismaMock.vehicle.findUnique.mock.mockImplementation(async () => ({
+    id: "vehicle-1",
+    transporterId: "transporter-1",
+    registrationNumber: "OLD-123",
+    vehicleType: "Truck",
+    vehicleClass: "HEAVY_TRUCK",
+    fuelType: "DIESEL",
+    vehicleBodyType: "Flatbed",
+    availabilityStatus: "AVAILABLE",
+    verificationStatus: "APPROVED",
+  }));
+
+  prismaMock.booking.findFirst.mock.mockImplementation(async () => ({
+    id: "booking-1",
+    status: "IN_TRANSIT",
+  }));
+
+  await assert.rejects(
+    updateVehicle("vehicle-1", {
+      registrationNumber: "NEW-456",
+      vehicleClass: "HEAVY_TRUCK" as any,
+    }),
+    {
+      message:
+        "Vehicle details cannot be replaced while the vehicle is assigned to an active trip",
+    },
+  );
+
+  assert.equal(prismaMock.vehicle.update.mock.calls.length, 0);
+  assert.equal(publishAdminEventMock.mock.calls.length, 0);
+});
+
 test("updateVehicle rejects replacement while the vehicle is on a trip", async () => {
+  prismaMock.booking.findFirst.mock.mockImplementation(async () => null);
   prismaMock.vehicle.findUnique.mock.mockImplementation(async () => ({
     id: "vehicle-1",
     transporterId: "transporter-1",
@@ -324,6 +363,7 @@ test("updateVehicle keeps verification unchanged for non-identity metadata chang
 });
 
 test("updateVehicle maps duplicate registration numbers to a conflict error", async () => {
+  prismaMock.booking.findFirst.mock.mockImplementation(async () => null);
   prismaMock.vehicle.findUnique.mock.mockImplementation(async () => ({
     id: "vehicle-1",
     transporterId: "transporter-1",

@@ -227,11 +227,17 @@ export async function startMarketplaceVehicleLocationTracking(
       LOCATION_TASK_NAME,
     );
 
-  if (
-    alreadyRunning &&
-    activeMarketplaceVehicleId === vehicleId
-  ) {
-    return;
+  let initialLocation: Location.LocationObject;
+
+  try {
+    initialLocation = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.High,
+    });
+  } catch (error) {
+    throw new Error(
+      "Unable to get the vehicle's current location. Turn on device location and try again.",
+      { cause: error },
+    );
   }
 
   if (alreadyRunning) {
@@ -262,12 +268,33 @@ export async function startMarketplaceVehicleLocationTracking(
       ACTIVE_MARKETPLACE_VEHICLE_KEY,
       vehicleId,
     );
+
+    await publishLocation(initialLocation);
   } catch (error) {
     await SecureStore.deleteItemAsync(
       ACTIVE_MARKETPLACE_VEHICLE_KEY,
     );
 
-    if (activeMarketplaceVehicleId) {
+    const activeBookingId =
+      await SecureStore.getItemAsync(ACTIVE_BOOKING_KEY);
+
+    if (!activeBookingId) {
+      const running =
+        await Location.hasStartedLocationUpdatesAsync(
+          LOCATION_TASK_NAME,
+        );
+
+      if (running) {
+        await Location.stopLocationUpdatesAsync(
+          LOCATION_TASK_NAME,
+        );
+      }
+    }
+
+    if (
+      activeMarketplaceVehicleId &&
+      activeMarketplaceVehicleId !== vehicleId
+    ) {
       try {
         await Location.startLocationUpdatesAsync(
           LOCATION_TASK_NAME,
