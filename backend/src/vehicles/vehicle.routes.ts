@@ -43,7 +43,20 @@ router.post(
       data: toVehicleDto(vehicle),
     });
   } catch (error) {
-    res.status(500).json({
+    const message =
+      error instanceof Error ? error.message : "Server error";
+
+    if (
+      message ===
+      "This transporter already has a registered vehicle. Update the existing vehicle instead of registering another vehicle."
+    ) {
+      return res.status(409).json({
+        success: false,
+        error: message,
+      });
+    }
+
+    return res.status(500).json({
       success: false,
       error: "Server error",
     });
@@ -143,7 +156,7 @@ router.patch("/:id/availability", async (req: AuthenticatedRequest, res) => {
     ) {
       return res.status(409).json({
         success: false,
-        error: "Server error",
+        error: message,
       });
     }
 
@@ -183,11 +196,40 @@ router.patch("/:id", async (req: AuthenticatedRequest, res) => {
       data: toVehicleDto(vehicle),
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: "Server error",
-    });
-  }
+      const message =
+        error instanceof Error ? error.message : "Server error";
+
+      if (message === "Vehicle not found") {
+        return res.status(404).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      if (message === "Access denied") {
+        return res.status(403).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      if (
+        message ===
+          "A vehicle with this registration number already exists" ||
+        message ===
+          "Vehicle details cannot be replaced while the vehicle is on a trip"
+      ) {
+        return res.status(409).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        error: "Server error",
+      });
+    }
 });
 
 

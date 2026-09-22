@@ -562,7 +562,7 @@ model AdminMfaChallenge {
 
 model Vehicle {
   id                 String @id @default(uuid())
-  transporterId      String
+  transporterId      String @unique
   registrationNumber String @unique
 
   vehicleType     String

@@ -3,6 +3,7 @@ import {
   getFleetVehicle,
   getFleetVehicles,
   updateFleetVehicle,
+  updateFleetVehicleVerification,
   type FleetVehicle,
   type FleetVehicleUpdate,
   type VehicleAvailabilityStatus,
@@ -162,8 +163,8 @@ export default function Fleet() {
         year: vehicle.year ?? undefined,
         color: vehicle.color ?? undefined,
         capacity: vehicle.capacity ?? undefined,
+        vehicleBodyType: vehicle.vehicleBodyType ?? undefined,
         availabilityStatus: vehicle.availabilityStatus,
-        verificationStatus: vehicle.verificationStatus,
       });
     } catch (error) {
       console.error("[TransConet Admin] Unable to load fleet vehicle:", error);
@@ -210,6 +211,41 @@ export default function Fleet() {
       );
     } catch {
       setError("Unable to update vehicle.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function updateVerification(
+    status: VehicleVerificationStatus,
+  ) {
+    if (!selectedVehicle) return;
+
+    try {
+      setSaving(true);
+      setError("");
+
+      const updated = await updateFleetVehicleVerification(
+        selectedVehicle.id,
+        status,
+      );
+
+      setSelectedVehicle(updated);
+
+      setVehicles((current) =>
+        current.map((vehicle) =>
+          vehicle.id === updated.id
+            ? {
+                ...vehicle,
+                ...updated,
+              }
+            : vehicle,
+        ),
+      );
+    } catch {
+      setError(
+        `Unable to change vehicle verification to ${labelize(status)}.`,
+      );
     } finally {
       setSaving(false);
     }
@@ -569,6 +605,67 @@ export default function Fleet() {
               </div>
 
               <div className="section-title" style={{ marginTop: 22 }}>
+                <h3>Vehicle Verification</h3>
+                <span>
+                  Use the dedicated verification workflow to change approval state
+                </span>
+              </div>
+
+              <div className="panel" style={{ padding: 20 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 16,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <div>
+                    <span>Current Verification Status</span>
+                    <div style={{ marginTop: 8 }}>
+                      <span
+                        className={`status-pill ${statusClass(
+                          selectedVehicle.verificationStatus,
+                        )}`}
+                      >
+                        {labelize(selectedVehicle.verificationStatus)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 8,
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    {verificationStatuses.map((status) => (
+                      <button
+                        key={status}
+                        type="button"
+                        className="text-button"
+                        disabled={
+                          saving ||
+                          selectedVehicle.verificationStatus === status
+                        }
+                        onClick={() => void updateVerification(status)}
+                      >
+                        {status === "APPROVED"
+                          ? "Approve"
+                          : status === "REJECTED"
+                            ? "Reject"
+                            : status === "SUSPENDED"
+                              ? "Suspend"
+                              : "Set Pending"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="section-title" style={{ marginTop: 22 }}>
                 <h3>Edit Vehicle</h3>
                 <span>
                   Changes are validated by the Fleet administration API
@@ -705,25 +802,6 @@ export default function Fleet() {
                     </select>
                   </div>
 
-                  <div>
-                    <span>Verification Status</span>
-                    <select
-                      value={form.verificationStatus ?? ""}
-                      onChange={(event) =>
-                        updateForm(
-                          "verificationStatus",
-                          event.target
-                            .value as VehicleVerificationStatus,
-                        )
-                      }
-                    >
-                      {verificationStatuses.map((value) => (
-                        <option key={value} value={value}>
-                          {labelize(value)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
                 </div>
 
                 <div style={{ marginTop: 18 }}>

@@ -15,6 +15,7 @@ import { useAuthStore } from "../../src/auth/auth.store";
 import {
   createVehicle,
   getTransporterVehicles,
+  updateVehicle,
   type Vehicle,
 } from "../../src/api/transporter";
 
@@ -150,29 +151,56 @@ export default function TransporterVehicleScreen() {
     try {
       setSaving(true);
 
-      const createdVehicle = await createVehicle({
-        registrationNumber: registration,
-        vehicleType,
-        fuelType,
-        vehicleBodyType,
-        vehicleClass,
-      });
+      const savedVehicle = vehicle
+        ? await updateVehicle(vehicle.id, {
+            registrationNumber: registration,
+            vehicleType,
+            fuelType,
+            vehicleBodyType,
+            vehicleClass,
+          })
+        : await createVehicle({
+            registrationNumber: registration,
+            vehicleType,
+            fuelType,
+            vehicleBodyType,
+            vehicleClass,
+          });
 
-      setVehicle(createdVehicle);
+      setVehicle(savedVehicle);
 
       Alert.alert(
-        "Vehicle submitted",
-        "Your vehicle has been registered and is now pending verification.",
+        vehicle ? "Vehicle updated" : "Vehicle submitted",
+        vehicle
+          ? "Your vehicle details have been updated and are now pending verification."
+          : "Your vehicle has been registered and is now pending verification.",
       );
     } catch (error) {
-      console.error("Failed to create vehicle:", error);
+      console.error("Failed to save vehicle:", error);
+
+      const responseData =
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as { response?: unknown }).response === "object" &&
+        (error as { response?: { data?: unknown } }).response?.data &&
+        typeof (error as { response?: { data?: unknown } }).response?.data === "object"
+          ? (error as { response: { data: Record<string, unknown> } }).response.data
+          : null;
 
       const message =
-        error instanceof Error
-          ? error.message
-          : "The vehicle could not be registered.";
+        typeof responseData?.error === "string"
+          ? responseData.error
+          : typeof responseData?.message === "string"
+            ? responseData.message
+            : error instanceof Error
+              ? error.message
+              : "The vehicle could not be saved.";
 
-      Alert.alert("Vehicle registration failed", message);
+      Alert.alert(
+        vehicle ? "Vehicle update failed" : "Vehicle registration failed",
+        message,
+      );
     } finally {
       setSaving(false);
     }
@@ -345,33 +373,34 @@ export default function TransporterVehicleScreen() {
           ) : null}
         </View>
 
-        {!vehicle ? (
+        <Pressable
+          style={[
+            styles.primaryButton,
+            saving && styles.buttonDisabled,
+          ]}
+          onPress={() => void handleSubmit()}
+          disabled={saving}
+        >
+          {saving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.primaryButtonText}>
+              {vehicle ? "Update vehicle" : "Register vehicle"}
+            </Text>
+          )}
+        </Pressable>
+
+        {vehicle ? (
           <Pressable
-            style={[
-              styles.primaryButton,
-              saving && styles.buttonDisabled,
-            ]}
-            onPress={() => void handleSubmit()}
+            style={styles.secondaryButton}
+            onPress={handleContinue}
             disabled={saving}
           >
-            {saving ? (
-              <ActivityIndicator color="#FFFFFF" />
-            ) : (
-              <Text style={styles.primaryButtonText}>
-                Register vehicle
-              </Text>
-            )}
-          </Pressable>
-        ) : (
-          <Pressable
-            style={styles.primaryButton}
-            onPress={handleContinue}
-          >
-            <Text style={styles.primaryButtonText}>
+            <Text style={styles.secondaryButtonText}>
               Continue to review
             </Text>
           </Pressable>
-        )}
+        ) : null}
 
         <Pressable
           style={styles.exitButton}
@@ -558,6 +587,21 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  secondaryButton: {
+    minHeight: 50,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#DCDCDC",
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 10,
+  },
+  secondaryButtonText: {
+    color: "#111111",
     fontSize: 15,
     fontWeight: "800",
   },

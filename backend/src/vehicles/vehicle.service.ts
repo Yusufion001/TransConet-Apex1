@@ -11,7 +11,37 @@ export async function createVehicle(data: {
   vehicleBodyType?: string;
   year?: number;
 }) {
-  const vehicle = await prisma.vehicle.create({ data });
+  const existingVehicle = await prisma.vehicle.findUnique({
+    where: { transporterId: data.transporterId },
+    select: {
+      id: true,
+      registrationNumber: true,
+    },
+  });
+
+  if (existingVehicle) {
+    throw new Error(
+      "This transporter already has a registered vehicle. Update the existing vehicle instead of registering another vehicle.",
+    );
+  }
+
+  let vehicle;
+  try {
+    vehicle = await prisma.vehicle.create({ data });
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
+      throw new Error(
+        "This transporter already has a registered vehicle. Update the existing vehicle instead of registering another vehicle.",
+      );
+    }
+
+    throw error;
+  }
 
   publishAdminEvent({
     eventType: "vehicle.created",
@@ -55,18 +85,80 @@ export async function getVehicleById(id: string) {
 export async function updateVehicle(
   id: string,
   data: {
+    registrationNumber?: string;
+    vehicleType?: string;
+    vehicleClass?: VehicleClass;
+    fuelType?: "PETROL" | "DIESEL";
+    vehicleBodyType?: string;
     make?: string;
     model?: string;
     year?: number;
     color?: string;
     capacity?: number;
-    fuelType?: "PETROL" | "DIESEL";
   },
 ) {
-  const vehicle = await prisma.vehicle.update({
+  const existingVehicle = await prisma.vehicle.findUnique({
     where: { id },
-    data,
+    select: {
+      id: true,
+      transporterId: true,
+      registrationNumber: true,
+      vehicleType: true,
+      vehicleClass: true,
+      fuelType: true,
+      vehicleBodyType: true,
+      availabilityStatus: true,
+      verificationStatus: true,
+    },
   });
+
+  if (!existingVehicle) {
+    throw new Error("Vehicle not found");
+  }
+
+  const identityChanged =
+    (data.registrationNumber !== undefined &&
+      data.registrationNumber !== existingVehicle.registrationNumber) ||
+    (data.vehicleType !== undefined &&
+      data.vehicleType !== existingVehicle.vehicleType) ||
+    (data.vehicleClass !== undefined &&
+      data.vehicleClass !== existingVehicle.vehicleClass) ||
+    (data.fuelType !== undefined &&
+      data.fuelType !== existingVehicle.fuelType) ||
+    (data.vehicleBodyType !== undefined &&
+      data.vehicleBodyType !== existingVehicle.vehicleBodyType);
+
+  if (identityChanged && existingVehicle.availabilityStatus === "ON_TRIP") {
+    throw new Error(
+      "Vehicle details cannot be replaced while the vehicle is on a trip",
+    );
+  }
+
+  let vehicle;
+  try {
+    vehicle = await prisma.vehicle.update({
+      where: { id },
+      data: {
+        ...data,
+        ...(identityChanged
+          ? {
+              verificationStatus: "PENDING",
+              availabilityStatus: "UNAVAILABLE",
+            }
+          : {}),
+      },
+    });
+  } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
+      throw new Error("A vehicle with this registration number already exists");
+    }
+    throw error;
+  }
 
   publishAdminEvent({
     eventType: "vehicle.updated",
