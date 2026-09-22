@@ -1398,29 +1398,97 @@ const styles = StyleSheet.create({
     display: "none",
   },
 
+  container: {
+    flexGrow: 1,
+    paddingHorizontal: 18,
+    paddingTop: 22,
+    paddingBottom: 50,
+    backgroundColor: "#F4F7FF",
+  },
+
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 28,
+    backgroundColor: "#F4F7FF",
+  },
+
+  back: {
+    alignSelf: "flex-start",
+    color: "#4169E1",
+    backgroundColor: "#EAF0FF",
+    borderRadius: 999,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    fontSize: 13,
+    fontWeight: "800",
+    marginBottom: 20,
+    overflow: "hidden",
+  },
+
+  eyebrow: {
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.7,
+    color: "#4169E1",
+  },
+
+  title: {
+    marginTop: 5,
+    fontSize: 30,
+    lineHeight: 36,
+    fontWeight: "900",
+    color: "#101B3A",
+  },
+
+  subtitle: {
+    marginTop: 8,
+    marginBottom: 20,
+    fontSize: 14,
+    lineHeight: 21,
+    color: "#667085",
+  },
+
   walletHubCard: {
-    marginBottom: 16,
+    marginBottom: 18,
+    padding: 17,
+    borderRadius: 21,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E1E7F5",
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 3,
   },
 
   walletHubTitle: {
-    fontSize: 13,
-    fontWeight: "800",
-    letterSpacing: 0.8,
-    marginBottom: 4,
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.3,
+    color: "#4169E1",
+    marginBottom: 5,
   },
 
   walletHubSubtitle: {
     fontSize: 13,
-    marginBottom: 12,
+    lineHeight: 19,
+    color: "#667085",
+    marginBottom: 13,
   },
 
   walletNavigationCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 16,
-    borderRadius: 14,
+    padding: 15,
+    minHeight: 76,
+    borderRadius: 15,
     borderWidth: 1,
+    borderColor: "#E1E7F5",
+    backgroundColor: "#F9FAFF",
     marginBottom: 10,
   },
 
@@ -1430,177 +1498,118 @@ const styles = StyleSheet.create({
   },
 
   walletNavigationTitle: {
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#101B3A",
     marginBottom: 4,
   },
 
   walletNavigationText: {
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 11,
+    lineHeight: 17,
+    color: "#667085",
   },
 
   walletNavigationArrow: {
     fontSize: 28,
+    lineHeight: 30,
     fontWeight: "400",
-  },
-
-  selectedTripRow: {
-    borderWidth: 2,
-  },
-
-  completedJobDetailCard: {
-    marginTop: -4,
-    marginBottom: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderRadius: 12,
-  },
-
-  completedJobDetailTitle: {
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 0.7,
-    marginBottom: 10,
-  },
-
-  detailRow: {
-    paddingVertical: 7,
-    borderBottomWidth: 1,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-
-  detailLabel: {
-    flex: 0.9,
-    fontSize: 12,
-    fontWeight: "700",
-  },
-
-  detailValue: {
-    flex: 1.4,
-    fontSize: 12,
-    textAlign: "right",
-  },
-
-
-  container: {
-    flexGrow: 1,
-    padding: 20,
-    paddingBottom: 50,
-    backgroundColor: "#F7F9FC",
-  },
-
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 30,
-  },
-
-  back: {
-    color: "#0B63CE",
-    fontSize: 16,
-    fontWeight: "700",
-    marginTop: 12,
-  },
-
-  eyebrow: {
-    marginTop: 24,
-    fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 1.6,
-    color: "#0B63CE",
-  },
-
-  title: {
-    marginTop: 5,
-    fontSize: 30,
-    fontWeight: "800",
-    color: "#101828",
-  },
-
-  subtitle: {
-    marginTop: 8,
-    fontSize: 15,
-    lineHeight: 21,
-    color: "#667085",
-    marginBottom: 22,
+    color: "#4169E1",
   },
 
   balanceCard: {
-    padding: 24,
-    borderRadius: 20,
-    backgroundColor: "#101828",
+    padding: 23,
+    borderRadius: 22,
+    backgroundColor: "#101B3A",
     marginBottom: 16,
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.17,
+    shadowRadius: 15,
+    elevation: 5,
   },
 
   balanceLabel: {
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: "900",
-    letterSpacing: 1.4,
-    color: "#12B76A",
+    letterSpacing: 1.5,
+    color: "#AEB9D5",
   },
 
   balance: {
     marginTop: 10,
     fontSize: 34,
+    lineHeight: 40,
     fontWeight: "900",
     color: "#FFFFFF",
     flexShrink: 0,
   },
 
-  currency: {
-    marginTop: 4,
-    color: "#D0D5DD",
-    fontWeight: "700",
-  },
-
   greenText: {
-    color: "#12B76A",
+    color: "#32D583",
   },
 
   greenAmount: {
-    color: "#12B76A",
+    color: "#32D583",
+  },
+
+  currency: {
+    marginTop: 5,
+    color: "#AEB9D5",
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.8,
   },
 
   summaryGrid: {
     flexDirection: "row",
-    gap: 10,
+    gap: 9,
     marginBottom: 16,
   },
 
   summaryCard: {
     flex: 1,
-    padding: 14,
-    borderRadius: 15,
+    minHeight: 78,
+    padding: 13,
+    borderRadius: 16,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E4E7EC",
+    borderColor: "#E1E7F5",
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 7,
+    elevation: 2,
   },
 
   summaryLabel: {
-    fontSize: 11,
+    fontSize: 9,
+    lineHeight: 13,
     color: "#667085",
-    fontWeight: "700",
+    fontWeight: "800",
   },
 
   summaryValue: {
     marginTop: 7,
-    fontSize: 15,
-    color: "#101828",
+    fontSize: 14,
+    lineHeight: 19,
+    color: "#101B3A",
     fontWeight: "900",
     flexShrink: 0,
   },
 
   card: {
-    padding: 20,
-    borderRadius: 18,
+    padding: 19,
+    borderRadius: 20,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E4E7EC",
+    borderColor: "#E1E7F5",
     marginBottom: 16,
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
 
   sectionHeader: {
@@ -1615,16 +1624,16 @@ const styles = StyleSheet.create({
   },
 
   section: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "900",
     letterSpacing: 1.4,
-    color: "#667085",
+    color: "#4169E1",
   },
 
   sectionDescription: {
     marginTop: 5,
     color: "#667085",
-    fontSize: 12,
+    fontSize: 11,
     lineHeight: 17,
   },
 
@@ -1632,22 +1641,25 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
     paddingHorizontal: 9,
     paddingVertical: 5,
-    borderRadius: 20,
+    borderRadius: 999,
     backgroundColor: "#ECFDF3",
-    color: "#067647",
-    fontSize: 9,
+    color: "#027A48",
+    fontSize: 8,
     fontWeight: "900",
+    letterSpacing: 0.5,
   },
 
   accountEmpty: {
-    padding: 14,
-    borderRadius: 12,
-    backgroundColor: "#F8FAFC",
+    padding: 15,
+    borderRadius: 14,
+    backgroundColor: "#F4F7FF",
+    borderWidth: 1,
+    borderColor: "#E1E7F5",
   },
 
   accountEmptyTitle: {
-    color: "#101828",
-    fontWeight: "800",
+    color: "#101B3A",
+    fontWeight: "900",
     fontSize: 14,
   },
 
@@ -1662,22 +1674,23 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    padding: 13,
+    padding: 14,
     borderWidth: 1,
-    borderColor: "#E4E7EC",
-    borderRadius: 14,
+    borderColor: "#E1E7F5",
+    borderRadius: 15,
     marginBottom: 10,
+    backgroundColor: "#FFFFFF",
   },
 
   accountRowSelected: {
-    borderColor: "#0B63CE",
-    backgroundColor: "#F5F9FF",
+    borderColor: "#4169E1",
+    backgroundColor: "#F4F7FF",
   },
 
   accountRadio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 21,
+    height: 21,
+    borderRadius: 11,
     borderWidth: 2,
     borderColor: "#98A2B3",
     alignItems: "center",
@@ -1685,13 +1698,13 @@ const styles = StyleSheet.create({
   },
 
   accountRadioDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
   },
 
   accountRadioDotSelected: {
-    backgroundColor: "#0B63CE",
+    backgroundColor: "#4169E1",
   },
 
   accountMain: {
@@ -1706,17 +1719,17 @@ const styles = StyleSheet.create({
 
   accountBank: {
     flex: 1,
-    color: "#101828",
+    color: "#101B3A",
     fontSize: 14,
     fontWeight: "900",
   },
 
   defaultBadge: {
     paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 10,
-    backgroundColor: "#EEF4FF",
-    color: "#175CD3",
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: "#EAF0FF",
+    color: "#4169E1",
     fontSize: 8,
     fontWeight: "900",
   },
@@ -1737,16 +1750,16 @@ const styles = StyleSheet.create({
 
   verifiedText: {
     marginTop: 6,
-    color: "#067647",
+    color: "#027A48",
     fontSize: 10,
-    fontWeight: "800",
+    fontWeight: "900",
   },
 
   accountStatus: {
     marginTop: 6,
     color: "#B42318",
     fontSize: 10,
-    fontWeight: "800",
+    fontWeight: "900",
   },
 
   cooldownText: {
@@ -1760,24 +1773,25 @@ const styles = StyleSheet.create({
   accountActions: {
     flexDirection: "row",
     gap: 10,
-    marginTop: 4,
+    marginTop: 5,
   },
 
   secondaryButton: {
     flex: 1,
-    minHeight: 44,
-    borderRadius: 12,
+    minHeight: 46,
+    borderRadius: 13,
     borderWidth: 1,
-    borderColor: "#0B63CE",
+    borderColor: "#4169E1",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 12,
+    backgroundColor: "#F8FAFF",
   },
 
   secondaryButtonText: {
-    color: "#0B63CE",
-    fontWeight: "800",
-    fontSize: 13,
+    color: "#4169E1",
+    fontWeight: "900",
+    fontSize: 12,
   },
 
   securityHeader: {
@@ -1788,10 +1802,10 @@ const styles = StyleSheet.create({
   },
 
   securityIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    backgroundColor: "#EEF4FF",
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "#EAF0FF",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1801,7 +1815,7 @@ const styles = StyleSheet.create({
   },
 
   securityTitle: {
-    color: "#101828",
+    color: "#101B3A",
     fontSize: 16,
     fontWeight: "900",
   },
@@ -1815,9 +1829,11 @@ const styles = StyleSheet.create({
 
   securityNote: {
     marginBottom: 14,
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: "#F2F4F7",
+    padding: 13,
+    borderRadius: 13,
+    backgroundColor: "#F4F7FF",
+    borderWidth: 1,
+    borderColor: "#DCE4F7",
   },
 
   securityNoteTitle: {
@@ -1839,8 +1855,10 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    color: "#344054",
-    fontWeight: "700",
+    color: "#475467",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.7,
     marginBottom: 7,
     marginTop: 4,
   },
@@ -1855,13 +1873,13 @@ const styles = StyleSheet.create({
 
   input: {
     borderWidth: 1,
-    borderColor: "#D0D5DD",
-    borderRadius: 12,
+    borderColor: "#D5DDF0",
+    borderRadius: 13,
     paddingHorizontal: 14,
     paddingVertical: 13,
-    fontSize: 16,
-    color: "#101828",
-    backgroundColor: "#FFFFFF",
+    fontSize: 15,
+    color: "#101B3A",
+    backgroundColor: "#F9FAFF",
     marginBottom: 12,
   },
 
@@ -1869,9 +1887,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#D0D5DD",
-    borderRadius: 12,
-    backgroundColor: "#FFFFFF",
+    borderColor: "#D5DDF0",
+    borderRadius: 13,
+    backgroundColor: "#F9FAFF",
     marginBottom: 12,
   },
 
@@ -1879,23 +1897,23 @@ const styles = StyleSheet.create({
     paddingLeft: 14,
     fontSize: 16,
     color: "#344054",
-    fontWeight: "600",
+    fontWeight: "900",
   },
 
   currencyInputField: {
     flex: 1,
     paddingHorizontal: 10,
     paddingVertical: 13,
-    fontSize: 16,
-    color: "#101828",
+    fontSize: 15,
+    color: "#101B3A",
   },
 
   selectedAccountBox: {
     padding: 14,
-    borderRadius: 13,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#D0D5DD",
-    backgroundColor: "#F8FAFC",
+    borderColor: "#D5DDF0",
+    backgroundColor: "#F8FAFF",
     marginBottom: 10,
   },
 
@@ -1908,7 +1926,7 @@ const styles = StyleSheet.create({
 
   selectedAccountBank: {
     marginTop: 6,
-    color: "#101828",
+    color: "#101B3A",
     fontSize: 15,
     fontWeight: "900",
   },
@@ -1928,8 +1946,10 @@ const styles = StyleSheet.create({
 
   noAccountBox: {
     padding: 14,
-    borderRadius: 13,
+    borderRadius: 14,
     backgroundColor: "#FFF7ED",
+    borderWidth: 1,
+    borderColor: "#FED7AA",
     marginBottom: 10,
   },
 
@@ -1952,15 +1972,16 @@ const styles = StyleSheet.create({
   },
 
   selectorOption: {
-    padding: 10,
-    borderRadius: 10,
+    padding: 11,
+    borderRadius: 11,
     borderWidth: 1,
-    borderColor: "#E4E7EC",
+    borderColor: "#E1E7F5",
+    backgroundColor: "#FFFFFF",
   },
 
   selectorOptionSelected: {
-    borderColor: "#0B63CE",
-    backgroundColor: "#F5F9FF",
+    borderColor: "#4169E1",
+    backgroundColor: "#F4F7FF",
   },
 
   selectorText: {
@@ -1970,9 +1991,9 @@ const styles = StyleSheet.create({
   },
 
   selectorTextSelected: {
-    color: "#0B63CE",
+    color: "#4169E1",
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: "900",
   },
 
   cancelButton: {
@@ -1990,9 +2011,9 @@ const styles = StyleSheet.create({
   transactionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 13,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#F2F4F7",
+    borderBottomColor: "#EEF1F7",
     gap: 12,
   },
 
@@ -2001,9 +2022,9 @@ const styles = StyleSheet.create({
   },
 
   transactionTitle: {
-    color: "#101828",
+    color: "#101B3A",
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "900",
   },
 
   transactionDescription: {
@@ -2023,7 +2044,7 @@ const styles = StyleSheet.create({
   },
 
   positive: {
-    color: "#067647",
+    color: "#027A48",
   },
 
   neutral: {
@@ -2032,17 +2053,17 @@ const styles = StyleSheet.create({
 
   status: {
     marginTop: 4,
-    fontSize: 10,
-    fontWeight: "800",
+    fontSize: 9,
+    fontWeight: "900",
     color: "#667085",
   },
 
   tripRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 13,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#F2F4F7",
+    borderBottomColor: "#EEF1F7",
     gap: 12,
   },
 
@@ -2051,9 +2072,9 @@ const styles = StyleSheet.create({
   },
 
   tripRoute: {
-    color: "#101828",
+    color: "#101B3A",
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "900",
     lineHeight: 19,
   },
 
@@ -2068,49 +2089,103 @@ const styles = StyleSheet.create({
   },
 
   tripFare: {
-    color: "#101828",
+    color: "#101B3A",
     fontSize: 14,
     fontWeight: "900",
   },
 
   tripStatus: {
     marginTop: 4,
-    color: "#067647",
-    fontSize: 10,
-    fontWeight: "800",
+    color: "#027A48",
+    fontSize: 9,
+    fontWeight: "900",
   },
 
   withdrawalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 13,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: "#F2F4F7",
+    borderBottomColor: "#EEF1F7",
   },
 
   withdrawalTitle: {
-    color: "#101828",
-    fontSize: 15,
+    color: "#101B3A",
+    fontSize: 14,
     fontWeight: "900",
+  },
+
+  completedJobDetailCard: {
+    marginTop: -4,
+    marginBottom: 12,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: "#E1E7F5",
+    borderRadius: 14,
+    backgroundColor: "#F9FAFF",
+  },
+
+  completedJobDetailTitle: {
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 0.8,
+    color: "#4169E1",
+    marginBottom: 10,
+  },
+
+  selectedTripRow: {
+    borderWidth: 2,
+    borderColor: "#4169E1",
+    backgroundColor: "#F4F7FF",
+  },
+
+  detailRow: {
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E9EDF5",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
+  detailLabel: {
+    flex: 0.9,
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#475467",
+  },
+
+  detailValue: {
+    flex: 1.4,
+    fontSize: 12,
+    textAlign: "right",
+    color: "#344054",
   },
 
   button: {
     marginTop: 14,
-    minHeight: 48,
-    borderRadius: 13,
-    backgroundColor: "#0B63CE",
+    minHeight: 50,
+    borderRadius: 14,
+    backgroundColor: "#4169E1",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 20,
+    shadowColor: "#4169E1",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.14,
+    shadowRadius: 7,
+    elevation: 3,
   },
 
   buttonText: {
     color: "#FFFFFF",
-    fontWeight: "800",
+    fontWeight: "900",
+    fontSize: 12,
+    letterSpacing: 0.5,
   },
 
   disabled: {
-    opacity: 0.6,
+    opacity: 0.55,
   },
 
   empty: {
@@ -2123,11 +2198,14 @@ const styles = StyleSheet.create({
   muted: {
     marginTop: 10,
     color: "#667085",
+    fontSize: 13,
   },
 
   error: {
     color: "#B42318",
     textAlign: "center",
     marginBottom: 15,
+    fontSize: 14,
+    lineHeight: 20,
   },
 });

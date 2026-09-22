@@ -267,215 +267,299 @@ export default function TransporterSubscription() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 20,
-    paddingBottom: 40,
-    backgroundColor: "#F5F7FA",
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 48,
+    backgroundColor: "#F4F7FF",
   },
+
   back: {
-    marginTop: 10,
-    color: "#0B63CE",
-    fontSize: 16,
-    fontWeight: "700",
+    alignSelf: "flex-start",
+    marginTop: 4,
+    paddingVertical: 8,
+    paddingRight: 12,
+    color: "#4169E1",
+    fontSize: 15,
+    fontWeight: "800",
   },
+
   eyebrow: {
-    marginTop: 28,
+    marginTop: 22,
     fontSize: 11,
     fontWeight: "900",
-    letterSpacing: 1.5,
-    color: "#0B63CE",
+    letterSpacing: 1.6,
+    color: "#4169E1",
   },
+
   title: {
     marginTop: 5,
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#101828",
+    fontSize: 29,
+    lineHeight: 35,
+    fontWeight: "900",
+    color: "#101B3A",
   },
+
   subtitle: {
     marginTop: 8,
-    marginBottom: 20,
-    fontSize: 15,
+    marginBottom: 22,
+    fontSize: 14,
     lineHeight: 21,
     color: "#667085",
   },
+
   currentCard: {
-    padding: 18,
-    borderRadius: 18,
-    backgroundColor: "#101828",
+    padding: 20,
+    borderRadius: 22,
+    backgroundColor: "#101B3A",
+    borderWidth: 1,
+    borderColor: "#1C2A50",
     marginBottom: 14,
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 16,
+    elevation: 5,
   },
+
   currentLabel: {
     fontSize: 10,
     fontWeight: "900",
-    letterSpacing: 1.2,
-    color: "#98A2B3",
+    letterSpacing: 1.5,
+    color: "#AAB6D3",
   },
+
   currentPlan: {
-    marginTop: 6,
-    fontSize: 24,
+    marginTop: 7,
+    fontSize: 27,
+    lineHeight: 32,
     fontWeight: "900",
     color: "#FFFFFF",
   },
+
   currentStatus: {
-    marginTop: 4,
+    marginTop: 6,
     fontSize: 14,
     fontWeight: "700",
-    color: "#D0D5DD",
+    color: "#DCE3F5",
   },
+
   currentPeriod: {
-    marginTop: 4,
-    fontSize: 13,
-    color: "#98A2B3",
+    marginTop: 5,
+    fontSize: 12,
+    color: "#AAB6D3",
   },
+
   infoCard: {
-    padding: 18,
-    borderRadius: 18,
+    padding: 19,
+    borderRadius: 20,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E4E7EC",
-    marginBottom: 24,
+    borderColor: "#E1E7F5",
+    marginBottom: 25,
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
   },
+
   infoTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#344054",
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#101B3A",
   },
+
   infoText: {
-    marginTop: 6,
+    marginTop: 7,
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 20,
     color: "#667085",
   },
+
   sectionTitle: {
-    marginBottom: 10,
+    marginBottom: 11,
     fontSize: 11,
     fontWeight: "900",
-    letterSpacing: 1.3,
+    letterSpacing: 1.4,
     color: "#667085",
   },
+
   planCard: {
-    padding: 18,
-    marginBottom: 14,
-    borderRadius: 18,
+    padding: 19,
+    marginBottom: 15,
+    borderRadius: 21,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E4E7EC",
+    borderColor: "#E1E7F5",
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    elevation: 2,
   },
+
   currentPlanCard: {
-    borderColor: "#0B63CE",
+    borderColor: "#4169E1",
     borderWidth: 2,
+    shadowColor: "#4169E1",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.10,
+    shadowRadius: 15,
+    elevation: 4,
   },
+
   planHeader: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
   },
+
   planTitleWrap: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
     gap: 8,
+    paddingRight: 10,
   },
+
   planName: {
     fontSize: 21,
+    lineHeight: 26,
     fontWeight: "900",
-    color: "#101828",
+    color: "#101B3A",
   },
+
   currentBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 8,
     overflow: "hidden",
     fontSize: 9,
     fontWeight: "900",
-    color: "#0B63CE",
-    backgroundColor: "#EAF2FF",
+    letterSpacing: 0.5,
+    color: "#4169E1",
+    backgroundColor: "#EEF3FF",
   },
+
   planPrice: {
-    marginLeft: 12,
+    marginLeft: 8,
     fontSize: 18,
+    lineHeight: 23,
     fontWeight: "900",
-    color: "#101828",
+    color: "#101B3A",
   },
+
   interval: {
-    marginTop: 2,
-    fontSize: 12,
+    marginTop: 3,
+    fontSize: 11,
+    fontWeight: "600",
     color: "#667085",
     textAlign: "right",
   },
+
   planDescription: {
-    marginTop: 12,
+    marginTop: 14,
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 21,
     color: "#475467",
   },
+
   benefits: {
-    marginTop: 12,
+    marginTop: 13,
+    paddingTop: 2,
   },
+
   benefit: {
-    marginTop: 5,
+    marginTop: 6,
     fontSize: 13,
     lineHeight: 19,
     color: "#344054",
   },
+
   noBenefits: {
-    marginTop: 12,
+    marginTop: 13,
     fontSize: 13,
+    lineHeight: 19,
     color: "#98A2B3",
   },
+
   planButton: {
-    marginTop: 16,
-    minHeight: 48,
+    marginTop: 18,
+    minHeight: 50,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#4169E1",
+    shadowColor: "#4169E1",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.18,
+    shadowRadius: 9,
+    elevation: 3,
+  },
+
+  disabledButton: {
+    backgroundColor: "#A7B0C2",
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+
+  buttonPressed: {
+    opacity: 0.82,
+    transform: [{ scale: 0.985 }],
+  },
+
+  planButtonText: {
+    fontSize: 14,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+    color: "#FFFFFF",
+  },
+
+  message: {
+    paddingVertical: 22,
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#667085",
+  },
+
+  errorCard: {
+    padding: 18,
+    borderRadius: 18,
+    backgroundColor: "#FFF6F5",
+    borderWidth: 1,
+    borderColor: "#F3C7C2",
+  },
+
+  errorText: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: "#B42318",
+  },
+
+  retryButton: {
+    marginTop: 13,
+    alignSelf: "flex-start",
+    minHeight: 44,
+    paddingHorizontal: 18,
+    paddingVertical: 11,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#0B63CE",
+    backgroundColor: "#4169E1",
   },
-  disabledButton: {
-    backgroundColor: "#98A2B3",
-  },
-  buttonPressed: {
-    opacity: 0.75,
-  },
-  planButtonText: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-  message: {
-    paddingVertical: 20,
-    fontSize: 14,
-    color: "#667085",
-  },
-  errorCard: {
-    padding: 18,
-    borderRadius: 16,
-    backgroundColor: "#FFF4F4",
-    borderWidth: 1,
-    borderColor: "#FECACA",
-  },
-  errorText: {
-    fontSize: 14,
-    lineHeight: 20,
-    color: "#B42318",
-  },
-  retryButton: {
-    marginTop: 12,
-    alignSelf: "flex-start",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: "#0B63CE",
-  },
+
   retryText: {
     fontSize: 13,
-    fontWeight: "800",
+    fontWeight: "900",
     color: "#FFFFFF",
   },
+
   inlineError: {
-    marginTop: 4,
+    marginTop: 3,
     marginBottom: 12,
     fontSize: 13,
+    lineHeight: 19,
     color: "#B42318",
   },
 });

@@ -245,182 +245,248 @@ function TransporterSupport() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
-    paddingBottom: 40,
-    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 44,
+    backgroundColor: "#F4F7FF",
   },
+
   eyebrow: {
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 1.2,
-    color: "#0B63CE",
-  },
-  title: {
-    marginTop: 4,
-    fontSize: 28,
+    fontSize: 10,
     fontWeight: "900",
-    color: "#101828",
+    letterSpacing: 1.6,
+    color: "#4169E1",
   },
+
+  title: {
+    marginTop: 5,
+    fontSize: 29,
+    lineHeight: 35,
+    fontWeight: "900",
+    color: "#101B3A",
+  },
+
   subtitle: {
     marginTop: 8,
-    marginBottom: 18,
+    marginBottom: 22,
     fontSize: 14,
     lineHeight: 21,
     color: "#667085",
   },
+
   card: {
-    padding: 18,
-    borderRadius: 16,
+    padding: 19,
+    borderRadius: 21,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#EAECF0",
+    borderColor: "#E1E7F5",
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    elevation: 2,
   },
+
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "800",
-    color: "#101828",
+    lineHeight: 24,
+    fontWeight: "900",
+    color: "#101B3A",
   },
+
   label: {
-    marginTop: 16,
+    marginTop: 17,
     marginBottom: 7,
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 0.8,
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.1,
     color: "#667085",
   },
+
   input: {
-    minHeight: 48,
-    paddingHorizontal: 13,
+    minHeight: 51,
+    paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: "#D0D5DD",
-    borderRadius: 10,
-    backgroundColor: "#FFFFFF",
+    borderColor: "#D9E0EF",
+    borderRadius: 13,
+    backgroundColor: "#FBFCFF",
     fontSize: 14,
-    color: "#101828",
+    color: "#101B3A",
   },
+
   textArea: {
-    minHeight: 120,
-    paddingTop: 12,
+    minHeight: 125,
+    paddingTop: 13,
+    paddingBottom: 13,
   },
+
   priorityRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
   },
+
   priorityButton: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 13,
     paddingVertical: 9,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "#D0D5DD",
+    borderColor: "#D9E0EF",
     backgroundColor: "#FFFFFF",
   },
+
   priorityButtonActive: {
-    borderColor: "#0B63CE",
-    backgroundColor: "#EAF2FF",
+    borderColor: "#4169E1",
+    backgroundColor: "#EEF3FF",
   },
+
   priorityText: {
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "900",
+    letterSpacing: 0.15,
     color: "#475467",
   },
+
   priorityTextActive: {
-    color: "#0B63CE",
+    color: "#4169E1",
   },
+
   submitButton: {
-    minHeight: 50,
-    marginTop: 20,
+    minHeight: 52,
+    marginTop: 21,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 10,
-    backgroundColor: "#0B63CE",
+    backgroundColor: "#4169E1",
+    shadowColor: "#4169E1",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 3,
   },
+
   submitText: {
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "900",
+    letterSpacing: 0.15,
     color: "#FFFFFF",
   },
+
   disabled: {
-    opacity: 0.6,
+    opacity: 0.55,
+    shadowOpacity: 0,
+    elevation: 0,
   },
+
   historyHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginTop: 28,
-    marginBottom: 12,
+    gap: 9,
+    marginTop: 29,
+    marginBottom: 13,
   },
+
   count: {
-    minWidth: 26,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
+    minWidth: 28,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 999,
     textAlign: "center",
     overflow: "hidden",
-    backgroundColor: "#EAF2FF",
-    color: "#0B63CE",
+    backgroundColor: "#EEF3FF",
+    color: "#4169E1",
     fontSize: 12,
-    fontWeight: "800",
+    fontWeight: "900",
   },
+
   ticketCard: {
-    marginBottom: 12,
-    padding: 16,
-    borderRadius: 14,
+    marginBottom: 13,
+    padding: 17,
+    borderRadius: 18,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#EAECF0",
+    borderColor: "#E1E7F5",
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.045,
+    shadowRadius: 11,
+    elevation: 2,
   },
+
   ticketHeader: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    gap: 10,
+    gap: 12,
   },
+
   ticketSubject: {
     flex: 1,
     fontSize: 15,
-    fontWeight: "800",
-    color: "#101828",
+    lineHeight: 20,
+    fontWeight: "900",
+    color: "#101B3A",
   },
+
   status: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: "#0B63CE",
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 8,
+    overflow: "hidden",
+    backgroundColor: "#EEF3FF",
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 0.5,
+    color: "#4169E1",
   },
+
   ticketCategory: {
-    marginTop: 6,
+    marginTop: 7,
     fontSize: 11,
-    fontWeight: "700",
+    lineHeight: 17,
+    fontWeight: "800",
     color: "#667085",
   },
+
   ticketDescription: {
     marginTop: 10,
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 20,
     color: "#475467",
   },
+
   date: {
-    marginTop: 10,
+    marginTop: 11,
     fontSize: 11,
     color: "#98A2B3",
   },
+
   emptyCard: {
-    padding: 24,
+    paddingHorizontal: 22,
+    paddingVertical: 27,
     alignItems: "center",
-    borderRadius: 14,
+    borderRadius: 19,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#EAECF0",
+    borderColor: "#E1E7F5",
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 1,
   },
+
   emptyTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#101828",
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#101B3A",
   },
+
   emptyText: {
-    marginTop: 5,
+    marginTop: 6,
     textAlign: "center",
     fontSize: 13,
+    lineHeight: 19,
     color: "#667085",
   },
 });
@@ -488,59 +554,80 @@ function TransporterSupportDisputes() {
 const combinedStyles = TabStyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F5F7FA",
+    backgroundColor: "#F4F7FF",
   },
+
   header: {
     paddingHorizontal: 20,
     paddingTop: 18,
-    paddingBottom: 12,
+    paddingBottom: 15,
     backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E8ECF5",
   },
+
   eyebrow: {
     fontSize: 10,
     fontWeight: "900",
-    letterSpacing: 1.4,
-    color: "#0B63CE",
+    letterSpacing: 1.5,
+    color: "#4169E1",
   },
+
   title: {
+    marginTop: 5,
     fontSize: 28,
-    fontWeight: "800",
-    color: "#101828",
-    marginTop: 4,
+    lineHeight: 34,
+    fontWeight: "900",
+    color: "#101B3A",
   },
+
   subtitle: {
-    fontSize: 14,
+    marginTop: 6,
+    fontSize: 13,
     lineHeight: 20,
     color: "#667085",
-    marginTop: 5,
   },
+
   tabs: {
     flexDirection: "row",
     marginHorizontal: 20,
-    marginTop: 12,
-    marginBottom: 4,
+    marginTop: 14,
+    marginBottom: 5,
     padding: 4,
-    borderRadius: 12,
-    backgroundColor: "#EAECF0",
+    borderRadius: 14,
+    backgroundColor: "#E8ECF5",
+    borderWidth: 1,
+    borderColor: "#DDE4F2",
   },
+
   tab: {
     flex: 1,
+    minHeight: 44,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 42,
-    borderRadius: 9,
+    borderRadius: 10,
   },
+
   activeTab: {
     backgroundColor: "#FFFFFF",
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 5,
+    elevation: 1,
   },
+
   tabText: {
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#667085",
   },
+
   activeTabText: {
-    color: "#101828",
+    color: "#4169E1",
+    fontWeight: "900",
   },
+
   content: {
     flex: 1,
   },

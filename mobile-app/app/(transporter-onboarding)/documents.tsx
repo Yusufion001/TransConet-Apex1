@@ -733,106 +733,143 @@ export default function TransporterDocumentsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F4F7FF",
   },
+
   container: {
     width: "100%",
     maxWidth: 560,
     alignSelf: "center",
-    paddingHorizontal: 24,
-    paddingTop: 28,
-    paddingBottom: 48,
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 52,
   },
+
   header: {
-    marginBottom: 24,
-  },
-  eyebrow: {
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 2,
-    color: "#111111",
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: "800",
-    color: "#111111",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 15,
-    lineHeight: 22,
-    color: "#666666",
-  },
-  progressRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 8,
-  },
-  progressActive: {
-    flex: 1,
-    height: 5,
-    borderRadius: 999,
-    backgroundColor: "#111111",
-  },
-  progressInactive: {
-    flex: 1,
-    height: 5,
-    borderRadius: 999,
-    backgroundColor: "#E5E5E5",
-  },
-  progressText: {
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1,
-    color: "#777777",
-    marginBottom: 24,
-  },
-  notice: {
-    borderWidth: 1,
-    borderColor: "#D9D9D9",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 18,
-    backgroundColor: "#FAFAFA",
-  },
-  noticeTitle: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#111111",
-    marginBottom: 6,
-  },
-  noticeText: {
-    fontSize: 13,
-    lineHeight: 20,
-    color: "#555555",
-  },
-  card: {
-    borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 18,
-  },
-  cardTitle: {
-    fontSize: 19,
-    fontWeight: "800",
-    color: "#111111",
-    marginBottom: 7,
-  },
-  cardDescription: {
-    fontSize: 13,
-    lineHeight: 20,
-    color: "#666666",
-    marginBottom: 18,
-  },
-  fieldBlock: {
-    borderTopWidth: 1,
-    borderTopColor: "#EEEEEE",
-    paddingTop: 17,
-    marginTop: 4,
     marginBottom: 20,
   },
+
+  eyebrow: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: "#E7EDFF",
+    overflow: "hidden",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 2.2,
+    color: "#4169E1",
+    marginBottom: 15,
+  },
+
+  title: {
+    fontSize: 30,
+    lineHeight: 38,
+    fontWeight: "900",
+    color: "#101B3A",
+    letterSpacing: -0.5,
+    marginBottom: 9,
+  },
+
+  subtitle: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: "#667085",
+  },
+
+  progressRow: {
+    flexDirection: "row",
+    gap: 7,
+    marginBottom: 9,
+  },
+
+  progressActive: {
+    flex: 1,
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: "#4169E1",
+  },
+
+  progressInactive: {
+    flex: 1,
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: "#D8E0F2",
+  },
+
+  progressText: {
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.3,
+    color: "#4169E1",
+    marginBottom: 20,
+  },
+
+  notice: {
+    borderWidth: 1,
+    borderColor: "#D9E3FA",
+    borderRadius: 18,
+    paddingHorizontal: 17,
+    paddingVertical: 16,
+    marginBottom: 16,
+    backgroundColor: "#EEF3FF",
+  },
+
+  noticeTitle: {
+    fontSize: 13,
+    fontWeight: "900",
+    color: "#203A78",
+    marginBottom: 6,
+  },
+
+  noticeText: {
+    fontSize: 12.5,
+    lineHeight: 20,
+    color: "#5F6F8F",
+  },
+
+  card: {
+    borderWidth: 1,
+    borderColor: "#E1E7F2",
+    borderRadius: 22,
+    paddingHorizontal: 17,
+    paddingVertical: 19,
+    marginBottom: 16,
+    backgroundColor: "#FFFFFF",
+    shadowColor: "#101B3A",
+    shadowOffset: {
+      width: 0,
+      height: 7,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 3,
+  },
+
+  cardTitle: {
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: "900",
+    color: "#101B3A",
+    marginBottom: 7,
+  },
+
+  cardDescription: {
+    fontSize: 12.5,
+    lineHeight: 20,
+    color: "#667085",
+    marginBottom: 17,
+  },
+
+  fieldBlock: {
+    borderTopWidth: 1,
+    borderTopColor: "#EDF0F6",
+    paddingTop: 17,
+    marginTop: 5,
+    marginBottom: 18,
+  },
+
   labelRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -840,138 +877,199 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 9,
   },
+
   inputLabel: {
     flex: 1,
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 0.6,
-    color: "#222222",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.9,
+    color: "#52617B",
   },
+
   input: {
+    height: 54,
     borderWidth: 1,
-    borderColor: "#D9D9D9",
-    borderRadius: 11,
-    height: 50,
-    paddingHorizontal: 14,
-    fontSize: 16,
-    color: "#111111",
-    backgroundColor: "#FFFFFF",
+    borderColor: "#D8E0EE",
+    borderRadius: 14,
+    paddingHorizontal: 15,
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#101B3A",
+    backgroundColor: "#FBFCFF",
   },
+
   helper: {
-    fontSize: 12,
+    fontSize: 11.5,
     lineHeight: 18,
-    color: "#777777",
+    color: "#7A8498",
     marginTop: 7,
     marginBottom: 12,
   },
+
   statusBadge: {
     paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: 999,
-    backgroundColor: "#EEEEEE",
+    backgroundColor: "#EEF1F6",
+    borderWidth: 1,
+    borderColor: "#E1E6EF",
   },
+
   statusApproved: {
-    backgroundColor: "#E8F5E9",
+    backgroundColor: "#EAF8F0",
+    borderColor: "#BCE6CE",
   },
+
   statusPending: {
-    backgroundColor: "#FFF4D6",
+    backgroundColor: "#FFF6DD",
+    borderColor: "#F1DFA6",
   },
+
   statusRejected: {
     backgroundColor: "#FDECEC",
+    borderColor: "#F3C8C8",
   },
+
   statusText: {
-    fontSize: 9,
-    fontWeight: "800",
-    letterSpacing: 0.5,
-    color: "#333333",
+    fontSize: 8.5,
+    fontWeight: "900",
+    letterSpacing: 0.55,
+    color: "#344054",
   },
+
   actionButton: {
-    minHeight: 46,
-    borderRadius: 11,
-    backgroundColor: "#111111",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-  },
-  uploadButton: {
     minHeight: 48,
-    borderRadius: 11,
-    backgroundColor: "#111111",
+    borderRadius: 13,
+    backgroundColor: "#4169E1",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 16,
-    marginTop: 14,
+    paddingHorizontal: 15,
+    shadowColor: "#4169E1",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 2,
   },
+
+  uploadButton: {
+    minHeight: 50,
+    borderRadius: 13,
+    backgroundColor: "#4169E1",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 15,
+    marginTop: 15,
+    shadowColor: "#4169E1",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+
   actionButtonText: {
     color: "#FFFFFF",
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 0.5,
+    fontSize: 11.5,
+    fontWeight: "900",
+    letterSpacing: 0.55,
     textAlign: "center",
   },
+
   disabledButton: {
-    opacity: 0.45,
+    opacity: 0.48,
   },
+
   vehicleStatusRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
+    paddingVertical: 3,
   },
+
   documentName: {
     flex: 1,
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#222222",
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#101B3A",
   },
+
   rejectionText: {
     color: "#B42318",
     fontSize: 12,
     lineHeight: 18,
     marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 10,
+    backgroundColor: "#FFF2F2",
   },
+
   requirementCard: {
     borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 18,
+    borderColor: "#DCE5FA",
+    borderRadius: 20,
+    paddingHorizontal: 17,
+    paddingVertical: 18,
+    marginBottom: 17,
+    backgroundColor: "#F8FAFF",
   },
+
   requirementTitle: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#111111",
-    marginBottom: 12,
+    fontSize: 15,
+    fontWeight: "900",
+    color: "#203A78",
+    marginBottom: 13,
   },
+
   requirementItem: {
-    fontSize: 14,
-    color: "#444444",
-    marginBottom: 9,
+    fontSize: 13,
+    lineHeight: 20,
+    color: "#52617B",
+    marginBottom: 8,
+    fontWeight: "600",
   },
+
   continueButton: {
-    minHeight: 52,
-    borderRadius: 12,
-    backgroundColor: "#111111",
+    minHeight: 56,
+    borderRadius: 15,
+    backgroundColor: "#4169E1",
     alignItems: "center",
     justifyContent: "center",
     marginTop: 2,
+    shadowColor: "#4169E1",
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4,
   },
+
   continueButtonText: {
     color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "800",
-    letterSpacing: 0.7,
+    fontSize: 12.5,
+    fontWeight: "900",
+    letterSpacing: 0.8,
   },
+
   exitButton: {
     minHeight: 48,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8,
+    marginTop: 6,
   },
+
   exitButtonText: {
-    color: "#666666",
+    color: "#667085",
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "800",
     letterSpacing: 0.5,
   },
 });
