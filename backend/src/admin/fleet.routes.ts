@@ -35,12 +35,7 @@ const fleetVehicleUpdateSchema = z.object({
     "UNAVAILABLE",
     "ON_TRIP",
   ]).optional(),
-  verificationStatus: z.enum([
-    "PENDING",
-    "APPROVED",
-    "REJECTED",
-    "SUSPENDED",
-  ]).optional(),
+
 }).strict();
 
 const router = Router();
@@ -154,6 +149,16 @@ router.patch("/:id", async (req: AuthenticatedRequest, res) => {
 
     if (message === "Vehicle not found") {
       return res.status(404).json({
+        success: false,
+        error: message,
+      });
+    }
+
+    if (
+      message ===
+      "Vehicle details cannot be replaced while the vehicle is on a trip"
+    ) {
+      return res.status(409).json({
         success: false,
         error: message,
       });

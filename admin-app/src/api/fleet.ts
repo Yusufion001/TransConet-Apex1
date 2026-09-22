@@ -62,7 +62,6 @@ export type FleetVehicleUpdate = {
   color?: string;
   capacity?: number;
   availabilityStatus?: VehicleAvailabilityStatus;
-  verificationStatus?: VehicleVerificationStatus;
 };
 
 type ApiResponse<T> = {
@@ -97,5 +96,17 @@ export async function updateFleetVehicle(
     data,
   );
 
+  return response.data.data;
+}
+
+
+export async function updateFleetVehicleVerification(
+  id: string,
+  status: VehicleVerificationStatus,
+): Promise<FleetVehicle> {
+  const response = await apiClient.patch<ApiResponse<FleetVehicle>>(
+    `/admin/fleet/${id}/verification`,
+    { status },
+  );
   return response.data.data;
 }

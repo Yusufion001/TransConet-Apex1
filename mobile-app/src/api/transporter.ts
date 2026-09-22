@@ -288,13 +288,18 @@ export async function updateVehicleAvailability(
 export async function updateVehicle(
   vehicleId: string,
   input: {
+    registrationNumber?: string;
+    vehicleType?: string;
+    vehicleClass?: string;
+    fuelType?: "PETROL" | "DIESEL";
+    vehicleBodyType?: string;
     make?: string;
     model?: string;
     year?: number;
     color?: string;
     capacity?: number;
   },
-) {
+): Promise<Vehicle> {
   const response = await apiClient.patch<ApiResponse<Vehicle>>(
     `/vehicles/${vehicleId}`,
     input,

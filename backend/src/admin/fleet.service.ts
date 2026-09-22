@@ -50,7 +50,6 @@ export async function updateAdminVehicle(
     color?: string;
     capacity?: number;
     availabilityStatus?: any;
-    verificationStatus?: any;
   },
 ) {
   const existing = await prisma.vehicle.findUnique({
@@ -61,10 +60,36 @@ export async function updateAdminVehicle(
     throw new Error("Vehicle not found");
   }
 
+  const identityChanged =
+    (data.registrationNumber !== undefined &&
+      data.registrationNumber !== existing.registrationNumber) ||
+    (data.vehicleType !== undefined &&
+      data.vehicleType !== existing.vehicleType) ||
+    (data.vehicleClass !== undefined &&
+      data.vehicleClass !== existing.vehicleClass) ||
+    (data.vehicleBodyType !== undefined &&
+      data.vehicleBodyType !== existing.vehicleBodyType);
+
+  if (identityChanged && existing.availabilityStatus === "ON_TRIP") {
+    throw new Error(
+      "Vehicle details cannot be replaced while the vehicle is on a trip",
+    );
+  }
+
+  const updateData = {
+    ...data,
+    ...(identityChanged
+      ? {
+          verificationStatus: "PENDING" as const,
+          availabilityStatus: "UNAVAILABLE" as const,
+        }
+      : {}),
+  };
+
   const vehicle = await prisma.$transaction(async (tx) => {
     const updated = await tx.vehicle.update({
       where: { id: vehicleId },
-      data,
+      data: updateData,
     });
 
     await tx.auditLog.create({
@@ -74,13 +99,18 @@ export async function updateAdminVehicle(
         newValue: {
           vehicleId: updated.id,
           changes: data,
+          verificationReset: identityChanged,
+          resultingVerificationStatus: updated.verificationStatus,
+          resultingAvailabilityStatus: updated.availabilityStatus,
         },
         previousValue: {
           vehicleId: existing.id,
           registrationNumber: existing.registrationNumber,
           vehicleType: existing.vehicleType,
           vehicleClass: existing.vehicleClass,
+          vehicleBodyType: existing.vehicleBodyType,
           availabilityStatus: existing.availabilityStatus,
+          verificationStatus: existing.verificationStatus,
         },
       },
     });

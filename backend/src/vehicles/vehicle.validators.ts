@@ -19,10 +19,23 @@ export const createVehicleSchema = z.object({
 });
 
 export const updateVehicleSchema = z.object({
+  registrationNumber: z.string().trim().min(1).max(50).optional(),
+  vehicleType: z.string().trim().min(1).max(100).optional(),
+  vehicleClass: z.enum([
+    "MINI_TRUCK",
+    "LIGHT_TRUCK",
+    "MEDIUM_TRUCK",
+    "HEAVY_TRUCK",
+    "CONTAINER_TRUCK",
+    "REFRIGERATED_TRUCK",
+    "TANKER",
+    "SPECIALIZED",
+  ]).optional(),
+  fuelType: z.enum(["PETROL", "DIESEL"]).optional(),
+  vehicleBodyType: z.string().trim().min(1).max(100).optional(),
   make: z.string().trim().min(1).max(100).optional(),
   model: z.string().trim().min(1).max(100).optional(),
   year: z.coerce.number().int().min(1900).max(2100).optional(),
-  fuelType: z.enum(["PETROL", "DIESEL"]).optional(),
   color: z.string().trim().min(1).max(50).optional(),
   capacity: z.coerce.number().finite().positive().optional(),
 });
