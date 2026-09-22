@@ -511,194 +511,322 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F4F7FF",
   },
+
   keyboard: {
     flex: 1,
   },
+
   container: {
     flexGrow: 1,
-    paddingHorizontal: 22,
-    paddingTop: 28,
-    paddingBottom: 24,
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 32,
   },
+
   eyebrow: {
-    fontSize: 11,
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: "#E7EDFF",
+    color: "#4169E1",
+    fontSize: 10,
     fontWeight: "900",
     letterSpacing: 2,
-    color: "#777777",
   },
+
   title: {
-    marginTop: 8,
-    fontSize: 30,
-    lineHeight: 36,
+    marginTop: 17,
+    color: "#101B3A",
+    fontSize: 31,
+    lineHeight: 38,
     fontWeight: "900",
-    color: "#111111",
+    letterSpacing: -0.7,
   },
+
   subtitle: {
-    marginTop: 10,
-    fontSize: 16,
-    lineHeight: 24,
-    color: "#666666",
+    marginTop: 9,
+    maxWidth: 370,
+    color: "#667085",
+    fontSize: 15,
+    lineHeight: 22,
   },
+
   form: {
     marginTop: 22,
-  },
-  label: {
-    marginTop: 14,
-    marginBottom: 7,
-    fontSize: 11,
-    fontWeight: "800",
-    letterSpacing: 1.2,
-    color: "#555555",
-  },
-  input: {
-    minHeight: 52,
+    paddingHorizontal: 17,
+    paddingTop: 6,
+    paddingBottom: 18,
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#D8D8D8",
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: "#111111",
-    backgroundColor: "#FAFAFA",
+    borderColor: "#E1E7F4",
+
+    shadowColor: "#173B8F",
+    shadowOpacity: 0.10,
+    shadowRadius: 20,
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    elevation: 5,
   },
+
+  label: {
+    marginTop: 16,
+    marginBottom: 7,
+    color: "#344054",
+    fontSize: 10,
+    lineHeight: 14,
+    fontWeight: "900",
+    letterSpacing: 1.05,
+  },
+
+  input: {
+    minHeight: 55,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "#D8E0EF",
+    borderRadius: 13,
+    backgroundColor: "#FBFCFF",
+    color: "#172033",
+    fontSize: 16,
+
+    shadowColor: "#102B68",
+    shadowOpacity: 0.025,
+    shadowRadius: 4,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    elevation: 1,
+  },
+
   multilineInput: {
-    minHeight: 90,
-    paddingTop: 14,
+    minHeight: 94,
+    paddingTop: 15,
     textAlignVertical: "top",
   },
+
   roleRow: {
-    gap: 10,
+    gap: 11,
   },
+
   roleButton: {
+    minHeight: 79,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    justifyContent: "center",
+
     borderWidth: 1,
-    borderColor: "#D8D8D8",
-    borderRadius: 10,
-    padding: 15,
-    backgroundColor: "#FAFAFA",
+    borderColor: "#D8E0EF",
+    borderRadius: 15,
+    backgroundColor: "#FBFCFF",
   },
+
   roleButtonSelected: {
-    borderColor: "#111111",
-    backgroundColor: "#111111",
+    borderColor: "#4169E1",
+    backgroundColor: "#4169E1",
+
+    shadowColor: "#4169E1",
+    shadowOpacity: 0.22,
+    shadowRadius: 11,
+    shadowOffset: {
+      width: 0,
+      height: 5,
+    },
+    elevation: 4,
   },
+
   roleTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#111111",
+    color: "#172033",
+    fontSize: 16,
+    lineHeight: 21,
+    fontWeight: "900",
   },
+
   roleTitleSelected: {
     color: "#FFFFFF",
   },
+
   roleText: {
     marginTop: 4,
+    color: "#667085",
     fontSize: 13,
     lineHeight: 19,
-    color: "#777777",
   },
+
   roleTextSelected: {
-    color: "#D0D0D0",
+    color: "#E9EEFF",
   },
+
   sectionTitle: {
-    marginTop: 26,
-    fontSize: 18,
+    marginTop: 28,
+    marginBottom: 2,
+    color: "#101B3A",
+    fontSize: 19,
+    lineHeight: 25,
     fontWeight: "900",
-    color: "#111111",
+    letterSpacing: -0.2,
   },
+
   choiceRow: {
     flexDirection: "row",
     gap: 10,
   },
+
   choiceButton: {
     flex: 1,
-    minHeight: 48,
-    borderWidth: 1,
-    borderColor: "#D8D8D8",
-    borderRadius: 10,
+    minHeight: 50,
+    paddingHorizontal: 10,
+
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 10,
-    backgroundColor: "#FAFAFA",
+
+    borderWidth: 1,
+    borderColor: "#D8E0EF",
+    borderRadius: 13,
+    backgroundColor: "#FBFCFF",
   },
+
   choiceButtonSelected: {
-    borderColor: "#111111",
-    backgroundColor: "#111111",
+    borderColor: "#4169E1",
+    backgroundColor: "#4169E1",
+
+    shadowColor: "#4169E1",
+    shadowOpacity: 0.16,
+    shadowRadius: 8,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    elevation: 2,
   },
+
   choiceText: {
+    color: "#344054",
     fontSize: 14,
-    fontWeight: "700",
-    color: "#333333",
+    fontWeight: "800",
     textAlign: "center",
   },
+
   choiceTextSelected: {
     color: "#FFFFFF",
   },
+
   identityNote: {
-    marginTop: 12,
+    marginTop: 13,
+    paddingHorizontal: 13,
+    paddingVertical: 12,
+
+    borderRadius: 11,
+    backgroundColor: "#F3F6FF",
+
+    color: "#667085",
     fontSize: 12,
     lineHeight: 18,
-    color: "#777777",
   },
+
   consentRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginTop: 18,
-    gap: 10,
+    gap: 11,
+    marginTop: 19,
   },
+
   checkbox: {
-    width: 22,
-    height: 22,
-    borderWidth: 1,
-    borderColor: "#AAAAAA",
-    borderRadius: 5,
+    width: 23,
+    height: 23,
+    marginTop: 1,
+
     alignItems: "center",
     justifyContent: "center",
+
+    borderWidth: 1.5,
+    borderColor: "#B8C2D6",
+    borderRadius: 6,
     backgroundColor: "#FFFFFF",
   },
+
   checkboxSelected: {
-    borderColor: "#111111",
-    backgroundColor: "#111111",
+    borderColor: "#4169E1",
+    backgroundColor: "#4169E1",
+
+    shadowColor: "#4169E1",
+    shadowOpacity: 0.18,
+    shadowRadius: 5,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    elevation: 2,
   },
+
   checkmark: {
     color: "#FFFFFF",
     fontSize: 15,
+    lineHeight: 18,
     fontWeight: "900",
   },
+
   consentText: {
     flex: 1,
+    color: "#475467",
     fontSize: 13,
     lineHeight: 19,
-    color: "#555555",
   },
+
   primaryButton: {
-    minHeight: 56,
-    marginTop: 22,
-    borderRadius: 12,
-    backgroundColor: "#111111",
+    minHeight: 57,
+    marginTop: 24,
+
     alignItems: "center",
     justifyContent: "center",
+
+    borderRadius: 14,
+    backgroundColor: "#4169E1",
+
+    shadowColor: "#4169E1",
+    shadowOpacity: 0.28,
+    shadowRadius: 13,
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    elevation: 5,
   },
+
   disabledButton: {
     opacity: 0.65,
   },
+
   primaryText: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "700",
+    lineHeight: 20,
+    fontWeight: "900",
+    letterSpacing: 0.1,
   },
+
   bottom: {
     flexDirection: "row",
-    justifyContent: "center",
     alignItems: "center",
-    paddingTop: 28,
-    paddingBottom: 12,
+    justifyContent: "center",
+
+    paddingTop: 25,
+    paddingBottom: 8,
   },
+
   bottomText: {
-    color: "#777777",
+    color: "#667085",
     fontSize: 14,
   },
+
   signInText: {
-    color: "#111111",
+    color: "#4169E1",
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "900",
   },
 });

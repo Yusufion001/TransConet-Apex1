@@ -779,145 +779,192 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     paddingHorizontal: 20,
-    paddingTop: 58,
-    paddingBottom: 40,
-    backgroundColor: "#F5F7FA",
+    paddingTop: 30,
+    paddingBottom: 48,
+    backgroundColor: "#F4F7FF",
   },
+
   center: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
-    backgroundColor: "#F5F7FA",
+    backgroundColor: "#F4F7FF",
   },
+
   loadingText: {
     marginTop: 12,
     color: "#667085",
     fontSize: 14,
+    fontWeight: "600",
   },
+
   errorTitle: {
     textAlign: "center",
-    fontSize: 19,
-    fontWeight: "800",
-    color: "#101828",
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#101B3A",
   },
+
   errorText: {
     marginTop: 8,
     textAlign: "center",
     lineHeight: 21,
+    fontSize: 14,
     color: "#667085",
   },
+
   eyebrow: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "900",
     letterSpacing: 1.6,
-    color: "#0B63CE",
+    color: "#4169E1",
   },
+
   title: {
     marginTop: 5,
     fontSize: 30,
-    lineHeight: 36,
-    fontWeight: "800",
-    color: "#101828",
+    lineHeight: 37,
+    fontWeight: "900",
+    color: "#101B3A",
   },
+
   subtitle: {
     marginTop: 8,
     marginBottom: 22,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 21,
     color: "#667085",
   },
+
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
     marginBottom: 16,
   },
+
   statCard: {
     width: "48%",
-    minHeight: 82,
-    padding: 15,
-    borderRadius: 15,
+    minHeight: 88,
+    padding: 16,
+    borderRadius: 18,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E4E7EC",
+    borderColor: "#E1E7F5",
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
   },
+
   statValue: {
-    fontSize: 25,
-    fontWeight: "800",
-    color: "#101828",
+    fontSize: 27,
+    lineHeight: 31,
+    fontWeight: "900",
+    color: "#101B3A",
   },
+
   statLabel: {
-    marginTop: 4,
+    marginTop: 5,
     fontSize: 9,
     fontWeight: "900",
     letterSpacing: 1.1,
     color: "#98A2B3",
   },
+
   primaryButton: {
-    minHeight: 50,
-    borderRadius: 13,
+    minHeight: 52,
+    marginBottom: 17,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#0B63CE",
-    marginBottom: 16,
+    backgroundColor: "#4169E1",
+    shadowColor: "#4169E1",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 3,
   },
+
   primaryButtonText: {
     color: "#FFFFFF",
     fontSize: 15,
-    fontWeight: "800",
+    fontWeight: "900",
+    letterSpacing: 0.15,
   },
+
   disabledButton: {
     opacity: 0.45,
+    shadowOpacity: 0,
+    elevation: 0,
   },
+
   darkButton: {
-    marginTop: 16,
-    minHeight: 46,
+    marginTop: 17,
+    minHeight: 48,
     paddingHorizontal: 20,
     borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#101828",
+    backgroundColor: "#101B3A",
   },
+
   darkButtonText: {
     color: "#FFFFFF",
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "900",
   },
+
   formCard: {
-    marginBottom: 18,
-    padding: 18,
-    borderRadius: 18,
+    marginBottom: 20,
+    padding: 19,
+    borderRadius: 21,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#D0D5DD",
+    borderColor: "#E1E7F5",
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    elevation: 2,
   },
+
   formHeader: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
-    marginBottom: 17,
+    marginBottom: 18,
   },
+
   sectionHeader: {
     marginTop: 10,
     marginBottom: 14,
   },
+
   sectionTitle: {
     marginTop: 4,
     fontSize: 21,
-    fontWeight: "800",
-    color: "#101828",
+    lineHeight: 27,
+    fontWeight: "900",
+    color: "#101B3A",
   },
+
   formSubtitle: {
     marginTop: 4,
     fontSize: 13,
     color: "#667085",
   },
+
   cancelText: {
+    paddingVertical: 5,
+    paddingLeft: 10,
     fontSize: 13,
-    fontWeight: "800",
+    fontWeight: "900",
     color: "#B42318",
   },
+
   fieldLabel: {
     marginTop: 5,
     marginBottom: 7,
@@ -926,233 +973,298 @@ const styles = StyleSheet.create({
     letterSpacing: 1.1,
     color: "#667085",
   },
+
   input: {
-    minHeight: 50,
-    marginBottom: 12,
+    minHeight: 51,
+    marginBottom: 13,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: "#D0D5DD",
-    borderRadius: 12,
-    backgroundColor: "#FFFFFF",
+    borderColor: "#D9E0EF",
+    borderRadius: 13,
+    backgroundColor: "#FBFCFF",
     fontSize: 15,
-    color: "#101828",
+    color: "#101B3A",
   },
+
   classGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    marginBottom: 14,
+    marginBottom: 15,
   },
+
   classOption: {
-    paddingHorizontal: 11,
+    paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 11,
     borderWidth: 1,
-    borderColor: "#D0D5DD",
+    borderColor: "#D9E0EF",
     backgroundColor: "#FFFFFF",
   },
+
   classOptionSelected: {
-    borderColor: "#0B63CE",
-    backgroundColor: "#EAF2FF",
+    borderColor: "#4169E1",
+    backgroundColor: "#EEF3FF",
   },
+
   classOptionText: {
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "800",
     color: "#475467",
   },
+
   classOptionTextSelected: {
-    color: "#0B63CE",
+    color: "#4169E1",
   },
+
   classInfoCard: {
     marginTop: 12,
-    marginBottom: 14,
-    padding: 14,
-    borderRadius: 12,
+    marginBottom: 15,
+    padding: 15,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#D0D5DD",
-    backgroundColor: "#F9FAFB",
+    borderColor: "#DCE5FB",
+    backgroundColor: "#F4F7FF",
   },
+
   classInfoTitle: {
-    fontSize: 14,
-    fontWeight: "700",
     marginBottom: 6,
-    color: "#101828",
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#101B3A",
   },
+
   classInfoText: {
     fontSize: 13,
     lineHeight: 19,
     color: "#475467",
   },
+
   classInfoNote: {
-    marginTop: 6,
+    marginTop: 7,
     fontSize: 12,
     lineHeight: 17,
     fontStyle: "italic",
     color: "#667085",
   },
+
   formError: {
     marginBottom: 12,
     fontSize: 13,
     lineHeight: 19,
     color: "#B42318",
   },
+
   availabilityButton: {
-    minHeight: 46,
-    marginTop: 16,
-    borderRadius: 12,
+    minHeight: 47,
+    marginTop: 17,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
   },
+
   availabilityButtonAvailable: {
-    borderColor: "#0B63CE",
-    backgroundColor: "#EAF2FF",
+    borderColor: "#4169E1",
+    backgroundColor: "#EEF3FF",
   },
+
   availabilityButtonUnavailable: {
     borderColor: "#D92D20",
-    backgroundColor: "#FEF3F2",
+    backgroundColor: "#FFF4F2",
   },
+
   availabilityButtonText: {
     fontSize: 14,
-    fontWeight: "800",
+    fontWeight: "900",
   },
+
   availabilityButtonTextAvailable: {
-    color: "#0B63CE",
+    color: "#4169E1",
   },
+
   availabilityButtonTextUnavailable: {
     color: "#B42318",
   },
+
   vehicleCard: {
-    marginBottom: 14,
-    padding: 18,
-    borderRadius: 18,
+    marginBottom: 15,
+    padding: 19,
+    borderRadius: 21,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E4E7EC",
+    borderColor: "#E1E7F5",
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.055,
+    shadowRadius: 14,
+    elevation: 2,
   },
+
   vehicleHeader: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
   },
+
   vehicleHeaderText: {
     flex: 1,
     paddingRight: 12,
   },
+
   registration: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#101828",
+    fontSize: 21,
+    lineHeight: 26,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+    color: "#101B3A",
   },
+
   vehicleType: {
-    marginTop: 5,
+    marginTop: 6,
     fontSize: 13,
+    lineHeight: 19,
     color: "#667085",
   },
+
   editButton: {
+    minHeight: 37,
     paddingHorizontal: 13,
-    paddingVertical: 8,
-    borderRadius: 9,
-    backgroundColor: "#F2F4F7",
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EEF3FF",
+    borderWidth: 1,
+    borderColor: "#DCE5FB",
   },
+
   editButtonText: {
     fontSize: 12,
-    fontWeight: "800",
-    color: "#344054",
+    fontWeight: "900",
+    color: "#4169E1",
   },
+
   badgeRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-    marginTop: 16,
+    marginTop: 17,
   },
+
   badge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 7,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 10,
-    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+    borderRadius: 11,
+    backgroundColor: "#F7F9FD",
+    borderWidth: 1,
+    borderColor: "#E8ECF5",
   },
+
   badgeDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
   },
+
   badgeDotPositive: {
     backgroundColor: "#12B76A",
   },
+
   badgeDotNeutral: {
     backgroundColor: "#F79009",
   },
+
   badgeLabel: {
     fontSize: 8,
     fontWeight: "900",
     letterSpacing: 0.8,
     color: "#98A2B3",
   },
+
   badgeValue: {
     marginTop: 2,
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: "900",
     color: "#344054",
   },
+
   divider: {
     height: 1,
-    marginVertical: 15,
-    backgroundColor: "#EAECF0",
+    marginVertical: 16,
+    backgroundColor: "#E8ECF5",
   },
+
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    gap: 12,
-    marginBottom: 9,
+    gap: 14,
+    marginBottom: 10,
   },
+
   detailLabel: {
     fontSize: 9,
     fontWeight: "900",
     letterSpacing: 1,
     color: "#98A2B3",
   },
+
   detailValue: {
     flex: 1,
     textAlign: "right",
     fontSize: 13,
-    fontWeight: "700",
+    lineHeight: 18,
+    fontWeight: "800",
     color: "#344054",
   },
+
   infoBox: {
-    marginTop: 7,
-    padding: 13,
-    borderRadius: 11,
-    backgroundColor: "#FFFAEB",
+    marginTop: 8,
+    padding: 14,
+    borderRadius: 13,
+    backgroundColor: "#FFF8E8",
+    borderWidth: 1,
+    borderColor: "#F3E0B0",
   },
+
   infoTitle: {
     fontSize: 12,
-    fontWeight: "800",
+    lineHeight: 17,
+    fontWeight: "900",
     color: "#7A2E0E",
   },
+
   infoText: {
-    marginTop: 4,
+    marginTop: 5,
     fontSize: 12,
     lineHeight: 18,
     color: "#93370D",
   },
+
   emptyCard: {
     alignItems: "center",
-    padding: 24,
-    borderRadius: 18,
+    paddingHorizontal: 22,
+    paddingVertical: 28,
+    borderRadius: 21,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E4E7EC",
+    borderColor: "#E1E7F5",
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
   },
+
   emptyTitle: {
-    fontSize: 19,
-    fontWeight: "800",
-    color: "#101828",
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#101B3A",
   },
+
   emptyText: {
     marginTop: 8,
     textAlign: "center",
@@ -1160,19 +1272,23 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: "#667085",
   },
+
   footer: {
     alignItems: "center",
-    marginTop: 28,
+    marginTop: 30,
+    paddingTop: 10,
   },
+
   footerBrand: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "900",
     letterSpacing: 2,
-    color: "#98A2B3",
+    color: "#AAB4CA",
   },
+
   footerText: {
     marginTop: 5,
-    fontSize: 12,
-    color: "#98A2B3",
+    fontSize: 11,
+    color: "#AAB4CA",
   },
 });

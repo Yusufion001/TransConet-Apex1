@@ -248,7 +248,7 @@ export default function TransporterLayout() {
         headerTitle: "TRANSCONET",
         headerTitleAlign: "left",
         headerRight: () => <HeaderActions />,
-        drawerActiveTintColor: "#0B63CE",
+        drawerActiveTintColor: "#4169E1",
         drawerInactiveTintColor: "#475467",
         drawerLabelStyle: {
           fontSize: 15,
@@ -290,82 +290,119 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F4F7FF",
   },
+
   loadingText: {
     fontSize: 15,
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#667085",
   },
+
   drawer: {
-    paddingBottom: 24,
+    flexGrow: 1,
+    paddingTop: 8,
+    paddingBottom: 28,
+    backgroundColor: "#FFFFFF",
   },
-  menuItem: {
-    minHeight: 50,
-    justifyContent: "center",
+
+  brand: {
+    marginHorizontal: 14,
+    marginTop: 8,
+    marginBottom: 14,
     paddingHorizontal: 18,
+    paddingVertical: 18,
+    borderRadius: 20,
+    backgroundColor: "#101B3A",
   },
-  menuLabel: {
-    fontSize: 15,
+
+  brandTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    letterSpacing: 1.5,
+    color: "#FFFFFF",
+  },
+
+  brandSubtitle: {
+    marginTop: 5,
+    fontSize: 13,
     fontWeight: "700",
-    color: "#475467",
+    letterSpacing: 0.3,
+    color: "#C9D5FF",
   },
-  headerBalance: {
-    marginRight: 16,
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#101828",
+
+  separator: {
+    height: 1,
+    backgroundColor: "#E8ECF5",
+    marginHorizontal: 18,
+    marginVertical: 9,
   },
-  headerActions: {
+
+  menuItem: {
+    minHeight: 54,
+    marginHorizontal: 10,
+    marginVertical: 3,
+    paddingHorizontal: 15,
+    borderRadius: 14,
     flexDirection: "row",
     alignItems: "center",
   },
+
+  menuLabel: {
+    marginLeft: 13,
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#344054",
+  },
+
+  headerBalance: {
+    marginRight: 10,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 11,
+    overflow: "hidden",
+    backgroundColor: "#EEF3FF",
+    fontSize: 13,
+    fontWeight: "900",
+    color: "#101B3A",
+  },
+
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 4,
+  },
+
   headerIconButton: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
+    marginRight: 2,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 4,
+    backgroundColor: "#F4F7FF",
     position: "relative",
   },
+
   notificationBadge: {
     position: "absolute",
-    top: 2,
-    right: 0,
-    minWidth: 17,
-    height: 17,
+    top: 1,
+    right: -1,
+    minWidth: 18,
+    height: 18,
     paddingHorizontal: 4,
     borderRadius: 9,
-    backgroundColor: "#DC2626",
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#D92D20",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
   },
+
   notificationBadgeText: {
-    fontSize: 10,
-    lineHeight: 12,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-  brand: {
-    paddingHorizontal: 18,
-    paddingTop: 16,
-    paddingBottom: 10,
-  },
-  brandTitle: {
-    fontSize: 18,
+    fontSize: 9,
+    lineHeight: 11,
     fontWeight: "900",
-    letterSpacing: 1.2,
-    color: "#101828",
-  },
-  brandSubtitle: {
-    marginTop: 3,
-    fontSize: 13,
-    color: "#667085",
-    fontWeight: "600",
-  },
-  separator: {
-    height: 1,
-    backgroundColor: "#EAECF0",
-    marginVertical: 10,
+    color: "#FFFFFF",
   },
 });

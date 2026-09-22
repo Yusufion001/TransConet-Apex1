@@ -104,62 +104,91 @@ export default function VerifyAccountScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F4F7FF",
   },
+
   container: {
     flex: 1,
-    paddingHorizontal: 28,
-    paddingVertical: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 22,
   },
+
   brand: {
-    fontSize: 13,
-    fontWeight: "800",
-    letterSpacing: 3,
-    color: "#111111",
-    marginBottom: 18,
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: "#E7EDFF",
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 2.2,
+    color: "#4169E1",
+    overflow: "hidden",
   },
+
   content: {
     flex: 1,
     justifyContent: "center",
   },
+
   title: {
-    fontSize: 34,
-    lineHeight: 40,
-    fontWeight: "800",
-    color: "#111111",
+    fontSize: 32,
+    lineHeight: 39,
+    fontWeight: "900",
+    color: "#101B3A",
+    letterSpacing: -0.6,
   },
+
   subtitle: {
     marginTop: 12,
-    fontSize: 16,
-    lineHeight: 24,
-    color: "#666666",
+    maxWidth: 390,
+    fontSize: 15,
+    lineHeight: 23,
+    color: "#667085",
   },
+
   options: {
-    marginTop: 32,
+    marginTop: 28,
     gap: 14,
   },
+
   option: {
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#D8D8D8",
-    borderRadius: 14,
-    padding: 20,
+    borderColor: "#E1E7F5",
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 19,
+    shadowColor: "#101B3A",
+    shadowOffset: {
+      width: 0,
+      height: 7,
+    },
+    shadowOpacity: 0.07,
+    shadowRadius: 16,
+    elevation: 3,
   },
+
   optionTitle: {
     fontSize: 17,
+    lineHeight: 23,
     fontWeight: "800",
-    color: "#111111",
+    color: "#101B3A",
   },
+
   optionText: {
-    marginTop: 7,
+    marginTop: 8,
     fontSize: 14,
     lineHeight: 21,
-    color: "#666666",
+    color: "#667085",
   },
+
   note: {
-    marginTop: 24,
+    marginTop: 22,
+    paddingHorizontal: 8,
     fontSize: 13,
     lineHeight: 20,
-    color: "#777777",
+    color: "#7A8499",
     textAlign: "center",
   },
 });

@@ -284,170 +284,256 @@ export default function TransporterProfileSetupScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F4F7FF",
   },
+
   keyboard: {
     flex: 1,
   },
+
   container: {
     flexGrow: 1,
-    padding: 24,
+    paddingHorizontal: 20,
+    paddingTop: 18,
     paddingBottom: 48,
   },
+
   progressRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 22,
+    marginBottom: 14,
+    paddingHorizontal: 2,
   },
+
   progressDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#D9D9D9",
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    backgroundColor: "#D8E0F2",
+    borderWidth: 2,
+    borderColor: "#D8E0F2",
   },
+
   progressActive: {
-    backgroundColor: "#111111",
+    width: 13,
+    height: 13,
+    borderRadius: 7,
+    backgroundColor: "#4169E1",
+    borderColor: "#4169E1",
+    shadowColor: "#4169E1",
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 5,
+    elevation: 2,
   },
+
   progressLine: {
     flex: 1,
-    height: 1,
-    backgroundColor: "#D9D9D9",
-    marginHorizontal: 6,
+    height: 2,
+    backgroundColor: "#D8E0F2",
+    marginHorizontal: 7,
   },
+
   step: {
     fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 1.2,
-    color: "#777777",
+    fontWeight: "900",
+    letterSpacing: 1.5,
+    color: "#4169E1",
     marginBottom: 18,
   },
+
   content: {
     width: "100%",
     maxWidth: 560,
     alignSelf: "center",
   },
+
   brand: {
-    fontSize: 14,
-    fontWeight: "800",
-    letterSpacing: 2,
-    color: "#111111",
-    marginBottom: 18,
+    alignSelf: "flex-start",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    backgroundColor: "#E7EDFF",
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 2.2,
+    color: "#4169E1",
+    overflow: "hidden",
+    marginBottom: 16,
   },
+
   title: {
-    fontSize: 30,
-    lineHeight: 37,
-    fontWeight: "800",
-    color: "#111111",
+    fontSize: 31,
+    lineHeight: 39,
+    fontWeight: "900",
+    color: "#101B3A",
+    letterSpacing: -0.6,
     marginBottom: 10,
   },
+
   subtitle: {
     fontSize: 15,
     lineHeight: 23,
-    color: "#666666",
-    marginBottom: 24,
+    color: "#667085",
+    marginBottom: 22,
   },
+
   notice: {
     borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 26,
-    backgroundColor: "#FAFAFA",
+    borderColor: "#DCE5FA",
+    borderRadius: 18,
+    paddingHorizontal: 17,
+    paddingVertical: 16,
+    marginBottom: 24,
+    backgroundColor: "#EEF3FF",
   },
+
   noticeTitle: {
     fontSize: 13,
-    fontWeight: "700",
-    color: "#111111",
-    marginBottom: 5,
+    fontWeight: "800",
+    color: "#203A78",
+    marginBottom: 6,
   },
+
   noticeText: {
     fontSize: 13,
     lineHeight: 20,
-    color: "#666666",
+    color: "#5F6F8F",
   },
+
   form: {
-    gap: 8,
+    gap: 9,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F5",
+    borderRadius: 22,
+    paddingHorizontal: 18,
+    paddingVertical: 20,
+    shadowColor: "#101B3A",
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.07,
+    shadowRadius: 18,
+    elevation: 3,
   },
+
   typeRow: {
     gap: 10,
     marginBottom: 6,
   },
+
   typeOption: {
-    minHeight: 54,
+    minHeight: 58,
     borderWidth: 1,
-    borderColor: "#D8D8D8",
-    borderRadius: 10,
+    borderColor: "#DCE3F1",
+    borderRadius: 15,
     paddingHorizontal: 15,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#FFFFFF",
   },
+
   typeOptionActive: {
-    borderColor: "#111111",
+    borderColor: "#4169E1",
+    backgroundColor: "#F1F5FF",
+    shadowColor: "#4169E1",
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 7,
+    elevation: 1,
   },
+
   radio: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#999999",
+    width: 21,
+    height: 21,
+    borderRadius: 11,
+    borderWidth: 1.5,
+    borderColor: "#AAB5CB",
     marginRight: 12,
   },
+
   radioActive: {
     borderWidth: 6,
-    borderColor: "#111111",
+    borderColor: "#4169E1",
   },
+
   typeText: {
+    flex: 1,
     fontSize: 15,
-    color: "#111111",
-    fontWeight: "600",
-  },
-  label: {
-    fontSize: 11,
+    color: "#101B3A",
     fontWeight: "700",
-    letterSpacing: 0.8,
-    color: "#555555",
-    marginTop: 10,
   },
+
+  label: {
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1,
+    color: "#52617B",
+    marginTop: 11,
+    marginBottom: 1,
+  },
+
   input: {
-    minHeight: 52,
+    minHeight: 54,
     borderWidth: 1,
-    borderColor: "#D8D8D8",
-    borderRadius: 10,
+    borderColor: "#D8E0EE",
+    borderRadius: 14,
     paddingHorizontal: 15,
     fontSize: 15,
-    color: "#111111",
-    backgroundColor: "#FFFFFF",
+    color: "#101B3A",
+    backgroundColor: "#FBFCFF",
   },
+
   multiline: {
-    minHeight: 90,
+    minHeight: 94,
     paddingTop: 14,
     textAlignVertical: "top",
   },
+
   button: {
-    minHeight: 54,
-    borderRadius: 10,
+    minHeight: 56,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#111111",
-    marginTop: 24,
+    backgroundColor: "#4169E1",
+    marginTop: 25,
+    shadowColor: "#4169E1",
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    elevation: 4,
   },
+
   buttonDisabled: {
     opacity: 0.6,
   },
+
   buttonText: {
     color: "#FFFFFF",
     fontSize: 13,
-    fontWeight: "800",
-    letterSpacing: 0.7,
+    fontWeight: "900",
+    letterSpacing: 0.9,
   },
+
   secondaryButton: {
     alignItems: "center",
-    paddingVertical: 18,
+    paddingVertical: 17,
   },
+
   secondaryText: {
-    color: "#666666",
+    color: "#667085",
     fontSize: 13,
-    fontWeight: "600",
+    fontWeight: "700",
   },
 });
