@@ -2,6 +2,9 @@ import test, { mock } from "node:test";
 import assert from "node:assert/strict";
 
 const prismaMock = {
+  booking: {
+    findFirst: mock.fn<(...args: any[]) => any>(),
+  },
   vehicle: {
     findUnique: mock.fn<(...args: any[]) => any>(),
     update: mock.fn<(...args: any[]) => any>(),
@@ -37,6 +40,7 @@ const {
 
 function resetMocks() {
   for (const fn of [
+    prismaMock.booking.findFirst,
     prismaMock.vehicle.findUnique,
     prismaMock.vehicle.update,
     prismaMock.vehicle.findMany,
@@ -61,6 +65,8 @@ test.beforeEach(() => {
 });
 
 test("updateAdminVehicle preserves verification for non-identity edits", async () => {
+  prismaMock.booking.findFirst.mock.mockImplementation(async () => null);
+
   const existing = {
     id: "vehicle-1",
     registrationNumber: "ABC-123",
@@ -119,7 +125,48 @@ test("updateAdminVehicle preserves verification for non-identity edits", async (
   assert.equal(publishEventMock.mock.calls.length, 1);
 });
 
+test("updateAdminVehicle rejects replacement while an active booking references the vehicle", async () => {
+  const existing = {
+    id: "vehicle-1",
+    registrationNumber: "ABC-123",
+    vehicleType: "Truck",
+    vehicleClass: "MEDIUM_TRUCK",
+    vehicleBodyType: "Flatbed",
+    availabilityStatus: "AVAILABLE",
+    verificationStatus: "APPROVED",
+  };
+
+  prismaMock.vehicle.findUnique.mock.mockImplementation(
+    async () => existing,
+  );
+  prismaMock.booking.findFirst.mock.mockImplementation(
+    async () => ({
+      id: "booking-1",
+      status: "IN_TRANSIT",
+    }),
+  );
+
+  await assert.rejects(
+    updateAdminVehicle(
+      "vehicle-1",
+      "admin-1",
+      {
+        registrationNumber: "NEW-456",
+      },
+    ),
+    {
+      message:
+        "Vehicle details cannot be replaced while the vehicle is assigned to an active trip",
+    },
+  );
+
+  assert.equal(prismaMock.vehicle.update.mock.calls.length, 0);
+  assert.equal(publishEventMock.mock.calls.length, 0);
+});
+
 test("updateAdminVehicle resets verification when vehicle identity changes", async () => {
+  prismaMock.booking.findFirst.mock.mockImplementation(async () => null);
+
   const existing = {
     id: "vehicle-1",
     registrationNumber: "ABC-123",
