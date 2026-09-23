@@ -1,6 +1,5 @@
 import { prisma } from "../config/prisma.js";
 import { publishBookingEvent } from "../realtime/realtime.service.js";
-import { publishEvent } from "../realtime/event-bus.js";
 
 export async function createMessage(data: {
   senderId: string;
@@ -78,7 +77,7 @@ export async function createMessage(data: {
 
   publishBookingEvent(message.bookingId!, {
     eventType: "MESSAGE_CREATED",
-    module: "NOTIFICATION_CENTER",
+    module: "MESSAGING",
     entityType: "MESSAGE",
     entityId: message.id,
     actorId: message.senderId,
