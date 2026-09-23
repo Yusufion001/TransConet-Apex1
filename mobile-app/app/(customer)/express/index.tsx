@@ -527,13 +527,25 @@ export default function ExpressBookingScreen() {
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.title}>Express Booking</Text>
-        <Text style={styles.subtitle}>
-          Book a direct, expedited transport request separately from
-          the Marketplace.
-        </Text>
+        <View style={styles.header}>
+          <View style={styles.eyebrow}>
+            <Text style={styles.eyebrowText}>EXPRESS DELIVERY</Text>
+          </View>
+          <Text style={styles.title}>Express Booking</Text>
+          <Text style={styles.subtitle}>
+            Arrange a direct, expedited shipment separately from the Marketplace.
+          </Text>
+        </View>
 
-        <Text style={styles.sectionTitle}>Pickup</Text>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionIcon}>
+            <Text style={styles.sectionIconText}>1</Text>
+          </View>
+          <View style={styles.sectionHeaderContent}>
+            <Text style={styles.sectionTitle}>Pickup</Text>
+            <Text style={styles.sectionHint}>Where should we collect your shipment?</Text>
+          </View>
+        </View>
 
         <Text style={styles.label}>Pickup location</Text>
         <TextInput
@@ -609,7 +621,15 @@ export default function ExpressBookingScreen() {
           style={styles.input}
         />
 
-        <Text style={styles.sectionTitle}>Destination</Text>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionIcon}>
+            <Text style={styles.sectionIconText}>2</Text>
+          </View>
+          <View style={styles.sectionHeaderContent}>
+            <Text style={styles.sectionTitle}>Destination</Text>
+            <Text style={styles.sectionHint}>Where should the shipment be delivered?</Text>
+          </View>
+        </View>
 
         <Text style={styles.label}>Destination</Text>
         <TextInput
@@ -674,7 +694,15 @@ export default function ExpressBookingScreen() {
           style={styles.input}
         />
 
-        <Text style={styles.sectionTitle}>Shipment</Text>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionIcon}>
+            <Text style={styles.sectionIconText}>3</Text>
+          </View>
+          <View style={styles.sectionHeaderContent}>
+            <Text style={styles.sectionTitle}>Shipment</Text>
+            <Text style={styles.sectionHint}>Tell us what you are sending.</Text>
+          </View>
+        </View>
 
         <Text style={styles.label}>Package count</Text>
         <TextInput
@@ -813,7 +841,15 @@ export default function ExpressBookingScreen() {
 
         {quote ? (
           <View style={styles.quoteCard}>
-            <Text style={styles.quoteTitle}>Express Quote</Text>
+            <View style={styles.quoteHeader}>
+              <View>
+                <Text style={styles.quoteEyebrow}>ESTIMATED COST</Text>
+                <Text style={styles.quoteTitle}>Express Quote</Text>
+              </View>
+              <View style={styles.quoteBadge}>
+                <Text style={styles.quoteBadgeText}>EXPRESS</Text>
+              </View>
+            </View>
 
             <View style={styles.quoteRow}>
               <Text style={styles.quoteLabel}>Distance</Text>
@@ -951,42 +987,91 @@ export default function ExpressBookingScreen() {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    paddingBottom: 40,
+    paddingTop: 14,
+    paddingBottom: 42,
+    backgroundColor: "#F4F7FF",
+  },
+  header: {
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  eyebrow: {
+    alignSelf: "flex-start",
+    backgroundColor: "#E8EEFF",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 10,
+  },
+  eyebrowText: {
+    color: "#4169E1",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.1,
   },
   title: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#101828",
+    fontSize: 30,
+    lineHeight: 37,
+    fontWeight: "900",
+    color: "#101B3A",
   },
   subtitle: {
-    marginTop: 6,
-    marginBottom: 22,
+    marginTop: 8,
     color: "#667085",
     fontSize: 14,
     lineHeight: 21,
   },
-  sectionTitle: {
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 18,
-    marginBottom: 10,
+    marginBottom: 4,
+  },
+  sectionIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    backgroundColor: "#E8EEFF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  sectionIconText: {
+    color: "#4169E1",
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  sectionHeaderContent: {
+    flex: 1,
+  },
+  sectionHint: {
+    color: "#667085",
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 2,
+  },
+  sectionTitle: {
     fontSize: 18,
-    fontWeight: "800",
-    color: "#102A43",
+    fontWeight: "900",
+    color: "#101B3A",
   },
   label: {
-    marginTop: 12,
-    marginBottom: 6,
-    fontSize: 14,
-    fontWeight: "700",
+    marginTop: 14,
+    marginBottom: 7,
+    fontSize: 12,
+    fontWeight: "800",
     color: "#344054",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#D0D5DD",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    borderColor: "#D9E1F0",
+    borderRadius: 14,
+    paddingHorizontal: 15,
+    paddingVertical: 13,
     backgroundColor: "#FFFFFF",
-    color: "#101828",
+    color: "#101B3A",
+    fontSize: 14,
+    minHeight: 50,
   },
   textArea: {
     minHeight: 100,
@@ -1106,10 +1191,17 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     marginTop: 20,
-    borderRadius: 12,
+    minHeight: 52,
+    borderRadius: 15,
     paddingVertical: 14,
     alignItems: "center",
-    backgroundColor: "#175CD3",
+    justifyContent: "center",
+    backgroundColor: "#4169E1",
+    shadowColor: "#4169E1",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
+    elevation: 3,
   },
   primaryButtonText: {
     color: "#FFFFFF",
@@ -1121,17 +1213,46 @@ const styles = StyleSheet.create({
   },
   quoteCard: {
     marginTop: 18,
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: "#F4F8FC",
+    padding: 20,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#D7E3EF",
+    borderColor: "#DCE5F5",
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    elevation: 2,
+  },
+  quoteHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: 14,
+  },
+  quoteEyebrow: {
+    color: "#667085",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1,
+    marginBottom: 4,
   },
   quoteTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#102A43",
-    marginBottom: 12,
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#101B3A",
+  },
+  quoteBadge: {
+    backgroundColor: "#E8EEFF",
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+  },
+  quoteBadgeText: {
+    color: "#4169E1",
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 0.7,
   },
   quoteRow: {
     flexDirection: "row",
@@ -1157,9 +1278,9 @@ const styles = StyleSheet.create({
   },
   totalAmount: {
     marginTop: 4,
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: "900",
-    color: "#101828",
+    color: "#101B3A",
   },
   cancelButton: {
     marginTop: 12,

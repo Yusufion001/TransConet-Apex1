@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import {
   ActivityIndicator,
   Alert,
@@ -106,14 +107,31 @@ export default function CustomerDisputes() {
         />
       }
     >
-      <Text style={styles.eyebrow}>DISPUTE MANAGEMENT</Text>
+      <View style={styles.headerRow}>
+        <View style={styles.eyebrowPill}>
+          <Ionicons name="shield-checkmark-outline" size={14} color="#4169E1" />
+          <Text style={styles.eyebrow}>DISPUTE MANAGEMENT</Text>
+        </View>
+      </View>
+
       <Text style={styles.title}>Disputes</Text>
       <Text style={styles.subtitle}>
         Report an issue with a shipment and track its review status.
       </Text>
 
       <View style={styles.card}>
-        <Text style={styles.heading}>Open a Dispute</Text>
+        <View style={styles.cardHeader}>
+          <View style={styles.cardIcon}>
+            <Ionicons name="flag-outline" size={20} color="#4169E1" />
+          </View>
+          <View style={styles.cardHeaderText}>
+            <Text style={styles.heading}>Open a Dispute</Text>
+            <Text style={styles.cardSubtitle}>
+              Tell us what happened and provide supporting evidence.
+            </Text>
+          </View>
+        </View>
+
         <Text style={styles.label}>SELECT SHIPMENT</Text>
 
         {bookings.isLoading ? (
@@ -131,17 +149,36 @@ export default function CustomerDisputes() {
                 bookingId === booking.id && styles.selected,
               ]}
             >
-              <Text style={styles.route}>{route(booking)}</Text>
-              <Text style={styles.meta}>
-                {booking.truckCategory} · {fmtStatus(booking.status)}
-              </Text>
+              <View style={styles.bookingTop}>
+                <View style={styles.routeIcon}>
+                  <Ionicons name="cube-outline" size={16} color="#4169E1" />
+                </View>
+                <View style={styles.bookingContent}>
+                  <Text style={styles.route}>{route(booking)}</Text>
+                  <Text style={styles.meta}>
+                    {booking.truckCategory} · {fmtStatus(booking.status)}
+                  </Text>
+                </View>
+                <Ionicons
+                  name={
+                    bookingId === booking.id
+                      ? "checkmark-circle"
+                      : "ellipse-outline"
+                  }
+                  size={21}
+                  color={bookingId === booking.id ? "#4169E1" : "#98A2B3"}
+                />
+              </View>
             </Pressable>
           ))
         )}
 
         {selected && (
           <View style={styles.pickup}>
-            <Text style={styles.pickupTitle}>Pickup details</Text>
+            <View style={styles.pickupHeader}>
+              <Ionicons name="location-outline" size={17} color="#4169E1" />
+              <Text style={styles.pickupTitle}>Pickup details</Text>
+            </View>
             <Text style={styles.pickupText}>
               {selected.pickupLocation}
             </Text>
@@ -164,7 +201,10 @@ export default function CustomerDisputes() {
           </View>
         )}
 
-        <Text style={styles.label}>REASON</Text>
+        <View style={styles.labelRow}>
+          <Ionicons name="document-text-outline" size={14} color="#667085" />
+          <Text style={styles.label}>REASON</Text>
+        </View>
         <TextInput
           value={reason}
           onChangeText={setReason}
@@ -174,7 +214,10 @@ export default function CustomerDisputes() {
           style={styles.input}
         />
 
-        <Text style={styles.label}>EVIDENCE</Text>
+        <View style={styles.labelRow}>
+          <Ionicons name="images-outline" size={14} color="#667085" />
+          <Text style={styles.label}>EVIDENCE</Text>
+        </View>
 
         <DisputeEvidencePicker
           assets={assets}
@@ -190,12 +233,25 @@ export default function CustomerDisputes() {
           {mutation.isPending ? (
             <ActivityIndicator color="#FFFFFF" />
           ) : (
-            <Text style={styles.submitText}>Submit Dispute</Text>
+            <>
+              <Ionicons name="send-outline" size={18} color="#FFFFFF" />
+              <Text style={styles.submitText}>Submit Dispute</Text>
+            </>
           )}
         </Pressable>
       </View>
 
-      <Text style={[styles.heading, styles.history]}>My Disputes</Text>
+      <View style={styles.historyHeader}>
+        <View>
+          <Text style={[styles.heading, styles.history]}>My Disputes</Text>
+          <Text style={styles.historySubtitle}>
+            Review the status of issues you have reported.
+          </Text>
+        </View>
+        <View style={styles.historyIcon}>
+          <Ionicons name="time-outline" size={18} color="#4169E1" />
+        </View>
+      </View>
 
       {disputes.data?.map((dispute: Dispute) => {
         const booking = bookings.data?.find(
@@ -205,12 +261,19 @@ export default function CustomerDisputes() {
         return (
           <View key={dispute.id} style={styles.dispute}>
             <View style={styles.row}>
-              <Text style={styles.route}>
-                {booking ? route(booking) : "Shipment"}
-              </Text>
-              <Text style={styles.status}>
-                {fmtStatus(dispute.status)}
-              </Text>
+              <View style={styles.historyRoute}>
+                <View style={styles.routeIcon}>
+                  <Ionicons name="cube-outline" size={15} color="#4169E1" />
+                </View>
+                <Text style={styles.route}>
+                  {booking ? route(booking) : "Shipment"}
+                </Text>
+              </View>
+              <View style={styles.statusPill}>
+                <Text style={styles.status}>
+                  {fmtStatus(dispute.status)}
+                </Text>
+              </View>
             </View>
 
             <Text style={styles.reason}>{dispute.reason}</Text>
@@ -235,61 +298,133 @@ export default function CustomerDisputes() {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    paddingBottom: 40,
-    backgroundColor: "#F8FAFC",
+    paddingTop: 22,
+    paddingBottom: 48,
+    backgroundColor: "#F4F7FF",
+  },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  eyebrowPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 999,
+    backgroundColor: "#EEF4FF",
+    borderWidth: 1,
+    borderColor: "#D8E4FF",
   },
   eyebrow: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: "#0B63CE",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.7,
+    color: "#4169E1",
   },
   title: {
-    marginTop: 4,
-    fontSize: 28,
+    marginTop: 12,
+    fontSize: 30,
+    lineHeight: 37,
     fontWeight: "900",
-    color: "#101828",
+    color: "#101B3A",
   },
   subtitle: {
-    marginVertical: 12,
+    marginTop: 7,
+    marginBottom: 20,
     fontSize: 14,
     lineHeight: 21,
     color: "#667085",
   },
   card: {
-    padding: 18,
-    borderRadius: 16,
-    backgroundColor: "#FFF",
+    padding: 20,
+    borderRadius: 22,
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#EAECF0",
+    borderColor: "#DCE5F5",
+    shadowColor: "#101B3A",
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  cardIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EEF4FF",
+    borderWidth: 1,
+    borderColor: "#D8E4FF",
+  },
+  cardHeaderText: {
+    flex: 1,
   },
   heading: {
     fontSize: 18,
-    fontWeight: "800",
-    color: "#101828",
+    fontWeight: "900",
+    color: "#101B3A",
+  },
+  cardSubtitle: {
+    marginTop: 4,
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#667085",
+  },
+  labelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 20,
+    marginBottom: 8,
   },
   label: {
-    marginTop: 16,
-    marginBottom: 7,
-    fontSize: 11,
-    fontWeight: "800",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.7,
     color: "#667085",
   },
   booking: {
-    padding: 13,
-    marginBottom: 8,
-    borderRadius: 10,
+    padding: 14,
+    marginBottom: 9,
+    borderRadius: 15,
     borderWidth: 1,
-    borderColor: "#D0D5DD",
+    borderColor: "#DCE5F5",
+    backgroundColor: "#FFFFFF",
   },
   selected: {
-    borderColor: "#0B63CE",
-    backgroundColor: "#EAF2FF",
+    borderColor: "#4169E1",
+    backgroundColor: "#EEF4FF",
+  },
+  bookingTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  bookingContent: {
+    flex: 1,
+  },
+  routeIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EEF4FF",
   },
   route: {
     flex: 1,
     fontSize: 13,
+    lineHeight: 19,
     fontWeight: "800",
-    color: "#101828",
+    color: "#101B3A",
   },
   meta: {
     marginTop: 5,
@@ -297,81 +432,145 @@ const styles = StyleSheet.create({
     color: "#667085",
   },
   pickup: {
-    marginTop: 8,
-    padding: 12,
-    borderRadius: 10,
-    backgroundColor: "#F8FAFC",
+    marginTop: 5,
+    padding: 15,
+    borderRadius: 15,
+    backgroundColor: "#EEF4FF",
+    borderWidth: 1,
+    borderColor: "#D8E4FF",
+  },
+  pickupHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
   },
   pickupTitle: {
     fontSize: 13,
-    fontWeight: "800",
-    color: "#101828",
+    fontWeight: "900",
+    color: "#101B3A",
   },
   pickupText: {
-    marginTop: 5,
+    marginTop: 8,
     fontSize: 12,
+    lineHeight: 18,
     color: "#344054",
   },
   coords: {
-    marginTop: 4,
+    marginTop: 5,
     fontSize: 10,
+    lineHeight: 15,
     color: "#667085",
   },
   input: {
-    minHeight: 110,
-    padding: 12,
+    minHeight: 120,
+    padding: 14,
     borderWidth: 1,
-    borderColor: "#D0D5DD",
-    borderRadius: 10,
-    color: "#101828",
+    borderColor: "#DCE5F5",
+    borderRadius: 15,
+    backgroundColor: "#FFFFFF",
+    color: "#101B3A",
+    fontSize: 14,
+    lineHeight: 21,
   },
   submit: {
-    minHeight: 50,
+    minHeight: 52,
     marginTop: 20,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 10,
-    backgroundColor: "#0B63CE",
+    gap: 9,
+    borderRadius: 15,
+    backgroundColor: "#4169E1",
+    shadowColor: "#4169E1",
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 3,
   },
   submitText: {
-    color: "#FFF",
-    fontWeight: "800",
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "900",
   },
-  history: {
+  historyHeader: {
     marginTop: 28,
     marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  history: {
+    marginTop: 0,
+    marginBottom: 3,
+  },
+  historySubtitle: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#667085",
+  },
+  historyIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EEF4FF",
+    borderWidth: 1,
+    borderColor: "#D8E4FF",
   },
   dispute: {
-    padding: 16,
+    padding: 17,
     marginBottom: 12,
-    borderRadius: 14,
-    backgroundColor: "#FFF",
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#EAECF0",
+    borderColor: "#DCE5F5",
+    shadowColor: "#101B3A",
+    shadowOpacity: 0.045,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
   row: {
     flexDirection: "row",
+    alignItems: "flex-start",
     gap: 10,
   },
+  historyRoute: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  statusPill: {
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: "#EEF4FF",
+    borderWidth: 1,
+    borderColor: "#D8E4FF",
+  },
   status: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: "#0B63CE",
+    fontSize: 9,
+    fontWeight: "900",
+    color: "#4169E1",
+    textTransform: "uppercase",
   },
   reason: {
-    marginTop: 10,
+    marginTop: 12,
     fontSize: 13,
-    lineHeight: 19,
+    lineHeight: 20,
     color: "#475467",
   },
   evidence: {
-    marginTop: 8,
+    marginTop: 10,
     fontSize: 11,
+    lineHeight: 17,
     fontWeight: "800",
-    color: "#0B63CE",
+    color: "#4169E1",
   },
   date: {
-    marginTop: 8,
+    marginTop: 9,
     fontSize: 11,
     color: "#98A2B3",
   },

@@ -370,11 +370,20 @@ export default function ExpressBookingDetails() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Pressable onPress={() => router.back()}>
-        <Text style={styles.back}>‹ Back</Text>
+      <Pressable onPress={() => router.back()} style={styles.backButton}>
+        <Text style={styles.backIcon}>‹</Text>
+        <Text style={styles.back}>Back to Express</Text>
       </Pressable>
 
-      <Text style={styles.title}>Express Booking</Text>
+      <View style={styles.header}>
+        <View style={styles.eyebrow}>
+          <Text style={styles.eyebrowText}>EXPRESS SHIPMENT</Text>
+        </View>
+        <Text style={styles.title}>Express Booking</Text>
+        <Text style={styles.subtitle}>
+          Track payment, dispatch, verification and delivery from one place.
+        </Text>
+      </View>
 
       <View style={styles.expressBadge}>
         <Text style={styles.expressBadgeText}>
@@ -639,8 +648,47 @@ export default function ExpressBookingDetails() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 24,
-    backgroundColor: "#F7F9FC",
+    padding: 20,
+    paddingTop: 14,
+    paddingBottom: 42,
+    backgroundColor: "#F4F7FF",
+  },
+  backButton: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingRight: 10,
+  },
+  backIcon: {
+    color: "#4169E1",
+    fontSize: 25,
+    lineHeight: 25,
+    marginRight: 4,
+  },
+  header: {
+    marginTop: 8,
+    marginBottom: 14,
+  },
+  eyebrow: {
+    alignSelf: "flex-start",
+    backgroundColor: "#E8EEFF",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 10,
+  },
+  eyebrowText: {
+    color: "#4169E1",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1,
+  },
+  subtitle: {
+    color: "#667085",
+    fontSize: 14,
+    lineHeight: 21,
+    marginTop: 7,
   },
   center: {
     flex: 1,
@@ -653,36 +701,40 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   back: {
-    color: "#175CD3",
-    fontSize: 16,
-    fontWeight: "700",
-    marginTop: 20,
+    color: "#4169E1",
+    fontSize: 14,
+    fontWeight: "800",
   },
   title: {
     fontSize: 30,
-    fontWeight: "800",
-    color: "#111827",
-    marginVertical: 18,
+    lineHeight: 37,
+    fontWeight: "900",
+    color: "#101B3A",
   },
   expressBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#EAF2FF",
+    backgroundColor: "#E8EEFF",
     borderRadius: 999,
-    paddingHorizontal: 12,
+    paddingHorizontal: 11,
     paddingVertical: 7,
     marginBottom: 14,
   },
   expressBadgeText: {
-    color: "#175CD3",
+    color: "#4169E1",
     fontSize: 10,
     fontWeight: "900",
     letterSpacing: 0.5,
   },
   statusCard: {
-    backgroundColor: "#111827",
-    borderRadius: 20,
+    backgroundColor: "#101B3A",
+    borderRadius: 22,
     padding: 22,
     marginBottom: 16,
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 7 },
+    shadowOpacity: 0.14,
+    shadowRadius: 16,
+    elevation: 4,
   },
   statusLabel: {
     color: "#98A2B3",
@@ -702,11 +754,16 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#EAECF0",
+    borderColor: "#DCE5F5",
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
   },
   label: {
     color: "#667085",
@@ -729,8 +786,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   payButton: {
-    backgroundColor: "#175CD3",
-    borderRadius: 14,
+    backgroundColor: "#4169E1",
+    borderRadius: 15,
     paddingVertical: 15,
     alignItems: "center",
     justifyContent: "center",
@@ -807,8 +864,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   trackingWaitingBox: {
-    backgroundColor: "#EEF6FF",
-    borderRadius: 12,
+    backgroundColor: "#EEF4FF",
+    borderRadius: 15,
     padding: 18,
     alignItems: "center",
   },
@@ -819,8 +876,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   dispatchBox: {
-    backgroundColor: "#EEF6FF",
-    borderRadius: 12,
+    backgroundColor: "#EEF4FF",
+    borderRadius: 15,
     padding: 14,
     alignItems: "center",
   },
@@ -838,8 +895,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   pickupButton: {
-    backgroundColor: "#175CD3",
-    borderRadius: 14,
+    backgroundColor: "#4169E1",
+    borderRadius: 15,
     paddingVertical: 15,
     alignItems: "center",
     justifyContent: "center",
@@ -851,9 +908,11 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   otpBox: {
-    backgroundColor: "#EEF6FF",
-    borderRadius: 16,
+    backgroundColor: "#EEF4FF",
+    borderRadius: 18,
     padding: 18,
+    borderWidth: 1,
+    borderColor: "#D8E4FF",
     alignItems: "center",
   },
   otpTitle: {
@@ -884,8 +943,8 @@ const styles = StyleSheet.create({
   refreshButton: {
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#D0D5DD",
-    borderRadius: 14,
+    borderColor: "#D9E1F0",
+    borderRadius: 15,
     paddingVertical: 15,
     alignItems: "center",
     justifyContent: "center",
@@ -897,8 +956,8 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   button: {
-    backgroundColor: "#175CD3",
-    borderRadius: 12,
+    backgroundColor: "#4169E1",
+    borderRadius: 14,
     paddingHorizontal: 24,
     paddingVertical: 14,
     marginTop: 18,
@@ -913,7 +972,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   secondaryButtonText: {
-    color: "#175CD3",
+    color: "#4169E1",
     fontWeight: "800",
   },
   error: {
