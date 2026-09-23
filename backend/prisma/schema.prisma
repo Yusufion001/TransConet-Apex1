@@ -73,6 +73,7 @@ enum AdminModule {
   API_MANAGEMENT
   SECURITY_CENTER
   DATABASE_HEALTH
+  MESSAGING
 }
 
 enum UserStatus {
@@ -458,6 +459,9 @@ model User {
   featureFlagsCreated FeatureFlag[]    @relation("FeatureFlagCreator")
   featureFlagsUpdated FeatureFlag[]    @relation("FeatureFlagUpdater")
   backupSnapshots     BackupSnapshot[] @relation("BackupSnapshotRequester")
+  communicationLogsAdmin      CommunicationLog[] @relation("CommunicationAdministrator")
+  communicationLogsReceived   CommunicationLog[] @relation("CommunicationRecipient")
+
 }
 
 model CustomerProfile {
@@ -672,6 +676,8 @@ model Booking {
   @@index([vehicleId])
   @@index([status])
   @@index([scheduledDate])
+  communicationLogs CommunicationLog[]
+
 }
 
 model ExpressBooking {
@@ -1367,6 +1373,40 @@ model PlatformConfig {
   updatedAt   DateTime @updatedAt
 
   @@index([updatedBy])
+}
+
+enum CommunicationChannel {
+  IN_APP
+  EMAIL
+  SMS
+}
+
+enum CommunicationDeliveryStatus {
+  SENT
+  FAILED
+}
+
+model CommunicationLog {
+  id                String                     @id @default(uuid())
+  bookingId         String
+  administratorId   String
+  recipientId       String
+  channel           CommunicationChannel
+  status            CommunicationDeliveryStatus
+  subject           String?
+  content           String
+  providerMessageId String?
+  errorMessage      String?
+  createdAt         DateTime                   @default(now())
+
+  booking       Booking @relation(fields: [bookingId], references: [id])
+  administrator User    @relation("CommunicationAdministrator", fields: [administratorId], references: [id])
+  recipient     User    @relation("CommunicationRecipient", fields: [recipientId], references: [id])
+
+  @@index([bookingId, createdAt])
+  @@index([recipientId, createdAt])
+  @@index([administratorId, createdAt])
+  @@index([channel, status, createdAt])
 }
 
 model AuditLog {
