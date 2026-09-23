@@ -298,9 +298,11 @@ export async function getAdminMessageConversations(options: {
           conversation.latestCommunication
             ? conversation.latestMessage.createdAt >
               conversation.latestCommunication.createdAt
-              ? conversation.latestMessage
-              : conversation.latestCommunication
-            : conversation.latestMessage ?? conversation.latestCommunication,
+              ? conversation.latestMessage.createdAt
+              : conversation.latestCommunication.createdAt
+            : conversation.latestMessage?.createdAt ??
+              conversation.latestCommunication?.createdAt ??
+              null,
       };
     })
     .filter((conversation) => {
@@ -325,8 +327,8 @@ export async function getAdminMessageConversations(options: {
       return haystack.includes(search.toLowerCase());
     })
     .sort((a, b) => {
-      const aDate = a.latestActivity?.createdAt?.getTime() ?? 0;
-      const bDate = b.latestActivity?.createdAt?.getTime() ?? 0;
+      const aDate = a.latestActivity?.getTime() ?? 0;
+      const bDate = b.latestActivity?.getTime() ?? 0;
       return bDate - aDate;
     })
     .slice(0, limit);
@@ -395,7 +397,7 @@ export async function getAdminBookingMessages(bookingId: string) {
       sender: userMap.get(message.senderId) ?? null,
       recipient: userMap.get(message.recipientId) ?? null,
     })),
-    communications: communications.map((entry) => ({
+    communicationLogs: communications.map((entry) => ({
       ...entry,
       administrator: userMap.get(entry.administratorId) ?? null,
       recipient: userMap.get(entry.recipientId) ?? null,
