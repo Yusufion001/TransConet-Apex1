@@ -85,8 +85,8 @@ export default function ApiManagement() {
 
   if (loading) {
     return (
-      <section className="module-workspace">
-        <div className="module-header">
+      <section className="module-workspace api-management-workspace">
+        <div className="module-header api-management-module-header">
           <div>
             <span className="module-kicker">
               TRANSCONET-APEX1 SYSTEM
@@ -99,7 +99,7 @@ export default function ApiManagement() {
           </div>
         </div>
 
-        <div className="panel customer-state">
+        <div className="panel customer-state api-management-loading-state">
           <strong>Loading API Management…</strong>
           <span>
             Retrieving API overview and health information.
@@ -136,13 +136,13 @@ export default function ApiManagement() {
       </div>
 
       {error && (
-        <div className="panel customer-state error-state">
+        <div className="panel customer-state error-state api-management-error-state">
           <strong>API Management unavailable</strong>
           <span>{error}</span>
         </div>
       )}
 
-      <section className="stats-grid">
+      <section className="stats-grid api-management-kpi-grid">
         <Metric
           label="API Status"
           value={overview?.status ?? "—"}
@@ -172,9 +172,9 @@ export default function ApiManagement() {
         />
       </section>
 
-      <div className="dashboard-grid">
-        <section className="panel">
-          <div className="panel-header">
+      <div className="dashboard-grid api-management-dashboard">
+        <section className="panel api-management-health-panel">
+          <div className="panel-header api-management-panel-header">
             <div>
               <h2>API Health</h2>
               <p>
@@ -193,7 +193,7 @@ export default function ApiManagement() {
             </span>
           </div>
 
-          <div className="health-list">
+          <div className="health-list api-management-health-list">
             <div className="health-row">
               <span>API health status</span>
               <strong>{health?.status ?? "—"}</strong>
@@ -222,8 +222,8 @@ export default function ApiManagement() {
           </div>
         </section>
 
-        <section className="panel">
-          <div className="panel-header">
+        <section className="panel api-management-resources-panel">
+          <div className="panel-header api-management-panel-header">
             <div>
               <h2>API Resources</h2>
               <p>
@@ -233,7 +233,7 @@ export default function ApiManagement() {
             </div>
           </div>
 
-          <div className="health-list">
+          <div className="health-list api-management-resource-list">
             <div className="health-row">
               <span>Users</span>
               <strong>
@@ -265,8 +265,8 @@ export default function ApiManagement() {
         </section>
       </div>
 
-      <section className="panel">
-        <div className="panel-header">
+      <section className="panel api-management-scope-panel">
+        <div className="panel-header api-management-panel-header">
           <div>
             <h2>Management Scope</h2>
             <p>
@@ -276,7 +276,7 @@ export default function ApiManagement() {
           </div>
         </div>
 
-        <div className="detail-grid">
+        <div className="detail-grid api-management-scope-grid">
           <div>
             <span>API version</span>
             <strong>{overview?.apiVersion ?? "—"}</strong>

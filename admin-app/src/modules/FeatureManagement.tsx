@@ -233,8 +233,8 @@ export default function FeatureManagement() {
 
   if (selected || creating) {
     return (
-      <section className="dashboard">
-        <div className="module-header">
+      <section className="dashboard feature-management-workspace">
+        <div className="module-header feature-management-module-header">
           <div>
             <button
               type="button"
@@ -262,13 +262,13 @@ export default function FeatureManagement() {
         </div>
 
         {error && (
-          <div className="error-banner">
+          <div className="error-banner feature-management-error">
             {error}
           </div>
         )}
 
-        <div className="panel">
-          <div className="panel-header">
+        <div className="panel feature-management-editor-panel">
+          <div className="panel-header feature-management-panel-header">
             <div>
               <h2>
                 {creating
@@ -292,7 +292,7 @@ export default function FeatureManagement() {
             )}
           </div>
 
-          <div className="form-grid">
+          <div className="form-grid feature-management-form-grid">
             {creating && (
               <label>
                 Feature Key
@@ -410,7 +410,7 @@ export default function FeatureManagement() {
             </label>
           </div>
 
-          <div className="module-actions">
+          <div className="module-actions feature-management-actions">
             <button
               type="button"
               className="primary-button"
@@ -438,7 +438,7 @@ export default function FeatureManagement() {
           </div>
 
           {selected && (
-            <div className="module-meta">
+            <div className="module-meta feature-management-meta">
               <span>
                 Key: <strong>{selected.key}</strong>
               </span>
@@ -456,8 +456,8 @@ export default function FeatureManagement() {
   }
 
   return (
-    <section className="dashboard">
-      <div className="module-header">
+    <section className="dashboard feature-management-workspace">
+      <div className="module-header feature-management-module-header">
         <div>
           <span className="eyebrow">
             PLATFORM GOVERNANCE
@@ -479,12 +479,12 @@ export default function FeatureManagement() {
       </div>
 
       {error && (
-        <div className="error-banner">
+        <div className="error-banner feature-management-error">
           {error}
         </div>
       )}
 
-      <section className="stats-grid">
+      <section className="stats-grid feature-management-kpi-grid">
         <Stat label="Total Features" value={features.length} />
         <Stat label="Enabled" value={enabledCount} />
         <Stat label="Public" value={publicCount} />
@@ -492,8 +492,8 @@ export default function FeatureManagement() {
         <Stat label="Transporter Ready" value={transporterCount} />
       </section>
 
-      <div className="panel">
-        <div className="panel-header">
+      <div className="panel feature-management-directory-panel">
+        <div className="panel-header feature-management-panel-header">
           <div>
             <h2>Feature Flags</h2>
             <p>
@@ -503,7 +503,7 @@ export default function FeatureManagement() {
           </div>
 
           <input
-            className="module-search"
+            className="module-search feature-management-search"
             placeholder="Search features..."
             value={search}
             onChange={(event) =>
@@ -513,16 +513,16 @@ export default function FeatureManagement() {
         </div>
 
         {loading ? (
-          <div className="empty-state">
+          <div className="empty-state feature-management-state">
             Loading feature flags...
           </div>
         ) : filteredFeatures.length === 0 ? (
-          <div className="empty-state">
+          <div className="empty-state feature-management-state">
             No feature flags found.
           </div>
         ) : (
-          <div className="table-wrapper">
-            <table className="data-table">
+          <div className="table-wrapper feature-management-table-wrapper">
+            <table className="data-table feature-management-table">
               <thead>
                 <tr>
                   <th>Feature</th>

@@ -169,8 +169,8 @@ function AuditLogs() {
   }, [logs, search]);
 
   return (
-    <section className="module-workspace">
-      <div className="module-header">
+    <section className="module-workspace audit-logs-workspace">
+      <div className="module-header audit-logs-module-header">
         <div>
           <span className="module-kicker">
             TRANSCONET-APEX1 ADMINISTRATION
@@ -182,8 +182,8 @@ function AuditLogs() {
           </p>
         </div>
 
-        <div className="module-controls">
-          <span className={`status-badge ${connected ? "status-active" : "status-warning"}`}>
+        <div className="module-controls audit-logs-header-actions">
+          <span className={`status-badge audit-realtime-badge ${connected ? "status-active" : "status-warning"}`}>
             {connected ? "LIVE" : "OFFLINE"}
           </span>
 
@@ -205,34 +205,34 @@ function AuditLogs() {
         </div>
       )}
 
-      <div className="stats-grid">
-        <div className="stat-card">
+      <div className="stats-grid audit-logs-kpi-grid">
+        <div className="stat-card audit-kpi-card">
           <span>Records</span>
           <strong>{loading ? "…" : logs.length}</strong>
           <small>Persistent audit records loaded</small>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card audit-kpi-card">
           <span>Visible</span>
           <strong>{loading ? "…" : filteredLogs.length}</strong>
           <small>Records matching the current search</small>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card audit-kpi-card">
           <span>Actions</span>
           <strong>{loading ? "…" : actions.length}</strong>
           <small>Action types represented</small>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card audit-kpi-card audit-realtime-kpi">
           <span>Realtime</span>
           <strong>{connected ? "Connected" : "Disconnected"}</strong>
           <small>Administrative event channel</small>
         </div>
       </div>
 
-      <section className="module-card">
-        <div className="module-toolbar">
+      <section className="module-card audit-command-panel">
+        <div className="module-toolbar audit-command-header">
           <div>
             <strong>Administrative activity history</strong>
             <span>
@@ -241,8 +241,8 @@ function AuditLogs() {
             </span>
           </div>
 
-          <div className="module-controls">
-            <label>
+          <div className="module-controls audit-filter-controls">
+            <label className="audit-search-control">
               <span>Search</span>
               <input
                 value={search}
@@ -251,7 +251,7 @@ function AuditLogs() {
               />
             </label>
 
-            <label>
+            <label className="audit-action-control">
               <span>Action</span>
               <select
                 value={actionFilter}
@@ -279,47 +279,61 @@ function AuditLogs() {
             <span>No records match the current filters.</span>
           </div>
         ) : (
-          <div className="health-list">
+          <div className="audit-log-table-wrap">
+            <div className="audit-log-table-head">
+              <span>Action</span>
+              <span>Administrator</span>
+              <span>Target</span>
+              <span>Timestamp</span>
+            </div>
+
+            <div className="audit-log-list">
             {filteredLogs.map((log) => (
               <button
                 key={log.id}
                 type="button"
-                className="health-row"
+                className="audit-log-row"
                 onClick={() => setSelected(log)}
-                style={{
-                  width: "100%",
-                  textAlign: "left",
-                  cursor: "pointer",
-                  background: "transparent",
-                  border: 0,
-                }}
               >
-                <span>
+                <span className="audit-log-action">
                   <strong>{log.action}</strong>
-                  <br />
+                  <small>{log.id}</small>
+                </span>
+
+                <span className="audit-log-actor">
+                  <strong>{actorName(log)}</strong>
+                  <small>{log.administratorId}</small>
+                </span>
+
+                <span className="audit-log-target">
+                  <span className={`status-badge ${actionClass(log.action)}`}>
+                    {log.affectedBookingId
+                      ? "BOOKING"
+                      : log.affectedUserId
+                        ? "USER"
+                        : "ADMIN"}
+                  </span>
                   <small>
-                    {actorName(log)} · {formatDate(log.createdAt)}
+                    {log.affectedBookingId ??
+                      log.affectedUserId ??
+                      "Administrator action"}
                   </small>
                 </span>
 
-                <span
-                  className={`status-badge ${actionClass(log.action)}`}
-                >
-                  {log.affectedBookingId
-                    ? "BOOKING"
-                    : log.affectedUserId
-                      ? "USER"
-                      : "ADMIN"}
+                <span className="audit-log-time">
+                  <strong>{formatDate(log.createdAt)}</strong>
+                  <small>{log.ipAddress ?? "IP unavailable"}</small>
                 </span>
               </button>
             ))}
+            </div>
           </div>
         )}
       </section>
 
       {selected && (
-        <section className="module-card">
-          <div className="module-toolbar">
+        <section className="module-card audit-detail-panel">
+          <div className="module-toolbar audit-detail-header">
             <div>
               <strong>Audit record details</strong>
               <span>Persistent record from the backend AuditLog store.</span>
@@ -334,83 +348,74 @@ function AuditLogs() {
             </button>
           </div>
 
-          <div className="health-list">
-            <div className="health-row">
+          <div className="audit-detail-grid">
+            <div className="audit-detail-field">
               <span>Audit ID</span>
               <strong>{selected.id}</strong>
             </div>
 
-            <div className="health-row">
+            <div className="audit-detail-field">
               <span>Action</span>
               <strong>{selected.action}</strong>
             </div>
 
-            <div className="health-row">
+            <div className="audit-detail-field">
               <span>Administrator</span>
               <strong>{actorName(selected)}</strong>
             </div>
 
-            <div className="health-row">
+            <div className="audit-detail-field">
               <span>Administrator ID</span>
               <strong>{selected.administratorId}</strong>
             </div>
 
-            <div className="health-row">
+            <div className="audit-detail-field">
               <span>Affected user</span>
               <strong>{affectedUserName(selected)}</strong>
             </div>
 
-            <div className="health-row">
+            <div className="audit-detail-field">
               <span>Affected booking</span>
               <strong>{selected.affectedBookingId ?? "—"}</strong>
             </div>
 
-            <div className="health-row">
+            <div className="audit-detail-field">
               <span>IP address</span>
               <strong>{selected.ipAddress ?? "—"}</strong>
             </div>
 
-            <div className="health-row">
+            <div className="audit-detail-field">
               <span>Created</span>
               <strong>{formatDate(selected.createdAt)}</strong>
             </div>
           </div>
 
-          <div className="module-card">
-            <strong>Previous value</strong>
-            <pre
-              style={{
-                overflowX: "auto",
-                whiteSpace: "pre-wrap",
-                marginTop: "12px",
-              }}
-            >
+          <div className="audit-json-panel">
+            <div className="audit-json-heading">
+              <strong>Previous value</strong>
+              <span>Recorded state before the administrative action</span>
+            </div>
+            <pre>
               {JSON.stringify(selected.previousValue ?? {}, null, 2)}
             </pre>
           </div>
 
-          <div className="module-card">
-            <strong>New value</strong>
-            <pre
-              style={{
-                overflowX: "auto",
-                whiteSpace: "pre-wrap",
-                marginTop: "12px",
-              }}
-            >
+          <div className="audit-json-panel">
+            <div className="audit-json-heading">
+              <strong>New value</strong>
+              <span>Recorded state after the administrative action</span>
+            </div>
+            <pre>
               {JSON.stringify(selected.newValue ?? {}, null, 2)}
             </pre>
           </div>
 
-          <div className="module-card">
-            <strong>Device metadata</strong>
-            <pre
-              style={{
-                overflowX: "auto",
-                whiteSpace: "pre-wrap",
-                marginTop: "12px",
-              }}
-            >
+          <div className="audit-json-panel">
+            <div className="audit-json-heading">
+              <strong>Device metadata</strong>
+              <span>Security context captured with the audit record</span>
+            </div>
+            <pre>
               {JSON.stringify(selected.deviceMetadata ?? {}, null, 2)}
             </pre>
           </div>

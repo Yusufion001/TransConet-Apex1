@@ -2,6 +2,8 @@ import { apiClient } from "./client";
 
 export type AdminModule =
   | "PLATFORM_OVERVIEW"
+  | "CUSTOMER_MANAGEMENT"
+  | "TRANSPORTER_MANAGEMENT"
   | "VERIFICATION_CENTER"
   | "CONTENT_MANAGEMENT"
   | "SUPPORT_CARE"
@@ -25,7 +27,8 @@ export type AdminModule =
   | "ERROR_CENTER"
   | "API_MANAGEMENT"
   | "SECURITY_CENTER"
-  | "DATABASE_HEALTH";
+  | "DATABASE_HEALTH"
+  | "MESSAGING";
 
 export type AdminType =
   | "SUPER_ADMIN"
@@ -120,6 +123,24 @@ export async function updateAdministrator(
     `/admin/administrators/${userId}`,
     data,
   );
+  return response.data.data;
+}
+
+export async function resendAdministratorInvitation(
+  userId: string,
+): Promise<{
+  invitationId: string;
+  expiresAt: string;
+  message: string;
+}> {
+  const response = await apiClient.post<
+    ApiResponse<{
+      invitationId: string;
+      expiresAt: string;
+      message: string;
+    }>
+  >(`/admin/administrators/${userId}/resend-invitation`);
+
   return response.data.data;
 }
 

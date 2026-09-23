@@ -242,8 +242,8 @@ function ErrorCenter() {
   );
 
   return (
-    <section className="module-workspace">
-      <div className="module-header">
+    <section className="module-workspace error-center-workspace">
+      <div className="module-header error-center-module-header">
         <span className="module-kicker">TRANSCONET-APEX1 SYSTEM INTELLIGENCE</span>
         <h2>Error Center</h2>
         <p>
@@ -253,13 +253,13 @@ function ErrorCenter() {
       </div>
 
       {error && (
-        <div className="module-card module-error">
+        <div className="module-card module-error error-center-error-state">
           <strong>Error Center unavailable</strong>
           <p>{error}</p>
         </div>
       )}
 
-      <div className="stats-grid">
+      <div className="stats-grid error-center-kpi-grid">
         <div className="stat-card">
           <span>Recorded Errors</span>
           <strong>{loading ? "…" : errorCount}</strong>
@@ -289,8 +289,8 @@ function ErrorCenter() {
         </div>
       </div>
 
-      <div className="module-card">
-        <div className="module-toolbar">
+      <div className="module-card error-center-filter-panel">
+        <div className="module-toolbar error-center-filter-toolbar">
           <div>
             <strong>Error event stream</strong>
             <span>
@@ -335,9 +335,9 @@ function ErrorCenter() {
         </div>
       </div>
 
-      <div className="error-center-layout">
-        <div className="module-card">
-          <div className="panel-header">
+      <div className="error-center-layout error-center-command-layout">
+        <div className="module-card error-center-queue-panel">
+          <div className="panel-header error-center-queue-header">
             <div>
               <h2>Errors &amp; failures</h2>
               <p>{filteredEvents.length} matching events</p>
@@ -354,12 +354,12 @@ function ErrorCenter() {
               <span>Try changing the current search or event-type filter.</span>
             </div>
           ) : (
-            <div className="error-event-list">
+            <div className="error-event-list error-center-event-list">
               {filteredEvents.map((event) => (
                 <button
                   type="button"
                   key={event.id}
-                  className={`error-event-row ${
+                  className={`error-event-row error-center-event-row ${
                     selected?.id === event.id ? "active" : ""
                   }`}
                   onClick={() => setSelected(event)}
@@ -385,7 +385,7 @@ function ErrorCenter() {
           )}
         </div>
 
-        <div className="module-card error-detail">
+        <div className="module-card error-detail error-center-detail-panel">
           {!selected ? (
             <div className="detail-empty">
               <strong>Select an error event</strong>
@@ -395,7 +395,7 @@ function ErrorCenter() {
             </div>
           ) : (
             <>
-              <div className="partner-detail-header">
+              <div className="partner-detail-header error-center-detail-header">
                 <div>
                   <span className="module-kicker">ERROR EVENT</span>
                   <h2>{selected.title}</h2>
@@ -411,7 +411,7 @@ function ErrorCenter() {
                 </span>
               </div>
 
-              <div className="detail-grid">
+              <div className="detail-grid error-center-detail-grid">
                 <div>
                   <span>Event ID</span>
                   <strong>{selected.id}</strong>
@@ -448,7 +448,7 @@ function ErrorCenter() {
                 </div>
               </div>
 
-              <div className="detail-section">
+              <div className="detail-section error-center-record-panel">
                 <span>Description</span>
                 <strong>{selected.description ?? "No description recorded."}</strong>
               </div>

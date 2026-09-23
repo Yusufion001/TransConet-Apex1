@@ -199,7 +199,7 @@ export default function ContentManagement() {
 
   return (
     <section className="module-workspace content-management-workspace">
-      <div className="module-header">
+      <div className="module-header content-module-header">
         <span className="module-kicker">
           TRANSCONET-APEX1 GOVERNANCE
         </span>
@@ -214,20 +214,20 @@ export default function ContentManagement() {
       </div>
 
       {error && (
-        <div className="module-card module-error">
+        <div className="module-card module-error content-error-state">
           <strong>Content Management unavailable</strong>
           <p>{error}</p>
         </div>
       )}
 
       {notice && (
-        <div className="module-card module-success">
+        <div className="module-card module-success content-success-state">
           {notice}
         </div>
       )}
 
       <div className="content-management-layout">
-        <div className="module-card content-library">
+        <div className="module-card content-library content-library-panel">
           <div className="panel-header">
             <div>
               <h2>Content Library</h2>
@@ -246,7 +246,7 @@ export default function ContentManagement() {
             </button>
           </div>
 
-          <div className="content-filters">
+          <div className="content-filters content-library-filters">
             <input
               value={search}
               onChange={(event) =>
@@ -293,13 +293,13 @@ export default function ContentManagement() {
             </button>
           </div>
 
-          <div className="content-list">
+          <div className="content-list content-library-list">
             {loading ? (
-              <div className="empty-activity">
+              <div className="empty-activity content-state">
                 <strong>Loading content…</strong>
               </div>
             ) : filteredItems.length === 0 ? (
-              <div className="empty-activity">
+              <div className="empty-activity content-state">
                 <strong>No content found</strong>
                 <span>
                   Create the first controlled platform content item.
@@ -333,7 +333,7 @@ export default function ContentManagement() {
         </div>
 
         <form
-          className="module-card content-editor"
+          className="module-card content-editor content-editor-panel"
           onSubmit={handleSubmit}
         >
           <div className="panel-header">
@@ -433,7 +433,7 @@ export default function ContentManagement() {
             />
           </label>
 
-          <div className="editor-actions">
+          <div className="editor-actions content-editor-actions">
             <button
               type="submit"
               className="primary-button"

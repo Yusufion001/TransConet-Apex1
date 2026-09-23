@@ -71,8 +71,8 @@ function ReportCenter() {
   }, []);
 
   return (
-    <section className="module-workspace">
-      <div className="module-header">
+    <section className="module-workspace report-center-workspace">
+      <div className="module-header report-center-module-header">
         <span className="module-kicker">TRANSCONET-APEX1 GOVERNANCE</span>
         <h2>Report Center</h2>
         <p>
@@ -82,14 +82,14 @@ function ReportCenter() {
       </div>
 
       {error && (
-        <div className="module-card module-error">
+        <div className="module-card module-error report-center-error-state">
           <strong>Report Center operation failed</strong>
           <p>{error}</p>
         </div>
       )}
 
-      <div className="module-card">
-        <div className="module-toolbar">
+      <div className="module-card report-center-command-panel">
+        <div className="module-toolbar report-center-command-toolbar">
           <div>
             <strong>Reporting controls</strong>
             <span>
@@ -133,15 +133,14 @@ function ReportCenter() {
         </div>
       ) : (
         <>
-          <div className="module-card">
-            <div className="panel-header">
+          <div className="module-card report-center-section report-center-platform-section">
+            <div className="panel-header report-center-section-header">
               <div>
-                <h2>Platform</h2>
                 <p>Current platform population and infrastructure.</p>
               </div>
             </div>
 
-            <div className="stats-grid">
+            <div className="stats-grid report-center-kpi-grid">
               <Metric
                 label="Users"
                 value={overview.platform.users}
@@ -170,10 +169,9 @@ function ReportCenter() {
             </div>
           </div>
 
-          <div className="module-card">
-            <div className="panel-header">
+          <div className="module-card report-center-section report-center-operations-section">
+            <div className="panel-header report-center-section-header">
               <div>
-                <h2>Operations</h2>
                 <p>Booking activity and operational completion.</p>
               </div>
             </div>
@@ -202,10 +200,9 @@ function ReportCenter() {
             </div>
           </div>
 
-          <div className="module-card">
-            <div className="panel-header">
+          <div className="module-card report-center-section report-center-financial-section">
+            <div className="panel-header report-center-section-header">
               <div>
-                <h2>Financial</h2>
                 <p>Current payment and withdrawal activity.</p>
               </div>
             </div>
@@ -234,10 +231,9 @@ function ReportCenter() {
             </div>
           </div>
 
-          <div className="module-card">
-            <div className="panel-header">
+          <div className="module-card report-center-section report-center-compliance-section">
+            <div className="panel-header report-center-section-header">
               <div>
-                <h2>Compliance &amp; Support</h2>
                 <p>
                   Documents and operational cases requiring administrative
                   visibility.
@@ -264,10 +260,9 @@ function ReportCenter() {
             </div>
           </div>
 
-          <div className="module-card">
-            <div className="panel-header">
+          <div className="module-card report-center-section report-center-communication-section">
+            <div className="panel-header report-center-section-header">
               <div>
-                <h2>Communication</h2>
                 <p>Platform communication activity.</p>
               </div>
             </div>
@@ -281,10 +276,9 @@ function ReportCenter() {
             </div>
           </div>
 
-          <div className="module-card">
-            <div className="panel-header">
+          <div className="module-card report-center-snapshot-panel">
+            <div className="panel-header report-center-snapshot-header">
               <div>
-                <h2>Report Snapshot</h2>
                 <p>
                   Generate a controlled reporting event through the
                   administration backend.
@@ -298,7 +292,7 @@ function ReportCenter() {
             </div>
 
             {generatedReport ? (
-              <div className="detail-grid">
+              <div className="detail-grid report-center-snapshot-grid">
                 <div>
                   <span>Status</span>
                   <strong>{generatedReport.status}</strong>
@@ -325,7 +319,7 @@ function ReportCenter() {
             )}
           </div>
 
-          <div className="report-generated-meta">
+          <div className="report-generated-meta report-center-generated-meta">
             <span>
               Live metrics generated at{" "}
               <strong>{formatDate(overview.generatedAt)}</strong>

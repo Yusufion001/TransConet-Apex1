@@ -114,8 +114,8 @@ function RiskFraud() {
   );
 
   return (
-    <section className="module-workspace">
-      <div className="module-header">
+    <section className="module-workspace risk-fraud-workspace">
+      <div className="module-header risk-fraud-module-header">
         <span className="module-kicker">TRANSCONET-APEX1 GOVERNANCE</span>
 
         <h2>Risk &amp; Fraud</h2>
@@ -134,7 +134,7 @@ function RiskFraud() {
         </div>
       )}
 
-      <div className="stats-grid">
+      <div className="stats-grid risk-fraud-kpi-grid">
         <div className="stat-card">
           <span>Risk Posture</span>
           <strong>{loading ? "…" : overview?.status ?? "UNKNOWN"}</strong>
@@ -160,8 +160,8 @@ function RiskFraud() {
         </div>
       </div>
 
-      <div className="module-card">
-        <div className="module-toolbar">
+      <div className="module-card risk-monitoring-panel">
+        <div className="module-toolbar risk-monitoring-header">
           <div>
             <strong>Live risk indicators</strong>
             <span>
@@ -190,7 +190,7 @@ function RiskFraud() {
           </div>
         ) : (
           <>
-            <div className="risk-indicator-grid">
+            <div className="risk-indicator-grid risk-signal-grid">
               {overview.indicators.map((indicator: RiskIndicator) => (
                 <article className="risk-indicator" key={indicator.code}>
                   <div>
@@ -205,7 +205,7 @@ function RiskFraud() {
               ))}
             </div>
 
-            <div className="risk-monitoring-meta">
+            <div className="risk-monitoring-meta risk-monitoring-footer">
               <span>
                 Last checked: <strong>{formatDate(overview.checkedAt)}</strong>
               </span>
@@ -223,7 +223,7 @@ function RiskFraud() {
             </div>
           </div>
 
-          <div className="risk-category-grid">
+          <div className="risk-category-grid risk-category-panels">
             <div>
               <strong>Account Risk</strong>
               <span>
@@ -286,7 +286,7 @@ function RiskFraud() {
           </span>
         </div>
 
-        <form className="risk-alert-form" onSubmit={submitAlert}>
+        <form className="risk-alert-form risk-alert-composer" onSubmit={submitAlert}>
           <label>
             <span>Alert code</span>
             <input
@@ -339,9 +339,9 @@ function RiskFraud() {
             </div>
           </div>
 
-          <div className="risk-alert-list">
+          <div className="risk-alert-list risk-session-alert-list">
             {alerts.map((alert) => (
-              <article className="risk-alert-item" key={alert.id}>
+              <article className="risk-alert-item risk-session-alert" key={alert.id}>
                 <div>
                   <strong>{alert.code}</strong>
                   <span>{alert.description}</span>

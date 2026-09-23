@@ -133,7 +133,7 @@ export default function Transporters() {
 
   if (!transporterId || !transporter) {
     return (
-      <section className="dashboard">
+      <section className="dashboard transporters-workspace">
         <TransporterDirectory
           onSelectTransporter={openTransporter}
         />
@@ -166,8 +166,8 @@ export default function Transporters() {
   ];
 
   return (
-    <section className="dashboard">
-      <div className="module-header">
+    <section className="dashboard transporters-workspace">
+      <div className="module-header transporter-detail-header">
         <div>
           <button
             type="button"
@@ -212,9 +212,9 @@ export default function Transporters() {
         </div>
       )}
 
-      <div className="customer-layout">
-        <aside className="customer-subnav panel">
-          <div className="customer-identity">
+      <div className="customer-layout transporter-detail-layout">
+        <aside className="customer-subnav panel transporter-detail-sidebar">
+          <div className="customer-identity transporter-identity">
             <div className="customer-avatar">
               {transporter.firstName.charAt(0)}
               {transporter.lastName.charAt(0)}
@@ -234,7 +234,7 @@ export default function Transporters() {
             </span>
           </div>
 
-          <div className="customer-navigation">
+          <div className="customer-navigation transporter-navigation">
             {pages.map((item) => (
               <button
                 key={item.key}
@@ -251,7 +251,8 @@ export default function Transporters() {
             ))}
           </div>
 
-          <div className="customer-actions">
+          <div className="customer-actions transporter-actions transporter-account-actions">
+            <span className="customer-control-kicker">ACCOUNT CONTROL</span>
             <strong>Account Actions</strong>
 
             <button
@@ -294,7 +295,8 @@ export default function Transporters() {
             </button>
           </div>
 
-          <div className="customer-actions">
+          <div className="customer-actions transporter-actions transporter-verification-actions">
+            <span className="customer-control-kicker">IDENTITY REVIEW</span>
             <strong>Verification</strong>
 
             <button
@@ -327,15 +329,15 @@ export default function Transporters() {
           </div>
         </aside>
 
-        <div className="customer-content">
+        <div className="customer-content transporter-detail-content">
           {page === "overview" && (
-            <div className="customer-page">
-              <div className="section-title">
+            <div className="customer-page transporter-page">
+              <div className="section-title transporter-section-title">
                 <h3>Transporter Overview</h3>
                 <span>Account intelligence</span>
               </div>
 
-              <div className="stats-grid customer-stats">
+              <div className="stats-grid customer-stats transporter-stats">
                 <div className="stat-card">
                   <span>Total Trips</span>
                   <strong>
@@ -371,6 +373,12 @@ export default function Transporters() {
                 </div>
 
                 <div className="stat-card">
+                  <span>Total Earnings</span>
+                  <strong>{money(profile?.totalEarnings)}</strong>
+                  <small>Recorded transporter earnings</small>
+                </div>
+
+                <div className="stat-card">
                   <span>Vehicles</span>
                   <strong>
                     {transporter._count?.vehicles ??
@@ -383,7 +391,7 @@ export default function Transporters() {
                 </div>
               </div>
 
-              <div className="panel customer-detail-panel">
+              <div className="panel customer-detail-panel transporter-record-panel">
                 <div className="panel-header">
                   <div>
                     <h2>Account Information</h2>
@@ -461,15 +469,15 @@ export default function Transporters() {
           )}
 
           {page === "profile" && (
-            <div className="customer-page">
-              <div className="section-title">
+            <div className="customer-page transporter-page">
+              <div className="section-title transporter-section-title">
                 <h3>Business Profile</h3>
                 <span>
                   Transporter registration information
                 </span>
               </div>
 
-              <div className="panel customer-detail-panel">
+              <div className="panel customer-detail-panel transporter-record-panel">
                 <div className="detail-grid">
                   <div>
                     <span>Company Name</span>
@@ -536,17 +544,17 @@ export default function Transporters() {
           )}
 
           {page === "vehicles" && (
-            <div className="customer-page">
-              <div className="section-title">
+            <div className="customer-page transporter-page">
+              <div className="section-title transporter-section-title">
                 <h3>Registered Vehicles</h3>
                 <span>
                   Vehicles associated with this transporter
                 </span>
               </div>
 
-              <div className="panel customer-directory-panel">
+              <div className="panel customer-directory-panel transporter-record-panel">
                 {!transporter.vehicles?.length ? (
-                  <div className="customer-empty">
+                  <div className="customer-empty transporter-empty">
                     <strong>
                       No vehicles recorded.
                     </strong>
@@ -556,8 +564,8 @@ export default function Transporters() {
                     </span>
                   </div>
                 ) : (
-                  <div className="table-wrap">
-                    <table>
+                  <div className="table-wrap transporter-table-wrap">
+                    <table className="transporter-table">
                       <thead>
                         <tr>
                           <th>Registration</th>
@@ -618,8 +626,8 @@ export default function Transporters() {
           )}
 
           {page === "bookings" && (
-            <div className="customer-page">
-              <div className="section-title">
+            <div className="customer-page transporter-page">
+              <div className="section-title transporter-section-title">
                 <h3>Recent Bookings</h3>
                 <span>
                   Transporter booking activity returned by
@@ -627,10 +635,10 @@ export default function Transporters() {
                 </span>
               </div>
 
-              <div className="panel customer-directory-panel">
+              <div className="panel customer-directory-panel transporter-record-panel">
                 {!transporter.transporterBookings
                   ?.length ? (
-                  <div className="customer-empty">
+                  <div className="customer-empty transporter-empty">
                     <strong>
                       No bookings recorded.
                     </strong>
@@ -640,8 +648,8 @@ export default function Transporters() {
                     </span>
                   </div>
                 ) : (
-                  <div className="table-wrap">
-                    <table>
+                  <div className="table-wrap transporter-table-wrap">
+                    <table className="transporter-table">
                       <thead>
                         <tr>
                           <th>Booking</th>

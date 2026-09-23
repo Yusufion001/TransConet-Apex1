@@ -180,7 +180,7 @@ function Settings() {
 
   if (loading) {
     return (
-      <div className="dashboard">
+      <div className="dashboard settings-workspace">
         <section className="panel">
           <div className="empty-activity">
             <strong>
@@ -194,7 +194,7 @@ function Settings() {
 
   return (
     <div className="dashboard">
-      <section className="welcome-panel">
+      <section className="welcome-panel settings-module-header">
         <div>
           <span className="eyebrow">
             TRANSCONET-APEX1 PLATFORM SETTINGS
@@ -216,16 +216,16 @@ function Settings() {
       </section>
 
       {error && (
-        <section className="panel">
+        <section className="panel settings-error-state">
           <div className="empty-activity">
             <strong>{error}</strong>
           </div>
         </section>
       )}
 
-      <section className="dashboard-grid">
-        <div className="panel">
-          <div className="panel-header">
+      <section className="dashboard-grid settings-command-layout">
+        <div className="panel settings-registry-panel">
+          <div className="panel-header settings-panel-header">
             <div>
               <h2>Configuration Registry</h2>
               <p>
@@ -234,7 +234,7 @@ function Settings() {
             </div>
           </div>
 
-          <div className="health-list">
+          <div className="health-list settings-registry-list">
             {definitions.map((definition) => (
               <button
                 key={definition.key}
@@ -277,8 +277,8 @@ function Settings() {
           </div>
         </div>
 
-        <div className="panel">
-          <div className="panel-header">
+        <div className="panel settings-editor-panel">
+          <div className="panel-header settings-panel-header">
             <div>
               <h2>
                 {selectedDefinition
@@ -295,7 +295,7 @@ function Settings() {
 
           {selectedDefinition && (
             <>
-              <label>
+              <label className="settings-field">
                 Description
                 <input
                   value={description}
@@ -307,7 +307,7 @@ function Settings() {
                 />
               </label>
 
-              <label>
+              <label className="settings-field settings-json-field">
                 Configuration value
                 <textarea
                   value={editorValue}
@@ -320,7 +320,7 @@ function Settings() {
                 />
               </label>
 
-              <div className="panel-header">
+              <div className="panel-header settings-editor-footer">
                 <span>
                   {selectedConfig
                     ? `Last updated ${new Date(
@@ -344,7 +344,7 @@ function Settings() {
               </div>
 
               {message && (
-                <div className="command-status">
+                <div className="command-status settings-save-status">
                   <span className="status-dot" />
                   <span>{message}</span>
                 </div>

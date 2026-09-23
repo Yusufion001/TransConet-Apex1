@@ -50,8 +50,8 @@ export default function DatabaseHealth() {
 
   if (loading) {
     return (
-      <section className="module-workspace">
-        <div className="module-header">
+      <section className="module-workspace database-health-workspace">
+        <div className="module-header database-health-module-header">
           <div>
             <span className="module-kicker">
               TRANSCONET-APEX1 SYSTEM
@@ -64,7 +64,7 @@ export default function DatabaseHealth() {
           </div>
         </div>
 
-        <div className="panel customer-state">
+        <div className="panel customer-state database-loading-state">
           <strong>Loading Database Health…</strong>
           <span>
             Running the backend database health check.
@@ -99,13 +99,13 @@ export default function DatabaseHealth() {
       </div>
 
       {error && (
-        <div className="panel customer-state error-state">
+        <div className="panel customer-state error-state database-error-state">
           <strong>Database Health unavailable</strong>
           <span>{error}</span>
         </div>
       )}
 
-      <section className="stats-grid">
+      <section className="stats-grid database-health-kpi-grid">
         <div className="stat-card">
           <span>Database Status</span>
           <strong>{health?.status ?? "—"}</strong>
@@ -135,9 +135,9 @@ export default function DatabaseHealth() {
         </div>
       </section>
 
-      <div className="dashboard-grid">
-        <section className="panel">
-          <div className="panel-header">
+      <div className="dashboard-grid database-health-dashboard">
+        <section className="panel database-status-panel">
+          <div className="panel-header database-health-panel-header">
             <div>
               <h2>Database Status</h2>
               <p>
@@ -156,7 +156,7 @@ export default function DatabaseHealth() {
             </span>
           </div>
 
-          <div className="health-list">
+          <div className="health-list database-status-list">
             <div className="health-row">
               <span>Database</span>
               <strong>{health?.database ?? "—"}</strong>
@@ -185,8 +185,8 @@ export default function DatabaseHealth() {
           </div>
         </section>
 
-        <section className="panel">
-          <div className="panel-header">
+        <section className="panel database-records-panel">
+          <div className="panel-header database-health-panel-header">
             <div>
               <h2>Platform Records</h2>
               <p>
@@ -195,7 +195,7 @@ export default function DatabaseHealth() {
             </div>
           </div>
 
-          <div className="health-list">
+          <div className="health-list database-records-list">
             <div className="health-row">
               <span>Users</span>
               <strong>{health?.records.users ?? "—"}</strong>
