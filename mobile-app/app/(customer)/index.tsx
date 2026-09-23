@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Link, router, useNavigation } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
+import { Ionicons } from "@expo/vector-icons";
 
 import { useAuthStore } from "../../src/auth/auth.store";
 import { getCustomerBookings, type Booking } from "../../src/api/bookings";
@@ -122,7 +123,7 @@ export default function CustomerHome() {
               style={styles.menuButton}
               onPress={() => navigation.openDrawer()}
             >
-              <Text style={styles.menuIcon}>☰</Text>
+              <Ionicons name="menu-outline" size={25} color="#101B3A" />
             </Pressable>
 
             <Pressable
@@ -135,7 +136,7 @@ export default function CustomerHome() {
               style={styles.notificationButton}
               onPress={() => router.push("/(customer)/notifications")}
             >
-              <Text style={styles.notificationIcon}>🔔</Text>
+              <Ionicons name="notifications-outline" size={23} color="#101B3A" />
               {unreadNotificationCount > 0 ? (
                 <View style={styles.notificationBadge}>
                   <Text style={styles.notificationBadgeText}>
@@ -150,9 +151,13 @@ export default function CustomerHome() {
 
           <Text style={styles.brand}>TRANSCONET</Text>
 
-          <Text style={styles.greeting}>
-            Hello, {firstName} 👋
-          </Text>
+          <View style={styles.greetingBlock}>
+            <Text style={styles.greetingEyebrow}>CUSTOMER COMMAND CENTER</Text>
+            <Text style={styles.greeting}>Hello, {firstName}</Text>
+            <Text style={styles.greetingSubtitle}>
+              Manage your shipments and move your cargo with confidence.
+            </Text>
+          </View>
         </View>
 
         {/* ADMIN-CONTROLLED ADVERTISEMENT */}
@@ -224,7 +229,9 @@ export default function CustomerHome() {
               style={styles.serviceCard}
               onPress={() => router.push("/(customer)/bookings/create")}
             >
-              <Text style={styles.serviceIcon}>🚚</Text>
+              <View style={[styles.serviceIconWrap, styles.marketplaceIconWrap]}>
+                <Ionicons name="cube-outline" size={25} color="#4169E1" />
+              </View>
               <Text style={styles.serviceTitle}>
                 Marketplace
               </Text>
@@ -236,7 +243,9 @@ export default function CustomerHome() {
               style={styles.serviceCard}
               onPress={() => router.push("/(customer)/express")}
             >
-              <Text style={styles.serviceIcon}>⚡</Text>
+              <View style={[styles.serviceIconWrap, styles.expressIconWrap]}>
+                <Ionicons name="flash-outline" size={25} color="#FFFFFF" />
+              </View>
               <Text style={styles.serviceTitle}>
                 Express Booking
               </Text>
@@ -272,7 +281,10 @@ export default function CustomerHome() {
               </Text>
             </View>
 
-            <Text style={styles.viewArrow}>View →</Text>
+            <View style={styles.viewAction}>
+              <Text style={styles.viewArrow}>View</Text>
+              <Ionicons name="arrow-forward" size={16} color="#4169E1" />
+            </View>
           </Pressable>
         </View>
 
@@ -284,11 +296,15 @@ export default function CustomerHome() {
             style={styles.trackCard}
             onPress={handleTripPress}
           >
-            <Text style={styles.trackIcon}>📍</Text>
+            <View style={styles.trackIconWrap}>
+              <Ionicons name="navigate-outline" size={22} color="#FFFFFF" />
+            </View>
 
-            <Text style={styles.trackTitle}>
-              Track Your Trip
-            </Text>
+            <View style={styles.trackCopy}>
+              <Text style={styles.trackEyebrow}>LIVE JOURNEY</Text>
+              <Text style={styles.trackTitle}>Track Your Trip</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={19} color="#FFFFFF" />
           </Pressable>
         </View>
       </ScrollView>
@@ -301,59 +317,58 @@ export default function CustomerHome() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F7F9FC",
+    backgroundColor: "#F4F7FF",
   },
 
   container: {
     padding: 20,
-    paddingBottom: 24,
+    paddingTop: 14,
+    paddingBottom: 34,
     gap: 20,
   },
 
   header: {
-    alignItems: "center",
-    paddingTop: 8,
+    paddingTop: 2,
   },
 
   headerActions: {
-    alignSelf: "stretch",
+    width: "100%",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 10,
   },
 
   menuButton: {
-    width: 44,
-    height: 44,
+    width: 46,
+    height: 46,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-  },
-
-  menuIcon: {
-    fontSize: 26,
-    fontWeight: "800",
-    color: "#111827",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E3EAF7",
   },
 
   notificationButton: {
-    width: 44,
-    height: 44,
+    width: 46,
+    height: 46,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
-  },
-
-  notificationIcon: {
-    fontSize: 22,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E3EAF7",
   },
 
   notificationBadge: {
     position: "absolute",
-    top: 3,
-    right: 1,
-    minWidth: 18,
-    height: 18,
+    top: -2,
+    right: -2,
+    minWidth: 19,
+    height: 19,
     paddingHorizontal: 4,
-    borderRadius: 9,
+    borderRadius: 10,
     backgroundColor: "#D92D20",
     alignItems: "center",
     justifyContent: "center",
@@ -363,31 +378,49 @@ const styles = StyleSheet.create({
 
   notificationBadgeText: {
     color: "#FFFFFF",
-    fontSize: 10,
-    fontWeight: "800",
-    lineHeight: 13,
+    fontSize: 9,
+    fontWeight: "900",
+    lineHeight: 12,
   },
 
   brand: {
-    marginTop: -4,
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: "900",
-    letterSpacing: 2,
-    color: "#111827",
+    letterSpacing: 1.8,
+    color: "#4169E1",
+  },
+
+  greetingBlock: {
+    marginTop: 12,
+  },
+
+  greetingEyebrow: {
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.35,
+    color: "#667085",
   },
 
   greeting: {
-    marginTop: 14,
-    alignSelf: "stretch",
-    fontSize: 20,
-    fontWeight: "700",
-    color: "#111827",
+    marginTop: 5,
+    fontSize: 29,
+    lineHeight: 36,
+    fontWeight: "900",
+    color: "#101B3A",
+  },
+
+  greetingSubtitle: {
+    marginTop: 5,
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#667085",
+    maxWidth: 330,
   },
 
   adCard: {
     minHeight: 150,
-    borderRadius: 20,
-    backgroundColor: "#0B63CE",
+    borderRadius: 22,
+    backgroundColor: "#4169E1",
     overflow: "hidden",
   },
 
@@ -426,43 +459,49 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "900",
     color: "#FFFFFF",
-    letterSpacing: 1,
+    letterSpacing: 0.2,
+    textAlign: "center",
   },
 
   adText: {
-    marginTop: 10,
-    fontSize: 15,
+    marginTop: 9,
+    fontSize: 14,
+    lineHeight: 20,
     color: "#FFFFFF",
+    textAlign: "center",
   },
 
   adButton: {
     marginTop: 14,
-    paddingHorizontal: 16,
+    minHeight: 42,
+    paddingHorizontal: 17,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 12,
     backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   adButtonText: {
-    color: "#0B63CE",
+    color: "#4169E1",
     fontSize: 13,
-    fontWeight: "800",
+    fontWeight: "900",
   },
 
   section: {
-    gap: 12,
+    gap: 11,
   },
 
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "800",
-    color: "#111827",
+    fontWeight: "900",
+    color: "#101B3A",
   },
 
   sectionLabel: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: "900",
-    letterSpacing: 1.2,
+    letterSpacing: 1.25,
     color: "#667085",
   },
 
@@ -473,36 +512,56 @@ const styles = StyleSheet.create({
 
   serviceCard: {
     flex: 1,
-    minHeight: 112,
-    borderRadius: 18,
+    minHeight: 136,
+    borderRadius: 19,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E4E7EC",
+    borderColor: "#E1E8F5",
     padding: 16,
     justifyContent: "space-between",
+    shadowColor: "#101B3A",
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 2,
   },
 
-  serviceIcon: {
-    fontSize: 28,
+  serviceIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  marketplaceIconWrap: {
+    backgroundColor: "#EEF3FF",
+  },
+
+  expressIconWrap: {
+    backgroundColor: "#101B3A",
   },
 
   serviceTitle: {
     fontSize: 15,
-    fontWeight: "800",
-    color: "#111827",
+    lineHeight: 20,
+    fontWeight: "900",
+    color: "#101B3A",
   },
 
-
   tripCard: {
-    minHeight: 82,
-    borderRadius: 16,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E4E7EC",
-    padding: 16,
+    minHeight: 92,
+    borderRadius: 19,
+    backgroundColor: "#101B3A",
+    padding: 17,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    shadowColor: "#101B3A",
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
 
   tripInfo: {
@@ -512,82 +571,73 @@ const styles = StyleSheet.create({
 
   tripTitle: {
     fontSize: 15,
-    fontWeight: "800",
-    color: "#111827",
+    fontWeight: "900",
+    color: "#FFFFFF",
   },
 
   tripStatus: {
     marginTop: 7,
-    fontSize: 13,
-    color: "#667085",
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#C9D4F2",
     textTransform: "capitalize",
   },
 
+  viewAction: {
+    minHeight: 38,
+    paddingHorizontal: 12,
+    borderRadius: 11,
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+
   viewArrow: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#0B63CE",
+    fontSize: 13,
+    fontWeight: "900",
+    color: "#4169E1",
   },
 
   trackCard: {
-    minHeight: 64,
-    borderRadius: 16,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E4E7EC",
+    minHeight: 76,
+    borderRadius: 19,
+    backgroundColor: "#4169E1",
+    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
+    gap: 12,
+    shadowColor: "#4169E1",
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 3,
   },
 
-  trackIcon: {
-    fontSize: 21,
+  trackIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  trackCopy: {
+    flex: 1,
+  },
+
+  trackEyebrow: {
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 1.1,
+    color: "#DDE6FF",
   },
 
   trackTitle: {
+    marginTop: 3,
     fontSize: 16,
-    fontWeight: "800",
-    color: "#111827",
-  },
-
-  bottomNav: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    minHeight: 76,
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 10,
-    backgroundColor: "#FFFFFF",
-    borderTopWidth: 1,
-    borderTopColor: "#E4E7EC",
-    flexDirection: "row",
-    justifyContent: "space-around",
-  },
-
-  navItem: {
-    minWidth: 80,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 2,
-  },
-
-  navIcon: {
-    fontSize: 20,
-    color: "#667085",
-  },
-
-  navText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#667085",
-  },
-
-  navActive: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: "#0B63CE",
+    fontWeight: "900",
+    color: "#FFFFFF",
   },
 });

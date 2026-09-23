@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 
 export default function CustomerSupportDisputes() {
@@ -11,22 +12,32 @@ export default function CustomerSupportDisputes() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <Text style={styles.backText}>‹</Text>
+          <Ionicons name="arrow-back" size={20} color="#4169E1" />
         </Pressable>
 
-        <Text style={styles.title}>Support & Disputes</Text>
+        <View style={styles.headerTitleWrap}>
+          <Text style={styles.headerEyebrow}>CUSTOMER CARE</Text>
+          <Text style={styles.title}>Support & Disputes</Text>
+        </View>
 
-        <View style={styles.headerSpacer} />
       </View>
 
       <View style={styles.content}>
         <View style={styles.hero}>
-          <Text style={styles.heroTitle}>How can we help?</Text>
-          <Text style={styles.heroText}>
-            Get help with your account, payments, shipments, or report an issue
-            with a shipment.
-          </Text>
+          <View style={styles.heroIcon}>
+            <Ionicons name="headset" size={24} color="#FFFFFF" />
+          </View>
+          <View style={styles.heroCopy}>
+            <Text style={styles.heroEyebrow}>WE'RE HERE TO HELP</Text>
+            <Text style={styles.heroTitle}>How can we help?</Text>
+            <Text style={styles.heroText}>
+              Get help with your account, payments, shipments, or report an issue
+              with a shipment.
+            </Text>
+          </View>
         </View>
+
+        <Text style={styles.sectionLabel}>HELP CENTER</Text>
 
         <Pressable
           accessibilityRole="button"
@@ -34,14 +45,18 @@ export default function CustomerSupportDisputes() {
           style={styles.option}
           onPress={() => router.push("/(customer)/support")}
         >
-          <Text style={styles.icon}>🎧</Text>
+          <View style={styles.optionIcon}>
+            <Ionicons name="headset-outline" size={24} color="#4169E1" />
+          </View>
           <View style={styles.optionText}>
             <Text style={styles.optionTitle}>Support</Text>
             <Text style={styles.optionDescription}>
               Create a support ticket or check your existing support requests.
             </Text>
           </View>
-          <Text style={styles.arrow}>›</Text>
+          <View style={styles.arrow}>
+            <Ionicons name="chevron-forward" size={20} color="#4169E1" />
+          </View>
         </Pressable>
 
         <Pressable
@@ -50,14 +65,18 @@ export default function CustomerSupportDisputes() {
           style={styles.option}
           onPress={() => router.push("/(customer)/disputes")}
         >
-          <Text style={styles.icon}>⚠️</Text>
+          <View style={styles.optionIcon}>
+            <Ionicons name="warning-outline" size={24} color="#4169E1" />
+          </View>
           <View style={styles.optionText}>
             <Text style={styles.optionTitle}>Shipment Disputes</Text>
             <Text style={styles.optionDescription}>
               Report or review an issue connected to one of your shipments.
             </Text>
           </View>
-          <Text style={styles.arrow}>›</Text>
+          <View style={styles.arrow}>
+            <Ionicons name="chevron-forward" size={20} color="#4169E1" />
+          </View>
         </Pressable>
       </View>
     </View>
@@ -67,87 +86,155 @@ export default function CustomerSupportDisputes() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F7F9FC",
+    backgroundColor: "#F4F7FF",
   },
   header: {
-    minHeight: 72,
-    paddingHorizontal: 16,
+    minHeight: 88,
+    paddingHorizontal: 20,
+    paddingTop: 10,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
-    borderBottomColor: "#E4E7EC",
+    borderBottomColor: "#E6ECF5",
   },
   backButton: {
     width: 44,
     height: 44,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
+    backgroundColor: "#EEF4FF",
+    borderWidth: 1,
+    borderColor: "#D8E4FF",
   },
-  backText: {
-    fontSize: 34,
-    lineHeight: 38,
-    color: "#111827",
+  headerTitleWrap: {
+    flex: 1,
+    marginLeft: 14,
+    alignItems: "center",
+    paddingRight: 44,
+  },
+  headerEyebrow: {
+    fontSize: 10,
+    lineHeight: 14,
+    fontWeight: "800",
+    letterSpacing: 1.1,
+    color: "#4169E1",
   },
   title: {
+    marginTop: 3,
     fontSize: 19,
+    lineHeight: 25,
     fontWeight: "800",
-    color: "#111827",
-  },
-  headerSpacer: {
-    width: 44,
+    color: "#101B3A",
   },
   content: {
-    padding: 16,
+    padding: 20,
     gap: 14,
   },
   hero: {
+    flexDirection: "row",
+    alignItems: "flex-start",
     padding: 20,
-    borderRadius: 18,
-    backgroundColor: "#0B63CE",
-    marginBottom: 2,
+    borderRadius: 22,
+    backgroundColor: "#4169E1",
+    shadowColor: "#101B3A",
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 4,
+  },
+  heroIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(255,255,255,0.16)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.22)",
+  },
+  heroCopy: {
+    flex: 1,
+    marginLeft: 14,
+  },
+  heroEyebrow: {
+    fontSize: 10,
+    lineHeight: 14,
+    fontWeight: "800",
+    letterSpacing: 1,
+    color: "#DCE8FF",
   },
   heroTitle: {
-    fontSize: 22,
+    marginTop: 3,
+    fontSize: 24,
+    lineHeight: 30,
     fontWeight: "800",
     color: "#FFFFFF",
   },
   heroText: {
-    marginTop: 8,
+    marginTop: 7,
     fontSize: 14,
     lineHeight: 20,
-    color: "#EAF2FF",
+    color: "#EAF1FF",
+  },
+  sectionLabel: {
+    marginTop: 4,
+    marginBottom: 0,
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: "800",
+    letterSpacing: 1.1,
+    color: "#667085",
   },
   option: {
+    minHeight: 104,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    padding: 18,
-    borderRadius: 16,
+    padding: 17,
+    borderRadius: 20,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E4E7EC",
+    borderColor: "#DCE5F5",
+    shadowColor: "#101B3A",
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
   },
-  icon: {
-    fontSize: 28,
+  optionIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#EEF4FF",
+    borderWidth: 1,
+    borderColor: "#D8E4FF",
   },
   optionText: {
     flex: 1,
-    gap: 4,
+    marginLeft: 14,
   },
   optionTitle: {
-    fontSize: 16,
+    fontSize: 17,
+    lineHeight: 22,
     fontWeight: "800",
-    color: "#111827",
+    color: "#101B3A",
   },
   optionDescription: {
+    marginTop: 5,
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 19,
     color: "#667085",
   },
   arrow: {
-    fontSize: 28,
-    color: "#667085",
+    width: 36,
+    height: 36,
+    marginLeft: 10,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#F4F7FF",
   },
 });

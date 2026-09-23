@@ -485,11 +485,15 @@ const [destinationLandmark, setDestinationLandmark] = useState("");
       contentContainerStyle={styles.container}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.title}>Book Transport</Text>
-
-      <Text style={styles.subtitle}>
-        Tell us what you need moved and where it needs to go.
-      </Text>
+      <View style={styles.header}>
+        <View style={styles.eyebrow}>
+          <Text style={styles.eyebrowText}>NEW SHIPMENT</Text>
+        </View>
+        <Text style={styles.title}>Book Transport</Text>
+        <Text style={styles.subtitle}>
+          Tell us what you need moved and where it needs to go.
+        </Text>
+      </View>
 
       <Text style={styles.label}>Pickup location</Text>
 
@@ -961,7 +965,7 @@ const styles = StyleSheet.create({
   locationModalTitle: {
     fontSize: 20,
     fontWeight: "800",
-    color: "#101828",
+    color: "#101B3A",
     paddingHorizontal: 20,
   },
   locationModalHint: {
@@ -987,7 +991,7 @@ const styles = StyleSheet.create({
   locationModalCancel: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#D0D5DD",
+    borderColor: "#D9E1F0",
     borderRadius: 12,
     paddingVertical: 13,
     alignItems: "center",
@@ -1003,7 +1007,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#D7E3EF",
+    borderColor: "#DDE5F5",
     overflow: "hidden",
   },
   suggestionItem: {
@@ -1015,7 +1019,7 @@ const styles = StyleSheet.create({
   suggestionTitle: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#102A43",
+    color: "#101B3A",
   },
   suggestionSecondary: {
     marginTop: 3,
@@ -1030,9 +1034,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     padding: 14,
     borderRadius: 14,
-    backgroundColor: "#F4F8FC",
+    backgroundColor: "#F8FAFF",
     borderWidth: 1,
-    borderColor: "#D7E3EF",
+    borderColor: "#DDE5F5",
   },
   routeLoadingText: {
     fontSize: 14,
@@ -1046,21 +1050,21 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#D7E3EF",
+    borderColor: "#DDE5F5",
   },
   routeSummaryCard: {
     marginTop: 16,
     marginBottom: 8,
     padding: 16,
     borderRadius: 16,
-    backgroundColor: "#F4F8FC",
+    backgroundColor: "#F8FAFF",
     borderWidth: 1,
-    borderColor: "#D7E3EF",
+    borderColor: "#DDE5F5",
   },
   routeSummaryTitle: {
     fontSize: 17,
     fontWeight: "700",
-    color: "#102A43",
+    color: "#101B3A",
     marginBottom: 12,
   },
   routeSummaryRow: {
@@ -1076,7 +1080,7 @@ const styles = StyleSheet.create({
   routeSummaryValue: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#102A43",
+    color: "#101B3A",
   },
   routeSummaryHint: {
     marginTop: 12,
@@ -1098,21 +1102,40 @@ const styles = StyleSheet.create({
   },
   container: {
     flexGrow: 1,
-    padding: 24,
-    backgroundColor: "#F7F9FC",
+    padding: 20,
+    paddingBottom: 40,
+    backgroundColor: "#F4F7FF",
+  },
+  header: {
+    marginTop: 18,
+    marginBottom: 10,
+  },
+  eyebrow: {
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "#EAF0FF",
+    marginBottom: 10,
+  },
+  eyebrowText: {
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1,
+    color: "#4169E1",
   },
   title: {
     fontSize: 30,
+    lineHeight: 37,
     fontWeight: "800",
-    color: "#111827",
-    marginTop: 24,
+    color: "#101B3A",
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: "#667085",
-    marginTop: 8,
-    marginBottom: 28,
-    lineHeight: 22,
+    marginTop: 7,
+    marginBottom: 22,
+    lineHeight: 21,
   },
   label: {
     fontSize: 14,
@@ -1123,12 +1146,18 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#D0D5DD",
-    borderRadius: 14,
+    borderColor: "#D9E1F0",
+    borderRadius: 15,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 16,
-    marginBottom: 18,
+    fontSize: 15,
+    color: "#101B3A",
+    marginBottom: 17,
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.025,
+    shadowRadius: 5,
+    elevation: 1,
   },
   fieldHint: {
     fontSize: 13,
@@ -1146,13 +1175,13 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#D0D5DD",
-    backgroundColor: "#F9FAFB",
+    borderColor: "#D9E1F0",
+    backgroundColor: "#F8FAFF",
   },
   classInfoTitle: {
     fontSize: 14,
     fontWeight: "800",
-    color: "#101828",
+    color: "#101B3A",
     marginBottom: 6,
   },
   classInfoText: {
@@ -1170,7 +1199,7 @@ const styles = StyleSheet.create({
   categoryOption: {
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#D0D5DD",
+    borderColor: "#D9E1F0",
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -1190,7 +1219,7 @@ const styles = StyleSheet.create({
     textTransform: "capitalize",
   },
   categoryOptionTextSelected: {
-    color: "#175CD3",
+    color: "#4169E1",
   },
   categoryRadio: {
     width: 22,
@@ -1220,13 +1249,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   locationButtonText: {
-    color: "#175CD3",
+    color: "#4169E1",
     fontSize: 15,
     fontWeight: "800",
   },
     mapConfirmButton: {
       borderWidth: 1,
-      borderColor: "#D0D5DD",
+      borderColor: "#D9E1F0",
       borderRadius: 12,
       paddingVertical: 11,
       alignItems: "center",
@@ -1256,7 +1285,7 @@ const styles = StyleSheet.create({
   noticeTitle: {
     fontSize: 15,
     fontWeight: "800",
-    color: "#175CD3",
+    color: "#4169E1",
     marginBottom: 6,
   },
   fareCard: {
@@ -1265,7 +1294,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: "#D0D5DD",
+    borderColor: "#D9E1F0",
   },
   fareLabel: {
     fontSize: 12,
@@ -1276,7 +1305,7 @@ const styles = StyleSheet.create({
   fareAmount: {
     fontSize: 30,
     fontWeight: "900",
-    color: "#111827",
+    color: "#101B3A",
   },
   distanceText: {
     fontSize: 13,
@@ -1289,7 +1318,7 @@ const styles = StyleSheet.create({
   paymentTitle: {
     fontSize: 18,
     fontWeight: "800",
-    color: "#111827",
+    color: "#101B3A",
     marginBottom: 4,
   },
   paymentSubtitle: {
@@ -1300,7 +1329,7 @@ const styles = StyleSheet.create({
   paymentOption: {
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#D0D5DD",
+    borderColor: "#D9E1F0",
     borderRadius: 16,
     padding: 16,
     marginBottom: 10,
@@ -1317,7 +1346,7 @@ const styles = StyleSheet.create({
   paymentOptionTitle: {
     fontSize: 16,
     fontWeight: "800",
-    color: "#111827",
+    color: "#101B3A",
   },
   paymentOptionText: {
     fontSize: 13,

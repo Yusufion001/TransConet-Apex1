@@ -327,44 +327,90 @@ export default function BookingDetails() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Pressable onPress={() => router.back()}>
-        <Text style={styles.back}>‹ Back</Text>
+      <Pressable
+        onPress={() => router.back()}
+        style={styles.backButton}
+        hitSlop={8}
+      >
+        <Text style={styles.back}>‹ Back to Shipments</Text>
       </Pressable>
 
-      <Text style={styles.title}>Shipment Details</Text>
+      <View style={styles.header}>
+        <View style={styles.eyebrow}>
+          <Text style={styles.eyebrowText}>MY SHIPMENT</Text>
+        </View>
+        <Text style={styles.title}>Shipment Details</Text>
+        <Text style={styles.subtitle}>
+          Track your shipment, payment and transporter communication in one place.
+        </Text>
+      </View>
 
       <View style={styles.statusCard}>
         <Text style={styles.statusLabel}>CURRENT STATUS</Text>
-        <Text style={styles.status}>{booking.status}</Text>
+        <View style={styles.statusRow}>
+          <Text style={styles.status}>{booking.status}</Text>
+          <View style={styles.liveBadge}>
+            <View style={styles.liveDot} />
+            <Text style={styles.liveBadgeText}>
+              {liveStatus ? "LIVE" : "UPDATED"}
+            </Text>
+          </View>
+        </View>
         {liveStatus && (
           <Text style={styles.live}>Live update: {liveStatus}</Text>
         )}
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.label}>PICKUP</Text>
-        <Text style={styles.value}>{booking.pickupLocation}</Text>
+        <Text style={styles.sectionEyebrow}>ROUTE</Text>
 
-        <Text style={styles.arrow}>↓</Text>
+        <View style={styles.locationRow}>
+          <View style={styles.routeMarker}>
+            <View style={styles.pickupDot} />
+          </View>
+          <View style={styles.locationContent}>
+            <Text style={styles.label}>PICKUP</Text>
+            <Text style={styles.value}>{booking.pickupLocation}</Text>
+          </View>
+        </View>
 
-        <Text style={styles.label}>DESTINATION</Text>
-        <Text style={styles.value}>{booking.destination}</Text>
+        <View style={styles.routeLine} />
+
+        <View style={styles.locationRow}>
+          <View style={styles.routeMarker}>
+            <View style={styles.destinationDot} />
+          </View>
+          <View style={styles.locationContent}>
+            <Text style={styles.label}>DESTINATION</Text>
+            <Text style={styles.value}>{booking.destination}</Text>
+          </View>
+        </View>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.label}>SHIPMENT</Text>
-        <Text style={styles.detail}>
-          Truck: {booking.truckCategory}
-        </Text>
-        <Text style={styles.detail}>
-          Weight: {booking.cargoWeight ?? "—"}
-        </Text>
-        <Text style={styles.detail}>
-          Fare: {money(booking.fare ?? booking.estimatedFare)}
-        </Text>
-        <Text style={styles.detail}>
-          Payment: {isNegotiatedBooking ? "NEGOTIATED" : paymentStatus}
-        </Text>
+        <Text style={styles.sectionEyebrow}>SHIPMENT SUMMARY</Text>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Truck</Text>
+          <Text style={styles.detailValue}>{booking.truckCategory}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Weight</Text>
+          <Text style={styles.detailValue}>{booking.cargoWeight ?? "—"}</Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Fare</Text>
+          <Text style={styles.detailValueStrong}>
+            {money(booking.fare ?? booking.estimatedFare)}
+          </Text>
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Payment</Text>
+          <View style={styles.paymentPill}>
+            <Text style={styles.paymentPillText}>
+              {isNegotiatedBooking ? "NEGOTIATED" : paymentStatus}
+            </Text>
+          </View>
+        </View>
 
         {isNegotiatedBooking && (
           <View style={styles.negotiatedBox}>
@@ -442,7 +488,11 @@ export default function BookingDetails() {
 
       {booking.transporterId && (
         <View style={styles.card}>
-          <Text style={styles.label}>MESSAGES</Text>
+          <Text style={styles.sectionEyebrow}>SHIPMENT COMMUNICATION</Text>
+          <Text style={styles.cardHeading}>Messages</Text>
+          <Text style={styles.cardSubtitle}>
+            Communicate directly with the transporter assigned to this shipment.
+          </Text>
 
           <View style={styles.messagesBox}>
             {messagesQuery.isLoading ? (
@@ -549,7 +599,8 @@ export default function BookingDetails() {
 
       {trackingCoordinate && (
         <View style={styles.liveMapCard}>
-          <Text style={styles.label}>LIVE TRANSPORTER LOCATION</Text>
+          <Text style={styles.sectionEyebrow}>LIVE TRACKING</Text>
+          <Text style={styles.cardHeading}>Transporter Location</Text>
           <View style={styles.liveMap}>
             <TransConetMap
               region={trackingRegion}
@@ -573,7 +624,8 @@ export default function BookingDetails() {
 
       {vehicleLocation && (
         <View style={styles.liveCard}>
-          <Text style={styles.label}>LIVE VEHICLE LOCATION</Text>
+          <Text style={styles.sectionEyebrow}>VEHICLE TELEMETRY</Text>
+          <Text style={styles.cardHeading}>Live Vehicle Location</Text>
           <Text style={styles.detail}>
             Latitude: {vehicleLocation.latitude.toFixed(6)}
           </Text>
@@ -594,8 +646,10 @@ export default function BookingDetails() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 24,
-    backgroundColor: "#F7F9FC",
+    padding: 20,
+    paddingTop: 14,
+    paddingBottom: 36,
+    backgroundColor: "#F4F7FF",
   },
   center: {
     flex: 1,
@@ -603,23 +657,84 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 24,
   },
+  backButton: {
+    alignSelf: "flex-start",
+    minHeight: 42,
+    justifyContent: "center",
+    paddingHorizontal: 2,
+  },
   back: {
-    color: "#175CD3",
-    fontSize: 16,
-    fontWeight: "700",
-    marginTop: 20,
+    color: "#4169E1",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  header: {
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  eyebrow: {
+    alignSelf: "flex-start",
+    backgroundColor: "#E8EEFF",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 10,
+  },
+  eyebrowText: {
+    color: "#4169E1",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.1,
+  },
+  subtitle: {
+    color: "#667085",
+    fontSize: 14,
+    lineHeight: 21,
+    marginTop: 8,
   },
   title: {
     fontSize: 30,
-    fontWeight: "800",
-    color: "#111827",
-    marginVertical: 22,
+    lineHeight: 37,
+    fontWeight: "900",
+    color: "#101B3A",
   },
   statusCard: {
-    backgroundColor: "#111827",
-    borderRadius: 20,
-    padding: 22,
+    backgroundColor: "#101B3A",
+    borderRadius: 22,
+    padding: 20,
     marginBottom: 16,
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
+    elevation: 5,
+  },
+  statusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  liveBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 999,
+    backgroundColor: "rgba(255,255,255,0.10)",
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+  },
+  liveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 99,
+    backgroundColor: "#5BE7A9",
+    marginRight: 6,
+  },
+  liveBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 0.8,
   },
   statusLabel: {
     color: "#98A2B3",
@@ -639,11 +754,71 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#EAECF0",
+    borderColor: "#E5EAF4",
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  sectionEyebrow: {
+    color: "#667085",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.1,
+    marginBottom: 12,
+  },
+  cardHeading: {
+    color: "#101B3A",
+    fontSize: 18,
+    fontWeight: "900",
+    marginBottom: 5,
+  },
+  cardSubtitle: {
+    color: "#667085",
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  locationRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  routeMarker: {
+    width: 24,
+    alignItems: "center",
+    paddingTop: 5,
+  },
+  pickupDot: {
+    width: 11,
+    height: 11,
+    borderRadius: 99,
+    backgroundColor: "#4169E1",
+    borderWidth: 3,
+    borderColor: "#DCE5FF",
+  },
+  destinationDot: {
+    width: 11,
+    height: 11,
+    borderRadius: 99,
+    backgroundColor: "#101B3A",
+    borderWidth: 3,
+    borderColor: "#E3E7EF",
+  },
+  locationContent: {
+    flex: 1,
+    paddingLeft: 8,
+  },
+  routeLine: {
+    width: 2,
+    height: 24,
+    backgroundColor: "#D9E2F2",
+    marginLeft: 11,
+    marginVertical: 2,
   },
   liveMapCard: {
     backgroundColor: "#FFFFFF",
@@ -691,9 +866,48 @@ const styles = StyleSheet.create({
     marginBottom: 7,
   },
   value: {
-    color: "#1D2939",
-    fontSize: 17,
-    fontWeight: "700",
+    color: "#101B3A",
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: "800",
+  },
+  detailRow: {
+    minHeight: 42,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F2F5",
+    paddingVertical: 9,
+  },
+  detailLabel: {
+    color: "#667085",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  detailValue: {
+    color: "#344054",
+    fontSize: 13,
+    fontWeight: "800",
+    maxWidth: "62%",
+    textAlign: "right",
+  },
+  detailValueStrong: {
+    color: "#101B3A",
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  paymentPill: {
+    backgroundColor: "#EEF3FF",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  paymentPillText: {
+    color: "#4169E1",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.5,
   },
   arrow: {
     color: "#98A2B3",

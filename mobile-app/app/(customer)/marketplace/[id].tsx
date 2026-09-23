@@ -148,15 +148,21 @@ export default function CustomerMarketplaceRequest() {
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
     >
-      <Pressable onPress={() => router.back()}>
-        <Text style={styles.back}>‹ Back</Text>
+      <Pressable onPress={() => router.back()} style={styles.backButton}>
+        <Text style={styles.backIcon}>‹</Text>
+        <Text style={styles.back}>Back to Requests</Text>
       </Pressable>
 
-      <Text style={styles.eyebrow}>NEGOTIATED FARE</Text>
-      <Text style={styles.title}>Transporter Bids</Text>
-      <Text style={styles.subtitle}>
-        Review the offers from transporters and select the one you want.
-      </Text>
+      <View style={styles.header}>
+        <View style={styles.eyebrowPill}>
+          <Text style={styles.eyebrow}>NEGOTIATED FARE</Text>
+        </View>
+        <Text style={styles.title}>Transporter Bids</Text>
+        <Text style={styles.subtitle}>
+          Review transporter offers, compare the details and select the offer
+          that works for your shipment.
+        </Text>
+      </View>
 
       <View style={styles.notice}>
         <Text style={styles.noticeTitle}>How negotiated fare works</Text>
@@ -320,8 +326,10 @@ export default function CustomerMarketplaceRequest() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 24,
-    backgroundColor: "#F7F9FC",
+    padding: 20,
+    paddingTop: 14,
+    paddingBottom: 42,
+    backgroundColor: "#F4F7FF",
   },
   center: {
     flex: 1,
@@ -332,57 +340,87 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     color: "#667085",
+    fontSize: 14,
+  },
+  backButton: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingRight: 10,
+  },
+  backIcon: {
+    color: "#4169E1",
+    fontSize: 25,
+    lineHeight: 25,
+    marginRight: 4,
   },
   back: {
-    color: "#175CD3",
+    color: "#4169E1",
+    fontSize: 14,
     fontWeight: "800",
-    marginBottom: 20,
+  },
+  header: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  eyebrowPill: {
+    alignSelf: "flex-start",
+    backgroundColor: "#E8EEFF",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 10,
   },
   eyebrow: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "900",
-    letterSpacing: 1.2,
-    color: "#7A4E00",
+    letterSpacing: 1,
+    color: "#4169E1",
   },
   title: {
     fontSize: 30,
-    fontWeight: "800",
-    color: "#111827",
-    marginTop: 5,
+    lineHeight: 37,
+    fontWeight: "900",
+    color: "#101B3A",
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: "#667085",
-    lineHeight: 22,
-    marginTop: 8,
-    marginBottom: 20,
+    lineHeight: 21,
+    marginTop: 7,
   },
   notice: {
-    backgroundColor: "#FFF7E8",
+    backgroundColor: "#EEF4FF",
     borderWidth: 1,
-    borderColor: "#F2C94C",
-    borderRadius: 16,
-    padding: 16,
+    borderColor: "#D8E4FF",
+    borderRadius: 18,
+    padding: 17,
     marginBottom: 18,
   },
   noticeTitle: {
     fontSize: 14,
     fontWeight: "900",
-    color: "#7A4E00",
+    color: "#101B3A",
   },
   noticeText: {
     marginTop: 7,
     fontSize: 13,
     lineHeight: 20,
-    color: "#694F1D",
+    color: "#475467",
   },
   card: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 18,
+    borderRadius: 20,
+    padding: 20,
     borderWidth: 1,
-    borderColor: "#EAECF0",
+    borderColor: "#DCE5F5",
     marginBottom: 22,
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
   },
   sectionLabel: {
     fontSize: 11,
@@ -393,13 +431,14 @@ const styles = StyleSheet.create({
   },
   location: {
     fontSize: 16,
-    fontWeight: "700",
-    color: "#1D2939",
+    lineHeight: 22,
+    fontWeight: "800",
+    color: "#101B3A",
   },
   arrow: {
     fontSize: 18,
-    color: "#98A2B3",
-    marginVertical: 5,
+    color: "#4169E1",
+    marginVertical: 6,
   },
   divider: {
     height: 1,
@@ -425,17 +464,23 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: "800",
-    color: "#111827",
+    lineHeight: 26,
+    fontWeight: "900",
+    color: "#101B3A",
     marginBottom: 12,
   },
   bidCard: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 18,
-    padding: 18,
+    borderRadius: 20,
+    padding: 19,
     borderWidth: 1,
-    borderColor: "#EAECF0",
+    borderColor: "#DCE5F5",
     marginBottom: 14,
+    shadowColor: "#101B3A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.045,
+    shadowRadius: 12,
+    elevation: 2,
   },
   bidHeader: {
     flexDirection: "row",
@@ -447,20 +492,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bidName: {
-    fontSize: 19,
-    fontWeight: "800",
-    color: "#111827",
+    fontSize: 18,
+    lineHeight: 23,
+    fontWeight: "900",
+    color: "#101B3A",
   },
   bidTier: {
-    marginTop: 5,
-    fontSize: 11,
-    fontWeight: "800",
+    marginTop: 6,
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.7,
     color: "#667085",
   },
   bidAmount: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "900",
-    color: "#175CD3",
+    color: "#4169E1",
   },
   statsRow: {
     flexDirection: "row",
@@ -469,9 +516,11 @@ const styles = StyleSheet.create({
   },
   stat: {
     flex: 1,
-    backgroundColor: "#F7F9FC",
-    borderRadius: 12,
-    padding: 10,
+    backgroundColor: "#F4F7FF",
+    borderRadius: 13,
+    padding: 11,
+    borderWidth: 1,
+    borderColor: "#E4EAF5",
   },
   statLabel: {
     fontSize: 10,
@@ -491,9 +540,11 @@ const styles = StyleSheet.create({
   },
   messageBox: {
     marginTop: 14,
-    backgroundColor: "#F7F9FC",
-    borderRadius: 12,
-    padding: 12,
+    backgroundColor: "#F4F7FF",
+    borderRadius: 14,
+    padding: 13,
+    borderWidth: 1,
+    borderColor: "#E4EAF5",
   },
   messageLabel: {
     fontSize: 9,
@@ -514,12 +565,17 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     marginTop: 16,
-    backgroundColor: "#111827",
-    borderRadius: 14,
-    minHeight: 48,
+    backgroundColor: "#4169E1",
+    borderRadius: 15,
+    minHeight: 50,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 18,
+    shadowColor: "#4169E1",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 3,
   },
   primaryButtonText: {
     color: "#FFFFFF",
@@ -530,9 +586,11 @@ const styles = StyleSheet.create({
   },
   empty: {
     backgroundColor: "#FFFFFF",
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 24,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#DCE5F5",
   },
   emptyTitle: {
     fontSize: 19,
@@ -547,10 +605,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   button: {
-    backgroundColor: "#111827",
+    backgroundColor: "#4169E1",
     borderRadius: 14,
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 22,
-    paddingVertical: 14,
+    paddingVertical: 13,
     marginTop: 14,
   },
   buttonText: {
@@ -559,20 +620,24 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     borderWidth: 1,
-    borderColor: "#D0D5DD",
+    borderColor: "#D9E1F0",
+    backgroundColor: "#FFFFFF",
     borderRadius: 14,
+    minHeight: 48,
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 22,
-    paddingVertical: 13,
+    paddingVertical: 12,
     marginTop: 10,
   },
   secondaryButtonText: {
-    color: "#344054",
+    color: "#4169E1",
     fontWeight: "800",
   },
   errorTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: "#B42318",
+    fontSize: 21,
+    fontWeight: "900",
+    color: "#101B3A",
   },
   errorText: {
     color: "#667085",
@@ -580,9 +645,11 @@ const styles = StyleSheet.create({
     marginTop: 7,
   },
   closedNotice: {
-    backgroundColor: "#F2F4F7",
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: "#EEF1F6",
+    borderWidth: 1,
+    borderColor: "#DCE2EC",
+    borderRadius: 17,
+    padding: 17,
     marginTop: 4,
   },
   closedTitle: {
