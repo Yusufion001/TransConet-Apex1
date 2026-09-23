@@ -592,7 +592,7 @@ export default function VerificationCenter() {
 
   if (loading) {
     return (
-      <section className="module-shell">
+      <section className="module-shell verification-center-shell">
         <div className="module-header">
           <div>
             <span className="module-eyebrow">
@@ -614,7 +614,7 @@ export default function VerificationCenter() {
 
   if (error) {
     return (
-      <section className="module-shell">
+      <section className="module-shell verification-center-shell">
         <div className="module-header">
           <div>
             <span className="module-eyebrow">
@@ -643,7 +643,7 @@ export default function VerificationCenter() {
   }
 
   return (
-    <section className="module-shell">
+    <section className="module-shell verification-center-shell">
       <div className="module-header">
         <div>
           <span className="module-eyebrow">

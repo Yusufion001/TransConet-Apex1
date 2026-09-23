@@ -250,8 +250,8 @@ export default function SupportCare() {
 
   if (loading) {
     return (
-      <section className="module-shell">
-        <div className="module-header">
+      <section className="module-shell support-management-workspace">
+        <div className="module-header support-module-header">
           <div>
             <span className="module-eyebrow">
               CUSTOMER EXPERIENCE / SUPPORT & CARE
@@ -270,8 +270,8 @@ export default function SupportCare() {
 
   if (error) {
     return (
-      <section className="module-shell">
-        <div className="module-header">
+      <section className="module-shell support-management-workspace">
+        <div className="module-header support-module-header">
           <div>
             <span className="module-eyebrow">
               CUSTOMER EXPERIENCE / SUPPORT & CARE
@@ -293,8 +293,8 @@ export default function SupportCare() {
   }
 
   return (
-    <section className="module-shell">
-      <div className="module-header">
+    <section className="module-shell support-management-workspace">
+      <div className="module-header support-module-header">
         <div>
           <span className="module-eyebrow">
             CUSTOMER EXPERIENCE / SUPPORT & CARE
@@ -319,7 +319,7 @@ export default function SupportCare() {
         </button>
       </div>
 
-      <div className="support-metrics">
+      <div className="support-metrics support-kpi-grid">
         <button
           type="button"
           className="support-metric"
@@ -354,7 +354,7 @@ export default function SupportCare() {
         </div>
       </div>
 
-      <div className="support-toolbar">
+      <div className="support-toolbar support-filter-bar">
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -397,9 +397,9 @@ export default function SupportCare() {
         </select>
       </div>
 
-      <div className="support-workspace">
-        <div className="support-directory">
-          <div className="support-directory-header">
+      <div className="support-workspace support-command-layout">
+        <div className="support-directory support-queue-panel">
+          <div className="support-directory-header support-queue-header">
             <div>
               <h2>Support queue</h2>
               <span>{filteredTickets.length} tickets</span>
@@ -407,12 +407,12 @@ export default function SupportCare() {
           </div>
 
           {filteredTickets.length === 0 ? (
-            <div className="support-empty">
+            <div className="support-empty support-state">
               No support tickets match the current filters.
             </div>
           ) : (
-            <div className="support-table-wrap">
-              <table className="support-table">
+            <div className="support-table-wrap support-queue-table-wrap">
+              <table className="support-table support-queue-table">
                 <thead>
                   <tr>
                     <th>Requester</th>
@@ -438,7 +438,7 @@ export default function SupportCare() {
                         setActionError("");
                       }}
                     >
-                      <td>
+                      <td data-label="Requester">
                         <strong>{personName(ticket.requester)}</strong>
                         <span>
                           {ticket.requester?.email ??
@@ -447,7 +447,7 @@ export default function SupportCare() {
                         </span>
                       </td>
 
-                      <td>
+                      <td data-label="Issue">
                         <strong>{ticket.subject}</strong>
                         <span>
                           {ticket.category}
@@ -457,25 +457,25 @@ export default function SupportCare() {
                         </span>
                       </td>
 
-                      <td>
+                      <td data-label="Priority">
                         <span className={priorityClass(ticket.priority)}>
                           {label(ticket.priority)}
                         </span>
                       </td>
 
-                      <td>
+                      <td data-label="Status">
                         <span className={statusClass(ticket.status)}>
                           {label(ticket.status)}
                         </span>
                       </td>
 
-                      <td>
+                      <td data-label="Assigned">
                         <span>
                           {personName(ticket.assignedAdmin)}
                         </span>
                       </td>
 
-                      <td>{formatDate(ticket.createdAt)}</td>
+                      <td data-label="Created">{formatDate(ticket.createdAt)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -484,14 +484,14 @@ export default function SupportCare() {
           )}
         </div>
 
-        <aside className="support-detail">
+        <aside className="support-detail support-detail-panel">
           {!selectedTicket ? (
-            <div className="support-empty">
+            <div className="support-empty support-state">
               Select a support ticket to inspect it.
             </div>
           ) : (
             <>
-              <div className="support-detail-header">
+              <div className="support-detail-header support-ticket-header">
                 <span className="module-eyebrow">
                   SUPPORT TICKET
                 </span>
@@ -511,7 +511,7 @@ export default function SupportCare() {
                 </div>
               </div>
 
-              <div className="support-detail-grid">
+              <div className="support-detail-grid support-ticket-grid">
                 <div>
                   <span>Requester</span>
                   <strong>
@@ -567,18 +567,18 @@ export default function SupportCare() {
                 </div>
               </div>
 
-              <div className="support-description">
+              <div className="support-description support-description-panel">
                 <span>Customer / transporter description</span>
                 <p>{selectedTicket.description}</p>
               </div>
 
               {actionError && (
-                <div className="support-action-error">
+                <div className="support-action-error support-control-error">
                   {actionError}
                 </div>
               )}
 
-              <div className="support-actions">
+              <div className="support-actions support-control-panel">
                 <div>
                   <label htmlFor="support-status">
                     Update status

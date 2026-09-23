@@ -299,8 +299,8 @@ export default function Disputes() {
 
   if (loading) {
     return (
-      <section className="module-shell">
-        <div className="module-header">
+      <section className="module-shell disputes-management-workspace">
+        <div className="module-header disputes-module-header">
           <div>
             <span className="module-eyebrow">
               GOVERNANCE / DISPUTES
@@ -319,8 +319,8 @@ export default function Disputes() {
 
   if (error) {
     return (
-      <section className="module-shell">
-        <div className="module-header">
+      <section className="module-shell disputes-management-workspace">
+        <div className="module-header disputes-module-header">
           <div>
             <span className="module-eyebrow">
               GOVERNANCE / DISPUTES
@@ -342,8 +342,8 @@ export default function Disputes() {
   }
 
   return (
-    <section className="module-shell">
-      <div className="module-header">
+    <section className="module-shell disputes-management-workspace">
+      <div className="module-header disputes-module-header">
         <div>
           <span className="module-eyebrow">
             GOVERNANCE / DISPUTES
@@ -368,7 +368,7 @@ export default function Disputes() {
         </button>
       </div>
 
-      <div className="dispute-metrics">
+      <div className="dispute-metrics disputes-kpi-grid">
         <button
           type="button"
           className="dispute-metric"
@@ -403,7 +403,7 @@ export default function Disputes() {
         </div>
       </div>
 
-      <div className="dispute-toolbar">
+      <div className="dispute-toolbar disputes-filter-bar">
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -429,9 +429,9 @@ export default function Disputes() {
         </select>
       </div>
 
-      <div className="dispute-workspace">
-        <div className="dispute-directory">
-          <div className="dispute-directory-header">
+      <div className="dispute-workspace disputes-command-layout">
+        <div className="dispute-directory disputes-queue-panel">
+          <div className="dispute-directory-header disputes-queue-header">
             <div>
               <h2>Dispute queue</h2>
               <span>{disputes.length} cases</span>
@@ -439,12 +439,12 @@ export default function Disputes() {
           </div>
 
           {disputes.length === 0 ? (
-            <div className="dispute-empty">
+            <div className="dispute-empty disputes-state">
               No disputes match the current filters.
             </div>
           ) : (
-            <div className="dispute-table-wrap">
-              <table className="dispute-table">
+            <div className="dispute-table-wrap disputes-queue-table-wrap">
+              <table className="dispute-table disputes-queue-table">
                 <thead>
                   <tr>
                     <th>Customer</th>
@@ -470,7 +470,7 @@ export default function Disputes() {
                         setActionError("");
                       }}
                     >
-                      <td>
+                      <td data-label="Customer">
                         <strong>{personName(dispute.customer)}</strong>
                         <span>
                           {dispute.customer.email ??
@@ -479,7 +479,7 @@ export default function Disputes() {
                         </span>
                       </td>
 
-                      <td>
+                      <td data-label="Transporter">
                         <strong>
                           {personName(dispute.transporter)}
                         </strong>
@@ -490,7 +490,7 @@ export default function Disputes() {
                         </span>
                       </td>
 
-                      <td>
+                      <td data-label="Booking">
                         <strong>
                           {dispute.bookingId.slice(0, 8)}
                         </strong>
@@ -499,7 +499,7 @@ export default function Disputes() {
                         </span>
                       </td>
 
-                      <td>
+                      <td data-label="Status">
                         <span
                           className={statusClass(dispute.status)}
                         >
@@ -507,13 +507,13 @@ export default function Disputes() {
                         </span>
                       </td>
 
-                      <td>
+                      <td data-label="Assigned">
                         <span>
                           {personName(dispute.administrator)}
                         </span>
                       </td>
 
-                      <td>{formatDate(dispute.createdAt)}</td>
+                      <td data-label="Created">{formatDate(dispute.createdAt)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -522,14 +522,14 @@ export default function Disputes() {
           )}
         </div>
 
-        <aside className="dispute-detail">
+        <aside className="dispute-detail disputes-detail-panel">
           {!selectedDispute ? (
-            <div className="dispute-empty">
+            <div className="dispute-empty disputes-state">
               Select a dispute to inspect it.
             </div>
           ) : (
             <>
-              <div className="dispute-detail-header">
+              <div className="dispute-detail-header disputes-ticket-header">
                 <span className="module-eyebrow">
                   DISPUTE CASE
                 </span>
@@ -548,12 +548,12 @@ export default function Disputes() {
               </div>
 
               {detailLoading ? (
-                <div className="dispute-empty">
+                <div className="dispute-empty disputes-state">
                   Loading complete dispute details…
                 </div>
               ) : (
               <>
-              <div className="dispute-detail-grid">
+              <div className="dispute-detail-grid disputes-ticket-grid">
                 <div>
                   <span>Customer</span>
                   <strong>
@@ -620,7 +620,7 @@ export default function Disputes() {
                 </div>
               </div>
 
-              <div className="dispute-description">
+              <div className="dispute-description disputes-record-panel">
                 <span>Pickup details</span>
                 <p>
                   <strong>Location:</strong>{" "}
@@ -666,7 +666,7 @@ export default function Disputes() {
               </div>
 
               {((selectedDetail ?? selectedDispute).evidence?.media?.length ?? 0) > 0 && (
-                <div className="dispute-description">
+                <div className="dispute-description disputes-record-panel">
                   <span>Evidence</span>
 
                   <div className="dispute-evidence-grid">
@@ -700,13 +700,13 @@ export default function Disputes() {
                 </div>
               )}
 
-              <div className="dispute-description">
+              <div className="dispute-description disputes-record-panel">
                 <span>Dispute reason</span>
                 <p>{(selectedDetail ?? selectedDispute).reason}</p>
               </div>
 
               {selectedDispute.resolution && (
-                <div className="dispute-description">
+                <div className="dispute-description disputes-record-panel">
                   <span>Recorded resolution</span>
                   <p>{selectedDispute.resolution}</p>
                 </div>
@@ -716,14 +716,14 @@ export default function Disputes() {
               )}
 
               {actionError && (
-                <div className="dispute-action-error">
+                <div className="dispute-action-error disputes-control-error">
                   {actionError}
                 </div>
               )}
 
               {selectedDispute.status !== "RESOLVED" &&
                 selectedDispute.status !== "REJECTED" && (
-                  <div className="dispute-actions">
+                  <div className="dispute-actions disputes-control-panel">
                     <div>
                       <label htmlFor="dispute-administrator">
                         Assign administrator
@@ -780,7 +780,7 @@ export default function Disputes() {
                       />
                     </div>
 
-                    <div className="dispute-status-actions">
+                    <div className="dispute-status-actions disputes-decision-actions">
                       {selectedDispute.status === "OPEN" && (
                         <button
                           type="button"

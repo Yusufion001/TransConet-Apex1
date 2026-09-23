@@ -104,7 +104,7 @@ export default function Customers() {
 
   if (!customerId || !customer) {
     return (
-      <section className="dashboard">
+      <section className="dashboard customers-workspace">
         <CustomerDirectory onSelectCustomer={openCustomer} />
 
         {loading && (
@@ -135,8 +135,8 @@ export default function Customers() {
   ];
 
   return (
-    <section className="dashboard">
-      <div className="module-header">
+    <section className="dashboard customers-workspace">
+      <div className="module-header customer-detail-header">
         <div>
           <button
             type="button"
@@ -202,7 +202,8 @@ export default function Customers() {
             ))}
           </div>
 
-          <div className="customer-actions">
+          <div className="customer-actions customer-account-actions">
+            <span className="customer-control-kicker">ACCOUNT CONTROL</span>
             <strong>Account Actions</strong>
 
             <button
@@ -233,10 +234,10 @@ export default function Customers() {
           </div>
         </aside>
 
-        <div className="customer-content">
+        <div className="customer-content customer-detail-content">
           {page === "overview" && (
-            <div className="customer-page">
-              <div className="section-title">
+            <div className="customer-page customer-overview-page">
+              <div className="section-title customer-section-title">
                 <h3>Customer Overview</h3>
                 <span>Account intelligence</span>
               </div>
@@ -275,7 +276,7 @@ export default function Customers() {
                 </div>
               </div>
 
-              <div className="panel customer-detail-panel">
+              <div className="panel customer-detail-panel customer-record-panel">
                 <div className="panel-header">
                   <div>
                     <h2>Account Information</h2>
@@ -435,8 +436,8 @@ function BookingTable({ bookings }: { bookings: Booking[] }) {
   }
 
   return (
-    <div className="table-wrap">
-      <table>
+    <div className="table-wrap customer-bookings-table-wrap">
+      <table className="customer-bookings-table">
         <thead>
           <tr>
             <th>Booking</th>

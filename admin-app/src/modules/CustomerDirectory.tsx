@@ -66,8 +66,8 @@ export default function CustomerDirectory({
   }
 
   return (
-    <section className="dashboard">
-      <div className="module-header">
+    <section className="dashboard customer-directory-workspace">
+      <div className="module-header customer-directory-header">
         <div>
           <div className="module-kicker">
             OPERATIONS / CUSTOMER MANAGEMENT
@@ -83,7 +83,7 @@ export default function CustomerDirectory({
         </div>
       </div>
 
-      <div className="panel customer-directory-toolbar">
+      <div className="panel customer-directory-toolbar customer-directory-controls">
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -91,7 +91,7 @@ export default function CustomerDirectory({
           aria-label="Search customers"
         />
 
-        <div className="customer-status-filters">
+        <div className="customer-status-filters customer-filter-group">
           {statuses.map((item) => (
             <button
               key={item}
@@ -111,7 +111,7 @@ export default function CustomerDirectory({
         </div>
       )}
 
-      <div className="panel customer-directory-panel">
+      <div className="panel customer-directory-panel customer-record-list">
         {loading ? (
           <div className="customer-state">
             Loading customer directory…
@@ -124,8 +124,8 @@ export default function CustomerDirectory({
             </span>
           </div>
         ) : (
-          <div className="table-wrap">
-            <table>
+          <div className="table-wrap customer-directory-table-wrap">
+            <table className="customer-directory-table">
               <thead>
                 <tr>
                   <th>Customer</th>
@@ -197,7 +197,7 @@ export default function CustomerDirectory({
       </div>
 
       {totalPages > 1 && (
-        <div className="customer-pagination">
+        <div className="customer-pagination customer-directory-pagination">
           <button
             type="button"
             disabled={page <= 1}

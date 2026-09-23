@@ -266,8 +266,8 @@ export default function MarketingCenter() {
 
   if (selected || creating) {
     return (
-      <section className="dashboard">
-        <div className="module-header">
+      <section className="dashboard marketing-workspace">
+        <div className="module-header marketing-module-header">
           <div>
             <button
               type="button"
@@ -319,9 +319,9 @@ export default function MarketingCenter() {
             Loading campaign…
           </div>
         ) : (
-          <div className="customer-layout">
-            <aside className="customer-subnav panel">
-              <div className="customer-identity">
+          <div className="customer-layout marketing-detail-layout">
+            <aside className="customer-subnav panel marketing-detail-sidebar">
+              <div className="customer-identity marketing-identity">
                 <div className="customer-avatar">
                   MC
                 </div>
@@ -340,7 +340,7 @@ export default function MarketingCenter() {
               </div>
 
               {selected && (
-                <div className="customer-actions">
+                <div className="customer-actions marketing-actions">
                   <strong>Campaign Control</strong>
 
                   {statuses
@@ -365,15 +365,15 @@ export default function MarketingCenter() {
               )}
             </aside>
 
-            <div className="customer-content">
-              <div className="section-title">
+            <div className="customer-content marketing-detail-content">
+              <div className="section-title marketing-section-title">
                 <h3>Campaign Configuration</h3>
                 <span>
                   Audience, channel, content and campaign lifecycle
                 </span>
               </div>
 
-              <div className="panel customer-detail-panel">
+              <div className="panel customer-detail-panel marketing-record-panel">
                 <div className="form-grid">
                   <label>
                     <span>Campaign Name</span>
@@ -515,7 +515,7 @@ export default function MarketingCenter() {
                   </label>
                 </div>
 
-                <div className="section-title">
+                <div className="section-title marketing-section-title">
                   <h3>Campaign Content</h3>
                   <span>
                     Content payload delivered through the selected
@@ -620,7 +620,7 @@ export default function MarketingCenter() {
                   </label>
                 </div>
 
-                <div className="customer-actions">
+                <div className="customer-actions marketing-actions">
                   <button
                     type="button"
                     className="primary-button"
@@ -648,8 +648,8 @@ export default function MarketingCenter() {
               </div>
 
               {selected && (
-                <div className="panel customer-detail-panel">
-                  <div className="section-title">
+                <div className="panel customer-detail-panel marketing-record-panel">
+                  <div className="section-title marketing-section-title">
                     <h3>Campaign Intelligence</h3>
                     <span>
                       Current campaign metadata and delivery state
@@ -721,8 +721,8 @@ export default function MarketingCenter() {
   }
 
   return (
-    <section className="dashboard">
-      <div className="module-header">
+    <section className="dashboard marketing-workspace">
+      <div className="module-header marketing-module-header">
         <div>
           <div className="module-kicker">
             TRANSCONET-APEX1 / MARKETING CENTER
@@ -749,7 +749,7 @@ export default function MarketingCenter() {
         </div>
       )}
 
-      <div className="stats-grid">
+      <div className="stats-grid marketing-stats">
         <StatCard
           label="Total Campaigns"
           value={loading ? "…" : String(campaigns.length)}
@@ -772,7 +772,7 @@ export default function MarketingCenter() {
         />
       </div>
 
-      <div className="panel">
+      <div className="panel marketing-directory-panel">
         <div className="operations-toolbar">
           <div>
             <strong>Campaign Directory</strong>
@@ -830,8 +830,8 @@ export default function MarketingCenter() {
           </div>
         </div>
 
-        <div className="operations-table-wrap">
-          <table className="operations-table">
+        <div className="operations-table-wrap marketing-table-wrap">
+          <table className="operations-table marketing-table">
             <thead>
               <tr>
                 <th>Campaign</th>

@@ -284,7 +284,7 @@ export default function BookingsShipments() {
   if (selected) {
     return (
       <div className="dashboard">
-        <section className="module-header">
+        <section className="module-header bookings-detail-header">
           <div>
             <button
               type="button"
@@ -326,7 +326,7 @@ export default function BookingsShipments() {
           </div>
         ) : (
           <>
-            <section className="stats-grid">
+            <section className="stats-grid booking-detail-stats">
               <div className="stat-card">
                 <span>Fare</span>
                 <strong>{money(selected.fare)}</strong>
@@ -348,9 +348,10 @@ export default function BookingsShipments() {
               </div>
             </section>
 
-            <section className="customer-layout">
-              <aside className="customer-subnav panel">
-                <div className="customer-actions">
+            <section className="customer-layout bookings-control-layout">
+              <aside className="customer-subnav panel booking-control-panel">
+                <div className="customer-actions booking-control-card">
+                  <span className="booking-control-kicker">STATUS CONTROL</span>
                   <strong>Lifecycle Control</strong>
 
                   <select
@@ -372,7 +373,8 @@ export default function BookingsShipments() {
                   </select>
                 </div>
 
-                <div className="customer-actions">
+                <div className="customer-actions booking-control-card">
+                  <span className="booking-control-kicker">ASSIGNMENT CONTROL</span>
                   <strong>Transporter & Vehicle Assignment</strong>
 
                   <select
@@ -432,7 +434,8 @@ export default function BookingsShipments() {
                   </button>
                 </div>
 
-                <div className="customer-actions">
+                <div className="customer-actions booking-control-card booking-reference-card">
+                  <span className="booking-control-kicker">OPERATIONAL REFERENCES</span>
                   <strong>Operational References</strong>
                   <span>Events: {selected.events?.length ?? 0}</span>
                   <span>
@@ -650,7 +653,7 @@ export default function BookingsShipments() {
                   </div>
                 </section>
 
-                <section className="panel">
+                <section className="panel booking-proof-panel">
                   <div className="panel-header">
                     <div>
                       <h3>Delivery Proof</h3>
@@ -701,54 +704,31 @@ export default function BookingsShipments() {
 
                   {(selected.cargoPhotoUrl ||
                     selected.receiverSignatureUrl) && (
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fit, minmax(220px, 1fr))",
-                        gap: "16px",
-                        marginTop: "20px",
-                      }}
-                    >
+                    <div className="booking-proof-grid">
                       {selected.cargoPhotoUrl && (
-                        <div>
-                          <strong> Cargo Photo </strong>
+                        <div className="booking-proof-card">
+                          <strong>Cargo Photo</strong>
                           <img
                             src={selected.cargoPhotoUrl}
                             alt="Cargo delivery proof"
-                            style={{
-                              width: "100%",
-                              maxHeight: "320px",
-                              objectFit: "contain",
-                              borderRadius: "12px",
-                              border: "1px solid #E4E7EC",
-                              marginTop: "8px",
-                              background: "#F9FAFB",
-                            }}
+                            className="booking-proof-image booking-proof-image-cargo"
                           />
                         </div>
                       )}
 
                       {selected.receiverSignatureUrl && (
-                        <div>
-                          <strong> Receiver Signature </strong>
+                        <div className="booking-proof-card">
+                          <strong>Receiver Signature</strong>
                           <img
                             src={selected.receiverSignatureUrl}
                             alt="Receiver signature proof"
-                            style={{
-                              width: "100%",
-                              maxHeight: "320px",
-                              objectFit: "contain",
-                              borderRadius: "12px",
-                              border: "1px solid #E4E7EC",
-                              marginTop: "8px",
-                              background: "#FFFFFF",
-                            }}
+                            className="booking-proof-image booking-proof-image-signature"
                           />
                         </div>
                       )}
                     </div>
                   )}
+
                 </section>
 
                 <section className="panel">
@@ -893,13 +873,13 @@ export default function BookingsShipments() {
 
   return (
     <div className="dashboard">
-      <section className="module-header">
+      <section className="module-header bookings-list-header">
         <div>
-          <div className="module-kicker">TRANSCONET-APEX1 / OPERATIONS</div>
+          <div className="module-kicker">TRANSCONET-APEX1 / OPERATIONS CONTROL</div>
           <h2>Bookings & Shipments</h2>
           <p>
-            Manage bookings and shipment lifecycles using authorized
-            operational data.
+            Manage complete booking lifecycle, shipment movement, assignment,
+            payment and delivery records.
           </p>
         </div>
       </section>
@@ -925,6 +905,11 @@ export default function BookingsShipments() {
         <div className="stat-card">
           <span>Assigned</span>
           <strong>{summary.assigned}</strong>
+        </div>
+
+        <div className="stat-card">
+          <span>Accepted</span>
+          <strong>{summary.accepted}</strong>
         </div>
 
         <div className="stat-card">
@@ -1009,8 +994,8 @@ export default function BookingsShipments() {
             </span>
           </div>
         ) : (
-          <div className="table-wrap">
-            <table>
+          <div className="table-wrap bookings-table-wrap">
+            <table className="bookings-table">
               <thead>
                 <tr>
                   <th>Booking</th>
@@ -1033,7 +1018,12 @@ export default function BookingsShipments() {
                     className="clickable-row"
                   >
                     <td>
-                      <strong>{booking.id.slice(0, 8)}</strong>
+                      <div className="booking-id-line">
+                        <strong>{booking.id.slice(0, 8)}</strong>
+                        {booking.expressBooking ? (
+                          <span className="booking-express-badge">EXPRESS</span>
+                        ) : null}
+                      </div>
                     </td>
 
                     <td>{personName(booking.customer)}</td>

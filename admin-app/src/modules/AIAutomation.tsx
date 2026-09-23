@@ -109,8 +109,8 @@ export default function AIAutomation() {
 
   if (loading) {
     return (
-      <section className="module-workspace">
-        <div className="module-header">
+      <section className="module-workspace ai-automation-workspace">
+        <div className="module-header ai-automation-module-header">
           <div>
             <span className="module-kicker">
               TRANSCONET-APEX1 SYSTEM INTELLIGENCE
@@ -151,7 +151,7 @@ export default function AIAutomation() {
           </p>
         </div>
 
-        <div className="module-actions">
+        <div className="module-actions ai-automation-actions">
           <button
             type="button"
             className="text-button"
@@ -173,20 +173,20 @@ export default function AIAutomation() {
       </div>
 
       {error && (
-        <div className="panel customer-state error-state">
+        <div className="panel customer-state error-state ai-automation-error">
           <strong>AI Automation unavailable</strong>
           <span>{error}</span>
         </div>
       )}
 
       {notice && (
-        <div className="panel customer-state">
+        <div className="panel customer-state ai-automation-notice">
           <strong>Automation complete</strong>
           <span>{notice}</span>
         </div>
       )}
 
-      <section className="stats-grid">
+      <section className="stats-grid ai-automation-kpi-grid">
         <Metric
           label="Automation Status"
           value={overview?.status ?? "—"}
@@ -240,9 +240,9 @@ export default function AIAutomation() {
         />
       </section>
 
-      <div className="dashboard-grid">
-        <section className="panel">
-          <div className="panel-header">
+      <div className="dashboard-grid ai-automation-command-grid">
+        <section className="panel ai-automation-panel">
+          <div className="panel-header ai-automation-panel-header">
             <div>
               <h2>Automation State</h2>
               <p>
@@ -261,8 +261,8 @@ export default function AIAutomation() {
             </span>
           </div>
 
-          <div className="health-list">
-            <div className="health-row">
+          <div className="health-list ai-automation-health-list">
+            <div className="health-row ai-automation-health-row">
               <span>Engine</span>
               <strong>{overview?.automation.mode ?? "—"}</strong>
             </div>
@@ -334,7 +334,7 @@ export default function AIAutomation() {
               ))}
             </div>
           ) : (
-            <div className="customer-state">
+            <div className="customer-state ai-automation-empty">
               <strong>No current recommendations</strong>
               <span>
                 The automation engine has not identified an active

@@ -89,8 +89,8 @@ export default function TransporterDirectory({
   }
 
   return (
-    <section className="dashboard">
-      <div className="module-header">
+    <section className="dashboard transporter-directory-workspace">
+      <div className="module-header transporter-directory-header">
         <div>
           <div className="module-kicker">
             OPERATIONS / TRANSPORTER MANAGEMENT
@@ -104,12 +104,12 @@ export default function TransporterDirectory({
           </p>
         </div>
 
-        <div className="customer-directory-count">
+        <div className="customer-directory-count transporter-directory-count">
           {total.toLocaleString()} transporters
         </div>
       </div>
 
-      <div className="panel customer-directory-toolbar">
+      <div className="panel customer-directory-toolbar transporter-directory-controls">
         <input
           value={search}
           onChange={(event) => {
@@ -120,7 +120,7 @@ export default function TransporterDirectory({
           aria-label="Search transporters"
         />
 
-        <div className="customer-status-filters">
+        <div className="customer-status-filters transporter-filter-group transporter-account-filters">
           {statuses.map((item) => (
             <button
               key={item}
@@ -135,7 +135,7 @@ export default function TransporterDirectory({
           ))}
         </div>
 
-        <div className="customer-status-filters">
+        <div className="customer-status-filters transporter-filter-group transporter-verification-filters">
           {verificationStatuses.map((item) => (
             <button
               key={item}
@@ -159,21 +159,21 @@ export default function TransporterDirectory({
         </div>
       )}
 
-      <div className="panel customer-directory-panel">
+      <div className="panel customer-directory-panel transporter-directory-panel">
         {loading ? (
-          <div className="customer-state">
+          <div className="customer-state transporter-state">
             Loading transporter directory…
           </div>
         ) : transporters.length === 0 ? (
-          <div className="customer-empty">
+          <div className="customer-empty transporter-empty">
             <strong>No transporters found.</strong>
             <span>
               Try changing the search term or transporter filters.
             </span>
           </div>
         ) : (
-          <div className="table-wrap">
-            <table>
+          <div className="table-wrap transporter-directory-table-wrap">
+            <table className="transporter-directory-table">
               <thead>
                 <tr>
                   <th>Transporter</th>
@@ -280,7 +280,7 @@ export default function TransporterDirectory({
       </div>
 
       {totalPages > 1 && (
-        <div className="customer-pagination">
+        <div className="customer-pagination transporter-directory-pagination">
           <button
             type="button"
             disabled={page <= 1}

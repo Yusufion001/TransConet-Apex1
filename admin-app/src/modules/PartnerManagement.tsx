@@ -146,8 +146,8 @@ function PartnerManagement() {
   }, [partners, search, tierFilter]);
 
   return (
-    <section className="module-workspace">
-      <div className="module-header">
+    <section className="module-workspace partner-management-workspace">
+      <div className="module-header partner-module-header">
         <span className="module-kicker">TRANSCONET-APEX1 GOVERNANCE</span>
         <h2>Partner Management</h2>
         <p>
@@ -163,7 +163,7 @@ function PartnerManagement() {
         </div>
       )}
 
-      <div className="stats-grid">
+      <div className="stats-grid partner-stats">
         <div className="stat-card">
           <span>Total Partners</span>
           <strong>{loading ? "…" : partners.length}</strong>
@@ -207,7 +207,7 @@ function PartnerManagement() {
         </div>
       </div>
 
-      <div className="module-card">
+      <div className="module-card partner-directory-toolbar">
         <div className="module-toolbar">
           <div>
             <strong>Partner directory</strong>
@@ -250,7 +250,7 @@ function PartnerManagement() {
         </div>
       </div>
 
-      <div className="partner-management-layout">
+      <div className="partner-management-layout partner-workspace-layout">
         <div className="module-card">
           <div className="panel-header">
             <div>
@@ -260,11 +260,11 @@ function PartnerManagement() {
           </div>
 
           {loading ? (
-            <div className="module-empty">
+            <div className="module-empty partner-state">
               <strong>Loading partners…</strong>
             </div>
           ) : filteredPartners.length === 0 ? (
-            <div className="module-empty">
+            <div className="module-empty partner-state">
               <strong>No partners found</strong>
               <span>Try changing the current filters.</span>
             </div>
@@ -306,16 +306,16 @@ function PartnerManagement() {
           )}
         </div>
 
-        <div className="module-card partner-detail">
+        <div className="module-card partner-detail partner-detail-panel">
           {!selected ? (
-            <div className="detail-empty">
+            <div className="detail-empty partner-detail-empty">
               <strong>Select a partner</strong>
               <span>
                 Partner details and administrative controls will appear here.
               </span>
             </div>
           ) : detailLoading ? (
-            <div className="detail-loading">
+            <div className="detail-loading partner-detail-loading">
               Loading partner details…
             </div>
           ) : (
@@ -374,7 +374,7 @@ function PartnerManagement() {
                 </div>
               </div>
 
-              <div className="partner-actions">
+              <div className="partner-actions partner-control-panel">
                 <strong>Administrative controls</strong>
 
                 <div>
@@ -406,7 +406,7 @@ function PartnerManagement() {
                 </div>
               </div>
 
-              <div className="partner-vehicles">
+              <div className="partner-vehicles partner-fleet-panel">
                 <div className="panel-header">
                   <div>
                     <h2>Partner fleet</h2>
@@ -415,13 +415,13 @@ function PartnerManagement() {
                 </div>
 
                 {selected.user.vehicles.length === 0 ? (
-                  <div className="module-empty">
+                  <div className="module-empty partner-state">
                     <span>No vehicles registered.</span>
                   </div>
                 ) : (
-                  <div className="partner-vehicle-list">
+                  <div className="partner-vehicle-list partner-fleet-list">
                     {selected.user.vehicles.map((vehicle) => (
-                      <div className="partner-vehicle-row" key={vehicle.id}>
+                      <div className="partner-vehicle-row partner-fleet-row" key={vehicle.id}>
                         <div>
                           <strong>{vehicle.registrationNumber}</strong>
                           <span>

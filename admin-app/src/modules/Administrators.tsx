@@ -5,6 +5,7 @@ import {
   disableAdministrator,
   getAdministrator,
   getAdministrators,
+  resendAdministratorInvitation,
   suspendAdministrator,
   updateAdministrator,
   type AdminModule,
@@ -34,6 +35,8 @@ const ADMIN_TYPES: AdminType[] = [
 
 const ADMIN_MODULES: AdminModule[] = [
   "PLATFORM_OVERVIEW",
+  "CUSTOMER_MANAGEMENT",
+  "TRANSPORTER_MANAGEMENT",
   "VERIFICATION_CENTER",
   "CONTENT_MANAGEMENT",
   "SUPPORT_CARE",
@@ -57,6 +60,7 @@ const ADMIN_MODULES: AdminModule[] = [
   "API_MANAGEMENT",
   "SECURITY_CENTER",
   "DATABASE_HEALTH",
+  "MESSAGING",
 ];
 
 function labelize(value: string) {
@@ -80,6 +84,7 @@ export default function Administrators() {
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [resendingInvitation, setResendingInvitation] = useState(false);
   const [error, setError] = useState("");
   const [detailError, setDetailError] = useState("");
   const [notice, setNotice] = useState("");
@@ -163,6 +168,30 @@ export default function Administrators() {
     }
   }
 
+  async function resendInvitation() {
+    if (!selected || selected.isSuperAdministrator) return;
+
+    try {
+      setResendingInvitation(true);
+      setDetailError("");
+      setNotice("");
+
+      await resendAdministratorInvitation(selected.userId);
+
+      setNotice(
+        "Administrator invitation has been renewed and resent successfully.",
+      );
+    } catch (error) {
+      setDetailError(
+        error instanceof Error
+          ? error.message
+          : "Unable to resend the administrator invitation.",
+      );
+    } finally {
+      setResendingInvitation(false);
+    }
+  }
+
   async function changeStatus(
     action: "activate" | "suspend" | "disable",
   ) {
@@ -187,7 +216,13 @@ export default function Administrators() {
           item.userId === updated.userId ? updated : item,
         ),
       );
-      setNotice(`Administrator ${action}d successfully.`);
+      const actionLabel = {
+        activate: "activated",
+        suspend: "suspended",
+        disable: "disabled",
+      }[action];
+
+      setNotice(`Administrator ${actionLabel} successfully.`);
     } catch (error) {
       const message =
         error instanceof Error
@@ -691,9 +726,23 @@ export default function Administrators() {
 
               <div className="administrator-meta-grid">
                 <div>
-                  <span>Status</span>
+                  <span>Administrator Status</span>
                   <strong className={statusClass(selected.status)}>
                     {selected.status}
+                  </strong>
+                </div>
+                <div>
+                  <span>Account Status</span>
+                  <strong
+                    className={
+                      selected.user.status === "PENDING"
+                        ? "administrator-account-pending"
+                        : ""
+                    }
+                  >
+                    {selected.user.status === "PENDING"
+                      ? "Invitation Pending"
+                      : selected.user.status}
                   </strong>
                 </div>
                 <div>
@@ -771,6 +820,19 @@ export default function Administrators() {
                   </div>
 
                   <div className="administrator-actions">
+                    {selected.user.status === "PENDING" && (
+                      <button
+                        type="button"
+                        className="secondary-action administrator-invitation-action"
+                        disabled={saving || resendingInvitation}
+                        onClick={() => void resendInvitation()}
+                      >
+                        {resendingInvitation
+                          ? "Resending Invitation…"
+                          : "Resend Invitation"}
+                      </button>
+                    )}
+
                     <button
                       type="button"
                       className="primary-action"

@@ -14,6 +14,7 @@ import Disputes from "./modules/Disputes";
 import Fleet from "./modules/Fleet";
 import SecurityCenter from "./modules/SecurityCenter";
 import NotificationCenter from "./modules/NotificationCenter";
+import Messages from "./modules/Messages";
 import PartnerManagement from "./modules/PartnerManagement";
 import ReportCenter from "./modules/ReportCenter";
 import ErrorCenter from "./modules/ErrorCenter";
@@ -31,6 +32,9 @@ import VerificationCenter from "./modules/VerificationCenter";
 import { useAuthStore } from "./auth/auth.store";
 import type { AdminModule } from "./api/administrators";
 import { getPlatformOverview, type PlatformOverview } from "./api/admin";
+import { getAdminActivity, type AdminActivity } from "./api/activity";
+import { getDatabaseHealth } from "./api/database-health";
+import { getApiHealth } from "./api/api-management";
 import {
   getLiveTripSummary,
   getLiveTrips,
@@ -151,7 +155,8 @@ const primaryNav: NavItem[] = [
   },
   {
     label: "Messages",
-    description: "Platform communication",
+    description: "Shipment communication across in-app, email, and SMS channels",
+    requiredModule: "MESSAGING",
   },
   {
     label: "Security",
@@ -247,36 +252,23 @@ function App() {
       ),
   );
 
-  useEffect(() => {
-    let mounted = true;
+  const loadOverview = useCallback(async () => {
+    try {
+      setOverviewLoading(true);
+      setOverviewError("");
 
-    async function loadOverview() {
-      try {
-        setOverviewLoading(true);
-        setOverviewError("");
-
-        const data = await getPlatformOverview();
-
-        if (mounted) {
-          setOverview(data);
-        }
-      } catch {
-        if (mounted) {
-          setOverviewError("Unable to load live platform overview.");
-        }
-      } finally {
-        if (mounted) {
-          setOverviewLoading(false);
-        }
-      }
+      const data = await getPlatformOverview();
+      setOverview(data);
+    } catch {
+      setOverviewError("Unable to load live platform overview.");
+    } finally {
+      setOverviewLoading(false);
     }
-
-    void loadOverview();
-
-    return () => {
-      mounted = false;
-    };
   }, []);
+
+  useEffect(() => {
+    void loadOverview();
+  }, [loadOverview]);
 
   return (
     <div className="admin-shell">
@@ -417,6 +409,10 @@ function App() {
             overview={overview}
             overviewLoading={overviewLoading}
             overviewError={overviewError}
+            assignedModules={user?.adminProfile?.assignedModules ?? []}
+            isSuperAdministrator={isSuperAdministrator}
+            onRefresh={() => void loadOverview()}
+            onNavigate={setActive}
           />
         ) : active === "Live Operations" ? (
           <LiveOperations />
@@ -458,6 +454,8 @@ function App() {
           <PartnerManagement />
         ) : active === "Notifications" ? (
           <NotificationCenter />
+        ) : active === "Messages" ? (
+          <Messages />
         ) : active === "Content Management" ? (
           <ContentManagement />
         ) : active === "Audit Logs" ? (
@@ -494,99 +492,259 @@ function CommandCenter({
   overview,
   overviewLoading,
   overviewError,
+  assignedModules,
+  isSuperAdministrator,
+  onRefresh,
+  onNavigate,
 }: {
   administratorName: string;
   overview: PlatformOverview | null;
   overviewLoading: boolean;
   overviewError: string;
+  assignedModules: string[];
+  isSuperAdministrator: boolean;
+  onRefresh: () => void;
+  onNavigate: (label: string) => void;
 }) {
+  const [liveSummary, setLiveSummary] = useState<LiveTripSummary | null>(null);
+  const [activity, setActivity] = useState<AdminActivity[]>([]);
+  const [realtimeConnected, setRealtimeConnected] = useState(false);
+  const [apiStatus, setApiStatus] = useState("Unavailable");
+  const [databaseStatus, setDatabaseStatus] = useState("Unavailable");
+  const [healthLoading, setHealthLoading] = useState(true);
+  const [activityLoading, setActivityLoading] = useState(false);
+
+  const canUse = (module: AdminModule) =>
+    isSuperAdministrator || assignedModules.includes(module);
+
+  const loadCommandData = useCallback(async () => {
+    setHealthLoading(true);
+
+    const tasks: Promise<void>[] = [
+      getLiveTripSummary()
+        .then(setLiveSummary)
+        .catch(() => setLiveSummary(null)),
+    ];
+
+    if (canUse("API_MANAGEMENT")) {
+      tasks.push(
+        getApiHealth()
+          .then((health) => {
+            setApiStatus(health.status || "Unknown");
+          })
+          .catch(() => setApiStatus("Unavailable")),
+      );
+    } else {
+      setApiStatus("Access restricted");
+    }
+
+    if (canUse("DATABASE_HEALTH")) {
+      tasks.push(
+        getDatabaseHealth()
+          .then((health) => {
+            setDatabaseStatus(health.status || "Unknown");
+          })
+          .catch(() => setDatabaseStatus("Unavailable")),
+      );
+    } else {
+      setDatabaseStatus("Access restricted");
+    }
+
+    if (canUse("ACTIVITY_TIMELINE")) {
+      setActivityLoading(true);
+
+      tasks.push(
+        getAdminActivity({ page: 1, limit: 6 })
+          .then((result) => setActivity(result.activities))
+          .catch(() => setActivity([]))
+          .finally(() => setActivityLoading(false)),
+      );
+    } else {
+      setActivity([]);
+      setActivityLoading(false);
+    }
+
+    await Promise.all(tasks);
+    setHealthLoading(false);
+  }, [assignedModules, isSuperAdministrator]);
+
+  useEffect(() => {
+    void loadCommandData();
+
+    if (!canUse("ACTIVITY_TIMELINE")) {
+      return;
+    }
+
+    let cleanup: (() => void) | undefined;
+
+    void subscribeAdminRealtime("ACTIVITY_TIMELINE", {
+      onConnectionChange: setRealtimeConnected,
+      onActivity: (event) => {
+        const next: AdminActivity = {
+          id: event.eventId,
+          eventType: event.eventType,
+          module: event.module ?? "PLATFORM",
+          actorId: event.actorId ?? null,
+          entityType: event.entityType ?? null,
+          entityId: event.entityId ?? null,
+          bookingId: event.bookingId ?? null,
+          title: event.eventType,
+          description:
+            typeof event.data === "object" && event.data !== null
+              ? JSON.stringify(event.data)
+              : null,
+          data: event.data ?? null,
+          createdAt: event.timestamp,
+        };
+
+        setActivity((current) => [
+          next,
+          ...current.filter((item) => item.id !== next.id),
+        ].slice(0, 6));
+      },
+    }).then((unsubscribe) => {
+      cleanup = unsubscribe;
+    }).catch(() => {
+      setRealtimeConnected(false);
+    });
+
+    return () => {
+      cleanup?.();
+    };
+  }, [loadCommandData, assignedModules, isSuperAdministrator]);
+
+  const formatNumber = (value: number | undefined) =>
+    typeof value === "number" ? value.toLocaleString() : "—";
+
+  const formatTime = (value?: string) => {
+    if (!value) return "—";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? "—"
+      : date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+  };
+
+
   return (
-    <div className="dashboard">
-      <section className="welcome-panel">
+    <div className="dashboard command-center">
+      <section className="command-header">
         <div>
-          <span className="eyebrow">
-            TRANSCONET-APEX1 COMMAND CENTER
-          </span>
-
-          <h2>
-            Welcome back, {administratorName}.
-          </h2>
-
+          <span className="eyebrow">TRANSCONET-APEX1 COMMAND CENTER</span>
+          <h2>Welcome back, {administratorName}.</h2>
           <p>
-            This is the central administration workspace
-            for monitoring and governing the TransConet-Apex1
-            transportation and logistics ecosystem.
+            Central operational visibility for the TransConet-Apex1
+            transportation and logistics platform.
           </p>
         </div>
 
-        <div className="command-status">
-          <span className="status-dot" />
-          <span>Platform monitoring active</span>
+        <div className="command-header-actions">
+          <div className="sync-summary">
+            <span className={`health-indicator ${overviewError ? "warning" : ""}`}>
+              <span className="status-dot" />
+              {overviewError ? "Overview unavailable" : "Systems connected"}
+            </span>
+            <small>
+              Updated {formatTime(overview?.synchronizedAt)}
+            </small>
+          </div>
+
+          <button
+            type="button"
+            className="refresh-button command-refresh"
+            onClick={() => {
+              onRefresh();
+              void loadCommandData();
+            }}
+            disabled={overviewLoading || healthLoading}
+          >
+            {overviewLoading || healthLoading ? "Refreshing…" : "Refresh"}
+          </button>
         </div>
       </section>
 
-      <section className="stats-grid">
+      {overviewError && (
+        <div className="module-card module-error command-error">
+          <strong>Command Center overview unavailable</strong>
+          <p>{overviewError}</p>
+        </div>
+      )}
+
+      <section className="stats-grid command-metrics">
         <StatCard
           label="Customers"
-          value={overviewLoading ? "…" : String(overview?.customers ?? "—")}
-          detail={overviewError || "Registered customer accounts"}
+          value={overviewLoading ? "…" : formatNumber(overview?.customers)}
+          detail="Registered customer accounts"
         />
-
         <StatCard
           label="Transporters"
-          value={overviewLoading ? "…" : String(overview?.transporters ?? "—")}
-          detail={overviewError || "Registered transporter accounts"}
+          value={overviewLoading ? "…" : formatNumber(overview?.transporters)}
+          detail="Registered transporter accounts"
         />
-
         <StatCard
           label="Active Operations"
-          value={overviewLoading ? "…" : String(overview?.activeTrips ?? "—")}
-          detail={overviewError || "Currently active transport operations"}
+          value={overviewLoading ? "…" : formatNumber(overview?.activeTrips)}
+          detail="Currently active trips"
         />
-
         <StatCard
-          label="Marketplace Activity"
-          value={overviewLoading ? "…" : String(
-            (overview?.pendingBookings ?? 0) + (overview?.pendingPayments ?? 0),
-          )}
-          detail={overviewError || "Pending marketplace and payment activity"}
+          label="Pending Requests"
+          value={overviewLoading ? "…" : formatNumber(overview?.pendingBookings)}
+          detail="Bookings awaiting action"
+        />
+        <StatCard
+          label="Verification Queue"
+          value={overviewLoading ? "…" : formatNumber(overview?.pendingVerification)}
+          detail="Documents awaiting review"
+        />
+        <StatCard
+          label="Pending Payments"
+          value={overviewLoading ? "…" : formatNumber(overview?.pendingPayments)}
+          detail="Payments awaiting settlement"
         />
       </section>
 
-      <section className="dashboard-grid">
+      <section className="dashboard-grid command-primary-grid">
         <div className="panel operations-panel">
           <div className="panel-header">
             <div>
               <h2>Live Operations</h2>
-              <p>
-                Real-time transport activity will appear
-                here.
-              </p>
+              <p>Current operational status from the live-trip service</p>
             </div>
-
-            <span className="live-badge">
+            <span className={`live-badge ${realtimeConnected ? "" : "syncing"}`}>
               <span className="status-dot" />
-              LIVE
+              {realtimeConnected ? "LIVE" : "SYNC"}
             </span>
           </div>
 
-          <div className="operations-canvas">
-            <div className="operations-grid" />
-
-            <div className="operations-message">
-              <div className="operations-symbol">
-                A
-              </div>
-
-              <strong>
-                Operational intelligence workspace
-              </strong>
-
-              <span>
-                Live trips, shipment movement and authorized
-                vehicle visibility will connect here.
-              </span>
+          <div className="command-live-summary">
+            <div className="live-total">
+              <span>Active operations</span>
+              <strong>{liveSummary?.total ?? overview?.activeTrips ?? 0}</strong>
             </div>
+
+            <div className="live-status-grid">
+              <CommandMetric label="Assigned" value={liveSummary?.assigned} />
+              <CommandMetric label="Accepted" value={liveSummary?.accepted} />
+              <CommandMetric label="Arriving" value={liveSummary?.driverArriving} />
+              <CommandMetric label="Arrived" value={liveSummary?.arrived} />
+              <CommandMetric label="In Transit" value={liveSummary?.inTransit} />
+              <CommandMetric
+                label="Express Dispatch"
+                value={liveSummary?.expressDispatching}
+              />
+            </div>
+          </div>
+
+          <div className="panel-footer-link">
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => onNavigate("Live Operations")}
+            >
+              Open Live Operations →
+            </button>
           </div>
         </div>
 
@@ -594,51 +752,185 @@ function CommandCenter({
           <div className="panel-header">
             <div>
               <h2>Platform Health</h2>
-              <p>Administration infrastructure status</p>
+              <p>Health feeds available to this administrator</p>
             </div>
           </div>
 
           <div className="health-list">
-            <HealthRow label="Backend API" />
-            <HealthRow label="Database" />
-            <HealthRow label="Realtime" />
-            <HealthRow label="Payments" />
-            <HealthRow label="Notifications" />
+            <HealthRow
+              label="Backend API"
+              value={apiStatus}
+              loading={healthLoading}
+            />
+            <HealthRow
+              label="Database"
+              value={databaseStatus}
+              loading={healthLoading}
+            />
+            <HealthRow
+              label="Realtime"
+              value={
+                realtimeConnected
+                  ? "Connected"
+                  : canUse("ACTIVITY_TIMELINE")
+                    ? "Disconnected"
+                    : "Access restricted"
+              }
+              loading={false}
+            />
+            <HealthRow
+              label="Payments"
+              value="Overview monitored"
+              loading={overviewLoading}
+            />
+            <HealthRow
+              label="Notifications"
+              value="Overview monitored"
+              loading={overviewLoading}
+            />
+          </div>
+
+          <div className="health-note">
+            Payment and notification rows use the existing platform overview
+            snapshot; no fabricated provider-health state is shown.
           </div>
         </div>
       </section>
 
-      <section className="panel activity-panel">
-        <div className="panel-header">
-          <div>
-            <h2>Recent Activity</h2>
-            <p>
-              Administrative and platform events
-            </p>
+      <section className="dashboard-grid command-secondary-grid">
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h2>Needs Attention</h2>
+              <p>Existing operational queues requiring administrator action</p>
+            </div>
           </div>
 
-          <button
-            type="button"
-            className="text-button"
-          >
-            View audit activity
-          </button>
+          <div className="attention-list">
+            <AttentionRow
+              label="Verification"
+              value={overview?.pendingVerification}
+              onClick={() => onNavigate("Verification")}
+            />
+            <AttentionRow
+              label="Pending bookings"
+              value={overview?.pendingBookings}
+              onClick={() => onNavigate("Bookings & Shipments")}
+            />
+            <AttentionRow
+              label="Pending payments"
+              value={overview?.pendingPayments}
+              onClick={() => onNavigate("Payments")}
+            />
+            <AttentionRow
+              label="Support tickets"
+              value={overview?.supportTickets}
+              onClick={() => onNavigate("Support")}
+            />
+            <AttentionRow
+              label="Disputes"
+              value={overview?.disputes}
+              onClick={() => onNavigate("Disputes")}
+            />
+          </div>
         </div>
 
-        <div className="empty-activity">
-          <div className="empty-icon">◷</div>
+        <div className="panel activity-panel command-activity-panel">
+          <div className="panel-header">
+            <div>
+              <h2>Recent Activity</h2>
+              <p>Latest authorized administration events</p>
+            </div>
 
-          <strong>
-            Waiting for authorized platform events
-          </strong>
+            {canUse("ACTIVITY_TIMELINE") && (
+              <span className={`status-badge ${realtimeConnected ? "status-active" : "status-warning"}`}>
+                {realtimeConnected ? "LIVE" : "SYNC"}
+              </span>
+            )}
+          </div>
 
-          <span>
-            Realtime activity will populate this workspace
-            once the administration event stream is connected.
-          </span>
+          {!canUse("ACTIVITY_TIMELINE") ? (
+            <div className="activity-restricted">
+              <strong>Activity access not assigned</strong>
+              <span>
+                This administrator can continue using the Command Center
+                without access to the full activity stream.
+              </span>
+            </div>
+          ) : activityLoading ? (
+            <div className="activity-restricted">
+              <strong>Loading recent activity…</strong>
+            </div>
+          ) : activity.length === 0 ? (
+            <div className="activity-restricted">
+              <strong>No recent activity returned</strong>
+              <span>
+                The authorized activity stream currently has no events to display.
+              </span>
+            </div>
+          ) : (
+            <div className="command-activity-list">
+              {activity.map((item) => (
+                <div className="command-activity-item" key={item.id}>
+                  <span className="activity-marker" />
+                  <div>
+                    <strong>{item.title}</strong>
+                    <small>
+                      {item.module} · {formatTime(item.createdAt)}
+                    </small>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {canUse("ACTIVITY_TIMELINE") && (
+            <div className="panel-footer-link">
+              <button
+                type="button"
+                className="text-button"
+                onClick={() => onNavigate("Activity Timeline")}
+              >
+                View Activity Timeline →
+              </button>
+            </div>
+          )}
         </div>
       </section>
     </div>
+  );
+}
+
+function CommandMetric({
+  label,
+  value,
+}: {
+  label: string;
+  value?: number;
+}) {
+  return (
+    <div className="command-live-metric">
+      <span>{label}</span>
+      <strong>{value ?? "—"}</strong>
+    </div>
+  );
+}
+
+function AttentionRow({
+  label,
+  value,
+  onClick,
+}: {
+  label: string;
+  value?: number;
+  onClick: () => void;
+}) {
+  return (
+    <button type="button" className="attention-row" onClick={onClick}>
+      <span>{label}</span>
+      <strong>{value ?? "—"}</strong>
+      <span className="attention-arrow">→</span>
+    </button>
   );
 }
 
@@ -882,15 +1174,29 @@ function LiveOperations() {
 
   return (
     <section className="module-workspace live-operations-workspace">
-      <div className="module-header">
-        <span className="module-kicker">
-          TRANSCONET-APEX1 OPERATIONS
-        </span>
-        <h2>Live Operations</h2>
-        <p>
-          Monitor authorized active transport operations directly from
-          the TransConet-Apex1 backend.
-        </p>
+      <div className="live-operations-header">
+        <div className="live-operations-heading">
+          <span className="module-kicker">
+            TRANSCONET-APEX1 OPERATIONS CONTROL
+          </span>
+          <h2>Live Operations</h2>
+          <p>
+            Monitor active transport operations, vehicle movement,
+            dispatch activity and realtime trip status.
+          </p>
+        </div>
+
+        <div className="live-operations-header-status">
+          <span className="live-connection-indicator">
+            <span
+              className={`status-dot ${realtimeConnected ? "is-live" : "is-syncing"}`}
+            />
+            {realtimeConnected ? "Realtime connected" : "Synchronizing"}
+          </span>
+          <span className="live-operations-security">
+            Backend-authorized data
+          </span>
+        </div>
       </div>
 
       {error && (
@@ -900,28 +1206,31 @@ function LiveOperations() {
         </div>
       )}
 
-      <div className="stats-grid">
+      <div className="live-operations-kpi-grid">
         <StatCard
           label="Live Trips"
           value={loading ? "…" : String(summary?.total ?? 0)}
-          detail="Currently active trips"
+          detail="Currently active"
         />
         <StatCard
           label="Assigned"
           value={loading ? "…" : String(summary?.assigned ?? 0)}
-          detail="Assigned operations"
+          detail="Awaiting progression"
         />
         <StatCard
-          label="Arriving / Arrived"
-          value={
-            loading
-              ? "…"
-              : String(
-                  (summary?.driverArriving ?? 0) +
-                    (summary?.arrived ?? 0),
-                )
-          }
-          detail="Arrival activity"
+          label="Accepted"
+          value={loading ? "…" : String(summary?.accepted ?? 0)}
+          detail="Transporter accepted"
+        />
+        <StatCard
+          label="Arriving"
+          value={loading ? "…" : String(summary?.driverArriving ?? 0)}
+          detail="Driver approaching"
+        />
+        <StatCard
+          label="Arrived"
+          value={loading ? "…" : String(summary?.arrived ?? 0)}
+          detail="At pickup point"
         />
         <StatCard
           label="In Transit"
@@ -931,7 +1240,7 @@ function LiveOperations() {
         <StatCard
           label="Express Dispatching"
           value={loading ? "…" : String(summary?.expressDispatching ?? 0)}
-          detail={`${summary?.expressNearby ?? 0} nearby · ${summary?.expressGeneralBoard ?? 0} on General Board`}
+          detail={`${summary?.expressNearby ?? 0} nearby · ${summary?.expressGeneralBoard ?? 0} general board`}
         />
       </div>
 
@@ -1019,14 +1328,23 @@ function LiveOperations() {
                       }
                       onClick={() => void selectTrip(trip)}
                     >
-                      <td>
-                        <span className="operation-status">
+                      <td data-label="Status">
+                        <span
+                          className={`operation-status ${
+                            trip.expressBooking
+                              ? "operation-status-express"
+                              : `operation-status-${trip.status
+                                  .toLowerCase()
+                                  .replace(/_/g, "-")}`
+                          }`}
+                        >
+                          <span className="operation-status-dot" />
                           {trip.expressBooking
                             ? `EXPRESS · ${trip.expressBooking.dispatchStage}`
                             : trip.status}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Vehicle">
                         <strong>
                           {trip.vehicle?.registrationNumber ??
                             (trip.expressBooking
@@ -1040,9 +1358,9 @@ function LiveOperations() {
                               : "Vehicle unavailable")}
                         </small>
                       </td>
-                      <td>{customer}</td>
-                      <td>{transporter}</td>
-                      <td>
+                      <td data-label="Customer">{customer}</td>
+                      <td data-label="Transporter">{transporter}</td>
+                      <td data-label="Location">
                         {hasLocation
                           ? `${Number(trip.vehicle?.currentLatitude).toFixed(4)}, ${Number(trip.vehicle?.currentLongitude).toFixed(4)}`
                           : "No location"}
@@ -1096,7 +1414,10 @@ function LiveOperations() {
               ) : (
                 <>
                   <div className="trip-status-block">
-                    <span>Status</span>
+                    <div className="trip-status-heading">
+                      <span>Current operation status</span>
+                      <span className="trip-status-live">LIVE</span>
+                    </div>
                     <strong>
                       {selectedTrip.expressBooking
                         ? `EXPRESS · ${selectedTrip.expressBooking.dispatchStage}`
@@ -1105,8 +1426,11 @@ function LiveOperations() {
                   </div>
 
                   {selectedTrip.expressBooking && (
-                    <div className="detail-section">
-                      <span>Express Dispatch</span>
+                    <div className="detail-section express-detail-section">
+                      <div className="detail-section-heading">
+                        <span>Express Dispatch</span>
+                        <span className="detail-section-badge">EXPRESS</span>
+                      </div>
                       <strong>
                         {selectedTrip.expressBooking.dispatchStage ===
                         "GENERAL_BOARD"
@@ -1123,8 +1447,11 @@ function LiveOperations() {
                   )}
 
                   {selectedTrip.expressBooking && (
-                    <div className="detail-section">
-                      <span>Express Booking</span>
+                    <div className="detail-section express-booking-section">
+                      <div className="detail-section-heading">
+                        <span>Express Booking</span>
+                        <span className="detail-section-badge">BOOKING</span>
+                      </div>
                       <strong>
                         {selectedTrip.expressBooking.bookingId}
                       </strong>
@@ -1142,8 +1469,10 @@ function LiveOperations() {
                     </div>
                   )}
 
-                  <div className="detail-section">
-                    <span>Vehicle</span>
+                  <div className="detail-section participant-section">
+                    <div className="detail-section-heading">
+                      <span>Vehicle</span>
+                    </div>
                     <strong>
                       {selectedTrip.vehicle?.registrationNumber ??
                         "Unavailable"}
@@ -1157,8 +1486,10 @@ function LiveOperations() {
                     </small>
                   </div>
 
-                  <div className="detail-section">
-                    <span>Customer</span>
+                  <div className="detail-section participant-section">
+                    <div className="detail-section-heading">
+                      <span>Customer</span>
+                    </div>
                     <strong>
                       {selectedTrip.customer
                         ? `${selectedTrip.customer.firstName} ${selectedTrip.customer.lastName}`
@@ -1166,8 +1497,10 @@ function LiveOperations() {
                     </strong>
                   </div>
 
-                  <div className="detail-section">
-                    <span>Transporter</span>
+                  <div className="detail-section participant-section">
+                    <div className="detail-section-heading">
+                      <span>Transporter</span>
+                    </div>
                     <strong>
                       {selectedTrip.transporter
                         ? `${selectedTrip.transporter.firstName} ${selectedTrip.transporter.lastName}`
@@ -1175,8 +1508,11 @@ function LiveOperations() {
                     </strong>
                   </div>
 
-                  <div className="detail-section">
-                    <span>Latest Vehicle Position</span>
+                  <div className="detail-section location-detail-section">
+                    <div className="detail-section-heading">
+                      <span>Latest Vehicle Position</span>
+                      <span className="detail-section-badge">GPS</span>
+                    </div>
                     <strong>
                       {selectedTrip.vehicle?.currentLatitude !== null &&
                       selectedTrip.vehicle?.currentLatitude !== undefined &&
@@ -1196,7 +1532,12 @@ function LiveOperations() {
                   )}
 
                   <div className="detail-section tracking-section">
-                    <span>Tracking History</span>
+                    <div className="detail-section-heading">
+                      <span>Tracking History</span>
+                      <span className="tracking-count">
+                        {tracking.length > 8 ? "Latest 8" : `${tracking.length} point${tracking.length === 1 ? "" : "s"}`}
+                      </span>
+                    </div>
 
                     {trackingLoading ? (
                       <small>Loading tracking points…</small>
@@ -1312,16 +1653,34 @@ function StatCard({
 
 function HealthRow({
   label,
+  value,
+  loading,
 }: {
   label: string;
+  value: string;
+  loading?: boolean;
 }) {
+  const normalized = value.toLowerCase();
+  const tone =
+    normalized.includes("connected") ||
+    normalized.includes("healthy") ||
+    normalized.includes("operational") ||
+    normalized.includes("monitored") ||
+    normalized === "ok" ||
+    normalized === "up"
+      ? "status-active"
+      : normalized.includes("restricted") ||
+          normalized.includes("unavailable") ||
+          normalized.includes("disconnected")
+        ? "status-warning"
+        : "";
+
   return (
     <div className="health-row">
       <span>{label}</span>
-
-      <span className="health-status">
+      <span className={`health-status ${tone}`}>
         <span className="status-dot" />
-        Monitoring
+        {loading ? "Checking…" : value}
       </span>
     </div>
   );

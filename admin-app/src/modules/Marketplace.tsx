@@ -812,8 +812,8 @@ export default function Marketplace() {
 
   if (selectedRequest) {
     return (
-      <section className="dashboard">
-        <div className="module-header">
+      <section className="dashboard marketplace-workspace">
+        <div className="module-header marketplace-module-header">
           <div>
             <button
               type="button"
@@ -847,19 +847,19 @@ export default function Marketplace() {
         </div>
 
         {error && (
-          <div className="panel customer-state error-state">
+          <div className="panel customer-state error-state marketplace-state">
             {error}
           </div>
         )}
 
         {detailLoading ? (
-          <div className="panel customer-state">
+          <div className="panel customer-state marketplace-state">
             Loading marketplace request…
           </div>
         ) : (
-          <div className="customer-layout">
-            <aside className="customer-subnav panel">
-              <div className="customer-identity">
+          <div className="customer-layout marketplace-detail-layout">
+            <aside className="customer-subnav panel marketplace-detail-sidebar">
+              <div className="customer-identity marketplace-identity">
                 <div className="customer-avatar">
                   {selectedRequest.id.slice(0, 2).toUpperCase()}
                 </div>
@@ -877,7 +877,7 @@ export default function Marketplace() {
                 </span>
               </div>
 
-              <div className="customer-actions">
+              <div className="customer-actions marketplace-state-panel">
                 <strong>Marketplace State</strong>
 
                 <span
@@ -890,16 +890,16 @@ export default function Marketplace() {
               </div>
             </aside>
 
-            <div className="customer-content">
-              <div className="section-title">
+            <div className="customer-content marketplace-detail-content">
+              <div className="section-title marketplace-section-title">
                 <h3>Load Profile</h3>
                 <span>
                   The operational data behind this marketplace request
                 </span>
               </div>
 
-              <div className="panel customer-detail-panel">
-                <div className="detail-grid">
+              <div className="panel customer-detail-panel marketplace-record-panel">
+                <div className="detail-grid marketplace-detail-grid">
                   <div>
                     <span>Cargo</span>
                     <strong>
@@ -960,14 +960,14 @@ export default function Marketplace() {
                 </div>
               </div>
 
-              <div className="section-title">
+              <div className="section-title marketplace-section-title">
                 <h3>Bid Intelligence</h3>
                 <span>
                   Transporters competing for this load
                 </span>
               </div>
 
-              <div className="panel">
+              <div className="panel marketplace-panel">
                 {rankedBids.length === 0 ? (
                   <div className="empty-activity">
                     <strong>No bids</strong>
@@ -977,8 +977,8 @@ export default function Marketplace() {
                     </span>
                   </div>
                 ) : (
-                  <div className="operations-table-wrap">
-                    <table className="operations-table">
+                  <div className="operations-table-wrap marketplace-table-wrap">
+                    <table className="operations-table marketplace-table">
                       <thead>
                         <tr>
                           <th>State</th>
@@ -1057,8 +1057,8 @@ export default function Marketplace() {
   }
 
   return (
-    <section className="dashboard">
-      <div className="module-header">
+    <section className="dashboard marketplace-workspace">
+      <div className="module-header marketplace-module-header">
         <div>
           <div className="module-kicker">
             TRANSCONET-APEX1 / FLEET MARKETPLACE
@@ -1081,12 +1081,12 @@ export default function Marketplace() {
       </div>
 
       {error && (
-        <div className="panel customer-state error-state">
+        <div className="panel customer-state error-state marketplace-state">
           {error}
         </div>
       )}
 
-      <div className="panel negotiated-marketplace-banner">
+      <div className="panel negotiated-marketplace-banner marketplace-workflow-banner">
         <div>
           <div className="module-kicker">NEGOTIATED FARE WORKFLOW</div>
           <h3>Marketplace fare and commission are separate financial flows</h3>
@@ -1098,7 +1098,7 @@ export default function Marketplace() {
           </p>
         </div>
 
-        <div className="negotiated-marketplace-steps">
+        <div className="negotiated-marketplace-steps marketplace-workflow-steps">
           <div>
             <strong>1</strong>
             <span>Customer request</span>
@@ -1121,7 +1121,7 @@ export default function Marketplace() {
           </div>
         </div>
 
-        <div className="negotiated-marketplace-note">
+        <div className="negotiated-marketplace-note marketplace-workflow-note">
           <strong>Administration control:</strong> platform commission is
           calculated from the applicable commission rule and is handled
           separately in <strong>Financial Operations → Negotiated Commissions</strong>.
@@ -1129,7 +1129,7 @@ export default function Marketplace() {
         </div>
       </div>
 
-      <div className="stats-grid">
+      <div className="stats-grid marketplace-stats">
         <StatCard
           label="Open Loads"
           value={loading ? "…" : String(summary?.openRequests ?? 0)}
@@ -1152,12 +1152,12 @@ export default function Marketplace() {
         />
       </div>
 
-      <div className="section-title">
+      <div className="section-title marketplace-section-title">
         <h3>Fare Configuration</h3>
         <span>Marketplace pricing rules used for fare calculation</span>
       </div>
 
-      <div className="panel customer-detail-panel">
+      <div className="panel customer-detail-panel marketplace-record-panel">
         {pricingLoading ? (
           <div className="customer-state">
             Loading fare configuration…
@@ -1193,7 +1193,7 @@ export default function Marketplace() {
           </div>
         ) : (
           <>
-            <div className="detail-grid">
+            <div className="detail-grid marketplace-detail-grid">
               <label>
                 <span>Base Rate</span>
                 <input
@@ -1324,12 +1324,12 @@ export default function Marketplace() {
               </label>
             </div>
 
-            <div className="section-title">
+            <div className="section-title marketplace-section-title">
               <h3>Fuel Pricing</h3>
               <span>Current Admin-configured fuel prices per litre</span>
             </div>
 
-            <div className="detail-grid">
+            <div className="detail-grid marketplace-detail-grid">
               <label>
                 <span>Fuel Pricing Enabled</span>
                 <input
@@ -1398,7 +1398,7 @@ export default function Marketplace() {
               </label>
             </div>
 
-            <div className="section-title">
+            <div className="section-title marketplace-section-title">
               <h3>Vehicle Fuel Efficiency Profiles</h3>
               <span>
                 Configure fuel type, base km/L, year efficiency and missing-year
@@ -1406,16 +1406,16 @@ export default function Marketplace() {
               </span>
             </div>
 
-            <div className="detail-grid">
+            <div className="detail-grid marketplace-detail-grid">
               {Object.entries(pricingForm.fuel.vehicleProfiles).map(
                 ([vehicleClass, profile]) => (
-                  <div className="panel" key={vehicleClass}>
-                    <div className="section-title">
+                  <div className="panel marketplace-vehicle-profile" key={vehicleClass}>
+                    <div className="section-title marketplace-section-title">
                       <h3>{labelize(vehicleClass)}</h3>
                       <span>Fuel efficiency profile</span>
                     </div>
 
-                    <div className="detail-grid">
+                    <div className="detail-grid marketplace-detail-grid">
                       <label>
                         <span>Fuel Type</span>
                         <select
@@ -1499,9 +1499,9 @@ export default function Marketplace() {
                           }
                         />
                       </label>
-                    <div className="detail-grid">
+                    <div className="detail-grid marketplace-detail-grid">
                       <div>
-                        <div className="section-title">
+                        <div className="section-title marketplace-section-title">
                           <h3>Year Efficiency Bands</h3>
                           <span>Admin-defined vehicle-year efficiency factors</span>
                         </div>
@@ -1682,14 +1682,14 @@ export default function Marketplace() {
               )}
             </div>
 
-            <div className="section-title">
+            <div className="section-title marketplace-section-title">
               <h3>Vehicle Year Pricing Categories</h3>
               <span>
                 Configure the vehicle model-year ranges used by fare calculation.
               </span>
             </div>
 
-            <div className="detail-grid">
+            <div className="detail-grid marketplace-detail-grid">
               <label>
                 <span>Premium Minimum Year</span>
                 <input
@@ -1857,12 +1857,12 @@ export default function Marketplace() {
               </label>
             </div>
 
-            <div className="section-title">
+            <div className="section-title marketplace-section-title">
               <h3>Truck Multipliers</h3>
               <span>Vehicle-category pricing multipliers</span>
             </div>
 
-            <div className="detail-grid">
+            <div className="detail-grid marketplace-detail-grid">
               {Object.entries(pricingForm.truckMultipliers).map(
                 ([truckCategory, multiplier]) => (
                   <label key={truckCategory}>
@@ -1888,13 +1888,13 @@ export default function Marketplace() {
             </div>
 
             {pricingError && (
-              <div className="panel customer-state error-state">
+              <div className="panel customer-state error-state marketplace-state">
                 {pricingError}
               </div>
             )}
 
             {pricingSuccess && (
-              <div className="panel customer-state">
+              <div className="panel customer-state marketplace-state">
                 {pricingSuccess}
               </div>
             )}
@@ -1917,12 +1917,12 @@ export default function Marketplace() {
         )}
       </div>
 
-      <div className="section-title">
+      <div className="section-title marketplace-section-title">
         <h3>Commission Rules</h3>
         <span>Editable commission rules used for marketplace settlements</span>
       </div>
 
-      <div className="panel customer-detail-panel">
+      <div className="panel customer-detail-panel marketplace-record-panel">
         <div className="customer-state">
           <strong>Commission Control</strong>
           <span>
@@ -1932,7 +1932,7 @@ export default function Marketplace() {
           </span>
         </div>
 
-        <div className="detail-grid">
+        <div className="detail-grid marketplace-detail-grid">
           <label>
             <span>Rule Name</span>
             <input
@@ -2067,13 +2067,13 @@ export default function Marketplace() {
         </div>
 
         {commissionError && (
-          <div className="panel customer-state error-state">
+          <div className="panel customer-state error-state marketplace-state">
             {commissionError}
           </div>
         )}
 
         {commissionSuccess && (
-          <div className="panel customer-state">
+          <div className="panel customer-state marketplace-state">
             {commissionSuccess}
           </div>
         )}
@@ -2110,7 +2110,7 @@ export default function Marketplace() {
           </div>
         </div>
 
-        <div className="section-title">
+        <div className="section-title marketplace-section-title">
           <h3>Configured Rules</h3>
           <span>Activate, deactivate, or edit existing rules</span>
         </div>
@@ -2123,7 +2123,7 @@ export default function Marketplace() {
             <span>Create a rule above to control marketplace commission.</span>
           </div>
         ) : (
-          <div className="table-wrap">
+          <div className="table-wrap marketplace-table-wrap">
             <table>
               <thead>
                 <tr>
@@ -2188,12 +2188,12 @@ export default function Marketplace() {
         )}
       </div>
 
-      <div className="section-title">
+      <div className="section-title marketplace-section-title">
         <h3>Marketplace Requests</h3>
         <span>Customer loads entering the fleet marketplace</span>
       </div>
 
-      <div className="panel">
+      <div className="panel marketplace-panel">
         <div className="operations-toolbar">
           <div>
             <strong>Request Directory</strong>
@@ -2232,8 +2232,8 @@ export default function Marketplace() {
           </div>
         </div>
 
-        <div className="operations-table-wrap">
-          <table className="operations-table">
+        <div className="operations-table-wrap marketplace-table-wrap">
+          <table className="operations-table marketplace-table">
             <thead>
               <tr>
                 <th>Status</th>
@@ -2319,14 +2319,14 @@ export default function Marketplace() {
         />
       </div>
 
-      <div className="section-title">
+      <div className="section-title marketplace-section-title">
         <h3>Bid Activity</h3>
         <span>
           Transporter offers; a selected bid establishes the negotiated fare
         </span>
       </div>
 
-      <div className="panel">
+      <div className="panel marketplace-panel">
         <div className="operations-toolbar">
           <div>
             <strong>Bid Directory</strong>
@@ -2365,8 +2365,8 @@ export default function Marketplace() {
           </div>
         </div>
 
-        <div className="operations-table-wrap">
-          <table className="operations-table">
+        <div className="operations-table-wrap marketplace-table-wrap">
+          <table className="operations-table marketplace-table">
             <thead>
               <tr>
                 <th>Status</th>

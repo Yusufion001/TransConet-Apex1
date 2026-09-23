@@ -300,8 +300,8 @@ export default function Fleet() {
   if (selectedId) {
     if (detailLoading || !selectedVehicle) {
       return (
-        <section className="dashboard">
-          <div className="module-header">
+        <section className="dashboard fleet-workspace">
+          <div className="module-header fleet-module-header">
             <div>
               <button
                 type="button"
@@ -344,8 +344,8 @@ export default function Fleet() {
     const transporter = selectedVehicle.transporter;
 
     return (
-      <section className="dashboard">
-        <div className="module-header">
+      <section className="dashboard fleet-workspace">
+        <div className="module-header fleet-module-header">
           <div>
             <button
               type="button"
@@ -391,9 +391,9 @@ export default function Fleet() {
             Loading vehicle…
           </div>
         ) : (
-          <div className="customer-layout">
-            <aside className="customer-subnav panel">
-              <div className="customer-identity">
+          <div className="customer-layout fleet-detail-layout">
+            <aside className="customer-subnav panel fleet-detail-sidebar">
+              <div className="customer-identity fleet-identity">
                 <div className="customer-avatar">
                   {selectedVehicle.registrationNumber
                     .slice(0, 2)
@@ -413,7 +413,7 @@ export default function Fleet() {
                 </span>
               </div>
 
-              <div className="customer-actions">
+              <div className="customer-actions fleet-operational-status">
                 <strong>Operational Status</strong>
 
                 <span
@@ -426,15 +426,15 @@ export default function Fleet() {
               </div>
             </aside>
 
-            <div className="customer-content">
-              <div className="section-title">
+            <div className="customer-content fleet-detail-content">
+              <div className="section-title fleet-section-title">
                 <h3>Vehicle Details</h3>
                 <span>
                   Fleet identity, specifications and operational state
                 </span>
               </div>
 
-              <div className="panel customer-detail-panel">
+              <div className="panel customer-detail-panel fleet-record-panel">
                 <div className="detail-grid">
                   <div>
                     <span>Registration</span>
@@ -570,14 +570,14 @@ export default function Fleet() {
                 </div>
               </div>
 
-              <div className="section-title" style={{ marginTop: 22 }}>
+              <div className="section-title fleet-section-title fleet-section-title-spaced">
                 <h3>Transporter</h3>
                 <span>
                   Current vehicle ownership relationship
                 </span>
               </div>
 
-              <div className="panel customer-detail-panel">
+              <div className="panel customer-detail-panel fleet-record-panel">
                 <div className="detail-grid">
                   <div>
                     <span>Name</span>
@@ -604,23 +604,15 @@ export default function Fleet() {
                 </div>
               </div>
 
-              <div className="section-title" style={{ marginTop: 22 }}>
+              <div className="section-title fleet-section-title fleet-section-title-spaced">
                 <h3>Vehicle Verification</h3>
                 <span>
                   Use the dedicated verification workflow to change approval state
                 </span>
               </div>
 
-              <div className="panel" style={{ padding: 20 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 16,
-                    flexWrap: "wrap",
-                  }}
-                >
+              <div className="panel fleet-control-panel">
+                <div className="fleet-verification-layout">
                   <div>
                     <span>Current Verification Status</span>
                     <div style={{ marginTop: 8 }}>
@@ -634,13 +626,7 @@ export default function Fleet() {
                     </div>
                   </div>
 
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 8,
-                      flexWrap: "wrap",
-                    }}
-                  >
+                  <div className="fleet-verification-actions">
                     {verificationStatuses.map((status) => (
                       <button
                         key={status}
@@ -665,14 +651,14 @@ export default function Fleet() {
                 </div>
               </div>
 
-              <div className="section-title" style={{ marginTop: 22 }}>
+              <div className="section-title fleet-section-title fleet-section-title-spaced">
                 <h3>Edit Vehicle</h3>
                 <span>
                   Changes are validated by the Fleet administration API
                 </span>
               </div>
 
-              <div className="panel" style={{ padding: 20 }}>
+              <div className="panel fleet-control-panel">
                 <div className="detail-grid">
                   <div>
                     <span>Registration Number</span>
@@ -804,7 +790,7 @@ export default function Fleet() {
 
                 </div>
 
-                <div style={{ marginTop: 18 }}>
+                <div className="fleet-save-actions">
                   <button
                     type="button"
                     className="text-button"
@@ -823,8 +809,8 @@ export default function Fleet() {
   }
 
   return (
-    <section className="dashboard">
-      <div className="module-header">
+    <section className="dashboard fleet-workspace">
+      <div className="module-header fleet-module-header">
         <div>
           <div className="module-kicker">
             OPERATIONS / FLEET MANAGEMENT
@@ -853,7 +839,7 @@ export default function Fleet() {
         </div>
       )}
 
-      <div className="stats-grid customer-stats">
+      <div className="stats-grid customer-stats fleet-stats">
         <div className="stat-card">
           <span>Total Vehicles</span>
           <strong>{vehicles.length}</strong>
@@ -879,7 +865,7 @@ export default function Fleet() {
         </div>
       </div>
 
-      <div className="panel" style={{ padding: 20 }}>
+      <div className="panel fleet-control-panel">
         <div className="panel-header">
           <div>
             <h2>Fleet Directory</h2>
@@ -890,36 +876,29 @@ export default function Fleet() {
           </div>
         </div>
 
-        <div style={{ marginBottom: 16 }}>
+        <div className="fleet-directory-search">
           <input
             type="search"
             placeholder="Search registration, type, class or transporter…"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            style={{
-              width: "100%",
-              maxWidth: 480,
-              padding: "10px 12px",
-              border: "1px solid #e3e7ee",
-              borderRadius: 8,
-            }}
           />
         </div>
 
         {loading ? (
-          <div className="customer-state">
+          <div className="customer-state fleet-state">
             Loading fleet…
           </div>
         ) : filteredVehicles.length === 0 ? (
-          <div className="customer-empty">
+          <div className="customer-empty fleet-empty">
             <strong>No vehicles found</strong>
             <span>
               No fleet records match the current search.
             </span>
           </div>
         ) : (
-          <div className="table-wrap">
-            <table>
+          <div className="table-wrap fleet-table-wrap">
+            <table className="fleet-table">
               <thead>
                 <tr>
                   <th>Vehicle</th>

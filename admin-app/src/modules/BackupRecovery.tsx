@@ -103,8 +103,8 @@ export default function BackupRecovery() {
 
   if (loading) {
     return (
-      <section className="module-workspace">
-        <div className="module-header">
+      <section className="module-workspace backup-recovery-workspace">
+        <div className="module-header backup-recovery-module-header">
           <div>
             <span className="module-kicker">
               TRANSCONET-APEX1 SYSTEM
@@ -116,7 +116,7 @@ export default function BackupRecovery() {
           </div>
         </div>
 
-        <div className="panel customer-state">
+        <div className="panel customer-state backup-loading-state">
           <strong>Loading Backup & Recovery…</strong>
           <span>
             Checking database protection and recovery status.
@@ -155,7 +155,7 @@ export default function BackupRecovery() {
       </div>
 
       {error && (
-        <div className="panel customer-state error-state">
+        <div className="panel customer-state error-state backup-error-state">
           <strong>Backup & Recovery unavailable</strong>
           <span>{error}</span>
         </div>
@@ -168,7 +168,7 @@ export default function BackupRecovery() {
         </div>
       )}
 
-      <section className="stats-grid">
+      <section className="stats-grid backup-recovery-kpi-grid">
         <Metric
           label="Recovery Status"
           value={status?.status ?? "—"}
@@ -198,9 +198,9 @@ export default function BackupRecovery() {
         />
       </section>
 
-      <div className="dashboard-grid">
-        <section className="panel">
-          <div className="panel-header">
+      <div className="dashboard-grid backup-recovery-dashboard">
+        <section className="panel backup-protection-panel">
+          <div className="panel-header backup-recovery-panel-header">
             <div>
               <h2>Protection Status</h2>
               <p>
@@ -217,7 +217,7 @@ export default function BackupRecovery() {
             </span>
           </div>
 
-          <div className="health-list">
+          <div className="health-list backup-protection-list">
             <div className="health-row">
               <span>Database</span>
               <strong>{status?.database ?? "—"}</strong>
@@ -261,8 +261,8 @@ export default function BackupRecovery() {
           </div>
         </section>
 
-        <section className="panel">
-          <div className="panel-header">
+        <section className="panel backup-records-panel">
+          <div className="panel-header backup-recovery-panel-header">
             <div>
               <h2>Protected Records</h2>
               <p>
@@ -272,7 +272,7 @@ export default function BackupRecovery() {
             </div>
           </div>
 
-          <div className="health-list">
+          <div className="health-list backup-records-list">
             <div className="health-row">
               <span>Users</span>
               <strong>{records?.users ?? "—"}</strong>
@@ -306,8 +306,8 @@ export default function BackupRecovery() {
         </section>
       </div>
 
-      <section className="panel">
-        <div className="panel-header">
+      <section className="panel backup-snapshot-panel">
+        <div className="panel-header backup-recovery-panel-header">
           <div>
             <h2>Administrative Snapshot</h2>
             <p>
@@ -330,7 +330,7 @@ export default function BackupRecovery() {
         </div>
 
         {snapshot && (
-          <div className="health-list">
+          <div className="health-list backup-snapshot-result">
             <div className="health-row">
               <span>Snapshot ID</span>
               <strong>{snapshot.id}</strong>

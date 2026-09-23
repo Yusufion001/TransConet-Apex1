@@ -127,8 +127,8 @@ function ActivityTimeline() {
   const pagination = result?.pagination;
 
   return (
-    <section className="module-workspace">
-      <div className="module-header">
+    <section className="module-workspace activity-timeline-workspace">
+      <div className="module-header activity-timeline-module-header">
         <div>
           <span className="module-kicker">
             TRANSCONET-APEX1 OPERATIONS INTELLIGENCE
@@ -157,7 +157,7 @@ function ActivityTimeline() {
         </div>
       )}
 
-      <div className="stats-grid">
+      <div className="stats-grid activity-timeline-kpi-grid">
         <div className="stat-card">
           <span>Events</span>
           <strong>{loading ? "…" : pagination?.total ?? 0}</strong>
@@ -187,8 +187,8 @@ function ActivityTimeline() {
         </div>
       </div>
 
-      <section className="module-card">
-        <div className="module-toolbar">
+      <section className="module-card activity-timeline-command-panel">
+        <div className="module-toolbar activity-timeline-command-header">
           <div>
             <strong>Activity stream</strong>
             <span>
@@ -196,7 +196,7 @@ function ActivityTimeline() {
             </span>
           </div>
 
-          <div className="module-controls">
+          <div className="module-controls activity-timeline-filter-controls">
             <label>
               <span>Search</span>
               <input
@@ -257,12 +257,12 @@ function ActivityTimeline() {
             </span>
           </div>
         ) : (
-          <div className="health-list">
+          <div className="health-list activity-timeline-event-list">
             {filteredActivities.map((activity) => (
               <button
                 key={activity.id}
                 type="button"
-                className="health-row"
+                className="health-row activity-timeline-event-row"
                 onClick={() => setSelected(activity)}
                 style={{
                   width: "100%",
@@ -328,8 +328,8 @@ function ActivityTimeline() {
       </section>
 
       {selected && (
-        <section className="module-card">
-          <div className="module-toolbar">
+        <section className="module-card activity-timeline-detail-panel">
+          <div className="module-toolbar activity-timeline-detail-header">
             <div>
               <strong>Event details</strong>
               <span>
@@ -346,8 +346,8 @@ function ActivityTimeline() {
             </button>
           </div>
 
-          <div className="health-list">
-            <div className="health-row">
+          <div className="health-list activity-timeline-detail-grid">
+            <div className="health-row activity-timeline-detail-row">
               <span>Event ID</span>
               <strong>{selected.id}</strong>
             </div>
@@ -388,20 +388,16 @@ function ActivityTimeline() {
           </div>
 
           {selected.description && (
-            <div className="module-card">
+            <div className="module-card activity-timeline-description-panel">
               <strong>Description</strong>
               <p>{selected.description}</p>
             </div>
           )}
 
-          <div className="module-card">
+          <div className="module-card activity-timeline-data-panel">
             <strong>Event data</strong>
             <pre
-              style={{
-                overflowX: "auto",
-                whiteSpace: "pre-wrap",
-                marginTop: "12px",
-              }}
+              className="activity-timeline-json"
             >
               {JSON.stringify(selected.data ?? {}, null, 2)}
             </pre>
