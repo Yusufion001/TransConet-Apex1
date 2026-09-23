@@ -4,11 +4,17 @@ import assert from "node:assert/strict";
 const prismaMock = {
   booking: {
     findUnique: mock.fn<(...args: any[]) => any>(),
+    findMany: mock.fn<(...args: any[]) => any>(),
+  },
+  message: {
+    findMany: mock.fn<(...args: any[]) => any>(),
   },
   user: {
     findUnique: mock.fn<(...args: any[]) => any>(),
+    findMany: mock.fn<(...args: any[]) => any>(),
   },
   communicationLog: {
+    findMany: mock.fn<(...args: any[]) => any>(),
     create: mock.fn<(...args: any[]) => any>(),
   },
   auditLog: {
@@ -53,6 +59,7 @@ mock.module(
 );
 
 const {
+  getAdminMessageConversations,
   sendAdminMessage,
   sendAdminExternalCommunication,
 } = await import("../src/admin/message.service.js");
@@ -82,7 +89,11 @@ function resetMocks() {
 
   for (const fn of [
     prismaMock.booking.findUnique,
+    prismaMock.booking.findMany,
+    prismaMock.message.findMany,
     prismaMock.user.findUnique,
+    prismaMock.user.findMany,
+    prismaMock.communicationLog.findMany,
     prismaMock.communicationLog.create,
     prismaMock.auditLog.create,
     createMessageMock,
@@ -130,6 +141,49 @@ function resetMocks() {
 
 test.beforeEach(() => {
   resetMocks();
+});
+
+test("getAdminMessageConversations returns the flat booking fields expected by the admin UI", async () => {
+  const message = {
+    id: "message-1",
+    senderId: "customer-1",
+    recipientId: "transporter-1",
+    bookingId: "booking-1",
+    type: "TEXT",
+    content: "Shipment update",
+    createdAt: new Date("2026-09-23T08:10:00Z"),
+    readAt: null,
+  };
+
+  prismaMock.message.findMany.mock.mockImplementation(async () => [message]);
+  prismaMock.communicationLog.findMany.mock.mockImplementation(async () => []);
+  prismaMock.booking.findMany.mock.mockImplementation(async () => [booking]);
+  prismaMock.user.findMany.mock.mockImplementation(async () => [
+    customer,
+    {
+      id: "transporter-1",
+      firstName: "Transporter",
+      lastName: "One",
+      email: "transporter@example.com",
+      phone: "+2348098765432",
+      role: "TRANSPORTER",
+    },
+  ]);
+
+  const result = await getAdminMessageConversations({});
+
+  assert.equal(result.length, 1);
+  assert.equal(result[0].bookingId, "booking-1");
+  assert.equal(result[0].status, "ASSIGNED");
+  assert.equal(result[0].pickupLocation, "Lagos");
+  assert.equal(result[0].destination, "Ibadan");
+  assert.equal(
+    result[0].createdAt.toISOString(),
+    "2026-09-23T08:00:00.000Z",
+  );
+
+  assert.equal(result[0].booking?.id, "booking-1");
+  assert.equal(result[0].messageCount, 1);
 });
 
 test("sendAdminMessage creates an in-app message and communication log", async () => {

@@ -268,6 +268,11 @@ export async function getAdminMessageConversations(options: {
         .filter(Boolean);
 
       return {
+        bookingId: booking?.id ?? conversation.bookingId,
+        status: booking?.status ?? null,
+        pickupLocation: booking?.pickupLocation ?? null,
+        destination: booking?.destination ?? null,
+        createdAt: booking?.createdAt ?? null,
         booking: booking
           ? {
               id: booking.id,
