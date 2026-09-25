@@ -7,6 +7,13 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
 enum UserRole {
   CUSTOMER
   TRANSPORTER
@@ -367,6 +374,21 @@ enum WithdrawalAccountStatus {
   REJECTED
 }
 
+enum ContactChangeType {
+  EMAIL
+  PHONE
+}
+
+enum ContactChangeStatus {
+  PENDING_LIVENESS
+  LIVENESS_VERIFIED
+  PENDING_CONTACT_VERIFICATION
+  COMPLETED
+  FAILED
+  CANCELLED
+  EXPIRED
+}
+
 enum WithdrawalSecurityChallengePurpose {
   ADD_WITHDRAWAL_ACCOUNT
   CHANGE_WITHDRAWAL_ACCOUNT
@@ -376,6 +398,9 @@ model User {
   id                     String           @id @default(uuid())
   firstName              String
   lastName               String
+  nickname               String?
+  gender                 Gender?
+  dateOfBirth            DateTime?
   email                  String?          @unique
   phone                  String?          @unique
   passwordHash           String
@@ -406,6 +431,7 @@ model User {
   adminMfa           AdminMfa?
   adminMfaChallenges AdminMfaChallenge[]
   verifications      Verification[]
+  contactChanges      ContactChange[]
 
   adminInvitations AdminInvitation[] @relation("AdminInvitationUser")
 
@@ -1754,4 +1780,35 @@ model EmailVerification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([expiresAt])
+}
+
+
+model ContactChange {
+  id                          String             @id @default(uuid())
+  userId                      String
+  type                        ContactChangeType
+  status                      ContactChangeStatus @default(PENDING_LIVENESS)
+
+  currentValue               String
+  requestedValue             String
+
+  livenessSessionId          String?            @unique
+  livenessSessionExpiresAt   DateTime?
+  livenessVerifiedAt         DateTime?
+
+  contactVerificationTokenHash String?          @unique
+  contactVerificationExpiresAt DateTime?
+  contactVerificationAttempts Int               @default(0)
+  contactVerifiedAt           DateTime?
+
+  completedAt                DateTime?
+  expiresAt                  DateTime
+  createdAt                  DateTime            @default(now())
+  updatedAt                  DateTime            @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, status])
+  @@index([userId, createdAt])
+  @@index([status, expiresAt])
 }

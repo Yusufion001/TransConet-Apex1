@@ -37,11 +37,25 @@ async function publishLocation(location: Location.LocationObject) {
   }
 
   if (marketplaceVehicleId) {
+    console.log(
+      "[MARKETPLACE_LOCATION] Sending GPS through Socket.IO:",
+      {
+        vehicleId: marketplaceVehicleId,
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        socketConnected: socket.connected,
+      },
+    );
+
     socket.emit("vehicle-marketplace-location-update", {
       vehicleId: marketplaceVehicleId,
       latitude: location.coords.latitude,
       longitude: location.coords.longitude,
     });
+
+    console.log(
+      "[MARKETPLACE_LOCATION] Marketplace GPS event emitted.",
+    );
   }
 }
 
@@ -229,11 +243,29 @@ export async function startMarketplaceVehicleLocationTracking(
 
   let initialLocation: Location.LocationObject;
 
+  console.log(
+    "[MARKETPLACE_LOCATION] Requesting current GPS position for vehicle:",
+    vehicleId,
+  );
+
   try {
     initialLocation = await Location.getCurrentPositionAsync({
       accuracy: Location.Accuracy.High,
     });
+
+    console.log(
+      "[MARKETPLACE_LOCATION] GPS acquired:",
+      initialLocation.coords.latitude,
+      initialLocation.coords.longitude,
+      "accuracy:",
+      initialLocation.coords.accuracy,
+    );
   } catch (error) {
+    console.warn(
+      "[MARKETPLACE_LOCATION] GPS acquisition failed:",
+      error instanceof Error ? error.message : error,
+    );
+
     throw new Error(
       "Unable to get the vehicle's current location. Turn on device location and try again.",
       { cause: error },

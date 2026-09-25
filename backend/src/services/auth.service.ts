@@ -228,6 +228,9 @@ export async function registerUser(input: {
       data: {
         firstName: input.firstName,
         lastName: input.lastName,
+        ...(input.dateOfBirth
+          ? { dateOfBirth: new Date(input.dateOfBirth) }
+          : {}),
         email: normalizedEmail,
         phone: input.phone,
         passwordHash,

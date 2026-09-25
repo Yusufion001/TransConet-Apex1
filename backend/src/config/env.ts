@@ -18,6 +18,7 @@ const envSchema = z.object({
   PAYSTACK_SECRET_KEY: z.string().min(1),
   PAYSTACK_BASE_URL: z.string().url(),
   YOUVERIFY_API_KEY: z.string().min(1),
+  YOUVERIFY_PUBLIC_MERCHANT_ID: z.string().min(1),
   YOUVERIFY_BASE_URL: z.string().url(),
   YOUVERIFY_WEBHOOK_SECRET: z.string().min(32),
   RESEND_API_KEY: z.string().min(1),

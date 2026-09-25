@@ -3,7 +3,7 @@ import {
   stopMarketplaceVehicleLocationTracking,
 } from "../../../src/realtime/location-publisher";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -122,21 +122,7 @@ export default function TransporterFleet() {
   });
 
   const vehicles = vehiclesQuery.data ?? [];
-
-  const stats = useMemo(() => {
-    return {
-      total: vehicles.length,
-      pending: vehicles.filter(
-        (vehicle) => vehicle.verificationStatus === "PENDING",
-      ).length,
-      approved: vehicles.filter(
-        (vehicle) => vehicle.verificationStatus === "APPROVED",
-      ).length,
-      available: vehicles.filter(
-        (vehicle) => vehicle.availabilityStatus === "AVAILABLE",
-      ).length,
-    };
-  }, [vehicles]);
+  const vehicle = vehicles[0] ?? null;
 
   const resetForm = () => {
     setRegistrationNumber("");
@@ -313,20 +299,34 @@ export default function TransporterFleet() {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.eyebrow}>FLEET MANAGEMENT</Text>
-      <Text style={styles.title}>Your Fleet</Text>
+      <Text style={styles.eyebrow}>VEHICLE MANAGEMENT</Text>
+      <Text style={styles.title}>Your Vehicle</Text>
       <Text style={styles.subtitle}>
-        Manage your registered vehicles and monitor their operational readiness.
+        Manage your registered vehicle and keep it ready for TransConet operations.
       </Text>
 
       <View style={styles.statsGrid}>
-        <Stat label="TOTAL" value={stats.total} />
-        <Stat label="PENDING" value={stats.pending} />
-        <Stat label="APPROVED" value={stats.approved} />
-        <Stat label="AVAILABLE" value={stats.available} />
+        <Stat label="VEHICLE" value={vehicle ? 1 : 0} />
+        <Stat
+          label="VERIFIED"
+          value={vehicle?.verificationStatus === "APPROVED" ? 1 : 0}
+        />
+        <Stat
+          label="AVAILABLE"
+          value={vehicle?.availabilityStatus === "AVAILABLE" ? 1 : 0}
+        />
+        <Stat
+          label="READY"
+          value={
+            vehicle?.verificationStatus === "APPROVED" &&
+            vehicle?.availabilityStatus === "AVAILABLE"
+              ? 1
+              : 0
+          }
+        />
       </View>
 
-      {!showAddForm && !editingVehicleId ? (
+      {!vehicle && !showAddForm && !editingVehicleId ? (
         <Pressable
           onPress={() => setShowAddForm(true)}
           style={styles.primaryButton}
@@ -535,9 +535,9 @@ export default function TransporterFleet() {
       ) : null}
 
       <View style={styles.sectionHeader}>
-        <Text style={styles.eyebrow}>REGISTERED VEHICLES</Text>
+        <Text style={styles.eyebrow}>REGISTERED VEHICLE</Text>
         <Text style={styles.sectionTitle}>
-          {vehicles.length} vehicle{vehicles.length === 1 ? "" : "s"}
+          {vehicle ? "1 registered vehicle" : "No registered vehicle"}
         </Text>
       </View>
 
@@ -545,7 +545,7 @@ export default function TransporterFleet() {
         <View style={styles.emptyCard}>
           <Text style={styles.emptyTitle}>No vehicles registered</Text>
           <Text style={styles.emptyText}>
-            Add your first vehicle to begin building your TransConet fleet.
+            Register your vehicle to begin accepting TransConet loads.
           </Text>
 
           {!showAddForm ? (
@@ -558,7 +558,7 @@ export default function TransporterFleet() {
           ) : null}
         </View>
       ) : (
-        vehicles.map((vehicle) => (
+        vehicles.slice(0, 1).map((vehicle) => (
           <View key={vehicle.id} style={styles.vehicleCard}>
             <View style={styles.vehicleHeader}>
               <View style={styles.vehicleHeaderText}>

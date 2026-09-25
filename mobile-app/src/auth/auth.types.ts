@@ -6,6 +6,10 @@ export type AuthUser = {
   lastName?: string;
   email?: string;
   phone?: string;
+  nickname?: string | null;
+  gender?: "MALE" | "FEMALE" | "OTHER" | "PREFER_NOT_TO_SAY" | null;
+  dateOfBirth?: string | null;
+  profilePhoto?: string | null;
   role: UserRole;
   status?: string;
 };

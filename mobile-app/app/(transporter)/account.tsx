@@ -18,8 +18,9 @@ import {
   getTransporterProfile,
   updateTransporterProfile,
 } from "../../src/api/transporter";
-import { updateCurrentUser } from "../../src/api/auth";
 import { useAuthStore } from "../../src/auth/auth.store";
+import { startContactChange } from "../../src/api/contact-change";
+import { getDeviceCorrelationId } from "../../src/storage/device-correlation";
 
 export function TransporterAccountScreen() {
   const user = useAuthStore((state) => state.user);
@@ -85,32 +86,42 @@ export function TransporterAccountScreen() {
       return;
     }
 
-    if (firstName.trim().length < 2 || lastName.trim().length < 2) {
-      Alert.alert(
-        "Invalid details",
-        "First name and last name must contain at least 2 characters.",
-      );
-      return;
-    }
-
     try {
       setSavingPersonal(true);
 
-      await updateCurrentUser(user.id, {
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        phone: phone.trim() || undefined,
-      });
+      const currentPhone = user.phone?.trim() ?? "";
+      const requestedPhone = phone.trim();
+
+      if (requestedPhone !== currentPhone && requestedPhone.length < 7) {
+        Alert.alert("Invalid phone number", "Please enter a valid phone number.");
+        return;
+      }
+
+      if (requestedPhone !== currentPhone) {
+        const deviceCorrelationId = await getDeviceCorrelationId();
+
+        await startContactChange({
+          type: "PHONE",
+          requestedValue: requestedPhone,
+          deviceCorrelationId,
+        });
+      }
 
       await hydrate();
 
-      Alert.alert("Saved", "Your personal details have been updated.");
+      if (requestedPhone !== currentPhone) {
+        Alert.alert(
+          "Identity verification required",
+          "Your phone number change has been submitted for identity verification. Your current phone number remains unchanged until the verification process is completed.",
+        );
+      } else {
+        Alert.alert("Saved", "Your personal details have been updated.");
+      }
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
         "Unable to update your personal details.";
-
       Alert.alert("Update failed", message);
     } finally {
       setSavingPersonal(false);
@@ -300,8 +311,8 @@ export function TransporterAccountScreen() {
           <TextInput
             value={firstName}
             onChangeText={setFirstName}
-            style={styles.input}
-            editable={!savingPersonal && !personalInformationLocked}
+            editable={false}
+            style={styles.readOnlyInput}
             autoCapitalize="words"
           />
 
@@ -309,8 +320,8 @@ export function TransporterAccountScreen() {
           <TextInput
             value={lastName}
             onChangeText={setLastName}
-            style={styles.input}
-            editable={!savingPersonal && !personalInformationLocked}
+            editable={false}
+            style={styles.readOnlyInput}
             autoCapitalize="words"
           />
 

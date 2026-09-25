@@ -3,6 +3,44 @@ import { env } from "../config/env.js";
 
 const resend = new Resend(env.RESEND_API_KEY);
 
+
+export async function sendContactChangeVerificationEmail(
+  email: string,
+  verificationToken: string,
+  expiresAt: Date,
+) {
+  const expiresInMinutes = Math.max(
+    1,
+    Math.ceil(
+      (expiresAt.getTime() - Date.now()) / (1000 * 60),
+    ),
+  );
+
+  const result = await resend.emails.send({
+    from: env.EMAIL_FROM_ADDRESS,
+    to: email,
+    subject: "Verify your new TransConet email address",
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.6;max-width:600px;margin:auto">
+        <h2>Verify your new TransConet email</h2>
+        <p>You requested to change the email address on your TransConet account.</p>
+        <p>Your verification token is:</p>
+        <div style="font-size:24px;font-weight:800;letter-spacing:3px;padding:16px 20px;background:#f3f4f6;border-radius:8px;text-align:center;word-break:break-all">
+          ${verificationToken}
+        </div>
+        <p><strong>This token expires in ${expiresInMinutes} minutes.</strong></p>
+        <p>If you did not request this change, secure your account and contact TransConet support.</p>
+      </div>
+    `,
+  });
+
+  if (result.error) {
+    throw new Error("Failed to send contact-change verification email");
+  }
+
+  return result.data;
+}
+
 export async function sendPasswordResetEmail(
   email: string,
   resetToken: string,

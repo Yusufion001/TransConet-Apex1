@@ -41,6 +41,9 @@ type AuthState = {
     firstName?: string;
     lastName?: string;
     phone?: string;
+    nickname?: string;
+    gender?: "MALE" | "FEMALE" | "OTHER" | "PREFER_NOT_TO_SAY";
+    dateOfBirth?: string;
     profilePhoto?: string;
   }) => Promise<AuthUser>;
   signOut: () => Promise<void>;

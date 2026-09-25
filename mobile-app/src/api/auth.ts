@@ -147,9 +147,7 @@ export async function resetPassword(
 export async function updateCurrentUser(
   userId: string,
   input: {
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
+    nickname?: string;
     profilePhoto?: string;
   },
 ): Promise<AuthUser> {

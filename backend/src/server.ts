@@ -85,6 +85,7 @@ import authRoutes from "./routes/auth.routes.js";
 import verificationWebRoutes from "./routes/verification-web.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import routingRoutes from "./routes/routing.routes.js";
+import contactChangeRoutes from "./routes/contact-change.routes.js";
 const app = express();
 const httpServer = createServer(app);
 
@@ -178,6 +179,7 @@ app.use("/api/express", expressRoutes);
 app.use("/api/marketplace", marketplaceRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/contact-changes", contactChangeRoutes);
 app.use("/api/routes", routingRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/verification/youverify", youverifyWebhookRoutes);
