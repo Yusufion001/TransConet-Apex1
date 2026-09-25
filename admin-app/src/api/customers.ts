@@ -1,4 +1,5 @@
 import { apiClient } from "./client";
+import type { AdminContactChange } from "../types/contact-change";
 
 export type CustomerProfile = {
   userId: string;
@@ -16,6 +17,9 @@ export type Customer = {
   lastName: string;
   email: string | null;
   phone: string | null;
+  nickname: string | null;
+  gender: string | null;
+  dateOfBirth: string | null;
   role: string;
   status: string;
   profilePhoto: string | null;
@@ -23,6 +27,7 @@ export type Customer = {
   updatedAt: string;
   lastLoginAt: string | null;
   customerProfile: CustomerProfile | null;
+  contactChanges?: AdminContactChange[];
   bookingCount?: number;
   _count?: {
     customerBookings: number;

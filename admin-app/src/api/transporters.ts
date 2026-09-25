@@ -1,4 +1,5 @@
 import { apiClient } from "./client";
+import type { AdminContactChange } from "../types/contact-change";
 
 export type TransporterProfile = {
   userId: string;
@@ -48,6 +49,9 @@ export type Transporter = {
   lastName: string;
   email: string | null;
   phone: string | null;
+  nickname: string | null;
+  gender: string | null;
+  dateOfBirth: string | null;
   role: string;
   status: string;
   transporterTier: string | null;
@@ -56,6 +60,7 @@ export type Transporter = {
   updatedAt: string;
   lastLoginAt: string | null;
   transporterProfile: TransporterProfile | null;
+  contactChanges?: AdminContactChange[];
   vehicles?: TransporterVehicle[];
   transporterBookings?: TransporterBooking[];
   _count?: {

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import CustomerDirectory from "./CustomerDirectory";
+import ContactChangeHistory from "./ContactChangeHistory";
 import {
   activateCustomer,
   blockCustomer,
@@ -13,6 +14,7 @@ import {
 type CustomerPage =
   | "overview"
   | "profile"
+  | "contact-changes"
   | "bookings"
   | "shipments"
   | "payments"
@@ -127,6 +129,7 @@ export default function Customers() {
   const pages: { key: CustomerPage; label: string }[] = [
     { key: "overview", label: "Overview" },
     { key: "profile", label: "Profile" },
+    { key: "contact-changes", label: "Contact Changes" },
     { key: "bookings", label: "Bookings" },
     { key: "shipments", label: "Shipments" },
     { key: "payments", label: "Payments" },
@@ -344,6 +347,9 @@ export default function Customers() {
                 <div><span>Last Name</span><strong>{customer.lastName}</strong></div>
                 <div><span>Email</span><strong>{customer.email || "—"}</strong></div>
                 <div><span>Phone</span><strong>{customer.phone || "—"}</strong></div>
+                <div><span>Nickname</span><strong>{customer.nickname || "—"}</strong></div>
+                <div><span>Gender</span><strong>{customer.gender || "—"}</strong></div>
+                <div><span>Date of Birth</span><strong>{formatDate(customer.dateOfBirth)}</strong></div>
                 <div><span>Role</span><strong>{customer.role}</strong></div>
                 <div><span>Status</span><strong>{customer.status}</strong></div>
                 <div><span>Verification</span><strong>{profile?.verificationStatus || "—"}</strong></div>
@@ -353,6 +359,12 @@ export default function Customers() {
                 <div><span>Updated</span><strong>{formatDate(customer.updatedAt)}</strong></div>
               </div>
             </CustomerDataPage>
+          )}
+
+          {page === "contact-changes" && (
+            <ContactChangeHistory
+              changes={customer.contactChanges ?? []}
+            />
           )}
 
           {page === "bookings" || page === "shipments" ? (
