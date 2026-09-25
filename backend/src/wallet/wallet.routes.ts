@@ -1,4 +1,5 @@
-import { Router } from "express";
+import crypto from "node:crypto";
+import { Router, type Response } from "express";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import {
   authenticate,
@@ -18,6 +19,16 @@ import {
   createWithdrawal,
   getWallet,
 } from "./wallet.service.js";
+import {
+  initializeWalletFunding,
+  verifyAndCompleteWalletFunding,
+  completeWalletFunding,
+} from "./wallet-funding.service.js";
+import { initializeWalletFundingSchema } from "./wallet-funding.validators.js";
+import { verifyFlutterwaveTransaction } from "../payments/flutterwave.service.js";
+import { env } from "../config/env.js";
+import { prisma } from "../config/prisma.js";
+import { Prisma } from "../../generated/prisma/client.js";
 import {
   createWithdrawalSecurityChallenge,
 } from "./withdrawal-security.service.js";
@@ -44,17 +55,410 @@ const withdrawalLimiter = rateLimit({
 
 const router = Router();
 
+router.post(
+  "/funding/initialize",
+  authenticate,
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const parsed = initializeWalletFundingSchema.safeParse(req.body);
+
+      if (!parsed.success) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid wallet funding request",
+          details: parsed.error.flatten(),
+        });
+      }
+
+      const result = await initializeWalletFunding(
+        req.user!.id,
+        parsed.data.amount,
+        parsed.data.idempotencyKey,
+      );
+
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to initialize wallet funding";
+
+      if (message.includes("Idempotency key")) {
+        return res.status(409).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      if (message === "User not found") {
+        return res.status(404).json({
+          success: false,
+          error: message,
+        });
+      }
+
+      console.error("Wallet funding initialization error:", error);
+
+      return res.status(500).json({
+        success: false,
+        error: "Unable to initialize wallet funding",
+      });
+    }
+  },
+);
+
+router.get(
+  "/funding/callback",
+  async (req, res) => {
+    const transactionReference =
+      typeof req.query.tx_ref === "string"
+        ? req.query.tx_ref.trim()
+        : "";
+
+    const transactionId =
+      typeof req.query.transaction_id === "string"
+        ? req.query.transaction_id.trim()
+        : "";
+
+    const providerStatus =
+      typeof req.query.status === "string"
+        ? req.query.status.trim().toLowerCase()
+        : "";
+
+    if (!transactionReference || !transactionId) {
+      return walletFundingReturn(res, "failed", transactionReference);
+    }
+
+    try {
+      const funding = await prisma.walletFunding.findUnique({
+        where: {
+          transactionReference,
+        },
+        select: {
+          id: true,
+          provider: true,
+          transactionReference: true,
+        },
+      });
+
+      if (
+        !funding ||
+        funding.provider !== "FLUTTERWAVE"
+      ) {
+        return walletFundingReturn(
+          res,
+          "failed",
+          transactionReference,
+        );
+      }
+
+      if (providerStatus !== "successful") {
+        return walletFundingReturn(
+          res,
+          "failed",
+          transactionReference,
+        );
+      }
+
+      const result =
+        await verifyAndCompleteWalletFunding(
+          funding.id,
+          transactionId,
+        );
+
+      return walletFundingReturn(
+        res,
+        "success",
+        result.transactionReference,
+      );
+    } catch (error) {
+      console.error(
+        "Flutterwave wallet funding callback error:",
+        error,
+      );
+
+      return walletFundingReturn(
+        res,
+        "failed",
+        transactionReference,
+      );
+    }
+  },
+);
+
+router.post(
+  "/funding/webhook",
+  async (req, res) => {
+    const rawBody =
+      (req as typeof req & { rawBody?: Buffer }).rawBody;
+
+    if (!rawBody) {
+      return res.status(401).json({
+        success: false,
+        error: "Webhook signature verification required",
+      });
+    }
+
+    if (!verifyFlutterwaveWebhookSignature(
+      rawBody,
+      req as AuthenticatedRequest,
+    )) {
+      return res.status(401).json({
+        success: false,
+        error: "Invalid webhook signature",
+      });
+    }
+
+    try {
+      const data =
+        req.body?.data &&
+        typeof req.body.data === "object"
+          ? req.body.data
+          : {};
+
+      const transactionReference =
+        String(
+          data.tx_ref ??
+            req.body?.tx_ref ??
+            req.body?.transactionReference ??
+            req.body?.transaction_reference ??
+            req.body?.reference ??
+            "",
+        ).trim();
+
+      const transactionIdRaw =
+        data.id ??
+        req.body?.transactionId ??
+        req.body?.transaction_id;
+
+      const transactionId =
+        transactionIdRaw !== undefined &&
+        transactionIdRaw !== null
+          ? String(transactionIdRaw).trim()
+          : "";
+
+      const eventType =
+        String(
+          req.header("X-Event-Type") ??
+            req.body?.eventType ??
+            req.body?.type ??
+            req.body?.event ??
+            "UNKNOWN",
+        ).trim();
+
+      const providerEventId =
+        String(
+          req.header("X-Provider-Event-Id") ??
+            req.body?.providerEventId ??
+            data.flw_ref ??
+            req.body?.webhook_id ??
+            transactionId ??
+            transactionReference,
+        ).trim();
+
+      if (
+        !transactionReference ||
+        !transactionId ||
+        !providerEventId
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid wallet funding webhook event",
+        });
+      }
+
+      const funding =
+        await prisma.walletFunding.findUnique({
+          where: {
+            transactionReference,
+          },
+          select: {
+            id: true,
+            transactionReference: true,
+            provider: true,
+          },
+        });
+
+      /*
+       * This webhook endpoint is shared with Flutterwave. A valid
+       * Flutterwave event for another TransConet payment domain should
+       * be acknowledged without touching wallet funding.
+       */
+      if (
+        !funding ||
+        funding.provider !== "FLUTTERWAVE"
+      ) {
+        return res.status(200).json({
+          success: true,
+          data: {
+            ignored: true,
+          },
+        });
+      }
+
+      let webhookEvent;
+
+      try {
+        webhookEvent =
+          await prisma.walletFundingWebhookEvent.create({
+            data: {
+              provider: "FLUTTERWAVE",
+              providerEventId,
+              eventType,
+              walletFundingId: funding.id,
+              payload: req.body,
+            },
+          });
+      } catch (error) {
+        if (
+          error instanceof
+            Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2002"
+        ) {
+          const existing =
+            await prisma.walletFundingWebhookEvent.findUnique({
+              where: {
+                provider_providerEventId: {
+                  provider: "FLUTTERWAVE",
+                  providerEventId,
+                },
+              },
+              select: {
+                id: true,
+                processed: true,
+              },
+            });
+
+          if (existing?.processed) {
+            return res.status(200).json({
+              success: true,
+              data: {
+                duplicate: true,
+                processed: true,
+              },
+            });
+          }
+
+          webhookEvent = existing
+            ? { id: existing.id }
+            : undefined;
+        } else {
+          throw error;
+        }
+      }
+
+      if (!webhookEvent) {
+        throw new Error(
+          "Unable to record wallet funding webhook event",
+        );
+      }
+
+      /*
+       * Never trust the webhook payload's amount/status alone.
+       * Re-query Flutterwave and verify the exact transaction.
+       */
+      const verified =
+        await verifyFlutterwaveTransaction(
+          transactionId,
+        );
+
+      const result =
+        await completeWalletFunding(
+          funding.id,
+          verified,
+        );
+
+      await prisma.walletFundingWebhookEvent.update({
+        where: {
+          id: webhookEvent.id,
+        },
+        data: {
+          processed: true,
+          processedAt: new Date(),
+        },
+      });
+
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error(
+        "Wallet funding webhook error:",
+        error,
+      );
+
+      return res.status(500).json({
+        success: false,
+        error: "Webhook processing failed",
+      });
+    }
+  },
+);
+
+
+function verifyFlutterwaveWebhookSignature(
+  rawBody: Buffer,
+  req: AuthenticatedRequest,
+) {
+  const signature = req.header("flutterwave-signature")?.trim();
+  const legacyHash = req.header("verif-hash")?.trim();
+
+  if (signature) {
+    const expected = crypto
+      .createHmac("sha256", env.FLW_SECRET_HASH)
+      .update(rawBody)
+      .digest("base64");
+
+    const providedBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expected);
+
+    return (
+      providedBuffer.length === expectedBuffer.length &&
+      crypto.timingSafeEqual(providedBuffer, expectedBuffer)
+    );
+  }
+
+  if (legacyHash) {
+    const providedBuffer = Buffer.from(legacyHash);
+    const expectedBuffer = Buffer.from(env.FLW_SECRET_HASH);
+
+    return (
+      providedBuffer.length === expectedBuffer.length &&
+      crypto.timingSafeEqual(providedBuffer, expectedBuffer)
+    );
+  }
+
+  return false;
+}
+
+function walletFundingReturn(
+  res: Response,
+  status: "success" | "failed",
+  transactionReference?: string,
+) {
+  const params = new URLSearchParams({
+    status,
+    ...(transactionReference
+      ? { tx_ref: transactionReference }
+      : {}),
+  });
+
+  return res.redirect(
+    `transconet://wallet-funding-return?${params.toString()}`,
+  );
+}
+
+
 router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
   try {
     const input = createWalletSchema.parse(req.body);
-    const requestedTransporterId = input.transporterId;
+    const requestedUserId = input.userId;
 
     if (
       req.user!.role !== "ADMIN" &&
-      (
-        req.user!.role !== "TRANSPORTER" ||
-        req.user!.id !== requestedTransporterId
-      )
+      req.user!.id !== requestedUserId
     ) {
       return res.status(403).json({
         success: false,
@@ -62,7 +466,7 @@ router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
       });
     }
 
-    const wallet = await createWallet(requestedTransporterId);
+    const wallet = await createWallet(requestedUserId);
 
     res.json({
       success: true,
@@ -77,18 +481,15 @@ router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
 });
 
 router.get(
-  "/:transporterId",
+  "/:userId",
   authenticate,
   async (req: AuthenticatedRequest, res) => {
     try {
-      const transporterId = String(req.params.transporterId);
+      const userId = String(req.params.userId);
 
       if (
         req.user!.role !== "ADMIN" &&
-        (
-          req.user!.role !== "TRANSPORTER" ||
-          req.user!.id !== transporterId
-        )
+        req.user!.id !== userId
       ) {
         return res.status(403).json({
           success: false,
@@ -96,7 +497,7 @@ router.get(
         });
       }
 
-      const wallet = await getWallet(transporterId);
+      const wallet = await getWallet(userId);
 
       res.json({
         success: true,

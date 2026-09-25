@@ -260,7 +260,7 @@ export async function verifyExpressDelivery(
 
     const wallet = await tx.wallet.findUnique({
       where: {
-        transporterId: transporterId,
+        userId: transporterId,
       },
     });
 

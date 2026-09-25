@@ -14,6 +14,7 @@ const envSchema = z.object({
   FLW_SECRET_HASH: z.string().min(1),
   FLW_BASE_URL: z.string().url(),
   FLW_REDIRECT_URL: z.string().url(),
+  FLW_WALLET_FUNDING_REDIRECT_URL: z.string().url(),
   FLW_COMMISSION_REDIRECT_URL: z.string().url(),
   PAYSTACK_SECRET_KEY: z.string().min(1),
   PAYSTACK_BASE_URL: z.string().url(),

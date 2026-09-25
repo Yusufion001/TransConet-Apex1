@@ -3,6 +3,7 @@ import * as Crypto from "expo-crypto";
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,6 +18,7 @@ import {
   createWithdrawalAccountChallenge,
   getTransporterWallet,
   getWithdrawalAccounts,
+  initializeWalletFunding,
   requestWithdrawal,
   type WithdrawalAccount,
   type WithdrawalSecurityPurpose,
@@ -129,6 +131,8 @@ export default function TransporterWallet() {
     useState<string | null>(null);
 
   const [amount, setAmount] = useState("");
+  const [fundingAmount, setFundingAmount] = useState("");
+  const [fundingReference, setFundingReference] = useState<string | null>(null);
   const [selectedAccountId, setSelectedAccountId] =
     useState("");
 
@@ -146,6 +150,56 @@ export default function TransporterWallet() {
     refetchInterval: 15000,
   });
 
+  React.useEffect(() => {
+    const handleWalletFundingReturn = async ({ url }: { url: string }) => {
+      if (!url.startsWith("transconet://wallet-funding-return")) {
+        return;
+      }
+
+      try {
+        const parsed = new URL(url);
+        const status = parsed.searchParams.get("status");
+        const reference = parsed.searchParams.get("tx_ref");
+
+        if (reference) {
+          setFundingReference(reference);
+        }
+
+        await walletQuery.refetch();
+
+        if (status === "success") {
+          Alert.alert(
+            "Wallet funded",
+            "Your wallet balance has been refreshed.",
+          );
+        } else if (status === "failed") {
+          Alert.alert(
+            "Funding not completed",
+            "The wallet funding payment was not completed.",
+          );
+        }
+      } catch {
+        Alert.alert(
+          "Funding update",
+          "The payment returned, but the funding status could not be read.",
+        );
+      }
+    };
+
+    const subscription = Linking.addEventListener(
+      "url",
+      handleWalletFundingReturn,
+    );
+
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        void handleWalletFundingReturn({ url });
+      }
+    });
+
+    return () => subscription.remove();
+  }, [walletQuery]);
+
   const bookingsQuery = useQuery({
     queryKey: ["transporter-wallet-trips", user?.id],
     queryFn: () => getTransporterBookings(user!.id),
@@ -160,6 +214,59 @@ export default function TransporterWallet() {
     queryFn: () => getWithdrawalAccounts(user!.id),
     enabled: Boolean(user?.id),
     refetchInterval: 15000,
+  });
+
+  const fundingMutation = useMutation({
+    mutationFn: async () => {
+      const value = Number(fundingAmount);
+
+      if (!Number.isFinite(value) || value <= 0) {
+        throw new Error("Enter a valid funding amount.");
+      }
+
+      if (value > 100000000) {
+        throw new Error("Maximum wallet funding is ₦100,000,000.");
+      }
+
+      const idempotencyKey = `mobile-wallet-${user!.id}-${Date.now()}-${Crypto.randomUUID()}`;
+
+      return initializeWalletFunding({
+        amount: value,
+        idempotencyKey,
+      });
+    },
+    onSuccess: async (result) => {
+      setFundingAmount("");
+      setFundingReference(result.transactionReference);
+      await walletQuery.refetch();
+
+      if (!result.checkoutUrl) {
+        Alert.alert(
+          "Funding initialized",
+          "Your wallet funding was created, but no checkout URL was returned.",
+        );
+        return;
+      }
+
+      const canOpen = await Linking.canOpenURL(result.checkoutUrl);
+      if (!canOpen) {
+        Alert.alert(
+          "Unable to open payment",
+          "The Flutterwave checkout could not be opened on this device.",
+        );
+        return;
+      }
+
+      await Linking.openURL(result.checkoutUrl);
+    },
+    onError: (error: unknown) => {
+      Alert.alert(
+        "Wallet funding failed",
+        error instanceof Error
+          ? error.message
+          : "Unable to initialize wallet funding.",
+      );
+    },
   });
 
   const withdrawalMutation = useMutation({
@@ -554,6 +661,74 @@ export default function TransporterWallet() {
                 </View>
                 <Text style={styles.walletNavigationArrow}>›</Text>
               </Pressable>
+
+              <View style={styles.walletNavigationCard}>
+                <View style={styles.walletNavigationMain}>
+                  <Text style={styles.walletNavigationTitle}>
+                    Fund Wallet
+                  </Text>
+                  <Text style={styles.walletNavigationText}>
+                    Add money to your shared wallet securely with Flutterwave
+                  </Text>
+
+                  <TextInput
+                    value={fundingAmount}
+                    onChangeText={setFundingAmount}
+                    keyboardType="decimal-pad"
+                    placeholder="Amount in NGN"
+                    placeholderTextColor="#8A94A6"
+                    style={{
+                      marginTop: 12,
+                      borderWidth: 1,
+                      borderColor: "#D9E1EF",
+                      borderRadius: 12,
+                      paddingHorizontal: 14,
+                      paddingVertical: 11,
+                      color: "#172033",
+                      backgroundColor: "#FFFFFF",
+                    }}
+                  />
+
+                  <Pressable
+                    disabled={fundingMutation.isPending}
+                    onPress={() => fundingMutation.mutate()}
+                    style={{
+                      marginTop: 10,
+                      borderRadius: 12,
+                      paddingVertical: 12,
+                      alignItems: "center",
+                      backgroundColor: fundingMutation.isPending
+                        ? "#9DB4E8"
+                        : "#174EA6",
+                    }}
+                  >
+                    {fundingMutation.isPending ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <Text
+                        style={{
+                          color: "#FFFFFF",
+                          fontWeight: "800",
+                        }}
+                      >
+                        Fund Wallet
+                      </Text>
+                    )}
+                  </Pressable>
+
+                  {fundingReference ? (
+                    <Text
+                      style={{
+                        marginTop: 9,
+                        fontSize: 11,
+                        color: "#68758A",
+                      }}
+                    >
+                      Latest funding reference: {fundingReference}
+                    </Text>
+                  ) : null}
+                </View>
+              </View>
 
               <Pressable
                 style={styles.walletNavigationCard}

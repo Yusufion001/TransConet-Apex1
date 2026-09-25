@@ -46,7 +46,7 @@ export type WithdrawalSecurityChallenge = {
 
 export type Wallet = {
   id: string;
-  transporterId: string;
+  userId: string;
   availableBalance: string;
   pendingBalance: string;
   createdAt: string;
@@ -55,16 +55,43 @@ export type Wallet = {
   withdrawals?: Withdrawal[];
 };
 
+export type WalletFundingStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "SUCCESS"
+  | "FAILED";
+
+export type WalletFundingInitialization = {
+  id: string;
+  transactionReference: string;
+  checkoutUrl: string | null;
+  providerTransactionId: string | null;
+  status: WalletFundingStatus;
+};
+
 type ApiResponse<T> = {
   success: boolean;
   data: T;
 };
 
+export async function getWallet(userId: string): Promise<Wallet> {
+  const response = await apiClient.get<ApiResponse<Wallet>>(
+    `/wallet/${userId}`,
+  );
+
+  return response.data.data;
+}
+
 export async function getTransporterWallet(
   transporterId: string,
 ): Promise<Wallet> {
-  const response = await apiClient.get<ApiResponse<Wallet>>(
-    `/wallet/${transporterId}`,
+  return getWallet(transporterId);
+}
+
+export async function createWallet(userId: string): Promise<Wallet> {
+  const response = await apiClient.post<ApiResponse<Wallet>>(
+    "/wallet",
+    { userId },
   );
 
   return response.data.data;
@@ -73,10 +100,19 @@ export async function getTransporterWallet(
 export async function createTransporterWallet(
   transporterId: string,
 ): Promise<Wallet> {
-  const response = await apiClient.post<ApiResponse<Wallet>>(
-    "/wallet",
-    { transporterId },
-  );
+  return createWallet(transporterId);
+}
+
+export async function initializeWalletFunding(input: {
+  amount: number;
+  idempotencyKey: string;
+}): Promise<WalletFundingInitialization> {
+  const response = await apiClient.post<
+    ApiResponse<WalletFundingInitialization>
+  >("/wallet/funding/initialize", {
+    amount: input.amount,
+    idempotencyKey: input.idempotencyKey,
+  });
 
   return response.data.data;
 }

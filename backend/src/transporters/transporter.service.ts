@@ -172,11 +172,11 @@ export async function updateTransporterVerification(
 
     await tx.wallet.upsert({
       where: {
-        transporterId,
+        userId: transporterId,
       },
       update: {},
       create: {
-        transporterId,
+        userId: transporterId,
       },
     });
 

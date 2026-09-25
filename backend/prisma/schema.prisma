@@ -440,6 +440,7 @@ model User {
   vehicles                           Vehicle[]                     @relation("TransporterVehicles")
   payments                           Payment[]                     @relation("CustomerPayments")
   wallet                             Wallet?
+  walletFundings                    WalletFunding[]
   withdrawalAccounts                 WithdrawalAccount[]
   withdrawalSecurityChallenges       WithdrawalSecurityChallenge[]
   marketplaceRequests                MarketplaceRequest[]          @relation("MarketplaceRequests")
@@ -1111,7 +1112,7 @@ model Verification {
 
 model Wallet {
   id            String @id @default(uuid())
-  transporterId String @unique
+  userId        String @unique
 
   availableBalance Decimal @default(0) @db.Decimal(14, 2)
   pendingBalance   Decimal @default(0) @db.Decimal(14, 2)
@@ -1119,10 +1120,11 @@ model Wallet {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  transporter User @relation(fields: [transporterId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
 
   transactions WalletTransaction[]
   withdrawals  Withdrawal[]
+  fundings      WalletFunding[]
 }
 
 model WalletTransaction {
@@ -1136,11 +1138,69 @@ model WalletTransaction {
 
   description String?
 
+  // Unique reference used by administrative financial adjustments and
+  // other idempotent wallet operations. Nullable so existing transactions
+  // remain valid.
+  reference String? @unique
+
+  // Populated for administrator-created ledger entries. The administrator
+  // identity is also recorded in AuditLog for the complete audit trail.
+  administratorId String?
+
   createdAt DateTime @default(now())
 
   wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([walletId])
+  @@index([administratorId])
+}
+
+
+model WalletFunding {
+  id                    String   @id @default(uuid())
+  userId                String
+  walletId              String
+  amount                Decimal  @db.Decimal(14, 2)
+  currency              String   @default("NGN")
+  provider              String
+  transactionReference  String   @unique
+  providerTransactionId String?
+  checkoutUrl           String?
+  idempotencyKey        String
+  status                String   @default("PENDING")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user                 User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet               Wallet                     @relation(fields: [walletId], references: [id], onDelete: Restrict)
+  webhookEvents        WalletFundingWebhookEvent[]
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId])
+  @@index([walletId])
+  @@index([status])
+  @@index([provider, status])
+  @@index([createdAt])
+}
+
+model WalletFundingWebhookEvent {
+  id              String   @id @default(uuid())
+  provider        String
+  providerEventId String
+  eventType       String
+  walletFundingId String?
+  payload         Json
+  processed        Boolean  @default(false)
+  processedAt     DateTime?
+
+  createdAt DateTime @default(now())
+
+  walletFunding WalletFunding? @relation(fields: [walletFundingId], references: [id], onDelete: SetNull)
+
+  @@unique([provider, providerEventId])
+  @@index([walletFundingId])
+  @@index([provider, eventType])
+  @@index([createdAt])
 }
 
 model Withdrawal {
