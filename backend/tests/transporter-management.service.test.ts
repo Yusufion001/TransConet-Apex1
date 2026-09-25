@@ -139,11 +139,11 @@ test("changeTransporterVerification creates a wallet when approving a transporte
 
   assert.deepEqual(walletUpsert, {
     where: {
-      transporterId,
+      userId: transporterId,
     },
     update: {},
     create: {
-      transporterId,
+      userId: transporterId,
     },
   });
 

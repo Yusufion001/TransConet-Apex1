@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const createWalletSchema = z.object({
-  transporterId: z.string().uuid("Invalid transporter ID"),
+  userId: z.string().uuid("Invalid user ID"),
 });
 
 export const withdrawalSchema = z.object({

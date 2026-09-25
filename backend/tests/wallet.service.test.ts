@@ -74,7 +74,7 @@ test.beforeEach(() => {
 test("getWallet returns the transporter wallet with transactions and withdrawals", async () => {
   const wallet = {
     id: "wallet-1",
-    transporterId: "transporter-1",
+    userId: "transporter-1",
     availableBalance: "50000.00",
     pendingBalance: "10000.00",
     createdAt: new Date("2026-08-18T10:00:00.000Z"),
@@ -95,7 +95,7 @@ test("getWallet returns the transporter wallet with transactions and withdrawals
   const call = prismaMock.wallet.findUnique.mock.calls[0];
   assert.deepEqual(call.arguments[0], {
     where: {
-      transporterId: "transporter-1",
+      userId: "transporter-1",
     },
     include: {
       transactions: {
@@ -115,7 +115,7 @@ test("getWallet returns the transporter wallet with transactions and withdrawals
 test("createWallet creates a wallet and publishes an administration event", async () => {
   const wallet = {
     id: "wallet-1",
-    transporterId: "transporter-1",
+    userId: "transporter-1",
     availableBalance: 0,
     pendingBalance: 0,
     createdAt: new Date("2026-08-18T10:00:00.000Z"),
@@ -135,7 +135,7 @@ test("createWallet creates a wallet and publishes an administration event", asyn
     prismaMock.wallet.create.mock.calls[0].arguments[0],
     {
       data: {
-        transporterId: "transporter-1",
+        userId: "transporter-1",
       },
     },
   );
@@ -250,7 +250,7 @@ test("createWithdrawal denies access to another transporter's wallet", async () 
     async () => [
       {
         id: "wallet-1",
-        transporterId: "transporter-owner",
+        userId: "transporter-owner",
         availableBalance: new Prisma.Decimal(50000),
       },
     ],
@@ -277,7 +277,7 @@ test("createWithdrawal rejects insufficient available balance", async () => {
     async () => [
       {
         id: "wallet-1",
-        transporterId: "transporter-1",
+        userId: "transporter-1",
         availableBalance: new Prisma.Decimal(5000),
       },
     ],
@@ -320,7 +320,7 @@ test("createWithdrawal atomically reserves balance and creates a pending withdra
     async () => [
       {
         id: "wallet-1",
-        transporterId: "transporter-1",
+        userId: "transporter-1",
         availableBalance: new Prisma.Decimal(50000),
       },
     ],
@@ -409,7 +409,7 @@ test("createWithdrawal returns the existing withdrawal for the same idempotency 
     async () => [
       {
         id: "wallet-1",
-        transporterId: "transporter-1",
+        userId: "transporter-1",
         availableBalance: new Prisma.Decimal(50000),
       },
     ],

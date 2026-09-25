@@ -13,6 +13,42 @@ export const settlementRejectionSchema = z.object({
   rejectionReason: z.string().trim().min(1).max(1000),
 });
 
+export const adminWalletIdParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
+export const adminWalletQuerySchema = z.object({
+  search: z.string().trim().max(200).optional(),
+  role: z.enum(["CUSTOMER", "TRANSPORTER"]).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  offset: z.coerce.number().int().min(0).max(100000).default(0),
+});
+
+export const adminWalletTransactionQuerySchema = z.object({
+  transactionType: z.string().trim().max(100).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  offset: z.coerce.number().int().min(0).max(100000).default(0),
+});
+
+export const adminWalletFundingQuerySchema = z.object({
+  status: z.string().trim().max(50).optional(),
+  provider: z.string().trim().max(50).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  offset: z.coerce.number().int().min(0).max(100000).default(0),
+});
+
+export const adminWalletAdjustmentSchema = z.object({
+  direction: z.enum(["CREDIT", "DEBIT"]),
+  amount: z.coerce.number().finite().positive().max(1_000_000_000),
+  reason: z.string().trim().min(3).max(1000),
+  reference: z
+    .string()
+    .trim()
+    .min(3)
+    .max(120)
+    .regex(/^[A-Za-z0-9._:-]+$/),
+});
+
 export const adminPermissionKeys = [
   "FINANCIAL_VIEW",
   "PAYMENTS_VIEW",
@@ -31,6 +67,9 @@ export const adminPermissionKeys = [
   "COMMISSION_PAYMENTS_VIEW",
   "COMMISSION_PAYMENTS_VERIFY",
   "COMMISSION_PAYMENTS_REJECT",
+  "WALLETS_VIEW",
+  "WALLETS_ADJUST",
+  "WALLET_FUNDING_VIEW",
 ] as const;
 
 export const adminPermissionsSchema = z.object({

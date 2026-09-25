@@ -1,3 +1,5 @@
+const googleMapsPlatformKey = process.env.GOOGLE_MAP_PLATFORM_KEY;
+
 module.exports = {
   expo: {
     name: "TransConet",
@@ -30,7 +32,12 @@ module.exports = {
         monochromeImage: "./assets/android-icon-monochrome.png"
       },
       predictiveBackGestureEnabled: false,
-      package: "com.transconet.apex1"
+      package: "com.transconet.apex1",
+      config: {
+        googleMaps: {
+          apiKey: googleMapsPlatformKey
+        }
+      }
     },
 
     plugins: [
@@ -62,12 +69,9 @@ module.exports = {
       ],
       [
         "react-native-maps",
-        process.env.GOOGLE_MAP_PLATFORM_KEY
-          ? {
-              androidGoogleMapsApiKey:
-                process.env.GOOGLE_MAP_PLATFORM_KEY
-            }
-          : {}
+        {
+          androidGoogleMapsApiKey: googleMapsPlatformKey
+        }
       ]
     ],
 

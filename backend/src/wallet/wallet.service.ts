@@ -7,11 +7,11 @@ import {
 } from "./wallet.dto.js";
 
 export async function getWallet(
-  transporterId: string,
+  userId: string,
 ) {
   const wallet = await prisma.wallet.findUnique({
     where: {
-      transporterId,
+      userId,
     },
     include: {
       transactions: {
@@ -31,11 +31,11 @@ export async function getWallet(
 }
 
 export async function createWallet(
-  transporterId: string,
+  userId: string,
 ) {
   const wallet = await prisma.wallet.create({
     data: {
-      transporterId,
+      userId,
     },
   });
 
@@ -44,7 +44,7 @@ export async function createWallet(
     module: "FINANCIAL_OPERATIONS",
     entityType: "WALLET",
     entityId: wallet.id,
-    actorId: transporterId,
+    actorId: userId,
     data: toWalletDto(wallet),
   });
 
@@ -80,16 +80,16 @@ export async function createWithdrawal(
     const lockedWallets = await tx.$queryRaw<
       Array<{
         id: string;
-        transporterId: string;
+        userId: string;
         availableBalance: Prisma.Decimal;
       }>
     >`
       SELECT
         "id",
-        "transporterId",
+        "userId",
         "availableBalance"
       FROM "Wallet"
-      WHERE "transporterId" = ${userId}
+      WHERE "userId" = ${userId}
       FOR UPDATE
     `;
 
@@ -99,7 +99,7 @@ export async function createWithdrawal(
       throw new Error("Wallet not found");
     }
 
-    if (wallet.transporterId !== userId) {
+    if (wallet.userId !== userId) {
       throw new Error("Access denied");
     }
 

@@ -363,7 +363,7 @@ export async function completePayment(
     if (updatedPayment.booking.transporterId) {
       const wallet = await tx.wallet.findUnique({
         where: {
-          transporterId: updatedPayment.booking.transporterId,
+          userId: updatedPayment.booking.transporterId,
         },
       });
 

@@ -620,7 +620,7 @@ export async function releaseSettlement(
 
     const wallet = await tx.wallet.findUnique({
       where: {
-        transporterId: settlement.transporterId,
+        userId: settlement.transporterId,
       },
     });
 

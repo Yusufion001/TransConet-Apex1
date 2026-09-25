@@ -101,6 +101,12 @@ function CustomerDrawerContent(props: any) {
         <Text style={styles.sectionLabel}>ACCOUNT</Text>
 
         {menuItem(
+          "Wallet",
+          "/(customer)/wallet",
+          "wallet-outline",
+        )}
+
+        {menuItem(
           "Settings",
           "/(customer)/account",
           "settings-outline",
@@ -167,6 +173,13 @@ export default function CustomerLayout() {
         name="support-disputes"
         options={{
           title: "Support & Disputes",
+        }}
+      />
+
+      <Drawer.Screen
+        name="wallet/index"
+        options={{
+          title: "Wallet",
         }}
       />
 

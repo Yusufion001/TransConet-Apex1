@@ -363,9 +363,9 @@ export async function changeTransporterVerification(
 
     if (verificationStatus === "APPROVED") {
       await tx.wallet.upsert({
-        where: { transporterId },
+        where: { userId: transporterId },
         update: {},
-        create: { transporterId },
+        create: { userId: transporterId },
       });
     }
 

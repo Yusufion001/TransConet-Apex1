@@ -115,13 +115,14 @@ export async function getAdminWithdrawals(filters?: {
     include: {
       wallet: {
         include: {
-          transporter: {
+          user: {
             select: {
               id: true,
               firstName: true,
               lastName: true,
               email: true,
               phone: true,
+              role: true,
             },
           },
         },
@@ -134,7 +135,7 @@ export async function getAdminWithdrawals(filters?: {
 
   return withdrawals.map((withdrawal) => ({
     ...toWithdrawalDto(withdrawal),
-    transporter: withdrawal.wallet.transporter,
+    user: withdrawal.wallet.user,
   }));
 }
 
@@ -317,7 +318,7 @@ export async function updateWithdrawalStatus(
       include: {
         wallet: {
           select: {
-            transporterId: true,
+            userId: true,
           },
         },
       },
@@ -437,7 +438,7 @@ export async function updateWithdrawalStatus(
     await tx.auditLog.create({
       data: {
         administratorId,
-        affectedUserId: withdrawal.wallet.transporterId,
+        affectedUserId: withdrawal.wallet.userId,
         action: "WITHDRAWAL_STATUS_UPDATED",
         previousValue: {
           withdrawalId: withdrawal.id,
@@ -474,7 +475,7 @@ export async function updateWithdrawalStatus(
     ...withdrawalDto,
     wallet: {
       id: result.wallet.id,
-      transporterId: result.wallet.transporterId,
+      userId: result.wallet.userId,
       availableBalance: String(result.wallet.availableBalance),
       pendingBalance: String(result.wallet.pendingBalance),
     },

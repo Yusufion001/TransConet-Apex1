@@ -420,3 +420,182 @@ export async function rejectCommissionPayment(
 
   return response.data.data;
 }
+
+export type AdminWalletUser = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email?: string | null;
+  phone?: string | null;
+  role: "CUSTOMER" | "TRANSPORTER";
+};
+
+export type AdminWallet = {
+  id: string;
+  userId: string;
+  availableBalance: string;
+  pendingBalance: string;
+  createdAt: string;
+  updatedAt: string;
+  user: AdminWalletUser;
+  transactionCount: number;
+  fundingCount: number;
+  withdrawalCount: number;
+};
+
+export type AdminWalletListResponse = {
+  total: number;
+  limit: number;
+  offset: number;
+  wallets: AdminWallet[];
+};
+
+export type AdminWalletDetail = AdminWallet;
+
+export type AdminWalletTransaction = {
+  id: string;
+  walletId: string;
+  bookingId?: string | null;
+  amount: string;
+  transactionType: string;
+  description?: string | null;
+  reference?: string | null;
+  administratorId?: string | null;
+  createdAt: string;
+};
+
+export type AdminWalletTransactionsResponse = {
+  total: number;
+  limit: number;
+  offset: number;
+  transactions: AdminWalletTransaction[];
+};
+
+export type AdminWalletFunding = {
+  id: string;
+  userId: string;
+  walletId: string;
+  amount: string;
+  currency: string;
+  provider: string;
+  transactionReference: string;
+  providerTransactionId?: string | null;
+  checkoutUrl?: string | null;
+  idempotencyKey: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  webhookEventCount: number;
+};
+
+export type AdminWalletFundingsResponse = {
+  total: number;
+  limit: number;
+  offset: number;
+  fundings: AdminWalletFunding[];
+};
+
+export type AdminWalletFundingDetail = AdminWalletFunding & {
+  user: AdminWalletUser;
+  webhookEvents: {
+    id: string;
+    provider: string;
+    providerEventId: string;
+    eventType: string;
+    processed: boolean;
+    processedAt?: string | null;
+    createdAt: string;
+  }[];
+};
+
+export type AdminWalletAdjustmentInput = {
+  direction: "CREDIT" | "DEBIT";
+  amount: number;
+  reason: string;
+  reference: string;
+};
+
+export type AdminWalletAdjustmentResult = {
+  alreadyProcessed: boolean;
+  walletId: string;
+  userId: string;
+  transactionId: string;
+  direction: "CREDIT" | "DEBIT";
+  amount: string;
+  reference: string;
+  reason: string;
+  availableBalance: string;
+  pendingBalance?: string;
+};
+
+export async function getAdminWallets(params?: {
+  search?: string;
+  role?: "CUSTOMER" | "TRANSPORTER";
+  limit?: number;
+  offset?: number;
+}) {
+  const response = await apiClient.get<ApiResponse<AdminWalletListResponse>>(
+    "/admin/financial/wallets",
+    { params },
+  );
+
+  return response.data.data;
+}
+
+export async function getAdminWallet(id: string) {
+  const response = await apiClient.get<ApiResponse<AdminWalletDetail>>(
+    `/admin/financial/wallets/${id}`,
+  );
+
+  return response.data.data;
+}
+
+export async function getAdminWalletTransactions(
+  id: string,
+  params?: {
+    transactionType?: string;
+    limit?: number;
+    offset?: number;
+  },
+) {
+  const response = await apiClient.get<
+    ApiResponse<AdminWalletTransactionsResponse>
+  >(`/admin/financial/wallets/${id}/transactions`, { params });
+
+  return response.data.data;
+}
+
+export async function getAdminWalletFundings(
+  id: string,
+  params?: {
+    status?: string;
+    provider?: string;
+    limit?: number;
+    offset?: number;
+  },
+) {
+  const response = await apiClient.get<
+    ApiResponse<AdminWalletFundingsResponse>
+  >(`/admin/financial/wallets/${id}/fundings`, { params });
+
+  return response.data.data;
+}
+
+export async function getAdminWalletFunding(id: string) {
+  const response = await apiClient.get<
+    ApiResponse<AdminWalletFundingDetail>
+  >(`/admin/financial/wallet-fundings/${id}`);
+
+  return response.data.data;
+}
+
+export async function adjustAdminWallet(
+  id: string,
+  input: AdminWalletAdjustmentInput,
+) {
+  const response = await apiClient.post<
+    ApiResponse<AdminWalletAdjustmentResult>
+  >(`/admin/financial/wallets/${id}/adjust`, input);
+
+  return response.data.data;
+}

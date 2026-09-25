@@ -21,6 +21,11 @@ import {
   adminWithdrawalQuerySchema,
   adminWithdrawalIdParamsSchema,
   adminWebhookIdParamsSchema,
+  adminWalletIdParamsSchema,
+  adminWalletQuerySchema,
+  adminWalletTransactionQuerySchema,
+  adminWalletFundingQuerySchema,
+  adminWalletAdjustmentSchema,
 } from "./admin.validators.js";
 
 import {
@@ -31,6 +36,15 @@ import {
   getPaymentWebhookEvents,
   retryPaymentWebhook,
 } from "./financial.service.js";
+
+import {
+  listAdminWallets,
+  getAdminWalletDetail,
+  listAdminWalletTransactions,
+  listAdminWalletFundings,
+  getAdminWalletFundingDetail,
+  adjustAdminWallet,
+} from "./wallet-management.service.js";
 
 import {
   getSettlementById,
@@ -397,6 +411,256 @@ router.patch(
   },
 );
 
+
+
+router.get(
+  "/wallets",
+  requireAdminPermission("WALLETS_VIEW"),
+  validate(adminWalletQuerySchema, "query"),
+  async (req, res) => {
+    try {
+      const result = await listAdminWallets({
+        search: typeof req.query.search === "string" ? req.query.search : undefined,
+        role:
+          req.query.role === "CUSTOMER" || req.query.role === "TRANSPORTER"
+            ? req.query.role
+            : undefined,
+        limit: Number(req.query.limit),
+        offset: Number(req.query.offset),
+      });
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error("[Admin Wallets] LIST FAILED:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Server error",
+      });
+    }
+  },
+);
+
+router.get(
+  "/wallets/:id",
+  requireAdminPermission("WALLETS_VIEW"),
+  validate(adminWalletIdParamsSchema, "params"),
+  async (req, res) => {
+    try {
+      const wallet = await getAdminWalletDetail(String(req.params.id));
+
+      if (!wallet) {
+        return res.status(404).json({
+          success: false,
+          error: "Wallet not found",
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: wallet,
+      });
+    } catch (error) {
+      console.error("[Admin Wallets] DETAIL FAILED:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Server error",
+      });
+    }
+  },
+);
+
+router.get(
+  "/wallets/:id/transactions",
+  requireAdminPermission("WALLETS_VIEW"),
+  validate(adminWalletIdParamsSchema, "params"),
+  validate(adminWalletTransactionQuerySchema, "query"),
+  async (req, res) => {
+    try {
+      const result = await listAdminWalletTransactions(
+        String(req.params.id),
+        {
+          transactionType:
+            typeof req.query.transactionType === "string"
+              ? req.query.transactionType
+              : undefined,
+          limit: Number(req.query.limit),
+          offset: Number(req.query.offset),
+        },
+      );
+
+      if (!result) {
+        return res.status(404).json({
+          success: false,
+          error: "Wallet not found",
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Server error";
+
+      if (message === "Wallet not found") {
+        return res.status(404).json({
+          success: false,
+          error: "Wallet not found",
+        });
+      }
+
+      console.error("[Admin Wallet Transactions] LIST FAILED:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Server error",
+      });
+    }
+  },
+);
+
+router.get(
+  "/wallets/:id/fundings",
+  requireAdminPermission("WALLET_FUNDING_VIEW"),
+  validate(adminWalletIdParamsSchema, "params"),
+  validate(adminWalletFundingQuerySchema, "query"),
+  async (req, res) => {
+    try {
+      const result = await listAdminWalletFundings(
+        String(req.params.id),
+        {
+          status:
+            typeof req.query.status === "string"
+              ? req.query.status
+              : undefined,
+          provider:
+            typeof req.query.provider === "string"
+              ? req.query.provider
+              : undefined,
+          limit: Number(req.query.limit),
+          offset: Number(req.query.offset),
+        },
+      );
+
+      if (!result) {
+        return res.status(404).json({
+          success: false,
+          error: "Wallet not found",
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Server error";
+
+      if (message === "Wallet not found") {
+        return res.status(404).json({
+          success: false,
+          error: "Wallet not found",
+        });
+      }
+
+      console.error("[Admin Wallet Fundings] LIST FAILED:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Server error",
+      });
+    }
+  },
+);
+
+router.get(
+  "/wallet-fundings/:id",
+  requireAdminPermission("WALLET_FUNDING_VIEW"),
+  validate(adminWalletIdParamsSchema, "params"),
+  async (req, res) => {
+    try {
+      const funding = await getAdminWalletFundingDetail(
+        String(req.params.id),
+      );
+
+      if (!funding) {
+        return res.status(404).json({
+          success: false,
+          error: "Wallet funding not found",
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: funding,
+      });
+    } catch (error) {
+      console.error("[Admin Wallet Funding] DETAIL FAILED:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Server error",
+      });
+    }
+  },
+);
+
+router.post(
+  "/wallets/:id/adjust",
+  requireAdminPermission("WALLETS_ADJUST"),
+  validate(adminWalletIdParamsSchema, "params"),
+  validate(adminWalletAdjustmentSchema, "body"),
+  async (req: AuthenticatedRequest, res) => {
+    try {
+      const input = req.body as {
+        direction: "CREDIT" | "DEBIT";
+        amount: number;
+        reason: string;
+        reference: string;
+      };
+
+      const result = await adjustAdminWallet({
+        walletId: String(req.params.id),
+        administratorId: req.user!.id,
+        ...input,
+      });
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Server error";
+
+      if (message === "Wallet not found") {
+        return res.status(404).json({
+          success: false,
+          error: "Wallet not found",
+        });
+      }
+
+      if (message === "Insufficient available balance") {
+        return res.status(409).json({
+          success: false,
+          error: "Insufficient wallet balance",
+        });
+      }
+
+      if (message === "Adjustment reference has already been used with different parameters") {
+        return res.status(409).json({
+          success: false,
+          error: "Wallet transaction reference already exists",
+        });
+      }
+
+      console.error("[Admin Wallet Adjustment] FAILED:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Server error",
+      });
+    }
+  },
+);
 
 router.get("/commission-payments", requireAdminPermission("COMMISSION_PAYMENTS_VIEW"), async (req, res) => {
   try {

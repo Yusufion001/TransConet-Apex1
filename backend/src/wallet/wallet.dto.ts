@@ -66,7 +66,7 @@ export function toWithdrawalDto(withdrawal: {
 
 export function toWalletDto(wallet: {
   id: string;
-  transporterId: string;
+  userId: string;
   availableBalance: DecimalLike | number | string;
   pendingBalance: DecimalLike | number | string;
   createdAt: Date;
@@ -93,7 +93,7 @@ export function toWalletDto(wallet: {
 }) {
   return {
     id: wallet.id,
-    transporterId: wallet.transporterId,
+    userId: wallet.userId,
     availableBalance: money(wallet.availableBalance),
     pendingBalance: money(wallet.pendingBalance),
     createdAt: wallet.createdAt.toISOString(),

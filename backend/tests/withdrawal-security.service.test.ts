@@ -42,6 +42,14 @@ mock.module(new URL("../src/services/email.service.js", import.meta.url).href, {
   },
 });
 
+mock.module(new URL("../src/config/env.js", import.meta.url).href, {
+  namedExports: {
+    env: {
+      TERMII_OTP_TTL_MINUTES: 5,
+    },
+  },
+});
+
 const {
   createWithdrawalSecurityChallenge,
   verifyWithdrawalSecurityChallenge,
