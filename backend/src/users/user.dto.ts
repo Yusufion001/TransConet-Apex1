@@ -32,6 +32,9 @@ export type UserDto = {
   id: string;
   firstName: string;
   lastName: string;
+  nickname: string | null;
+  gender: string | null;
+  dateOfBirth: string | null;
   email: string | null;
   phone: string | null;
   role: string;
@@ -75,6 +78,9 @@ export function toUserDto(user: {
   id: string;
   firstName: string;
   lastName: string;
+  nickname: string | null;
+  gender: string | null;
+  dateOfBirth: Date | null;
   email: string | null;
   phone: string | null;
   role: string;
@@ -91,6 +97,9 @@ export function toUserDto(user: {
     id: user.id,
     firstName: user.firstName,
     lastName: user.lastName,
+    nickname: user.nickname,
+    gender: user.gender,
+    dateOfBirth: user.dateOfBirth?.toISOString() ?? null,
     email: user.email,
     phone: user.phone,
     role: user.role,

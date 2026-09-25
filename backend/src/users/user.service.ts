@@ -6,6 +6,9 @@ const userResponseSelect = {
   id: true,
   firstName: true,
   lastName: true,
+  nickname: true,
+  gender: true,
+  dateOfBirth: true,
   email: true,
   phone: true,
   role: true,
@@ -64,13 +67,11 @@ export async function getUserById(id: string) {
 export async function updateUser(
   id: string,
   data: {
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
+    nickname?: string;
     profilePhoto?: string;
   },
 ) {
-  if (data.firstName !== undefined || data.lastName !== undefined || data.phone !== undefined) {
+  if (data.nickname !== undefined || data.profilePhoto !== undefined) {
     const targetUser = await prisma.user.findUnique({
       where: { id },
       select: {

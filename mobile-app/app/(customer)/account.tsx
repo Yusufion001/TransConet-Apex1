@@ -14,10 +14,11 @@ import {
 import { router } from "expo-router";
 
 import { useAuthStore } from "../../src/auth/auth.store";
+import { startContactChange } from "../../src/api/contact-change";
+import { getDeviceCorrelationId } from "../../src/storage/device-correlation";
 
 export default function CustomerAccount() {
   const user = useAuthStore((state) => state.user);
-  const updateProfile = useAuthStore((state) => state.updateProfile);
   const loading = useAuthStore((state) => state.loading);
 
   const [editing, setEditing] = useState(false);
@@ -60,12 +61,26 @@ export default function CustomerAccount() {
     }
 
     try {
-      await updateProfile({
-        phone: cleanPhone,
+      const currentPhone = user.phone?.trim() ?? "";
+
+      if (cleanPhone === currentPhone) {
+        setEditing(false);
+        return;
+      }
+
+      const deviceCorrelationId = await getDeviceCorrelationId();
+
+      await startContactChange({
+        type: "PHONE",
+        requestedValue: cleanPhone,
+        deviceCorrelationId,
       });
 
       setEditing(false);
-      Alert.alert("Profile updated", "Your account information has been updated.");
+      Alert.alert(
+        "Identity verification required",
+        "Your phone number change has been submitted for identity verification. Your current phone number remains unchanged until the verification process is completed.",
+      );
     } catch (error: any) {
       const message =
         error?.response?.data?.message ||
