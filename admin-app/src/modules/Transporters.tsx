@@ -1,5 +1,6 @@
 import { useState } from "react";
 import TransporterDirectory from "./TransporterDirectory";
+import ContactChangeHistory from "./ContactChangeHistory";
 import {
   activateTransporter,
   blockTransporter,
@@ -13,6 +14,7 @@ import {
 type TransporterPage =
   | "overview"
   | "profile"
+  | "contact-changes"
   | "vehicles"
   | "bookings";
 
@@ -161,6 +163,7 @@ export default function Transporters() {
   }[] = [
     { key: "overview", label: "Overview" },
     { key: "profile", label: "Profile" },
+    { key: "contact-changes", label: "Contact Changes" },
     { key: "vehicles", label: "Vehicles" },
     { key: "bookings", label: "Bookings" },
   ];
@@ -432,6 +435,27 @@ export default function Transporters() {
                   </div>
 
                   <div>
+                    <span>Nickname</span>
+                    <strong>
+                      {transporter.nickname || "—"}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Gender</span>
+                    <strong>
+                      {transporter.gender || "—"}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Date of Birth</span>
+                    <strong>
+                      {formatDate(transporter.dateOfBirth)}
+                    </strong>
+                  </div>
+
+                  <div>
                     <span>Account Status</span>
                     <strong>
                       {transporter.status}
@@ -466,6 +490,12 @@ export default function Transporters() {
                 </div>
               </div>
             </div>
+          )}
+
+          {page === "contact-changes" && (
+            <ContactChangeHistory
+              changes={transporter.contactChanges ?? []}
+            />
           )}
 
           {page === "profile" && (
@@ -527,6 +557,27 @@ export default function Transporters() {
                     <strong>
                       {profile?.verificationStatus ||
                         "—"}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Nickname</span>
+                    <strong>
+                      {transporter.nickname || "—"}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Gender</span>
+                    <strong>
+                      {transporter.gender || "—"}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Date of Birth</span>
+                    <strong>
+                      {formatDate(transporter.dateOfBirth)}
                     </strong>
                   </div>
 
