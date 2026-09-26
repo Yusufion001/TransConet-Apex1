@@ -374,6 +374,10 @@ test("registerUser creates a customer profile and requires email verification", 
     undefined,
   );
 
+    assert.deepEqual(createCall.data.wallet, {
+      create: {},
+    });
+
   assert.equal(
     prismaMock.refreshSession.create.mock.calls.length,
     0,
@@ -424,7 +428,11 @@ test("registerUser creates a transporter profile and requires email verification
   const createCall =
     prismaMock.user.create.mock.calls[0]?.arguments[0];
 
-  assert.deepEqual(
+      assert.deepEqual(createCall.data.wallet, {
+      create: {},
+    });
+
+assert.deepEqual(
     createCall.data.transporterProfile,
     {
       create: {},

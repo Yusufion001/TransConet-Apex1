@@ -262,6 +262,13 @@ export async function registerUser(input: {
               },
             }
           : {}),
+      ...(input.role === "CUSTOMER" || input.role === "TRANSPORTER"
+        ? {
+            wallet: {
+              create: {},
+            },
+          }
+        : {}),
       },
       include: {
         customerProfile: true,
