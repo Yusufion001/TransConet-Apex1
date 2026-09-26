@@ -561,6 +561,24 @@ export async function getAdminWallets(params?: {
   return response.data.data;
 }
 
+export type AdminWalletRuntimeDiagnostic = {
+  node: string;
+  platform: string;
+  arch: string;
+  countWithoutTake?: number;
+  countWithTake?: number;
+  countWithoutTakeError?: string;
+  countWithTakeError?: string;
+};
+
+export async function getAdminWalletRuntimeDiagnostic() {
+  const response = await apiClient.get<
+    ApiResponse<AdminWalletRuntimeDiagnostic>
+  >("/admin/financial/wallets/runtime-diagnostic");
+
+  return response.data.data;
+}
+
 export async function getAdminWallet(id: string) {
   const response = await apiClient.get<ApiResponse<AdminWalletDetail>>(
     `/admin/financial/wallets/${id}`,
