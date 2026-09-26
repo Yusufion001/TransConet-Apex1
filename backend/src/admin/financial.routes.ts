@@ -58,6 +58,20 @@ import {
 
 const router = Router();
 
+function adminFinancialError(error: unknown, context: string) {
+  const message =
+    error instanceof Error
+      ? error.message
+      : "Unknown server error";
+
+  console.error(`[ADMIN FINANCIAL] ${context}:`, error);
+
+  return {
+    success: false,
+    error: message,
+  };
+}
+
 router.use(authenticate);
 router.use(requireAdmin);
 router.use(requireAdminModule("FINANCIAL_OPERATIONS"));
@@ -73,10 +87,9 @@ router.get("/overview", requireAdminPermission("FINANCIAL_VIEW"), async (_req, r
   } catch (error) {
     console.error("[Admin Financial Payments] FAILED:", error);
 
-    res.status(500).json({
-      success: false,
-      error: "Server error",
-    });
+    res.status(500).json(
+      adminFinancialError(error, "Financial operation failed"),
+    );
   }
 });
 
@@ -107,10 +120,9 @@ router.get(
       data: payments,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: "Server error",
-    });
+    res.status(500).json(
+      adminFinancialError(error, "Financial operation failed"),
+    );
   }
 });
 
@@ -127,10 +139,9 @@ router.get(
       data: events,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: "Server error",
-    });
+    res.status(500).json(
+      adminFinancialError(error, "Financial operation failed"),
+    );
   }
 });
 
@@ -147,10 +158,9 @@ router.get(
       data: settlements.map(toSettlementDto),
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: "Server error",
-    });
+    res.status(500).json(
+      adminFinancialError(error, "Financial operation failed"),
+    );
   }
 });
 
@@ -176,10 +186,9 @@ router.get(
       data: toSettlementDto(settlement),
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: "Server error",
-    });
+    return res.status(500).json(
+      adminFinancialError(error, "Financial operation failed"),
+    );
   }
 });
 
@@ -198,10 +207,9 @@ router.post(
         data: toSettlementDto(settlement),
       });
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: "Server error",
-      });
+      res.status(500).json(
+        adminFinancialError(error, "Financial operation failed"),
+      );
     }
   },
 );
@@ -229,10 +237,9 @@ router.post(
         });
       }
 
-      res.status(500).json({
-        success: false,
-        error: "Server error",
-      });
+      res.status(500).json(
+        adminFinancialError(error, "Financial operation failed"),
+      );
     }
   },
 );
@@ -262,10 +269,9 @@ router.post(
         });
       }
 
-      return res.status(500).json({
-        success: false,
-        error: "Server error",
-      });
+      return res.status(500).json(
+        adminFinancialError(error, "Financial operation failed"),
+      );
     }
   },
 );
@@ -286,10 +292,9 @@ router.post(
         data: toSettlementDto(settlement),
       });
     } catch (error) {
-      return res.status(500).json({
-        success: false,
-        error: "Server error",
-      });
+      return res.status(500).json(
+        adminFinancialError(error, "Financial operation failed"),
+      );
     }
   },
 );
@@ -311,10 +316,9 @@ router.post(
         data: toSettlementDto(settlement),
       });
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: "Server error",
-      });
+      res.status(500).json(
+        adminFinancialError(error, "Financial operation failed"),
+      );
     }
   },
 );
@@ -332,10 +336,9 @@ router.get(
       data: withdrawals,
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: "Server error",
-    });
+    res.status(500).json(
+      adminFinancialError(error, "Financial operation failed"),
+    );
   }
 });
 
@@ -360,19 +363,18 @@ router.post(
       const message =
         error instanceof Error
           ? error.message
-          : "Server error";
+          : "Unknown server error";
 
       if (message === "Payment webhook event not found") {
         return res.status(404).json({
           success: false,
-          error: "Server error",
+          error: message,
         });
       }
 
-      return res.status(500).json({
-        success: false,
-        error: "Server error",
-      });
+      return res.status(500).json(
+        adminFinancialError(error, "Financial operation failed"),
+      );
     }
   },
 );
@@ -403,9 +405,19 @@ router.patch(
         data: withdrawal,
       });
     } catch (error) {
-      res.status(500).json({
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unknown server error";
+
+      console.error(
+        "[ADMIN FINANCIAL] Withdrawal status update failed:",
+        error,
+      );
+
+      return res.status(500).json({
         success: false,
-        error: "Server error",
+        error: message,
       });
     }
   },
@@ -435,10 +447,9 @@ router.get(
       });
     } catch (error) {
       console.error("[Admin Wallets] LIST FAILED:", error);
-      return res.status(500).json({
-        success: false,
-        error: "Server error",
-      });
+      return res.status(500).json(
+        adminFinancialError(error, "Financial operation failed"),
+      );
     }
   },
 );
@@ -464,10 +475,9 @@ router.get(
       });
     } catch (error) {
       console.error("[Admin Wallets] DETAIL FAILED:", error);
-      return res.status(500).json({
-        success: false,
-        error: "Server error",
-      });
+      return res.status(500).json(
+        adminFinancialError(error, "Financial operation failed"),
+      );
     }
   },
 );
@@ -503,7 +513,7 @@ router.get(
         data: result,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Server error";
+      const message = error instanceof Error ? error.message : "Unknown server error";
 
       if (message === "Wallet not found") {
         return res.status(404).json({
@@ -513,10 +523,9 @@ router.get(
       }
 
       console.error("[Admin Wallet Transactions] LIST FAILED:", error);
-      return res.status(500).json({
-        success: false,
-        error: "Server error",
-      });
+      return res.status(500).json(
+        adminFinancialError(error, "Financial operation failed"),
+      );
     }
   },
 );
@@ -556,7 +565,7 @@ router.get(
         data: result,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Server error";
+      const message = error instanceof Error ? error.message : "Unknown server error";
 
       if (message === "Wallet not found") {
         return res.status(404).json({
@@ -566,10 +575,9 @@ router.get(
       }
 
       console.error("[Admin Wallet Fundings] LIST FAILED:", error);
-      return res.status(500).json({
-        success: false,
-        error: "Server error",
-      });
+      return res.status(500).json(
+        adminFinancialError(error, "Financial operation failed"),
+      );
     }
   },
 );
@@ -597,10 +605,9 @@ router.get(
       });
     } catch (error) {
       console.error("[Admin Wallet Funding] DETAIL FAILED:", error);
-      return res.status(500).json({
-        success: false,
-        error: "Server error",
-      });
+      return res.status(500).json(
+        adminFinancialError(error, "Financial operation failed"),
+      );
     }
   },
 );
@@ -630,7 +637,7 @@ router.post(
         data: result,
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Server error";
+      const message = error instanceof Error ? error.message : "Unknown server error";
 
       if (message === "Wallet not found") {
         return res.status(404).json({
@@ -654,10 +661,9 @@ router.post(
       }
 
       console.error("[Admin Wallet Adjustment] FAILED:", error);
-      return res.status(500).json({
-        success: false,
-        error: "Server error",
-      });
+      return res.status(500).json(
+        adminFinancialError(error, "Financial operation failed"),
+      );
     }
   },
 );
@@ -680,10 +686,9 @@ router.get("/commission-payments", requireAdminPermission("COMMISSION_PAYMENTS_V
       data: payments,
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: "Server error",
-    });
+    return res.status(500).json(
+      adminFinancialError(error, "Financial operation failed"),
+    );
   }
 });
 
@@ -707,10 +712,9 @@ router.get("/commission-payments/:id", requireAdminPermission("COMMISSION_PAYMEN
       data: payment,
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: "Server error",
-    });
+    return res.status(500).json(
+      adminFinancialError(error, "Financial operation failed"),
+    );
   }
 });
 
