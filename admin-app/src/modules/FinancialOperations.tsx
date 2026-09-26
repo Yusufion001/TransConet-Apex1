@@ -19,6 +19,7 @@ import {
   verifyFlutterwaveCommissionPayment,
   updateWithdrawalStatus,
   getAdminWallets,
+  getAdminWalletRuntimeDiagnostic,
   getAdminWallet,
   getAdminWalletTransactions,
   getAdminWalletFundings,
@@ -240,6 +241,18 @@ export default function FinancialOperations() {
   }, [loadFinancialData]);
 
   const loadWallets = useCallback(async () => {
+    let runtimeDiagnostic = "";
+
+    try {
+      const diagnostic = await getAdminWalletRuntimeDiagnostic();
+      runtimeDiagnostic = JSON.stringify(diagnostic);
+    } catch (diagnosticError) {
+      runtimeDiagnostic =
+        diagnosticError instanceof Error
+          ? diagnosticError.message
+          : String(diagnosticError);
+    }
+
     try {
       setWalletLoading(true);
       setWalletError("");
@@ -249,8 +262,13 @@ export default function FinancialOperations() {
       });
       setWallets(data?.wallets ?? []);
     } catch (err) {
+      const walletError = getRequestError(
+        err,
+        "Unable to load wallets.",
+      );
+
       setWalletError(
-        getRequestError(err, "Unable to load wallets."),
+        `${walletError} | Runtime diagnostic: ${runtimeDiagnostic}`,
       );
     } finally {
       setWalletLoading(false);
