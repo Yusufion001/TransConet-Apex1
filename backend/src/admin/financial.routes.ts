@@ -440,8 +440,8 @@ router.get(
           req.query.role === "CUSTOMER" || req.query.role === "TRANSPORTER"
             ? req.query.role
             : undefined,
-        limit: Number(req.query.limit),
-        offset: Number(req.query.offset),
+        limit: Number(req.query.limit ?? 50),
+        offset: Number(req.query.offset ?? 0),
       });
 
       return res.json({
@@ -499,8 +499,8 @@ router.get(
             typeof req.query.transactionType === "string"
               ? req.query.transactionType
               : undefined,
-          limit: Number(req.query.limit),
-          offset: Number(req.query.offset),
+          limit: Number(req.query.limit ?? 50),
+          offset: Number(req.query.offset ?? 0),
         },
       );
 
@@ -551,8 +551,8 @@ router.get(
             typeof req.query.provider === "string"
               ? req.query.provider
               : undefined,
-          limit: Number(req.query.limit),
-          offset: Number(req.query.offset),
+          limit: Number(req.query.limit ?? 50),
+          offset: Number(req.query.offset ?? 0),
         },
       );
 
@@ -599,8 +599,8 @@ router.get(
             typeof req.query.status === "string"
               ? req.query.status
               : undefined,
-          limit: Number(req.query.limit),
-          offset: Number(req.query.offset),
+          limit: Number(req.query.limit ?? 50),
+          offset: Number(req.query.offset ?? 0),
         },
       );
 
