@@ -22,10 +22,12 @@ import {
   getAdminWallet,
   getAdminWalletTransactions,
   getAdminWalletFundings,
+  getAdminWalletWithdrawals,
   getAdminWalletFunding,
   adjustAdminWallet,
   type AdminWallet,
   type AdminWalletTransaction,
+  type AdminWalletWithdrawal,
   type AdminWalletFunding,
   type AdminWalletFundingDetail,
   type FinancialOverview,
@@ -134,6 +136,8 @@ export default function FinancialOperations() {
     useState<AdminWalletTransaction[]>([]);
   const [walletFundings, setWalletFundings] =
     useState<AdminWalletFunding[]>([]);
+  const [walletWithdrawals, setWalletWithdrawals] =
+    useState<AdminWalletWithdrawal[]>([]);
   const [selectedFunding, setSelectedFunding] =
     useState<AdminWalletFundingDetail | null>(null);
   const [walletLoading, setWalletLoading] = useState(false);
@@ -237,15 +241,17 @@ export default function FinancialOperations() {
       setWalletLoading(true);
       setWalletError("");
 
-      const [wallet, transactions, fundings] = await Promise.all([
+      const [wallet, transactions, fundings, withdrawals] = await Promise.all([
         getAdminWallet(walletId),
         getAdminWalletTransactions(walletId),
         getAdminWalletFundings(walletId),
+        getAdminWalletWithdrawals(walletId),
       ]);
 
       setSelectedWallet(wallet);
       setWalletTransactions(transactions?.transactions ?? []);
       setWalletFundings(fundings?.fundings ?? []);
+      setWalletWithdrawals(withdrawals?.withdrawals ?? []);
       setSelectedFunding(null);
     } catch (err) {
       setWalletError(
@@ -545,6 +551,7 @@ export default function FinancialOperations() {
           selectedWallet={selectedWallet}
           transactions={walletTransactions}
           fundings={walletFundings}
+          withdrawals={walletWithdrawals}
           selectedFunding={selectedFunding}
           loading={walletLoading}
           error={walletError}
@@ -612,6 +619,7 @@ function WalletsPanel({
   selectedWallet,
   transactions,
   fundings,
+  withdrawals,
   selectedFunding,
   loading,
   error,
@@ -629,6 +637,7 @@ function WalletsPanel({
   selectedWallet: AdminWallet | null;
   transactions: AdminWalletTransaction[];
   fundings: AdminWalletFunding[];
+  withdrawals: AdminWalletWithdrawal[];
   selectedFunding: AdminWalletFundingDetail | null;
   loading: boolean;
   error: string;
@@ -1028,6 +1037,63 @@ function WalletsPanel({
             </div>
           )}
         </div>
+      </div>
+
+      <div className="panel">
+        <div className="panel-header">
+          <div>
+            <h2>Withdrawals</h2>
+            <p>
+              Wallet-scoped withdrawal records and processing status.
+            </p>
+          </div>
+        </div>
+
+        {!withdrawals.length ? (
+          <EmptyState
+            title="No withdrawal records."
+            description="No wallet withdrawal attempts were returned."
+          />
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th>Bank</th>
+                  <th>Account</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {withdrawals.map((withdrawal) => (
+                  <tr key={withdrawal.id}>
+                    <td>{formatDate(withdrawal.createdAt)}</td>
+                    <td>
+                      <strong>
+                        {formatAmount(withdrawal.amount, "NGN")}
+                      </strong>
+                    </td>
+                    <td>{withdrawal.bankName}</td>
+                    <td>
+                      {withdrawal.accountName} · {withdrawal.accountNumber}
+                    </td>
+                    <td>
+                      <span
+                        className={`status-pill ${statusClass(
+                          withdrawal.status,
+                        )}`}
+                      >
+                        {withdrawal.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {selectedFunding && (

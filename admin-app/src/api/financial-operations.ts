@@ -495,6 +495,25 @@ export type AdminWalletFundingsResponse = {
   fundings: AdminWalletFunding[];
 };
 
+export type AdminWalletWithdrawal = {
+  id: string;
+  walletId: string;
+  amount: string;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  status: string;
+  createdAt: string;
+  withdrawalAccountId?: string | null;
+};
+
+export type AdminWalletWithdrawalsResponse = {
+  total: number;
+  limit: number;
+  offset: number;
+  withdrawals: AdminWalletWithdrawal[];
+};
+
 export type AdminWalletFundingDetail = AdminWalletFunding & {
   user: AdminWalletUser;
   webhookEvents: {
@@ -578,6 +597,20 @@ export async function getAdminWalletFundings(
     ApiResponse<AdminWalletFundingsResponse>
   >(`/admin/financial/wallets/${id}/fundings`, { params });
 
+  return response.data.data;
+}
+
+export async function getAdminWalletWithdrawals(
+  id: string,
+  params?: {
+    status?: string;
+    limit?: number;
+    offset?: number;
+  },
+) {
+  const response = await apiClient.get<
+    ApiResponse<AdminWalletWithdrawalsResponse>
+  >(`/admin/financial/wallets/${id}/withdrawals`, { params });
   return response.data.data;
 }
 

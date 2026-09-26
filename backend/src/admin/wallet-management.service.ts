@@ -246,6 +246,58 @@ export async function listAdminWalletFundings(
   };
 }
 
+export async function listAdminWalletWithdrawals(
+  walletId: string,
+  options: {
+    status?: string;
+    limit: number;
+    offset: number;
+  },
+) {
+  const wallet = await prisma.wallet.findUnique({
+    where: { id: walletId },
+    select: { id: true },
+  });
+
+  if (!wallet) return null;
+
+  const where = {
+    walletId,
+    ...(options.status ? { status: options.status } : {}),
+  };
+
+  const [total, withdrawals] = await prisma.$transaction([
+    prisma.withdrawal.count({ where }),
+    prisma.withdrawal.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: options.offset,
+      take: options.limit,
+      select: {
+        id: true,
+        walletId: true,
+        amount: true,
+        bankName: true,
+        accountNumber: true,
+        accountName: true,
+        status: true,
+        createdAt: true,
+        withdrawalAccountId: true,
+      },
+    }),
+  ]);
+
+  return {
+    total,
+    limit: options.limit,
+    offset: options.offset,
+    withdrawals: withdrawals.map((withdrawal) => ({
+      ...withdrawal,
+      amount: decimalString(withdrawal.amount),
+    })),
+  };
+}
+
 export async function getAdminWalletFundingDetail(fundingId: string) {
   const funding = await prisma.walletFunding.findUnique({
     where: { id: fundingId },
