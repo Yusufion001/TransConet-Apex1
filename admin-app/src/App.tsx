@@ -5,6 +5,7 @@ import Customers from "./modules/Customers";
 import Transporters from "./modules/Transporters";
 import RolePermissions from "./modules/RolePermissions";
 import FinancialOperations from "./modules/FinancialOperations";
+import WalletManagement from "./modules/WalletManagement";
 import MarketingCenter from "./modules/MarketingCenter";
 import BookingsShipments from "./modules/BookingsShipments";
 import Marketplace from "./modules/Marketplace";
@@ -438,8 +439,10 @@ function App() {
           <Administrators />
         ) : active === "Roles & Permissions" ? (
           <RolePermissions />
-        ) : active === "Payments" || active === "Wallets" ? (
+        ) : active === "Payments" ? (
           <FinancialOperations />
+        ) : active === "Wallets" ? (
+          <WalletManagement />
         ) : active === "Subscriptions" ? (
           <Subscriptions />
         ) : active === "Verification" ? (
