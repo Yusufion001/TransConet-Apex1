@@ -37,6 +37,17 @@ export const adminWalletFundingQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).max(100000).default(0),
 });
 
+export const adminWalletWithdrawalQuerySchema = z.object({
+  status: z.enum([
+    "PENDING",
+    "PROCESSING",
+    "COMPLETED",
+    "FAILED",
+  ]).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  offset: z.coerce.number().int().min(0).max(100000).default(0),
+});
+
 export const adminWalletAdjustmentSchema = z.object({
   direction: z.enum(["CREDIT", "DEBIT"]),
   amount: z.coerce.number().finite().positive().max(1_000_000_000),

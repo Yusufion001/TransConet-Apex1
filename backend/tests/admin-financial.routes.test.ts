@@ -64,6 +64,7 @@ mock.module(new URL("../src/admin/wallet-management.service.js", import.meta.url
     getAdminWalletDetail: mock.fn(),
     listAdminWalletTransactions: mock.fn(),
     listAdminWalletFundings: mock.fn(),
+    listAdminWalletWithdrawals: mock.fn(),
     getAdminWalletFundingDetail: mock.fn(),
     adjustAdminWallet: mock.fn(),
   },

@@ -20,6 +20,10 @@ const prismaMock = {
     findMany: mock.fn<(...args: any[]) => any>(),
     findUnique: mock.fn<(...args: any[]) => any>(),
   },
+  withdrawal: {
+    count: mock.fn<(...args: any[]) => any>(),
+    findMany: mock.fn<(...args: any[]) => any>(),
+  },
   auditLog: {
     create: mock.fn<(...args: any[]) => any>(),
   },
@@ -46,6 +50,7 @@ const {
   getAdminWalletDetail,
   listAdminWalletTransactions,
   listAdminWalletFundings,
+  listAdminWalletWithdrawals,
   getAdminWalletFundingDetail,
   adjustAdminWallet,
 } = await import("../src/admin/wallet-management.service.js");
@@ -63,6 +68,8 @@ function resetMocks() {
     prismaMock.walletFunding.count,
     prismaMock.walletFunding.findMany,
     prismaMock.walletFunding.findUnique,
+    prismaMock.withdrawal.count,
+    prismaMock.withdrawal.findMany,
     prismaMock.auditLog.create,
     prismaMock.$transaction,
     prismaMock.$queryRaw,
@@ -251,6 +258,68 @@ test("listAdminWalletFundings rejects a missing wallet", async () => {
     offset: 0,
   });
   assert.equal(result, null);
+});
+
+test("listAdminWalletWithdrawals returns wallet withdrawal history with filters and pagination", async () => {
+  prismaMock.wallet.findUnique.mock.mockImplementation(
+    async () => ({ id: "wallet-1" }),
+  );
+  prismaMock.withdrawal.count.mock.mockImplementation(async () => 1);
+  prismaMock.withdrawal.findMany.mock.mockImplementation(async () => [
+    {
+      id: "withdrawal-1",
+      walletId: "wallet-1",
+      amount: new Prisma.Decimal("2500.00"),
+      bankName: "Test Bank",
+      accountNumber: "0123456789",
+      accountName: "Test User",
+      status: "PROCESSING",
+      createdAt: new Date("2026-09-25T13:00:00.000Z"),
+      withdrawalAccountId: "withdrawal-account-1",
+    },
+  ]);
+
+  const result = await listAdminWalletWithdrawals("wallet-1", {
+    status: "PROCESSING",
+    limit: 25,
+    offset: 10,
+  });
+
+  assert.equal(result?.total, 1);
+  assert.equal(result?.limit, 25);
+  assert.equal(result?.offset, 10);
+  assert.equal(result?.withdrawals[0]?.id, "withdrawal-1");
+  assert.equal(result?.withdrawals[0]?.amount, "2500.00");
+  assert.equal(result?.withdrawals[0]?.bankName, "Test Bank");
+  assert.equal(result?.withdrawals[0]?.status, "PROCESSING");
+
+  const countCall = prismaMock.withdrawal.count.mock.calls[0]?.arguments[0];
+  const findManyCall =
+    prismaMock.withdrawal.findMany.mock.calls[0]?.arguments[0];
+
+  assert.deepEqual(countCall.where, {
+    walletId: "wallet-1",
+    status: "PROCESSING",
+  });
+  assert.deepEqual(findManyCall.where, {
+    walletId: "wallet-1",
+    status: "PROCESSING",
+  });
+  assert.equal(findManyCall.skip, 10);
+  assert.equal(findManyCall.take, 25);
+});
+
+test("listAdminWalletWithdrawals rejects a missing wallet", async () => {
+  prismaMock.wallet.findUnique.mock.mockImplementation(async () => null);
+
+  const result = await listAdminWalletWithdrawals("missing-wallet", {
+    limit: 50,
+    offset: 0,
+  });
+
+  assert.equal(result, null);
+  assert.equal(prismaMock.withdrawal.count.mock.calls.length, 0);
+  assert.equal(prismaMock.withdrawal.findMany.mock.calls.length, 0);
 });
 
 test("getAdminWalletFundingDetail returns provider trace without webhook payloads", async () => {

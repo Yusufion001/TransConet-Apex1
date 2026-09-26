@@ -25,6 +25,7 @@ import {
   adminWalletQuerySchema,
   adminWalletTransactionQuerySchema,
   adminWalletFundingQuerySchema,
+  adminWalletWithdrawalQuerySchema,
   adminWalletAdjustmentSchema,
 } from "./admin.validators.js";
 
@@ -42,6 +43,7 @@ import {
   getAdminWalletDetail,
   listAdminWalletTransactions,
   listAdminWalletFundings,
+  listAdminWalletWithdrawals,
   getAdminWalletFundingDetail,
   adjustAdminWallet,
 } from "./wallet-management.service.js";
@@ -575,6 +577,45 @@ router.get(
       }
 
       console.error("[Admin Wallet Fundings] LIST FAILED:", error);
+      return res.status(500).json(
+        adminFinancialError(error, "Financial operation failed"),
+      );
+    }
+  },
+);
+
+router.get(
+  "/wallets/:id/withdrawals",
+  requireAdminPermission("WALLETS_VIEW"),
+  validate(adminWalletIdParamsSchema, "params"),
+  validate(adminWalletWithdrawalQuerySchema, "query"),
+  async (req, res) => {
+    try {
+      const result = await listAdminWalletWithdrawals(
+        String(req.params.id),
+        {
+          status:
+            typeof req.query.status === "string"
+              ? req.query.status
+              : undefined,
+          limit: Number(req.query.limit),
+          offset: Number(req.query.offset),
+        },
+      );
+
+      if (!result) {
+        return res.status(404).json({
+          success: false,
+          error: "Wallet not found",
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      console.error("[Admin Wallet Withdrawals] LIST FAILED:", error);
       return res.status(500).json(
         adminFinancialError(error, "Financial operation failed"),
       );
