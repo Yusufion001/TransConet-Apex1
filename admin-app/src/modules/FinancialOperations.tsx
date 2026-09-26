@@ -84,6 +84,27 @@ function statusClass(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }
 
+function getRequestError(error: unknown, fallback: string) {
+  if (axios.isAxiosError(error)) {
+    const responseError = error.response?.data?.error;
+    const requestId =
+      typeof error.response?.data?.requestId === "string"
+        ? error.response.data.requestId
+        : error.response?.headers?.["x-request-id"];
+
+    const message =
+      typeof responseError === "string"
+        ? responseError
+        : error.message;
+
+    return requestId
+      ? `${message} (Request ID: ${requestId})`
+      : message;
+  }
+
+  return error instanceof Error ? error.message : fallback;
+}
+
 function Stat({
   label,
   value,
@@ -229,7 +250,7 @@ export default function FinancialOperations() {
       setWallets(data?.wallets ?? []);
     } catch (err) {
       setWalletError(
-        err instanceof Error ? err.message : "Unable to load wallets.",
+        getRequestError(err, "Unable to load wallets."),
       );
     } finally {
       setWalletLoading(false);
@@ -255,9 +276,7 @@ export default function FinancialOperations() {
       setSelectedFunding(null);
     } catch (err) {
       setWalletError(
-        err instanceof Error
-          ? err.message
-          : "Unable to load wallet details.",
+        getRequestError(err, "Unable to load wallet details."),
       );
     } finally {
       setWalletLoading(false);
@@ -270,9 +289,7 @@ export default function FinancialOperations() {
       setSelectedFunding(await getAdminWalletFunding(fundingId));
     } catch (err) {
       setWalletError(
-        err instanceof Error
-          ? err.message
-          : "Unable to load funding details.",
+        getRequestError(err, "Unable to load funding details."),
       );
     }
   };
