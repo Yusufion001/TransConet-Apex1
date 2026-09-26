@@ -33,7 +33,7 @@ export async function listAdminWallets(options: {
       : {}),
   };
 
-  const [total, wallets] = await prisma.$transaction([
+  const [total, wallets] = await Promise.all([
     prisma.wallet.count({ where }),
     prisma.wallet.findMany({
       where,
@@ -150,7 +150,7 @@ export async function listAdminWalletTransactions(
       : {}),
   };
 
-  const [total, transactions] = await prisma.$transaction([
+  const [total, transactions] = await Promise.all([
     prisma.walletTransaction.count({ where }),
     prisma.walletTransaction.findMany({
       where,
@@ -204,7 +204,7 @@ export async function listAdminWalletFundings(
     ...(options.provider ? { provider: options.provider } : {}),
   };
 
-  const [total, fundings] = await prisma.$transaction([
+  const [total, fundings] = await Promise.all([
     prisma.walletFunding.count({ where }),
     prisma.walletFunding.findMany({
       where,
@@ -266,7 +266,7 @@ export async function listAdminWalletWithdrawals(
     ...(options.status ? { status: options.status } : {}),
   };
 
-  const [total, withdrawals] = await prisma.$transaction([
+  const [total, withdrawals] = await Promise.all([
     prisma.withdrawal.count({ where }),
     prisma.withdrawal.findMany({
       where,

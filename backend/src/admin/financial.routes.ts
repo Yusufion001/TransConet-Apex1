@@ -458,50 +458,6 @@ router.get(
 );
 
 router.get(
-  "/wallets/runtime-diagnostic",
-  requireAdminPermission("WALLETS_VIEW"),
-  async (_req, res) => {
-    const diagnostics: {
-      node: string;
-      platform: string;
-      arch: string;
-      countWithoutTake?: number;
-      countWithTake?: number;
-      countWithoutTakeError?: string;
-      countWithTakeError?: string;
-    } = {
-      node: process.version,
-      platform: process.platform,
-      arch: process.arch,
-    };
-
-    try {
-      diagnostics.countWithoutTake =
-        await prisma.wallet.count({ where: {} });
-    } catch (error) {
-      diagnostics.countWithoutTakeError =
-        error instanceof Error ? error.message : String(error);
-    }
-
-    try {
-      diagnostics.countWithTake =
-        await prisma.wallet.count({
-          where: {},
-          take: 1,
-        });
-    } catch (error) {
-      diagnostics.countWithTakeError =
-        error instanceof Error ? error.message : String(error);
-    }
-
-    return res.json({
-      success: true,
-      data: diagnostics,
-    });
-  },
-);
-
-router.get(
   "/wallets/:id",
   requireAdminPermission("WALLETS_VIEW"),
   validate(adminWalletIdParamsSchema, "params"),
