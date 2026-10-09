@@ -389,6 +389,103 @@ test("excludes a load when the available compatible vehicle falls outside the re
   assert.equal(result.length, 0);
 });
 
+test("excludes a load when the eligible vehicle GPS timestamp is in the future", async () => {
+  const now = new Date();
+  const staleLocation = new Date(now.getTime() + 60_000);
+
+  getMarketplaceVisibilityConfigMock.mock.mockImplementation(
+    async () => ({
+      geographicScope: "RADIUS",
+      defaultRadiusKm: 30,
+      maxRadiusKm: 50,
+      locationFreshnessSeconds: 60,
+      subscriptionBoosts: {
+        FREE: 5,
+        SILVER: 4,
+        GOLD: 3,
+        PLATINUM: 2,
+        ENTERPRISE: 1,
+      },
+      tierScores: {
+        TIER_1: 1,
+        TIER_2: 2,
+      },
+      requireApprovedTransporter: true,
+      requireApprovedVehicle: true,
+      requireAvailableVehicle: true,
+      requireVehicleLocation: true,
+    }),
+  );
+
+  prismaMock.user.findUnique.mock.mockImplementation(async () => ({
+    id: "transporter-1",
+    role: "TRANSPORTER",
+    status: "ACTIVE",
+    transporterTier: "TIER_1",
+    transporterProfile: {
+      verificationStatus: "APPROVED",
+      rating: 5,
+      totalTrips: 10,
+    },
+    vehicles: [
+      {
+        id: "vehicle-1",
+        vehicleClass: "MEDIUM_TRUCK",
+        vehicleType: "MEDIUM_TRUCK",
+        year: 2024,
+        currentLatitude: 6.5244,
+        currentLongitude: 3.3792,
+        marketplaceLocationUpdatedAt: staleLocation,
+      },
+    ],
+    subscriptions: [
+      {
+        plan: {
+          name: "FREE",
+        },
+      },
+    ],
+  }));
+
+  prismaMock.marketplaceRequest.findMany.mock.mockImplementation(
+    async () => [
+      {
+        id: "load-5",
+        customerId: "customer-1",
+        bookingId: null,
+        cargoDescription: "General cargo",
+        truckCategory: "MEDIUM_TRUCK",
+        preferredVehicleYearMin: null,
+        preferredVehicleYearMax: null,
+        cargoCategory: "GENERAL",
+        cargoWeight: 2000,
+        pickupLocation: "Lagos",
+        destination: "Abuja",
+        pickupLatitude: 6.5244,
+        pickupLongitude: 3.3792,
+        destinationLatitude: 9.0765,
+        destinationLongitude: 7.3986,
+        scheduledDate: null,
+        estimatedFare: 150000,
+        status: "OPEN",
+        agreedBidId: null,
+        createdAt: now,
+        updatedAt: now,
+        closedAt: null,
+        customer: {
+          id: "customer-1",
+          firstName: "Test",
+          lastName: "Customer",
+        },
+      },
+    ],
+  );
+
+  const result = await getVisibleMarketplaceLoads("transporter-1");
+
+  assert.equal(result.length, 0);
+});
+
 test("excludes a load when the eligible vehicle location is older than the admin-configured freshness window", async () => {
   const now = new Date();
   const staleLocation = new Date(now.getTime() - 61_000);
