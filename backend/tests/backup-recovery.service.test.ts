@@ -62,15 +62,15 @@ const {
   createBackupSnapshotRecord,
 } = await import("../src/admin/backup-recovery.service.js");
 
-test("getBackupRecoveryStatus reports protected records and Supabase recovery strategy", async () => {
+test("getBackupRecoveryStatus reports database counts without claiming verified recovery", async () => {
   const result = await getBackupRecoveryStatus();
 
-  assert.equal(result.status, "READY");
+  assert.equal(result.status, "UNVERIFIED");
   assert.equal(result.database, "POSTGRESQL");
-  assert.equal(result.provider, "SUPABASE");
-  assert.equal(result.backupStrategy, "SUPABASE_MANAGED");
-  assert.equal(result.recoveryMode, "POINT_IN_TIME_RECOVERY");
-  assert.equal(result.physicalBackupManagedExternally, true);
+  assert.equal(result.provider, "UNVERIFIED");
+  assert.equal(result.backupStrategy, "UNVERIFIED");
+  assert.equal(result.recoveryMode, "UNVERIFIED");
+  assert.equal(result.physicalBackupManagedExternally, null);
   assert.deepEqual(result.protectedRecords, {
     users: 10,
     bookings: 20,

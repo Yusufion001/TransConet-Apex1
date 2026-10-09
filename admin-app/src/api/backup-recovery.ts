@@ -6,7 +6,7 @@ export interface BackupRecoveryStatus {
   provider: string;
   backupStrategy: string;
   recoveryMode: string;
-  physicalBackupManagedExternally: boolean;
+  physicalBackupManagedExternally: boolean | null;
   applicationSnapshotMode: string;
   responseTimeMs: number;
   protectedRecords: {
