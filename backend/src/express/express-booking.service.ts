@@ -81,6 +81,9 @@ export async function createExpressBooking(
       booking: existingPayment.booking,
       expressBooking: existingPayment.booking.expressBooking,
       payment: existingPayment,
+      checkoutUrl: existingPayment.checkoutUrl,
+      accessCode: null,
+      reference: existingPayment.transactionReference,
     };
   }
 
@@ -122,6 +125,9 @@ export async function createExpressBooking(
         booking: concurrentPayment.booking,
         expressBooking: concurrentPayment.booking.expressBooking,
         payment: concurrentPayment,
+        checkoutUrl: concurrentPayment.checkoutUrl,
+        accessCode: null,
+        reference: concurrentPayment.transactionReference,
       };
     }
 
@@ -219,6 +225,12 @@ export async function createExpressBooking(
       payment,
     };
   });
+
+  // A concurrent request may have created the payment while this request
+  // was starting. Reuse its checkout details instead of initializing Paystack again.
+  if ("reference" in created) {
+    return created;
+  }
 
   let paystackPayment;
 

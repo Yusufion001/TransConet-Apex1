@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 const userFindUniqueMock = mock.fn<(...args: any[]) => any>();
 const paymentFindFirstMock = mock.fn<(...args: any[]) => any>();
+const transactionPaymentFindFirstMock = mock.fn<(...args: any[]) => any>();
 const expressBookingFindFirstMock = mock.fn<(...args: any[]) => any>();
 const queryRawMock = mock.fn<(...args: any[]) => any>();
 const paymentUpdateMock = mock.fn<(...args: any[]) => any>();
@@ -93,6 +94,7 @@ function resetMocks() {
   for (const fn of [
     userFindUniqueMock,
     paymentFindFirstMock,
+    transactionPaymentFindFirstMock,
     expressBookingFindFirstMock,
     queryRawMock,
     paymentUpdateMock,
@@ -112,6 +114,7 @@ function resetMocks() {
   userFindUniqueMock.mock.mockImplementation(async () => customer);
 
   paymentFindFirstMock.mock.mockImplementation(async () => null);
+  transactionPaymentFindFirstMock.mock.mockImplementation(async () => null);
 
   expressBookingFindFirstMock.mock.mockImplementation(async () => null);
 
@@ -144,7 +147,7 @@ function resetMocks() {
   transactionMock.mock.mockImplementation(
     async (callback: any) => callback({
       payment: {
-        findFirst: paymentFindFirstMock,
+        findFirst: transactionPaymentFindFirstMock,
         create: paymentCreateMock,
         update: paymentUpdateMock,
         updateMany: paymentUpdateManyMock,
@@ -275,6 +278,8 @@ test("createExpressBooking preserves idempotent replay before active-request enf
     id: "payment-existing",
     customerId: input.customerId,
     idempotencyKey: "existing-idempotency-key",
+    checkoutUrl: "https://paystack.example/existing-checkout",
+    transactionReference: "EXP-EXISTING-REF",
     booking: {
       id: "booking-existing",
       expressBooking: {
@@ -290,6 +295,54 @@ test("createExpressBooking preserves idempotent replay before active-request enf
   );
 
   assert.equal(result.expressBooking.id, "express-existing");
+  assert.equal(
+    result.checkoutUrl,
+    "https://paystack.example/existing-checkout",
+  );
+  assert.equal(result.reference, "EXP-EXISTING-REF");
+  assert.equal(result.accessCode, null);
   assert.equal(transactionMock.mock.calls.length, 0);
   assert.equal(expressBookingFindFirstMock.mock.calls.length, 0);
+});
+
+
+test("createExpressBooking returns the concurrent payment checkout on retry", async () => {
+  const concurrentPayment = {
+    id: "payment-concurrent",
+    customerId: input.customerId,
+    idempotencyKey: "concurrent-idempotency-key",
+    checkoutUrl: "https://paystack.example/concurrent-checkout",
+    transactionReference: "EXP-CONCURRENT-REF",
+    status: "PENDING",
+    booking: {
+      id: "booking-concurrent",
+      expressBooking: {
+        id: "express-concurrent",
+        status: "AWAITING_PAYMENT",
+      },
+    },
+  };
+
+  transactionPaymentFindFirstMock.mock.mockImplementation(
+    async () => concurrentPayment,
+  );
+
+  const result = await createExpressBooking(
+    input,
+    "concurrent-idempotency-key",
+  );
+
+  assert.equal(result.expressBooking.id, "express-concurrent");
+  assert.equal(
+    result.checkoutUrl,
+    "https://paystack.example/concurrent-checkout",
+  );
+  assert.equal(result.reference, "EXP-CONCURRENT-REF");
+  assert.equal(result.accessCode, null);
+
+  assert.equal(transactionMock.mock.calls.length, 1);
+  assert.equal(bookingCreateMock.mock.calls.length, 0);
+  assert.equal(expressBookingCreateMock.mock.calls.length, 0);
+  assert.equal(paymentCreateMock.mock.calls.length, 0);
+  assert.equal(initializePaystackPaymentMock.mock.calls.length, 0);
 });
