@@ -5,8 +5,10 @@ export async function calculateCommission(
   transporterTier?: "TIER_1" | "TIER_2" | null,
   db: Pick<typeof prisma, "commissionRule"> = prisma,
 ) {
-  if (amount <= 0) {
-    throw new Error("Commission amount must be greater than zero");
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error(
+      "Commission amount must be a finite number greater than zero",
+    );
   }
 
   const now = new Date();
@@ -65,6 +67,16 @@ export async function calculateCommission(
   const roundedCommission =
     Math.round(commissionAmount * 100) / 100;
 
+
+  if (
+    !Number.isFinite(roundedCommission) ||
+    roundedCommission < 0 ||
+    roundedCommission > amount
+  ) {
+    throw new Error(
+      "Calculated commission must be between zero and the gross payment amount",
+    );
+  }
   return {
     rule,
     grossAmount: amount,

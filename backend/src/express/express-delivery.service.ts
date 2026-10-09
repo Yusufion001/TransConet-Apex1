@@ -286,16 +286,28 @@ export async function verifyExpressDelivery(
       throw new Error("Express settlement could not be released");
     }
 
-    await tx.wallet.update({
+    const walletUpdated = await tx.wallet.updateMany({
       where: {
         id: wallet.id,
+        pendingBalance: {
+          gte: settlement.grossAmount,
+        },
       },
       data: {
+        pendingBalance: {
+          decrement: settlement.grossAmount,
+        },
         availableBalance: {
           increment: settlement.netAmount,
         },
       },
     });
+
+    if (walletUpdated.count !== 1) {
+      throw new Error(
+        "Insufficient pending wallet balance for Express settlement",
+      );
+    }
 
     await tx.walletTransaction.create({
       data: {
