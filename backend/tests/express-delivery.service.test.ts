@@ -21,6 +21,7 @@ const settlementMock = {
 const walletMock = {
   findUnique: mock.fn<(...args: any[]) => any>(),
   update: mock.fn<(...args: any[]) => any>(),
+  updateMany: mock.fn<(...args: any[]) => any>(),
 };
 
 const walletTransactionMock = {
@@ -133,6 +134,7 @@ function resetMocks() {
     settlementMock.updateMany,
     walletMock.findUnique,
     walletMock.update,
+    walletMock.updateMany,
     walletTransactionMock.create,
     bookingMock.update,
     vehicleMock.updateMany,
@@ -186,6 +188,10 @@ function resetMocks() {
       id: where.id,
       ...data,
     }),
+  );
+
+  walletMock.updateMany.mock.mockImplementation(
+    async () => ({ count: 1 }),
   );
 
   walletTransactionMock.create.mock.mockImplementation(
@@ -516,7 +522,7 @@ test(
       async () => ({
         id: "wallet-1",
         transporterId: "transporter-1",
-        pendingBalance: 0,
+        pendingBalance: 100000,
         availableBalance: 10000,
       }),
     );
@@ -569,26 +575,22 @@ test(
       "RELEASED",
     );
 
-    assert.equal(
-      walletMock.update.mock.callCount(),
-      1,
-    );
+    assert.equal(walletMock.update.mock.callCount(), 0);
+    assert.equal(walletMock.updateMany.mock.callCount(), 1);
 
     const walletUpdate =
-      walletMock.update.mock.calls[0]
+      walletMock.updateMany.mock.calls[0]
         ?.arguments[0] as any;
 
-    assert.deepEqual(
-      walletUpdate.data.availableBalance,
-      {
-        increment: 90000,
-      },
-    );
+    assert.deepEqual(walletUpdate.where, {
+      id: "wallet-1",
+      pendingBalance: { gte: 100000 },
+    });
 
-    assert.equal(
-      "pendingBalance" in walletUpdate.data,
-      false,
-    );
+    assert.deepEqual(walletUpdate.data, {
+      pendingBalance: { decrement: 100000 },
+      availableBalance: { increment: 90000 },
+    });
 
     assert.equal(
       walletTransactionMock.create.mock.callCount(),
@@ -701,6 +703,77 @@ test(
 );
 
 test(
+  "verifyExpressDelivery rejects settlement when pending balance is insufficient",
+  async () => {
+    const otp = "123456";
+    const settlement = {
+      id: "settlement-1",
+      bookingId: "booking-1",
+      paymentId: "payment-1",
+      transporterId: "transporter-1",
+      grossAmount: 100000,
+      commissionAmount: 10000,
+      netAmount: 90000,
+      currency: "NGN",
+      status: "PENDING",
+    };
+
+    expressBookingMock.findUnique.mock.mockImplementation(
+      async () =>
+        activeExpressBooking({
+          deliveryOtpHash: hashOtp(otp),
+          deliveryOtpExpiresAt: new Date(Date.now() + 60_000),
+        }),
+    );
+
+    paymentMock.findFirst.mock.mockImplementation(async () => ({
+      id: "payment-1",
+      bookingId: "booking-1",
+      status: "SUCCESS",
+      provider: "PAYSTACK",
+    }));
+
+    settlementMock.findUnique.mock.mockImplementation(async () => null);
+
+    createSettlementInTransactionMock.mock.mockImplementation(
+      async () => settlement,
+    );
+
+    walletMock.findUnique.mock.mockImplementation(async () => ({
+      id: "wallet-1",
+      transporterId: "transporter-1",
+      pendingBalance: 99999,
+      availableBalance: 10000,
+    }));
+
+    walletMock.updateMany.mock.mockImplementation(async () => ({
+      count: 0,
+    }));
+
+    await assert.rejects(
+      () => verifyExpressDelivery("express-1", "transporter-1", otp),
+      /insufficient pending wallet balance/i,
+    );
+
+    assert.equal(walletMock.updateMany.mock.callCount(), 1);
+
+    const walletUpdate =
+      walletMock.updateMany.mock.calls[0]?.arguments[0] as any;
+
+    assert.deepEqual(walletUpdate.where.pendingBalance, {
+      gte: 100000,
+    });
+
+    assert.equal(walletTransactionMock.create.mock.callCount(), 0);
+    assert.equal(expressBookingMock.updateMany.mock.callCount(), 0);
+    assert.equal(bookingMock.update.mock.callCount(), 0);
+    assert.equal(vehicleMock.updateMany.mock.callCount(), 0);
+    assert.equal(createShipmentEventMock.mock.callCount(), 0);
+    assert.equal(publishEventMock.mock.callCount(), 0);
+  },
+);
+
+test(
   "verifyExpressDelivery is idempotent after completed settlement",
   async () => {
     const settlement = {
@@ -753,10 +826,8 @@ test(
       "RELEASED",
     );
 
-    assert.equal(
-      walletMock.update.mock.callCount(),
-      0,
-    );
+    assert.equal(walletMock.update.mock.callCount(), 0);
+    assert.equal(walletMock.updateMany.mock.callCount(), 0);
 
     assert.equal(
       walletTransactionMock.create.mock.callCount(),

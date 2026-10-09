@@ -172,7 +172,7 @@ export default function BackupRecovery() {
         <Metric
           label="Recovery Status"
           value={status?.status ?? "—"}
-          detail="Current protection readiness"
+          detail="Database connectivity; recovery unverified"
         />
 
         <Metric
@@ -184,7 +184,7 @@ export default function BackupRecovery() {
         <Metric
           label="Recovery Mode"
           value={status?.recoveryMode ?? "—"}
-          detail="Configured recovery capability"
+          detail="Requires independent provider verification"
         />
 
         <Metric
@@ -194,7 +194,7 @@ export default function BackupRecovery() {
               ? `${status.responseTimeMs} ms`
               : "—"
           }
-          detail="Latest database protection check"
+          detail="Database query response time"
         />
       </section>
 
@@ -241,9 +241,11 @@ export default function BackupRecovery() {
             <div className="health-row">
               <span>Physical backup</span>
               <strong>
-                {status?.physicalBackupManagedExternally
-                  ? "Managed externally"
-                  : "Application managed"}
+                {status?.physicalBackupManagedExternally == null
+                  ? "Unverified"
+                  : status.physicalBackupManagedExternally
+                    ? "Managed externally"
+                    : "Application managed"}
               </strong>
             </div>
 

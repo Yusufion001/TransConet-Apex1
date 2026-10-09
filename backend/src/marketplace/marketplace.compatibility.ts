@@ -101,7 +101,12 @@ export function isMarketplaceVehicleLocationFresh(
     (now.getTime() - location.marketplaceLocationUpdatedAt.getTime()) /
     1000;
 
-  return Number.isFinite(ageSeconds) && ageSeconds <= freshnessSeconds;
+  // Reject future-dated location updates as well as stale/invalid timestamps.
+  return (
+    Number.isFinite(ageSeconds) &&
+    ageSeconds >= 0 &&
+    ageSeconds <= freshnessSeconds
+  );
 }
 
 export function marketplaceDistanceKm(

@@ -22,12 +22,12 @@ export async function getBackupRecoveryStatus() {
     ]);
 
     return {
-      status: "READY" as const,
+      status: "UNVERIFIED" as const,
       database: "POSTGRESQL",
-      provider: "SUPABASE",
-      backupStrategy: "SUPABASE_MANAGED",
-      recoveryMode: "POINT_IN_TIME_RECOVERY",
-      physicalBackupManagedExternally: true,
+      provider: "UNVERIFIED",
+      backupStrategy: "UNVERIFIED",
+      recoveryMode: "UNVERIFIED",
+      physicalBackupManagedExternally: null,
       applicationSnapshotMode: "ADMINISTRATIVE_AUDIT_RECORD",
       responseTimeMs: Date.now() - startedAt,
       protectedRecords: {
@@ -45,10 +45,10 @@ export async function getBackupRecoveryStatus() {
     return {
       status: "DEGRADED" as const,
       database: "POSTGRESQL",
-      provider: "SUPABASE",
-      backupStrategy: "SUPABASE_MANAGED",
-      recoveryMode: "POINT_IN_TIME_RECOVERY",
-      physicalBackupManagedExternally: true,
+      provider: "UNVERIFIED",
+      backupStrategy: "UNVERIFIED",
+      recoveryMode: "UNVERIFIED",
+      physicalBackupManagedExternally: null,
       applicationSnapshotMode: "ADMINISTRATIVE_AUDIT_RECORD",
       responseTimeMs: Date.now() - startedAt,
       protectedRecords: null,
@@ -69,7 +69,7 @@ export async function createBackupSnapshotRecord(
         administratorId,
         type: "ADMINISTRATIVE_SNAPSHOT",
         status: "REQUESTED",
-        provider: "SUPABASE",
+        provider: "UNVERIFIED",
         requestedAt,
       },
     });
@@ -79,8 +79,8 @@ export async function createBackupSnapshotRecord(
         administratorId,
         action: "BACKUP_SNAPSHOT_REQUESTED",
         previousValue: {
-          backupStrategy: "SUPABASE_MANAGED",
-          recoveryMode: "POINT_IN_TIME_RECOVERY",
+          backupStrategy: "UNVERIFIED",
+          recoveryMode: "UNVERIFIED",
         },
         newValue: {
           snapshotId: snapshot.id,
