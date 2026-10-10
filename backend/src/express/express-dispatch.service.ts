@@ -440,6 +440,30 @@ export async function acceptExpressBooking(
       throw new Error("Vehicle capacity is insufficient for this Express load");
     }
 
+    // Resolve the actual successful Paystack payment before claiming the load.
+    const payment = await tx.payment.findFirst({
+      where: {
+        bookingId: expressBooking.bookingId,
+        status: "SUCCESS",
+        provider: EXPRESS_PROVIDER,
+      },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        amount: true,
+        currency: true,
+      },
+    });
+
+    if (!payment) {
+      throw new Error("Successful Paystack payment not found for Express booking");
+    }
+
+    const paymentAmount = Number(payment.amount);
+    if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) {
+      throw new Error("Successful Express payment has an invalid amount");
+    }
+
     const claimed = await tx.expressBooking.updateMany({
       where: {
         id: expressBookingId,
@@ -484,6 +508,54 @@ export async function acceptExpressBooking(
 
     if (reservedVehicle.count !== 1) {
       throw new Error("Vehicle has already been reserved");
+    }
+
+    // Express payments happen before transporter acceptance. Hold the paid
+    // amount in the accepting transporter's pending balance until delivery.
+    // The unique reference makes retries safe and never debits the customer.
+    const wallet = await tx.wallet.findUnique({
+      where: { userId: transporterId },
+    });
+
+    if (!wallet) {
+      throw new Error("Transporter wallet not found for Express settlement");
+    }
+
+    const walletReference = `EXPRESS_PAYMENT_PENDING:${payment.id}`;
+    const existingLedgerEntry = await tx.walletTransaction.findUnique({
+      where: { reference: walletReference },
+    });
+
+    if (existingLedgerEntry) {
+      const matchesExistingCredit =
+        existingLedgerEntry.walletId === wallet.id &&
+        existingLedgerEntry.bookingId === expressBooking.bookingId &&
+        existingLedgerEntry.transactionType === "PAYMENT_PENDING" &&
+        Number(existingLedgerEntry.amount) === paymentAmount;
+
+      if (!matchesExistingCredit) {
+        throw new Error("Express payment wallet reference conflicts with existing ledger entry");
+      }
+    } else {
+      // Both writes occur in this transaction. A failure rolls back assignment,
+      // vehicle reservation, ledger creation, and the pending-balance credit.
+      await tx.walletTransaction.create({
+        data: {
+          walletId: wallet.id,
+          bookingId: expressBooking.bookingId,
+          amount: payment.amount,
+          transactionType: "PAYMENT_PENDING",
+          description: "Express payment held pending delivery confirmation",
+          reference: walletReference,
+        },
+      });
+
+      await tx.wallet.update({
+        where: { id: wallet.id },
+        data: {
+          pendingBalance: { increment: payment.amount },
+        },
+      });
     }
 
     return {

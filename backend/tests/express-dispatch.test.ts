@@ -21,12 +21,25 @@ const userMock = {
 const bookingMock = {
   update: mock.fn<(...args: any[]) => any>(),
 };
-
+const paymentMock = {
+  findFirst: mock.fn<(...args: any[]) => any>(),
+};
+const walletMock = {
+  findUnique: mock.fn<(...args: any[]) => any>(),
+  update: mock.fn<(...args: any[]) => any>(),
+};
+const walletTransactionMock = {
+  findUnique: mock.fn<(...args: any[]) => any>(),
+  create: mock.fn<(...args: any[]) => any>(),
+};
 const prismaMock = {
   expressBooking: expressBookingMock,
   vehicle: vehicleMock,
   user: userMock,
   booking: bookingMock,
+  payment: paymentMock,
+  wallet: walletMock,
+  walletTransaction: walletTransactionMock,
   $transaction: mock.fn<(...args: any[]) => any>(),
 };
 
@@ -64,6 +77,11 @@ function resetMocks() {
     vehicleMock.updateMany,
     userMock.findUnique,
     bookingMock.update,
+    paymentMock.findFirst,
+    walletMock.findUnique,
+    walletMock.update,
+    walletTransactionMock.findUnique,
+    walletTransactionMock.create,
     prismaMock.$transaction,
     publishEventMock,
   ]) {
@@ -140,6 +158,29 @@ function resetMocks() {
       verificationStatus: "APPROVED",
     },
   }));
+
+  paymentMock.findFirst.mock.mockImplementation(async () => ({
+    id: "payment-1",
+    amount: "25000",
+    currency: "NGN",
+  }));
+
+  walletMock.findUnique.mock.mockImplementation(async ({ where }: any) => ({
+    id: "wallet-transporter-tier1",
+    userId: where.userId,
+    pendingBalance: "0",
+  }));
+
+  walletMock.update.mock.mockImplementation(async ({ where, data }: any) => ({
+    id: where.id,
+    ...data,
+  }));
+
+  walletTransactionMock.findUnique.mock.mockImplementation(async () => null);
+
+  walletTransactionMock.create.mock.mockImplementation(
+    async ({ data }: any) => ({ id: "wallet-transaction-1", ...data }),
+  );
 
   bookingMock.update.mock.mockImplementation(
     async ({ where, data }: any) => ({
@@ -516,4 +557,81 @@ test("Express acceptance assigns the booking and reserves the vehicle", async ()
   assert.equal(vehicleUpdate.where.availabilityStatus, "AVAILABLE");
   assert.equal(vehicleUpdate.where.verificationStatus, "APPROVED");
   assert.equal(vehicleUpdate.data.availabilityStatus, "ON_TRIP");
+});
+
+test("Express acceptance credits the accepting transporter's pending wallet exactly once", async () => {
+  await acceptExpressBooking("express-1", "transporter-tier1", "vehicle-tier1");
+
+  const paymentLookup =
+    paymentMock.findFirst.mock.calls[0]?.arguments[0] as any;
+  assert.equal(paymentLookup.where.bookingId, "booking-1");
+  assert.equal(paymentLookup.where.status, "SUCCESS");
+  assert.equal(paymentLookup.where.provider, "PAYSTACK");
+
+  const ledgerCall =
+    walletTransactionMock.create.mock.calls[0]?.arguments[0] as any;
+  assert.equal(ledgerCall.data.walletId, "wallet-transporter-tier1");
+  assert.equal(ledgerCall.data.bookingId, "booking-1");
+  assert.equal(ledgerCall.data.amount, "25000");
+  assert.equal(ledgerCall.data.transactionType, "PAYMENT_PENDING");
+  assert.equal(
+    ledgerCall.data.reference,
+    "EXPRESS_PAYMENT_PENDING:payment-1",
+  );
+
+  const walletUpdate =
+    walletMock.update.mock.calls[0]?.arguments[0] as any;
+  assert.equal(walletUpdate.where.id, "wallet-transporter-tier1");
+  assert.equal(walletUpdate.data.pendingBalance.increment, "25000");
+  assert.equal(walletMock.update.mock.callCount(), 1);
+  assert.equal(walletTransactionMock.create.mock.callCount(), 1);
+});
+
+test("Express acceptance rejects a missing successful Paystack payment", async () => {
+  paymentMock.findFirst.mock.mockImplementationOnce(async () => null);
+
+  await assert.rejects(
+    () => acceptExpressBooking("express-1", "transporter-tier1", "vehicle-tier1"),
+    /successful Paystack payment not found/i,
+  );
+
+  assert.equal(expressBookingMock.updateMany.mock.callCount(), 0);
+  assert.equal(walletMock.update.mock.callCount(), 0);
+  assert.equal(walletTransactionMock.create.mock.callCount(), 0);
+  assert.equal(publishEventMock.mock.callCount(), 0);
+});
+
+test("Express acceptance does not credit the wallet twice when its payment ledger entry exists", async () => {
+  walletTransactionMock.findUnique.mock.mockImplementationOnce(async () => ({
+    id: "existing-wallet-transaction",
+    walletId: "wallet-transporter-tier1",
+    bookingId: "booking-1",
+    amount: "25000",
+    transactionType: "PAYMENT_PENDING",
+    reference: "EXPRESS_PAYMENT_PENDING:payment-1",
+  }));
+
+  await acceptExpressBooking("express-1", "transporter-tier1", "vehicle-tier1");
+
+  assert.equal(walletMock.update.mock.callCount(), 0);
+  assert.equal(walletTransactionMock.create.mock.callCount(), 0);
+});
+
+test("Express acceptance rejects a conflicting existing payment ledger reference", async () => {
+  walletTransactionMock.findUnique.mock.mockImplementationOnce(async () => ({
+    id: "conflicting-wallet-transaction",
+    walletId: "another-wallet",
+    bookingId: "booking-1",
+    amount: "25000",
+    transactionType: "PAYMENT_PENDING",
+    reference: "EXPRESS_PAYMENT_PENDING:payment-1",
+  }));
+
+  await assert.rejects(
+    () => acceptExpressBooking("express-1", "transporter-tier1", "vehicle-tier1"),
+    /reference conflicts/i,
+  );
+
+  assert.equal(walletMock.update.mock.callCount(), 0);
+  assert.equal(publishEventMock.mock.callCount(), 0);
 });
