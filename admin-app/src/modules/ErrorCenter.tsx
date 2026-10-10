@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { isAxiosError } from "axios";
 import {
   getErrorEvents,
   getErrorOverview,
@@ -57,8 +58,31 @@ function ErrorCenter() {
         const updated = eventData.find((item) => item.id === selected.id);
         if (updated) setSelected(updated);
       }
-    } catch {
-      setError("Unable to load Error Center data.");
+    } catch (cause) {
+      let detail =
+        cause instanceof Error ? cause.message : "Unknown request failure";
+
+      if (isAxiosError(cause)) {
+        const body = cause.response?.data as
+          | { error?: unknown; message?: unknown }
+          | undefined;
+
+        const serverMessage =
+          typeof body?.error === "string"
+            ? body.error
+            : typeof body?.message === "string"
+              ? body.message
+              : undefined;
+
+        const endpoint = cause.config?.url ?? "unknown endpoint";
+        const status = cause.response?.status;
+
+        detail = `${endpoint}${status ? ` (HTTP ${status})` : ""}: ${
+          serverMessage ?? cause.message
+        }`;
+      }
+
+      setError(`Unable to load Error Center data. ${detail}`);
     } finally {
       setLoading(false);
       setRefreshing(false);

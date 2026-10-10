@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { isAxiosError } from "axios";
 import {
   activateAdministrator,
   createAdministrator,
@@ -224,10 +225,26 @@ export default function Administrators() {
 
       setNotice(`Administrator ${actionLabel} successfully.`);
     } catch (error) {
+      const responseError = isAxiosError(error)
+        ? error.response?.data?.error
+        : undefined;
+
       const message =
-        error instanceof Error
-          ? error.message
-          : `Unable to ${action} this administrator.`;
+        typeof responseError === "string"
+          ? responseError
+          : Array.isArray(responseError)
+            ? responseError
+                .map((issue: unknown) =>
+                  typeof issue === "object" &&
+                  issue !== null &&
+                  "message" in issue
+                    ? String(issue.message)
+                    : String(issue),
+                )
+                .join("; ")
+            : error instanceof Error
+              ? error.message
+              : `Unable to ${action} this administrator.`;
 
       setDetailError(message);
     } finally {
