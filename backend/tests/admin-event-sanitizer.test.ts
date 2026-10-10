@@ -31,6 +31,31 @@ test("verification events exclude identity numbers and provider responses", () =
   assert.equal(JSON.stringify(result).includes("12345678901"), false);
 });
 
+test("user events exclude private profile fields", () => {
+  const result = sanitizeSensitiveEventData("USER", {
+    id: "user-123",
+    nickname: "Test User",
+    role: "CUSTOMER",
+    status: "ACTIVE",
+    updatedAt: "2026-10-10T10:00:00.000Z",
+    email: "private@example.com",
+    phone: "+2348000000000",
+    firstName: "Private",
+    lastName: "Person",
+    dateOfBirth: "1990-01-01",
+    photoUrl: "https://example.test/private.jpg",
+    identityNumber: "PRIVATE-ID",
+  });
+
+  assert.deepEqual(result, {
+    id: "user-123",
+    nickname: "Test User",
+    role: "CUSTOMER",
+    status: "ACTIVE",
+    updatedAt: "2026-10-10T10:00:00.000Z",
+  });
+});
+
 test("unrelated events are unchanged", () => {
   const data = { status: "ASSIGNED" };
   assert.equal(sanitizeSensitiveEventData("BOOKING", data), data);

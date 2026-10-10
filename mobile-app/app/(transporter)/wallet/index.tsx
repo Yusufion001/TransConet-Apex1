@@ -634,6 +634,9 @@ export default function TransporterWallet() {
                   router.push("/(transporter)/wallet/earnings" as never)
                 }
               >
+                <View style={styles.walletNavigationIcon}>
+                  <Text style={styles.walletNavigationIconText}>◈</Text>
+                </View>
                 <View style={styles.walletNavigationMain}>
                   <Text style={styles.walletNavigationTitle}>
                     Wallet & Earnings
@@ -651,6 +654,9 @@ export default function TransporterWallet() {
                   router.push("/(transporter)/wallet/completed" as never)
                 }
               >
+                <View style={styles.walletNavigationIcon}>
+                  <Text style={styles.walletNavigationIconText}>✓</Text>
+                </View>
                 <View style={styles.walletNavigationMain}>
                   <Text style={styles.walletNavigationTitle}>
                     Completed Jobs & Payments
@@ -664,9 +670,26 @@ export default function TransporterWallet() {
 
               <View style={styles.walletNavigationCard}>
                 <View style={styles.walletNavigationMain}>
-                  <Text style={styles.walletNavigationTitle}>
-                    Fund Wallet
-                  </Text>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      marginBottom: 8,
+                    }}
+                  >
+                    <View style={styles.walletNavigationIcon}>
+                      <Text style={styles.walletNavigationIconText}>＋</Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.walletNavigationTitle,
+                        { marginBottom: 0 },
+                      ]}
+                    >
+                      Fund Wallet
+                    </Text>
+                  </View>
+
                   <Text style={styles.walletNavigationText}>
                     Add money to your shared wallet securely with Flutterwave
                   </Text>
@@ -736,6 +759,9 @@ export default function TransporterWallet() {
                   router.push("/(transporter)/wallet/withdrawals" as never)
                 }
               >
+                <View style={styles.walletNavigationIcon}>
+                  <Text style={styles.walletNavigationIconText}>↗</Text>
+                </View>
                 <View style={styles.walletNavigationMain}>
                   <Text style={styles.walletNavigationTitle}>
                     Withdrawals
@@ -749,7 +775,7 @@ export default function TransporterWallet() {
             </View>
           )}
 
-          <Text style={styles.subtitle}>
+      <Text style={styles.subtitle}>
         Track released earnings, pending payments,
         completed trips and withdrawals.
       </Text>
@@ -1575,10 +1601,10 @@ const styles = StyleSheet.create({
 
   container: {
     flexGrow: 1,
-    paddingHorizontal: 18,
-    paddingTop: 22,
-    paddingBottom: 50,
-    backgroundColor: "#F4F7FF",
+    paddingHorizontal: 16,
+    paddingTop: 18,
+    paddingBottom: 36,
+    backgroundColor: "#F6F8FC",
   },
 
   center: {
@@ -1626,17 +1652,12 @@ const styles = StyleSheet.create({
   },
 
   walletHubCard: {
-    marginBottom: 18,
-    padding: 17,
-    borderRadius: 21,
+    marginBottom: 16,
+    padding: 15,
+    borderRadius: 16,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E1E7F5",
-    shadowColor: "#101B3A",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
+    borderColor: "#E7EBF3",
   },
 
   walletHubTitle: {
@@ -1658,18 +1679,34 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 15,
-    minHeight: 76,
-    borderRadius: 15,
+    padding: 12,
+    minHeight: 68,
+    borderRadius: 13,
     borderWidth: 1,
-    borderColor: "#E1E7F5",
-    backgroundColor: "#F9FAFF",
-    marginBottom: 10,
+    borderColor: "#E8ECF4",
+    backgroundColor: "#FFFFFF",
+    marginBottom: 9,
+  },
+
+  walletNavigationIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "#EDF2FF",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 11,
+  },
+
+  walletNavigationIconText: {
+    color: "#4169E1",
+    fontSize: 20,
+    fontWeight: "800",
   },
 
   walletNavigationMain: {
     flex: 1,
-    paddingRight: 12,
+    paddingRight: 8,
   },
 
   walletNavigationTitle: {
@@ -1693,15 +1730,10 @@ const styles = StyleSheet.create({
   },
 
   balanceCard: {
-    padding: 23,
-    borderRadius: 22,
-    backgroundColor: "#101B3A",
-    marginBottom: 16,
-    shadowColor: "#101B3A",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.17,
-    shadowRadius: 15,
-    elevation: 5,
+    padding: 20,
+    borderRadius: 17,
+    backgroundColor: "#4169E1",
+    marginBottom: 14,
   },
 
   balanceLabel: {
@@ -1738,23 +1770,18 @@ const styles = StyleSheet.create({
 
   summaryGrid: {
     flexDirection: "row",
-    gap: 9,
-    marginBottom: 16,
+    gap: 8,
+    marginBottom: 14,
   },
 
   summaryCard: {
     flex: 1,
-    minHeight: 78,
-    padding: 13,
-    borderRadius: 16,
+    minHeight: 72,
+    padding: 11,
+    borderRadius: 12,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E1E7F5",
-    shadowColor: "#101B3A",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.04,
-    shadowRadius: 7,
-    elevation: 2,
+    borderColor: "#E7EBF3",
   },
 
   summaryLabel: {
@@ -1774,17 +1801,12 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    padding: 19,
-    borderRadius: 20,
+    padding: 15,
+    borderRadius: 15,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E1E7F5",
-    marginBottom: 16,
-    shadowColor: "#101B3A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    borderColor: "#E7EBF3",
+    marginBottom: 14,
   },
 
   sectionHeader: {
@@ -2338,18 +2360,13 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    marginTop: 14,
-    minHeight: 50,
-    borderRadius: 14,
+    marginTop: 12,
+    minHeight: 48,
+    borderRadius: 12,
     backgroundColor: "#4169E1",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 20,
-    shadowColor: "#4169E1",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.14,
-    shadowRadius: 7,
-    elevation: 3,
+    paddingHorizontal: 18,
   },
 
   buttonText: {

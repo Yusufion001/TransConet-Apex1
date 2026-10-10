@@ -58,6 +58,8 @@ export default function ExpressBookingScreen() {
   const [packagingType, setPackagingType] = useState("");
   const [cargoDescription, setCargoDescription] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
+  const [additionalDetailsExpanded, setAdditionalDetailsExpanded] =
+    useState(false);
 
   const [expressConfig, setExpressConfig] =
     useState<ExpressConfig | null>(null);
@@ -613,13 +615,6 @@ export default function ExpressBookingScreen() {
           </Text>
         </Pressable>
 
-        <Text style={styles.label}>Pickup landmark</Text>
-        <TextInput
-          value={pickupLandmark}
-          onChangeText={setPickupLandmark}
-          placeholder="Optional landmark"
-          style={styles.input}
-        />
 
         <View style={styles.sectionHeader}>
           <View style={styles.sectionIcon}>
@@ -686,13 +681,6 @@ export default function ExpressBookingScreen() {
           </Text>
         </Pressable>
 
-        <Text style={styles.label}>Destination landmark</Text>
-        <TextInput
-          value={destinationLandmark}
-          onChangeText={setDestinationLandmark}
-          placeholder="Optional landmark"
-          style={styles.input}
-        />
 
         <View style={styles.sectionHeader}>
           <View style={styles.sectionIcon}>
@@ -802,14 +790,56 @@ export default function ExpressBookingScreen() {
           style={styles.input}
         />
 
-        <Text style={styles.label}>Cargo description</Text>
-        <TextInput
-          value={cargoDescription}
-          onChangeText={setCargoDescription}
-          placeholder="Describe your shipment"
-          multiline
-          style={[styles.input, styles.textArea]}
-        />
+        <Pressable
+          onPress={() =>
+            setAdditionalDetailsExpanded((expanded) => !expanded)
+          }
+          style={styles.detailsToggle}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: additionalDetailsExpanded }}
+        >
+          <View style={styles.detailsToggleContent}>
+            <Text style={styles.detailsToggleTitle}>
+              Additional details (optional)
+            </Text>
+            <Text style={styles.detailsToggleHint}>
+              Landmarks and shipment description
+            </Text>
+          </View>
+          <Text style={styles.detailsToggleIcon}>
+            {additionalDetailsExpanded ? "−" : "+"}
+          </Text>
+        </Pressable>
+
+        {additionalDetailsExpanded ? (
+          <View style={styles.detailsPanel}>
+            <Text style={styles.label}>Pickup landmark</Text>
+            <TextInput
+              value={pickupLandmark}
+              onChangeText={setPickupLandmark}
+              placeholder="Optional pickup landmark"
+              style={styles.input}
+            />
+
+            <Text style={styles.label}>Destination landmark</Text>
+            <TextInput
+              value={destinationLandmark}
+              onChangeText={setDestinationLandmark}
+              placeholder="Optional destination landmark"
+              style={styles.input}
+            />
+
+            <Text style={styles.label}>Cargo description</Text>
+            <TextInput
+              value={cargoDescription}
+              onChangeText={setCargoDescription}
+              placeholder="Describe your shipment"
+              multiline
+              style={[styles.input, styles.textArea]}
+            />
+          </View>
+        ) : null}
+
 
         <Pressable
           disabled={
@@ -1281,6 +1311,45 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: "900",
     color: "#101B3A",
+  },
+  detailsToggle: {
+    marginTop: 18,
+    paddingHorizontal: 15,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#D9E1F0",
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  detailsToggleContent: {
+    flex: 1,
+  },
+  detailsToggleTitle: {
+    color: "#101B3A",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  detailsToggleHint: {
+    color: "#667085",
+    fontSize: 12,
+    marginTop: 4,
+  },
+  detailsToggleIcon: {
+    color: "#4169E1",
+    fontSize: 24,
+    fontWeight: "700",
+    marginLeft: 12,
+  },
+  detailsPanel: {
+    marginTop: 8,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#D9E1F0",
+    backgroundColor: "#FFFFFF",
   },
   cancelButton: {
     marginTop: 12,

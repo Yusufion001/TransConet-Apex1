@@ -778,10 +778,10 @@ function Detail({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: 30,
-    paddingBottom: 48,
-    backgroundColor: "#F4F7FF",
+    paddingHorizontal: 21,
+    paddingTop: 23,
+    paddingBottom: 40,
+    backgroundColor: "#FFFFFF",
   },
 
   center: {
@@ -789,7 +789,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
-    backgroundColor: "#F4F7FF",
+    backgroundColor: "#FFFFFF",
   },
 
   loadingText: {
@@ -816,8 +816,8 @@ const styles = StyleSheet.create({
 
   eyebrow: {
     fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 1.6,
+    fontWeight: "800",
+    letterSpacing: 1.4,
     color: "#4169E1",
   },
 
@@ -825,13 +825,13 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontSize: 30,
     lineHeight: 37,
-    fontWeight: "900",
+    fontWeight: "800",
     color: "#101B3A",
   },
 
   subtitle: {
     marginTop: 8,
-    marginBottom: 22,
+    marginBottom: 23,
     fontSize: 14,
     lineHeight: 21,
     color: "#667085",
@@ -840,52 +840,50 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
-    marginBottom: 16,
+    gap: 0,
+    marginBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: "#E8ECF4",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E8ECF4",
   },
 
   statCard: {
-    width: "48%",
-    minHeight: 88,
-    padding: 16,
-    borderRadius: 18,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E1E7F5",
-    shadowColor: "#101B3A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    width: "50%",
+    minHeight: 78,
+    paddingVertical: 13,
+    paddingHorizontal: 12,
+    borderRadius: 0,
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
   },
 
   statValue: {
-    fontSize: 27,
-    lineHeight: 31,
-    fontWeight: "900",
+    fontSize: 25,
+    lineHeight: 30,
+    fontWeight: "800",
     color: "#101B3A",
   },
 
   statLabel: {
     marginTop: 5,
     fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 1.1,
-    color: "#98A2B3",
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    color: "#667085",
   },
 
   primaryButton: {
-    minHeight: 52,
-    marginBottom: 17,
-    borderRadius: 14,
+    minHeight: 49,
+    marginBottom: 20,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#4169E1",
-    shadowColor: "#4169E1",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    elevation: 3,
+    shadowOpacity: 0,
+    elevation: 0,
   },
 
   primaryButtonText: {
@@ -903,12 +901,12 @@ const styles = StyleSheet.create({
 
   darkButton: {
     marginTop: 17,
-    minHeight: 48,
+    minHeight: 47,
     paddingHorizontal: 20,
-    borderRadius: 13,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#101B3A",
+    backgroundColor: "#4169E1",
   },
 
   darkButtonText: {
@@ -918,17 +916,13 @@ const styles = StyleSheet.create({
   },
 
   formCard: {
-    marginBottom: 20,
-    padding: 19,
-    borderRadius: 21,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E1E7F5",
-    shadowColor: "#101B3A",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.06,
-    shadowRadius: 14,
-    elevation: 2,
+    marginBottom: 26,
+    padding: 0,
+    borderRadius: 0,
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
   },
 
   formHeader: {
@@ -939,15 +933,15 @@ const styles = StyleSheet.create({
   },
 
   sectionHeader: {
-    marginTop: 10,
-    marginBottom: 14,
+    marginTop: 13,
+    marginBottom: 15,
   },
 
   sectionTitle: {
     marginTop: 4,
     fontSize: 21,
     lineHeight: 27,
-    fontWeight: "900",
+    fontWeight: "800",
     color: "#101B3A",
   },
 
@@ -966,23 +960,23 @@ const styles = StyleSheet.create({
   },
 
   fieldLabel: {
-    marginTop: 5,
+    marginTop: 7,
     marginBottom: 7,
     fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 1.1,
-    color: "#667085",
+    fontWeight: "800",
+    letterSpacing: 0.9,
+    color: "#475467",
   },
 
   input: {
-    minHeight: 51,
+    minHeight: 49,
     marginBottom: 13,
-    paddingHorizontal: 14,
+    paddingHorizontal: 13,
     borderWidth: 1,
-    borderColor: "#D9E0EF",
-    borderRadius: 13,
-    backgroundColor: "#FBFCFF",
-    fontSize: 15,
+    borderColor: "#DCE2ED",
+    borderRadius: 9,
+    backgroundColor: "#FFFFFF",
+    fontSize: 14,
     color: "#101B3A",
   },
 
@@ -996,9 +990,9 @@ const styles = StyleSheet.create({
   classOption: {
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 11,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#D9E0EF",
+    borderColor: "#DCE2ED",
     backgroundColor: "#FFFFFF",
   },
 
@@ -1018,13 +1012,15 @@ const styles = StyleSheet.create({
   },
 
   classInfoCard: {
-    marginTop: 12,
+    marginTop: 10,
     marginBottom: 15,
-    padding: 15,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#DCE5FB",
-    backgroundColor: "#F4F7FF",
+    paddingVertical: 12,
+    paddingHorizontal: 13,
+    borderRadius: 8,
+    borderWidth: 0,
+    borderLeftWidth: 3,
+    borderLeftColor: "#4169E1",
+    backgroundColor: "#F5F8FF",
   },
 
   classInfoTitle: {
@@ -1056,9 +1052,9 @@ const styles = StyleSheet.create({
   },
 
   availabilityButton: {
-    minHeight: 47,
+    minHeight: 46,
     marginTop: 17,
-    borderRadius: 13,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -1088,17 +1084,13 @@ const styles = StyleSheet.create({
   },
 
   vehicleCard: {
-    marginBottom: 15,
-    padding: 19,
-    borderRadius: 21,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E1E7F5",
-    shadowColor: "#101B3A",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.055,
-    shadowRadius: 14,
-    elevation: 2,
+    marginBottom: 24,
+    padding: 0,
+    borderRadius: 0,
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
   },
 
   vehicleHeader: {
@@ -1114,8 +1106,8 @@ const styles = StyleSheet.create({
 
   registration: {
     fontSize: 21,
-    lineHeight: 26,
-    fontWeight: "900",
+    lineHeight: 27,
+    fontWeight: "800",
     letterSpacing: 0.2,
     color: "#101B3A",
   },
@@ -1128,9 +1120,9 @@ const styles = StyleSheet.create({
   },
 
   editButton: {
-    minHeight: 37,
+    minHeight: 35,
     paddingHorizontal: 13,
-    borderRadius: 10,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#EEF3FF",
@@ -1155,12 +1147,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 7,
-    paddingHorizontal: 11,
-    paddingVertical: 9,
-    borderRadius: 11,
-    backgroundColor: "#F7F9FD",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: "#F8F9FC",
     borderWidth: 1,
-    borderColor: "#E8ECF5",
+    borderColor: "#E8ECF4",
   },
 
   badgeDot: {
@@ -1194,7 +1186,7 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginVertical: 16,
-    backgroundColor: "#E8ECF5",
+    backgroundColor: "#E8ECF4",
   },
 
   detailRow: {
@@ -1223,8 +1215,8 @@ const styles = StyleSheet.create({
 
   infoBox: {
     marginTop: 8,
-    padding: 14,
-    borderRadius: 13,
+    padding: 12,
+    borderRadius: 8,
     backgroundColor: "#FFF8E8",
     borderWidth: 1,
     borderColor: "#F3E0B0",
@@ -1246,17 +1238,13 @@ const styles = StyleSheet.create({
 
   emptyCard: {
     alignItems: "center",
-    paddingHorizontal: 22,
-    paddingVertical: 28,
-    borderRadius: 21,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E1E7F5",
-    shadowColor: "#101B3A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
+    paddingHorizontal: 18,
+    paddingVertical: 24,
+    borderRadius: 0,
+    backgroundColor: "transparent",
+    borderWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
   },
 
   emptyTitle: {
