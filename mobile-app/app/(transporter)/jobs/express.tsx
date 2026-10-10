@@ -231,7 +231,7 @@ export default function ExpressIndexScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F4F7FF",
+    backgroundColor: "#F7F9FD",
   },
   container: {
     flexGrow: 1,
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 24,
-    backgroundColor: "#F4F7FF",
+    backgroundColor: "#F7F9FD",
   },
   loadingText: {
     marginTop: 12,
@@ -267,15 +267,15 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
     padding: 18,
-    borderRadius: 20,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E1E7F5",
+    borderColor: "#E5EAF3",
     backgroundColor: "#FFFFFF",
     shadowColor: "#101B3A",
-    shadowOpacity: 0.05,
+    shadowOpacity: 0,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 6 },
-    elevation: 2,
+    elevation: 0,
   },
   cardHeader: {
     flexDirection: "row",
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: "#E9EFFF",
+    backgroundColor: "#EEF2FF",
   },
   boardBadgeText: {
     fontSize: 9,
@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     marginVertical: 16,
-    backgroundColor: "#E8ECF5",
+    backgroundColor: "#E8EDF5",
   },
   sectionTitle: {
     fontSize: 14,
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: 999,
-    backgroundColor: "#F0F4FF",
+    backgroundColor: "#EEF2FF",
     fontSize: 10,
     fontWeight: "900",
     color: "#4169E1",
@@ -363,15 +363,15 @@ const styles = StyleSheet.create({
   acceptButton: {
     minHeight: 53,
     marginTop: 20,
-    borderRadius: 14,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#4169E1",
     shadowColor: "#4169E1",
-    shadowOpacity: 0.18,
+    shadowOpacity: 0,
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
-    elevation: 2,
+    elevation: 0,
   },
   acceptButtonDisabled: {
     opacity: 0.58,
@@ -383,9 +383,9 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     padding: 26,
-    borderRadius: 19,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E1E7F5",
+    borderColor: "#E5EAF3",
     backgroundColor: "#FFFFFF",
     alignItems: "center",
   },
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
     marginTop: 20,
     paddingHorizontal: 20,
-    borderRadius: 13,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#4169E1",

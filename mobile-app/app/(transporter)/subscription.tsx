@@ -269,151 +269,115 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 48,
-    backgroundColor: "#F4F7FF",
+    paddingBottom: 40,
+    backgroundColor: "#F7F9FE",
   },
-
   back: {
     alignSelf: "flex-start",
     marginTop: 4,
     paddingVertical: 8,
     paddingRight: 12,
     color: "#4169E1",
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "700",
   },
-
   eyebrow: {
-    marginTop: 22,
-    fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 1.6,
+    marginTop: 18,
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.5,
     color: "#4169E1",
   },
-
   title: {
     marginTop: 5,
-    fontSize: 29,
-    lineHeight: 35,
-    fontWeight: "900",
+    fontSize: 27,
+    lineHeight: 34,
+    fontWeight: "800",
     color: "#101B3A",
   },
-
   subtitle: {
     marginTop: 8,
-    marginBottom: 22,
+    marginBottom: 20,
     fontSize: 14,
     lineHeight: 21,
     color: "#667085",
   },
-
   currentCard: {
-    padding: 20,
-    borderRadius: 22,
-    backgroundColor: "#101B3A",
+    padding: 18,
+    borderRadius: 16,
+    backgroundColor: "#17264A",
     borderWidth: 1,
-    borderColor: "#1C2A50",
+    borderColor: "#24365F",
     marginBottom: 14,
-    shadowColor: "#101B3A",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.14,
-    shadowRadius: 16,
-    elevation: 5,
   },
-
   currentLabel: {
     fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 1.5,
-    color: "#AAB6D3",
+    fontWeight: "800",
+    letterSpacing: 1.3,
+    color: "#B9C5E0",
   },
-
   currentPlan: {
     marginTop: 7,
-    fontSize: 27,
+    fontSize: 26,
     lineHeight: 32,
-    fontWeight: "900",
+    fontWeight: "800",
     color: "#FFFFFF",
   },
-
   currentStatus: {
     marginTop: 6,
     fontSize: 14,
-    fontWeight: "700",
-    color: "#DCE3F5",
+    fontWeight: "600",
+    color: "#E0E7F5",
   },
-
   currentPeriod: {
     marginTop: 5,
     fontSize: 12,
-    color: "#AAB6D3",
+    lineHeight: 18,
+    color: "#B9C5E0",
   },
-
   infoCard: {
-    padding: 19,
-    borderRadius: 20,
+    padding: 16,
+    borderRadius: 15,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E1E7F5",
-    marginBottom: 25,
-    shadowColor: "#101B3A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 2,
+    borderColor: "#E5EAF4",
+    marginBottom: 23,
   },
-
   infoTitle: {
-    fontSize: 16,
-    fontWeight: "900",
-    color: "#101B3A",
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#17233F",
   },
-
   infoText: {
     marginTop: 7,
     fontSize: 13,
     lineHeight: 20,
     color: "#667085",
   },
-
   sectionTitle: {
     marginBottom: 11,
-    fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 1.4,
-    color: "#667085",
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 1.3,
+    color: "#7A8498",
   },
-
   planCard: {
-    padding: 19,
-    marginBottom: 15,
-    borderRadius: 21,
+    padding: 17,
+    marginBottom: 13,
+    borderRadius: 16,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: "#E1E7F5",
-    shadowColor: "#101B3A",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.06,
-    shadowRadius: 14,
-    elevation: 2,
+    borderColor: "#E5EAF4",
   },
-
   currentPlanCard: {
     borderColor: "#4169E1",
-    borderWidth: 2,
-    shadowColor: "#4169E1",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.10,
-    shadowRadius: 15,
-    elevation: 4,
+    borderWidth: 1.5,
   },
-
   planHeader: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
   },
-
   planTitleWrap: {
     flex: 1,
     flexDirection: "row",
@@ -422,34 +386,30 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingRight: 10,
   },
-
   planName: {
-    fontSize: 21,
+    fontSize: 20,
     lineHeight: 26,
-    fontWeight: "900",
+    fontWeight: "800",
     color: "#101B3A",
   },
-
   currentBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 7,
     overflow: "hidden",
     fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 0.5,
+    fontWeight: "800",
+    letterSpacing: 0.4,
     color: "#4169E1",
     backgroundColor: "#EEF3FF",
   },
-
   planPrice: {
     marginLeft: 8,
-    fontSize: 18,
+    fontSize: 17,
     lineHeight: 23,
-    fontWeight: "900",
+    fontWeight: "800",
     color: "#101B3A",
   },
-
   interval: {
     marginTop: 3,
     fontSize: 11,
@@ -457,104 +417,84 @@ const styles = StyleSheet.create({
     color: "#667085",
     textAlign: "right",
   },
-
   planDescription: {
-    marginTop: 14,
+    marginTop: 13,
     fontSize: 14,
     lineHeight: 21,
     color: "#475467",
   },
-
   benefits: {
-    marginTop: 13,
+    marginTop: 12,
     paddingTop: 2,
   },
-
   benefit: {
     marginTop: 6,
     fontSize: 13,
     lineHeight: 19,
     color: "#344054",
   },
-
   noBenefits: {
-    marginTop: 13,
+    marginTop: 12,
     fontSize: 13,
     lineHeight: 19,
-    color: "#98A2B3",
+    color: "#8791A4",
   },
-
   planButton: {
-    marginTop: 18,
-    minHeight: 50,
-    borderRadius: 14,
+    marginTop: 17,
+    minHeight: 48,
+    borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#4169E1",
-    shadowColor: "#4169E1",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.18,
-    shadowRadius: 9,
-    elevation: 3,
   },
-
   disabledButton: {
     backgroundColor: "#A7B0C2",
     shadowOpacity: 0,
     elevation: 0,
   },
-
   buttonPressed: {
     opacity: 0.82,
-    transform: [{ scale: 0.985 }],
   },
-
   planButtonText: {
     fontSize: 14,
-    fontWeight: "900",
-    letterSpacing: 0.2,
+    fontWeight: "800",
+    letterSpacing: 0.1,
     color: "#FFFFFF",
   },
-
   message: {
     paddingVertical: 22,
     fontSize: 14,
     lineHeight: 20,
     color: "#667085",
   },
-
   errorCard: {
-    padding: 18,
-    borderRadius: 18,
+    padding: 16,
+    borderRadius: 14,
     backgroundColor: "#FFF6F5",
     borderWidth: 1,
     borderColor: "#F3C7C2",
   },
-
   errorText: {
     fontSize: 14,
     lineHeight: 21,
     color: "#B42318",
   },
-
   retryButton: {
     marginTop: 13,
     alignSelf: "flex-start",
-    minHeight: 44,
-    paddingHorizontal: 18,
-    paddingVertical: 11,
-    borderRadius: 12,
+    minHeight: 42,
+    paddingHorizontal: 17,
+    paddingVertical: 10,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#4169E1",
   },
-
   retryText: {
     fontSize: 13,
-    fontWeight: "900",
+    fontWeight: "800",
     color: "#FFFFFF",
   },
-
   inlineError: {
     marginTop: 3,
     marginBottom: 12,

@@ -556,22 +556,18 @@ const styles = StyleSheet.create({
 
   form: {
     marginTop: 22,
-    paddingHorizontal: 17,
-    paddingTop: 6,
+    paddingHorizontal: 0,
+    paddingTop: 0,
     paddingBottom: 18,
-    borderRadius: 22,
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#E1E7F4",
-
-    shadowColor: "#173B8F",
-    shadowOpacity: 0.10,
-    shadowRadius: 20,
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    elevation: 5,
+    borderWidth: 0,
+    borderColor: "transparent",
+    borderRadius: 0,
+    backgroundColor: "transparent",
+    shadowColor: "transparent",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
   },
 
   label: {
@@ -588,9 +584,9 @@ const styles = StyleSheet.create({
     minHeight: 55,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: "#D8E0EF",
-    borderRadius: 13,
-    backgroundColor: "#FBFCFF",
+    borderColor: "#D7DFEF",
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
     color: "#172033",
     fontSize: 16,
 
@@ -622,7 +618,7 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
     borderColor: "#D8E0EF",
-    borderRadius: 15,
+    borderRadius: 12,
     backgroundColor: "#FBFCFF",
   },
 
@@ -631,13 +627,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#4169E1",
 
     shadowColor: "#4169E1",
-    shadowOpacity: 0.22,
+    shadowOpacity: 0,
     shadowRadius: 11,
     shadowOffset: {
       width: 0,
       height: 5,
     },
-    elevation: 4,
+    elevation: 0,
   },
 
   roleTitle: {
@@ -687,7 +683,7 @@ const styles = StyleSheet.create({
 
     borderWidth: 1,
     borderColor: "#D8E0EF",
-    borderRadius: 13,
+    borderRadius: 12,
     backgroundColor: "#FBFCFF",
   },
 
@@ -696,13 +692,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#4169E1",
 
     shadowColor: "#4169E1",
-    shadowOpacity: 0.16,
+    shadowOpacity: 0,
     shadowRadius: 8,
     shadowOffset: {
       width: 0,
       height: 4,
     },
-    elevation: 2,
+    elevation: 0,
   },
 
   choiceText: {
@@ -785,7 +781,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
 
-    borderRadius: 14,
+    borderRadius: 12,
     backgroundColor: "#4169E1",
 
     shadowColor: "#4169E1",
@@ -795,7 +791,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: 6,
     },
-    elevation: 5,
+    elevation: 0,
   },
 
   disabledButton: {

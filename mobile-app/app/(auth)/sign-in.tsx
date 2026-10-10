@@ -233,16 +233,7 @@ const styles = StyleSheet.create({
   },
   form: {
     marginTop: 28,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#E0E6F2",
-    borderRadius: 22,
-    backgroundColor: "#FFFFFF",
-    shadowColor: "#101B3A",
-    shadowOffset: { width: 0, height: 7 },
-    shadowOpacity: 0.07,
-    shadowRadius: 18,
-    elevation: 3,
+    width: "100%",
   },
   label: {
     marginTop: 14,
@@ -255,12 +246,12 @@ const styles = StyleSheet.create({
   input: {
     minHeight: 55,
     borderWidth: 1,
-    borderColor: "#D9E0EC",
-    borderRadius: 14,
+    borderColor: "#D7DFEF",
+    borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 15,
     color: "#101B3A",
-    backgroundColor: "#F9FAFC",
+    backgroundColor: "#FFFFFF",
   },
   forgot: {
     alignSelf: "flex-end",
@@ -272,7 +263,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     minHeight: 55,
     marginTop: 23,
-    borderRadius: 15,
+    borderRadius: 12,
     backgroundColor: "#4169E1",
     alignItems: "center",
     justifyContent: "center",
@@ -280,7 +271,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 7 },
     shadowOpacity: 0.22,
     shadowRadius: 12,
-    elevation: 4,
+    elevation: 0,
   },
   disabledButton: {
     opacity: 0.65,
