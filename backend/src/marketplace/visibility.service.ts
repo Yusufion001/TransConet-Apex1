@@ -1,5 +1,8 @@
 import { prisma } from "../config/prisma.js";
-import { isMarketplaceVehicleCompatible } from "./marketplace.compatibility.js";
+import {
+  isMarketplaceVehicleCompatible,
+  isMarketplaceVehicleLocationFresh,
+} from "./marketplace.compatibility.js";
 import {
   getMarketplaceVisibilityConfig,
 } from "./visibility.policy.js";
@@ -61,32 +64,6 @@ function tierScore(
     config.tierScores[
       tier as keyof typeof config.tierScores
     ] ?? config.tierScores.TIER_1
-  );
-}
-
-function hasValidCoordinates(
-  latitude: unknown,
-  longitude: unknown,
-): boolean {
-  if (
-    latitude === null ||
-    latitude === undefined ||
-    longitude === null ||
-    longitude === undefined
-  ) {
-    return false;
-  }
-
-  const lat = Number(latitude);
-  const lon = Number(longitude);
-
-  return (
-    Number.isFinite(lat) &&
-    Number.isFinite(lon) &&
-    lat >= -90 &&
-    lat <= 90 &&
-    lon >= -180 &&
-    lon <= 180
   );
 }
 
@@ -311,34 +288,23 @@ export async function getVisibleMarketplaceLoads(
       const locatedVehicles =
         matchingVehicles
           .filter((vehicle) =>
-            hasValidCoordinates(
-              vehicle.currentLatitude,
-              vehicle.currentLongitude,
+            isMarketplaceVehicleLocationFresh(
+              {
+                currentLatitude:
+                  vehicle.currentLatitude === null
+                    ? null
+                    : Number(vehicle.currentLatitude),
+                currentLongitude:
+                  vehicle.currentLongitude === null
+                    ? null
+                    : Number(vehicle.currentLongitude),
+                marketplaceLocationUpdatedAt:
+                  vehicle.marketplaceLocationUpdatedAt,
+              },
+              visibilityPolicy.locationFreshnessSeconds,
+              now,
             ),
           )
-          .filter((vehicle) => {
-            if (
-              visibilityPolicy.locationFreshnessSeconds ===
-              undefined
-            ) {
-              return true;
-            }
-
-            if (!vehicle.marketplaceLocationUpdatedAt) {
-              return false;
-            }
-
-            const locationAgeSeconds =
-              (now.getTime() -
-                vehicle.marketplaceLocationUpdatedAt.getTime()) /
-              1000;
-
-            return (
-              Number.isFinite(locationAgeSeconds) &&
-              locationAgeSeconds <=
-                visibilityPolicy.locationFreshnessSeconds
-            );
-          })
           .map((vehicle) => {
             const distance =
               distanceKm(
