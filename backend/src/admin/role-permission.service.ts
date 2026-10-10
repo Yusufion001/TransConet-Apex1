@@ -1,5 +1,6 @@
 import { prisma } from "../config/prisma.js";
 import { publishEvent } from "../realtime/event-bus.js";
+import { revokeAdminSocketAccess } from "../realtime/admin-socket-access.js";
 import { AdminStatus } from "../../generated/prisma/enums.js";
 import type { AdminModule } from "../../generated/prisma/enums.js";
 
@@ -102,6 +103,9 @@ export async function updateAdminPermissions(
     },
     select: adminRoleSelect,
   });
+
+  // Force existing sockets to reconnect with the updated permissions.
+  revokeAdminSocketAccess(userId);
 
   publishEvent("admin", {
     eventType: "ADMIN_PERMISSIONS_UPDATED",

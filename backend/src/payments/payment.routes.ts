@@ -1,3 +1,4 @@
+import { AdminModule } from "../../generated/prisma/enums.js";
 import { Router } from "express";
 import { prisma } from "../config/prisma.js";
 import { processPaymentWebhook } from "./payment-webhook.service.js";
@@ -352,6 +353,7 @@ router.post(
         req.user!.id,
         req.user!.role,
         "read",
+        AdminModule.FINANCIAL_OPERATIONS,
       );
 
       if (
@@ -431,14 +433,13 @@ router.get(
         });
       }
 
-      if (req.user!.role !== "ADMIN") {
-        await assertBookingAccess(
-          payment.bookingId,
-          req.user!.id,
-          req.user!.role,
-          "read",
-        );
-      }
+      await assertBookingAccess(
+        payment.bookingId,
+        req.user!.id,
+        req.user!.role,
+        "read",
+        AdminModule.FINANCIAL_OPERATIONS,
+      );
 
       res.json({
         success: true,
@@ -475,6 +476,7 @@ router.get(
         req.user!.id,
         req.user!.role,
         "read",
+        AdminModule.FINANCIAL_OPERATIONS,
       );
 
       const payments = await getBookingPayments(bookingId);

@@ -1,6 +1,7 @@
 import { EventEmitter } from "node:events";
 import type { AdminRealtimeEvent } from "./realtime.service.js";
 import { persistAdminActivity } from "./activity.service.js";
+import { sanitizeSensitiveEventData } from "./admin-event-sanitizer.js";
 
 export const eventBus = new EventEmitter();
 
@@ -26,11 +27,16 @@ export function publishEvent(
     ...event,
   };
 
+  const safePayload: RealtimeEvent = {
+    ...payload,
+    data: sanitizeSensitiveEventData(payload.entityType, payload.data),
+  };
+
   if (channel === "admin" || channel === "booking") {
-    void persistAdminActivity(payload).catch((error) => {
+    void persistAdminActivity(safePayload).catch((error) => {
       console.error("Failed to persist admin activity:", error);
     });
   }
 
-  emitRealtimeEvent(payload);
+  emitRealtimeEvent(safePayload);
 }

@@ -175,6 +175,11 @@ function securityErrorMiddleware(
   const safeStatusCode =
     statusCode >= 400 && statusCode < 500 ? statusCode : 500;
 
+  // Let the application error middleware log unexpected server failures.
+  if (safeStatusCode >= 500) {
+    return next(err);
+  }
+
   /*
    * Never expose internal exception details in production.
    */

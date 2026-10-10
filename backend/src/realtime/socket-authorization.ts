@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { AdminModule } from "../../generated/prisma/enums.js";
 
 export type SocketUser = {
   id: string;
@@ -16,8 +17,33 @@ export async function canAccessBooking(
   user: SocketUser,
   bookingId: string,
 ) {
+  if (user.status !== "ACTIVE") {
+    return false;
+  }
+
   if (user.role === "ADMIN") {
-    return true;
+    const administrator = await prisma.adminProfile.findUnique({
+      where: { userId: user.id },
+      select: {
+        status: true,
+        isSuperAdministrator: true,
+        administratorType: true,
+        assignedModules: true,
+      },
+    });
+
+    if (!administrator || administrator.status !== "ACTIVE") {
+      return false;
+    }
+
+    const isSuperAdministrator =
+      administrator.isSuperAdministrator ||
+      administrator.administratorType === "SUPER_ADMIN";
+
+    return (
+      isSuperAdministrator ||
+      administrator.assignedModules.includes(AdminModule.LIVE_TRIPS)
+    );
   }
 
   const booking = await prisma.booking.findUnique({

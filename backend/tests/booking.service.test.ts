@@ -1,8 +1,12 @@
+import { AdminModule } from "../generated/prisma/enums.js";
 import test, { mock } from "node:test";
 import assert from "node:assert/strict";
 import { toBookingDto } from "../src/bookings/booking.dto.js";
 
 const prismaMock = {
+  adminProfile: {
+    findUnique: mock.fn<(...args: any[]) => any>(),
+  },
   booking: {
     create: mock.fn<(...args: any[]) => any>(),
     findUnique: mock.fn<(...args: any[]) => any>(),
@@ -27,6 +31,7 @@ const prismaMock = {
   vehicle: {
     findUnique: mock.fn<(...args: any[]) => any>(),
     update: mock.fn<(...args: any[]) => any>(),
+    updateMany: mock.fn<(...args: any[]) => any>(),
   },
 
   payment: {
@@ -147,6 +152,7 @@ function makeBooking(overrides: Record<string, any> = {}) {
 }
 
 function resetMocks() {
+  prismaMock.adminProfile.findUnique.mock.resetCalls();
   createSettlementMock.mock.resetCalls();
   for (const fn of [
     prismaMock.booking.create,
@@ -157,6 +163,7 @@ function resetMocks() {
     prismaMock.user.findUnique,
     prismaMock.vehicle.findUnique,
     prismaMock.vehicle.update,
+    prismaMock.vehicle.updateMany,
     prismaMock.payment.findFirst,
     prismaMock.payment.findUnique,
     prismaMock.expressBooking.findUnique,
@@ -326,20 +333,91 @@ test("assertBookingAccess denies a customer access to another customer's booking
   );
 });
 
-test("assertBookingAccess allows an administrator to access any booking", async () => {
+test("assertBookingAccess allows an active administrator with the required module", async () => {
   prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
-    id: "booking-1",
-    customerId: "customer-1",
-    transporterId: "transporter-1",
+    id: "booking-1", customerId: "customer-1", transporterId: "transporter-1",
+  }));
+  prismaMock.adminProfile.findUnique.mock.mockImplementation(async () => ({
+    status: "ACTIVE", isSuperAdministrator: false,
+    administratorType: "SUPPORT_ADMIN", assignedModules: [AdminModule.LIVE_TRIPS],
   }));
 
   const result = await assertBookingAccess(
-    "booking-1",
-    "admin-1",
-    "ADMIN",
-    "read",
+    "booking-1", "admin-1", "ADMIN", "read", AdminModule.LIVE_TRIPS,
   );
+  assert.equal(result.id, "booking-1");
+});
 
+test("assertBookingAccess denies an administrator without the required module", async () => {
+  prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
+    id: "booking-1", customerId: "customer-1", transporterId: "transporter-1",
+  }));
+  prismaMock.adminProfile.findUnique.mock.mockImplementation(async () => ({
+    status: "ACTIVE", isSuperAdministrator: false,
+    administratorType: "SUPPORT_ADMIN", assignedModules: [AdminModule.SUPPORT_CARE],
+  }));
+
+  await assert.rejects(
+    assertBookingAccess("booking-1", "admin-1", "ADMIN", "read", AdminModule.LIVE_TRIPS),
+    { message: "Access denied" },
+  );
+});
+
+test("assertBookingAccess rejects an administrator when no module is required", async () => {
+  prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
+    id: "booking-1", customerId: "customer-1", transporterId: "transporter-1",
+  }));
+
+  await assert.rejects(
+    assertBookingAccess("booking-1", "admin-1", "ADMIN", "read"),
+    { message: "Access denied" },
+  );
+  assert.equal(prismaMock.adminProfile.findUnique.mock.calls.length, 0);
+});
+
+test("assertBookingAccess denies an administrator with no profile", async () => {
+  prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
+    id: "booking-1", customerId: "customer-1", transporterId: "transporter-1",
+  }));
+  prismaMock.adminProfile.findUnique.mock.mockImplementation(async () => null);
+
+  await assert.rejects(
+    assertBookingAccess("booking-1", "admin-1", "ADMIN", "read", AdminModule.LIVE_TRIPS),
+    { message: "Access denied" },
+  );
+});
+
+test("assertBookingAccess denies an inactive administrator", async () => {
+  prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
+    id: "booking-1", customerId: "customer-1", transporterId: "transporter-1",
+  }));
+  prismaMock.adminProfile.findUnique.mock.mockImplementation(async () => ({
+    status: "SUSPENDED",
+    isSuperAdministrator: false,
+    administratorType: "SUPPORT_ADMIN",
+    assignedModules: [AdminModule.LIVE_TRIPS],
+  }));
+
+  await assert.rejects(
+    assertBookingAccess("booking-1", "admin-1", "ADMIN", "read", AdminModule.LIVE_TRIPS),
+    { message: "Access denied" },
+  );
+});
+
+test("assertBookingAccess allows an active Super Administrator without assigned modules", async () => {
+  prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
+    id: "booking-1", customerId: "customer-1", transporterId: "transporter-1",
+  }));
+  prismaMock.adminProfile.findUnique.mock.mockImplementation(async () => ({
+    status: "ACTIVE",
+    isSuperAdministrator: true,
+    administratorType: "SUPER_ADMIN",
+    assignedModules: [],
+  }));
+
+  const result = await assertBookingAccess(
+    "booking-1", "super-admin-1", "ADMIN", "read", AdminModule.LIVE_TRIPS,
+  );
   assert.equal(result.id, "booking-1");
 });
 
@@ -360,10 +438,19 @@ test("getBookingById returns the requested booking", async () => {
 });
 
 test("assignBooking assigns an approved available vehicle and transporter", async () => {
-  prismaMock.booking.findUnique.mock.mockImplementation(async () => ({
-    id: "booking-1",
-    status: "SEARCHING",
-  }));
+  const updatedBooking = makeBooking({
+    transporterId: "transporter-1",
+    vehicleId: "vehicle-1",
+    status: "ASSIGNED",
+  });
+
+  let bookingReads = 0;
+  prismaMock.booking.findUnique.mock.mockImplementation(async () => {
+    bookingReads += 1;
+    return bookingReads === 1
+      ? { id: "booking-1", status: "SEARCHING" }
+      : updatedBooking;
+  });
 
   prismaMock.user.findUnique.mock.mockImplementation(async () => ({
     id: "transporter-1",
@@ -378,55 +465,68 @@ test("assignBooking assigns an approved available vehicle and transporter", asyn
     verificationStatus: "APPROVED",
   }));
 
-  const updatedBooking = makeBooking({
+  prismaMock.booking.updateMany.mock.mockImplementation(async () => ({ count: 1 }));
+  prismaMock.vehicle.updateMany.mock.mockImplementation(async () => ({ count: 1 }));
+
+  const result = await assignBooking("booking-1", "transporter-1", "vehicle-1");
+
+  assert.equal(result.status, "ASSIGNED");
+  assert.equal(prismaMock.booking.updateMany.mock.calls.length, 1);
+  assert.equal(prismaMock.vehicle.updateMany.mock.calls.length, 1);
+  assert.equal(prismaMock.booking.update.mock.calls.length, 0);
+  assert.equal(prismaMock.vehicle.update.mock.calls.length, 0);
+  assert.equal(createShipmentEventMock.mock.calls.length, 1);
+  assert.equal(publishBookingEventMock.mock.calls.length, 1);
+  assert.equal(publishEventMock.mock.calls.length, 1);
+});
+
+test("competing assignment requests allow only one booking claim to win", async () => {
+  const assignedBooking = makeBooking({
     transporterId: "transporter-1",
     vehicleId: "vehicle-1",
     status: "ASSIGNED",
   });
 
-  prismaMock.booking.update.mock.mockImplementation(
-    async () => updatedBooking,
-  );
+  let bookingReads = 0;
+  let claims = 0;
 
-  prismaMock.vehicle.update.mock.mockImplementation(
-    async () => ({
-      id: "vehicle-1",
-      availabilityStatus: "ON_TRIP",
-    }),
-  );
+  prismaMock.booking.findUnique.mock.mockImplementation(async () => {
+    bookingReads += 1;
+    return bookingReads <= 2
+      ? { id: "booking-1", status: "SEARCHING" }
+      : assignedBooking;
+  });
 
-  const result = await assignBooking(
-    "booking-1",
-    "transporter-1",
-    "vehicle-1",
-  );
+  prismaMock.user.findUnique.mock.mockImplementation(async () => ({
+    id: "transporter-1",
+    role: "TRANSPORTER",
+    status: "ACTIVE",
+  }));
 
-  assert.equal(result.status, "ASSIGNED");
+  prismaMock.vehicle.findUnique.mock.mockImplementation(async () => ({
+    id: "vehicle-1",
+    transporterId: "transporter-1",
+    availabilityStatus: "AVAILABLE",
+    verificationStatus: "APPROVED",
+  }));
 
-  assert.equal(
-    prismaMock.booking.update.mock.calls.length,
-    1,
-  );
+  prismaMock.booking.updateMany.mock.mockImplementation(async () => {
+    claims += 1;
+    return { count: claims === 1 ? 1 : 0 };
+  });
 
-  assert.equal(
-    prismaMock.vehicle.update.mock.calls.length,
-    1,
-  );
+  prismaMock.vehicle.updateMany.mock.mockImplementation(async () => ({ count: 1 }));
 
-  assert.equal(
-    createShipmentEventMock.mock.calls.length,
-    1,
-  );
+  const outcomes = await Promise.allSettled([
+    assignBooking("booking-1", "transporter-1", "vehicle-1"),
+    assignBooking("booking-1", "transporter-1", "vehicle-1"),
+  ]);
 
-  assert.equal(
-    publishBookingEventMock.mock.calls.length,
-    1,
-  );
-
-  assert.equal(
-    publishEventMock.mock.calls.length,
-    1,
-  );
+  assert.equal(outcomes.filter((item) => item.status === "fulfilled").length, 1);
+  assert.equal(outcomes.filter((item) => item.status === "rejected").length, 1);
+  assert.equal(prismaMock.booking.updateMany.mock.calls.length, 2);
+  assert.equal(prismaMock.vehicle.updateMany.mock.calls.length, 1);
+  assert.equal(publishBookingEventMock.mock.calls.length, 1);
 });
 
 test("assignBooking rejects a vehicle that is not available", async () => {

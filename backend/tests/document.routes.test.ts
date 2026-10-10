@@ -4,12 +4,13 @@ import assert from "node:assert/strict";
 const routerUseMock = mock.fn();
 const routerGetMock = mock.fn();
 const routerPostMock = mock.fn();
+const routerPatchMock = mock.fn();
 
 const RouterMock = () => ({
   use: routerUseMock,
   get: routerGetMock,
   post: routerPostMock,
-  patch: mock.fn(),
+  patch: routerPatchMock,
 });
 
 mock.module("express", {
@@ -51,6 +52,23 @@ mock.module(
   {
     namedExports: {
       requireAdmin: requireAdminMock,
+    },
+  },
+);
+
+const moduleGuardMiddleware = new Map();
+const requireAdminModuleMock = mock.fn((moduleName) => {
+  if (!moduleGuardMiddleware.has(moduleName)) {
+    moduleGuardMiddleware.set(moduleName, mock.fn());
+  }
+  return moduleGuardMiddleware.get(moduleName);
+});
+
+mock.module(
+  new URL("../src/middleware/admin-module.middleware.js", import.meta.url).href,
+  {
+    namedExports: {
+      requireAdminModule: requireAdminModuleMock,
     },
   },
 );
@@ -115,6 +133,25 @@ function makeRequest(body: unknown, user = {
 }
 
 const createRoute = getPostRoute("/");
+
+test("document review endpoints register the verification-center module guard", () => {
+  const guard = moduleGuardMiddleware.get("VERIFICATION_CENTER");
+  assert.ok(guard, "Expected verification-center guard");
+
+  const routes = [
+    [routerGetMock.mock.calls, "/pending"],
+    [routerGetMock.mock.calls, "/verified"],
+    [routerPatchMock.mock.calls, "/:id/approve"],
+    [routerPatchMock.mock.calls, "/:id/reject"],
+  ];
+
+  for (const [calls, path] of routes) {
+    const route = calls.find((call) => call.arguments[0] === path);
+    assert.ok(route, `Expected document route ${path}`);
+    assert.ok(route.arguments.includes(guard), `${path} must use the module guard`);
+  }
+});
+
 
 test.beforeEach(() => {
   createDocumentMock.mock.resetCalls();

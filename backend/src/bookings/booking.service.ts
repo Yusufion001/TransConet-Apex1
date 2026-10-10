@@ -1,3 +1,4 @@
+import { AdminModule } from "../../generated/prisma/enums.js";
 import { randomBytes, randomInt } from "node:crypto";
 import { prisma } from "../config/prisma.js";
 import { createShipmentEvent } from "../events/event.service.js";
@@ -150,6 +151,7 @@ export async function assertBookingAccess(
   userId: string,
   role: string,
   action: "read" | "assign" | "status" | "proof" | "confirm" = "read",
+  requiredAdminModule?: AdminModule,
 ) {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
@@ -157,7 +159,29 @@ export async function assertBookingAccess(
   });
 
   if (!booking) throw new Error("Booking not found");
-  if (role === "ADMIN") return booking;
+  if (role === "ADMIN") {
+    if (!requiredAdminModule) throw new Error("Access denied");
+    const administrator = await prisma.adminProfile.findUnique({
+      where: { userId },
+      select: {
+        status: true,
+        isSuperAdministrator: true,
+        administratorType: true,
+        assignedModules: true,
+      },
+    });
+    if (!administrator || administrator.status !== "ACTIVE") {
+      throw new Error("Access denied");
+    }
+    if (
+      administrator.isSuperAdministrator ||
+      administrator.administratorType === "SUPER_ADMIN"
+    ) return booking;
+    if (!administrator.assignedModules.includes(requiredAdminModule)) {
+      throw new Error("Access denied");
+    }
+    return booking;
+  }
 
   if (action === "read" &&
       ((role === "CUSTOMER" && booking.customerId === userId) ||
@@ -277,21 +301,39 @@ export async function assignBooking(
       throw new Error("Vehicle is not available");
     }
 
-    const updated = await tx.booking.update({
-      where: { id: bookingId },
-      data: {
-        transporterId,
-        vehicleId,
-        status: "ASSIGNED",
+    const bookingClaim = await tx.booking.updateMany({
+      where: {
+        id: bookingId,
+        status: { in: ["REQUESTED", "SEARCHING"] },
       },
+      data: { transporterId, vehicleId, status: "ASSIGNED" },
     });
 
-    await tx.vehicle.update({
-      where: { id: vehicleId },
-      data: {
-        availabilityStatus: "ON_TRIP",
+    if (bookingClaim.count !== 1) {
+      throw new Error("Booking has already been assigned or is no longer available");
+    }
+
+    const vehicleClaim = await tx.vehicle.updateMany({
+      where: {
+        id: vehicleId,
+        transporterId,
+        availabilityStatus: "AVAILABLE",
+        verificationStatus: "APPROVED",
       },
+      data: { availabilityStatus: "ON_TRIP" },
     });
+
+    if (vehicleClaim.count !== 1) {
+      throw new Error("Vehicle is no longer available");
+    }
+
+    const updated = await tx.booking.findUnique({
+      where: { id: bookingId },
+    });
+
+    if (!updated) {
+      throw new Error("Assigned booking could not be retrieved");
+    }
 
     return updated;
   });

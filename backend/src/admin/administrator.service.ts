@@ -6,6 +6,7 @@ import {
   AdminStatus,
   AdminType,
 } from "../../generated/prisma/enums.js";
+import { revokeAdminSocketAccess } from "../realtime/admin-socket-access.js";
 
 async function getActiveSuperAdministrator(creatorId: string) {
   const administrator = await prisma.adminProfile.findUnique({
@@ -277,7 +278,7 @@ export async function updateAdministrator(
     );
   }
 
-  return prisma.$transaction(async (tx) => {
+  const updatedResult = await prisma.$transaction(async (tx) => {
     const updated =
       await tx.adminProfile.update({
         where: {
@@ -336,6 +337,9 @@ export async function updateAdministrator(
 
     return updated;
   });
+
+  revokeAdminSocketAccess(userId);
+  return updatedResult;
 }
 
 export async function changeAdministratorStatus(
@@ -370,7 +374,7 @@ export async function changeAdministratorStatus(
     );
   }
 
-  return prisma.$transaction(async (tx) => {
+  const updatedResult = await prisma.$transaction(async (tx) => {
     const updated =
       await tx.adminProfile.update({
         where: {
@@ -436,4 +440,7 @@ export async function changeAdministratorStatus(
 
     return updated;
   });
+
+  revokeAdminSocketAccess(userId);
+  return updatedResult;
 }

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "FLW_WALLET_FUNDING_REDIRECT_URL=https://example.test/wallet-funding/callback node --experimental-test-module-mocks --import tsx --test tests/**/*.test.ts",
+    "test": "FLW_WALLET_FUNDING_REDIRECT_URL=https://example.test/wallet-funding/callback IDENTITY_ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef node --experimental-test-module-mocks --import tsx --test tests/**/*.test.ts",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/src/server.js",

@@ -7,6 +7,8 @@ import {
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
+import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import { AdminModule } from "../../generated/prisma/enums.js";
 import {
   documentCreateSchema,
   documentRejectionSchema,
@@ -147,7 +149,13 @@ router.post(
   },
 );
 
-router.get("/user/:userId", async (req: AuthenticatedRequest, res) => {
+router.get(
+  "/user/:userId",
+  (req: AuthenticatedRequest, res, next) => {
+    if (req.user?.role !== "ADMIN") return next();
+    return requireAdminModule(AdminModule.VERIFICATION_CENTER)(req, res, next);
+  },
+  async (req: AuthenticatedRequest, res) => {
   try {
     const requestedUserId = String(req.params.userId);
 
@@ -175,6 +183,7 @@ router.get("/user/:userId", async (req: AuthenticatedRequest, res) => {
 router.get(
   "/pending",
   requireAdmin,
+  requireAdminModule(AdminModule.VERIFICATION_CENTER),
   async (_req: AuthenticatedRequest, res) => {
     try {
       const documents = await getPendingDocuments();
@@ -191,6 +200,7 @@ router.get(
 router.get(
   "/verified",
   requireAdmin,
+  requireAdminModule(AdminModule.VERIFICATION_CENTER),
   async (_req: AuthenticatedRequest, res) => {
     try {
       const documents = await getVerifiedDocuments();
@@ -207,6 +217,7 @@ router.get(
 router.patch(
   "/:id/approve",
   requireAdmin,
+  requireAdminModule(AdminModule.VERIFICATION_CENTER),
   async (req: AuthenticatedRequest, res) => {
     try {
       const params = documentIdParamsSchema.parse(req.params);
@@ -236,6 +247,7 @@ router.patch(
 router.patch(
   "/:id/reject",
   requireAdmin,
+  requireAdminModule(AdminModule.VERIFICATION_CENTER),
   async (req: AuthenticatedRequest, res) => {
     try {
       const params = documentIdParamsSchema.parse(req.params);
