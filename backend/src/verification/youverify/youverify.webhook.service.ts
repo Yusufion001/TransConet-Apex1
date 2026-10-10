@@ -270,6 +270,14 @@ export async function processYouverifyWebhook(
   const status =
     extractStatus(payload) ?? "UNKNOWN";
 
+  // Persist only the minimum webhook metadata, never the raw provider body.
+  const providerSummary = {
+    provider: PROVIDER,
+    eventType,
+    verificationId,
+    status,
+  };
+
   /*
    * Find the TransConet document associated with
    * the provider verification.
@@ -305,7 +313,7 @@ export async function processYouverifyWebhook(
           eventType,
           documentId: document?.id,
           verificationId: verification?.id,
-          payload: payload as InputJsonValue,
+          payload: providerSummary as InputJsonValue,
         },
       });
   } catch (error) {
@@ -365,7 +373,7 @@ export async function processYouverifyWebhook(
         providerStatus?: "SUCCESS" | "FAILED" | "PENDING";
         verifiedAt?: Date | null;
       } = {
-        providerResponse: payload as InputJsonValue,
+        providerResponse: providerSummary as InputJsonValue,
       };
 
       if (isVerificationSuccess(status)) {
@@ -395,7 +403,17 @@ export async function processYouverifyWebhook(
         module: "VERIFICATION_CENTER",
         entityType: "VERIFICATION",
         entityId: updatedVerification.id,
-        data: updatedVerification,
+        data: {
+          id: updatedVerification.id,
+          type: updatedVerification.type,
+          verificationProvider: updatedVerification.verificationProvider,
+          providerStatus: updatedVerification.providerStatus,
+          adminStatus: updatedVerification.adminStatus,
+          adminApproved: updatedVerification.adminApproved,
+          verifiedAt: updatedVerification.verifiedAt,
+          createdAt: updatedVerification.createdAt,
+          updatedAt: updatedVerification.updatedAt,
+        },
       });
 
       const processedEvent =
@@ -416,7 +434,7 @@ export async function processYouverifyWebhook(
         webhookEventId: processedEvent.id,
         verificationId,
         status,
-        verification: updatedVerification,
+        verificationRecordId: updatedVerification.id,
       };
     }
 
@@ -440,7 +458,7 @@ export async function processYouverifyWebhook(
           },
           data: {
             providerResponse:
-              payload as InputJsonValue,
+              providerSummary as InputJsonValue,
             verifiedAt:
               document.verifiedAt ?? new Date(),
 
@@ -459,7 +477,16 @@ export async function processYouverifyWebhook(
         module: "VERIFICATION_CENTER",
         entityType: "DOCUMENT",
         entityId: updatedDocument.id,
-        data: updatedDocument,
+        data: {
+          id: updatedDocument.id,
+          type: updatedDocument.type,
+          status: updatedDocument.status,
+          verifiedAt: updatedDocument.verifiedAt,
+          adminApproved: updatedDocument.adminApproved,
+          adminApprovedAt: updatedDocument.adminApprovedAt,
+          createdAt: updatedDocument.createdAt,
+          updatedAt: updatedDocument.updatedAt,
+        },
       });
     } else if (isVerificationFailure(status)) {
       /*
@@ -475,7 +502,7 @@ export async function processYouverifyWebhook(
             },
             data: {
               providerResponse:
-                payload as InputJsonValue,
+                providerSummary as InputJsonValue,
               status: "REJECTED",
               adminApproved: false,
               adminApprovedAt: null,
@@ -489,7 +516,7 @@ export async function processYouverifyWebhook(
             },
             data: {
               providerResponse:
-                payload as InputJsonValue,
+                providerSummary as InputJsonValue,
             },
           });
       }
@@ -499,7 +526,16 @@ export async function processYouverifyWebhook(
         module: "VERIFICATION_CENTER",
         entityType: "DOCUMENT",
         entityId: updatedDocument.id,
-        data: updatedDocument,
+        data: {
+          id: updatedDocument.id,
+          type: updatedDocument.type,
+          status: updatedDocument.status,
+          verifiedAt: updatedDocument.verifiedAt,
+          adminApproved: updatedDocument.adminApproved,
+          adminApprovedAt: updatedDocument.adminApprovedAt,
+          createdAt: updatedDocument.createdAt,
+          updatedAt: updatedDocument.updatedAt,
+        },
       });
     } else {
       /*
@@ -513,7 +549,7 @@ export async function processYouverifyWebhook(
           },
           data: {
             providerResponse:
-              payload as InputJsonValue,
+              providerSummary as InputJsonValue,
           },
         });
     }
@@ -536,7 +572,7 @@ export async function processYouverifyWebhook(
       webhookEventId: processedEvent.id,
       verificationId,
       status,
-      document: updatedDocument,
+      documentRecordId: updatedDocument.id,
     };
   } catch (error) {
     /*

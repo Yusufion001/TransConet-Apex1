@@ -11,6 +11,8 @@ import {
 } from "../middleware/auth.middleware.js";
 import { assertBookingAccess } from "../bookings/booking.service.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
+import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import { AdminModule } from "../../generated/prisma/enums.js";
 import { validate } from "../middleware/validate.middleware.js";
 import {
   createSupportTicketSchema,
@@ -25,6 +27,10 @@ router.use(authenticate);
 router.post(
   "/",
   validate(createSupportTicketSchema),
+  (req: AuthenticatedRequest, res, next) => {
+    if (req.user?.role !== "ADMIN") return next();
+    return requireAdminModule(AdminModule.SUPPORT_CARE)(req, res, next);
+  },
   async (req: AuthenticatedRequest, res) => {
     try {
       if (req.body.bookingId) {
@@ -33,6 +39,7 @@ router.post(
           req.user!.id,
           req.user!.role,
           "read",
+        AdminModule.SUPPORT_CARE,
         );
       }
 
@@ -63,6 +70,10 @@ router.post(
 
 router.get(
   "/user/:userId",
+  (req: AuthenticatedRequest, res, next) => {
+    if (req.user?.role !== "ADMIN") return next();
+    return requireAdminModule(AdminModule.SUPPORT_CARE)(req, res, next);
+  },
   async (req: AuthenticatedRequest, res) => {
     try {
       const userId = String(req.params.userId);
@@ -89,6 +100,7 @@ router.get(
 router.patch(
   "/:id/status",
   requireAdmin,
+  requireAdminModule(AdminModule.SUPPORT_CARE),
   validate(supportTicketIdSchema, "params"),
   validate(supportTicketStatusSchema),
   async (req: AuthenticatedRequest, res) => {

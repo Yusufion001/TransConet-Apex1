@@ -1,3 +1,5 @@
+import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import { AdminModule } from "../../generated/prisma/enums.js";
 import { Router } from "express";
 import { z } from "zod";
 import {
@@ -39,6 +41,7 @@ router.use(authenticate);
 router.post(
   "/",
   requireAdmin,
+  requireAdminModule(AdminModule.LIVE_TRIPS),
   async (req, res) => {
     try {
       const data = shipmentEventSchema.parse(req.body);
@@ -73,6 +76,7 @@ router.get(
         req.user!.id,
         req.user!.role,
         "read",
+        AdminModule.LIVE_TRIPS,
       );
 
       const events = await getBookingEvents(

@@ -11,6 +11,8 @@ mock.module(new URL("../src/config/env.js", import.meta.url).href, {
       TERMII_OTP_TTL_MINUTES: 10,
       ADMIN_MFA_ENCRYPTION_KEY:
         "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      IDENTITY_ENCRYPTION_KEY:
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     },
   },
 });

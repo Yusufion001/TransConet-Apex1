@@ -1,3 +1,4 @@
+import { AdminModule } from "../../generated/prisma/enums.js";
 import { Router } from "express";
 import {
   createMessage,
@@ -36,6 +37,7 @@ router.post(
         req.user!.id,
         req.user!.role,
         "read",
+        AdminModule.MESSAGING,
       );
 
       if (
@@ -101,6 +103,7 @@ router.get(
         req.user!.id,
         req.user!.role,
         "read",
+        AdminModule.MESSAGING,
       );
 
       const messages = await getBookingMessages(

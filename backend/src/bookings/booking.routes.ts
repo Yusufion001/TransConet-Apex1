@@ -1,3 +1,5 @@
+import { requireAdminModule } from "../middleware/admin-module.middleware.js";
+import { AdminModule } from "../../generated/prisma/enums.js";
 import { randomUUID } from "node:crypto";
 import { estimateIndicativeFare } from "../pricing/pricing.service.js";
 import { Router, type Response } from "express";
@@ -174,7 +176,13 @@ router.post(
   }
 });
 
-router.get("/customer/:customerId", async (req: AuthenticatedRequest, res) => {
+router.get(
+  "/customer/:customerId",
+  (req: AuthenticatedRequest, res, next) => {
+    if (req.user?.role !== "ADMIN") return next();
+    return requireAdminModule(AdminModule.LIVE_TRIPS)(req, res, next);
+  },
+  async (req: AuthenticatedRequest, res) => {
   try {
     if (req.user!.role !== "ADMIN" &&
         (req.user!.role !== "CUSTOMER" ||
@@ -194,6 +202,10 @@ router.get("/customer/:customerId", async (req: AuthenticatedRequest, res) => {
 
 router.get(
   "/transporter/:transporterId",
+  (req: AuthenticatedRequest, res, next) => {
+    if (req.user?.role !== "ADMIN") return next();
+    return requireAdminModule(AdminModule.LIVE_TRIPS)(req, res, next);
+  },
   async (req: AuthenticatedRequest, res) => {
     try {
       if (
@@ -224,6 +236,10 @@ router.get(
 
 router.get(
   "/transporter/:transporterId/marketplace-assignments",
+  (req: AuthenticatedRequest, res, next) => {
+    if (req.user?.role !== "ADMIN") return next();
+    return requireAdminModule(AdminModule.LIVE_TRIPS)(req, res, next);
+  },
   async (req: AuthenticatedRequest, res) => {
     try {
       if (
@@ -253,6 +269,10 @@ router.get(
 
 router.get(
   "/transporter/:transporterId/express-assignments",
+  (req: AuthenticatedRequest, res, next) => {
+    if (req.user?.role !== "ADMIN") return next();
+    return requireAdminModule(AdminModule.LIVE_TRIPS)(req, res, next);
+  },
   async (req: AuthenticatedRequest, res) => {
     try {
       if (
@@ -303,6 +323,7 @@ router.get("/:id", async (req: AuthenticatedRequest, res) => {
       req.user!.id,
       req.user!.role,
       "read",
+        AdminModule.LIVE_TRIPS,
     );
 
     const booking = await getBookingById(String(req.params.id));
@@ -337,6 +358,7 @@ router.patch("/:id/assign", async (req: AuthenticatedRequest, res) => {
       req.user!.id,
       req.user!.role,
       "assign",
+        AdminModule.LIVE_TRIPS,
     );
 
     const input = assignBookingSchema.parse(req.body);
@@ -363,6 +385,7 @@ router.patch("/:id/status", async (req: AuthenticatedRequest, res) => {
       req.user!.id,
       req.user!.role,
       "status",
+        AdminModule.LIVE_TRIPS,
     );
 
     const input = updateBookingStatusSchema.parse(req.body);
@@ -392,6 +415,7 @@ router.post(
         req.user!.id,
         req.user!.role,
         "proof",
+        AdminModule.LIVE_TRIPS,
       );
 
       const input = z.object({
@@ -434,6 +458,7 @@ router.patch(
         req.user!.id,
         req.user!.role,
         "proof",
+        AdminModule.LIVE_TRIPS,
       );
 
       const input = proofOfDeliverySchema.parse(req.body);
@@ -468,6 +493,7 @@ router.get(
         req.user!.id,
         req.user!.role,
         "confirm",
+        AdminModule.LIVE_TRIPS,
       );
 
       const code = await getDeliveryConfirmationCode(
@@ -495,6 +521,7 @@ router.patch(
         req.user!.id,
         req.user!.role,
         "confirm",
+        AdminModule.LIVE_TRIPS,
       );
 
       const input = confirmDeliverySchema.parse(req.body);

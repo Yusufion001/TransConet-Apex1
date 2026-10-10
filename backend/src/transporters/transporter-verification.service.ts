@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma.js";
+import { encryptIdentityValue, maskIdentityValue } from "../security/identity-crypto.js";
 import { publishEvent } from "../realtime/event-bus.js";
 import {
   extractYouverifyVerificationId,
@@ -122,11 +123,18 @@ export async function startTransporterVerification(
     data: {
       userId: input.userId,
       type: input.type,
-      verificationNumber,
+      verificationNumber: encryptIdentityValue(verificationNumber),
       verificationProvider: "YOUVERIFY",
       externalVerificationId,
       providerStatus,
-      providerResponse: providerResponse as any,
+      providerResponse: {
+          ...(typeof providerResponse.success === "boolean"
+            ? { success: providerResponse.success }
+            : {}),
+          ...(providerResponse.data?.status
+            ? { data: { status: String(providerResponse.data.status).slice(0, 40) } }
+            : {}),
+        } as any,
       verifiedAt: providerStatus === "SUCCESS" ? new Date() : null,
       adminStatus: "PENDING",
       adminApproved: false,
@@ -139,8 +147,15 @@ export async function startTransporterVerification(
     entityType: "VERIFICATION",
     entityId: verification.id,
     actorId: input.userId,
-    data: verification,
+    data: {
+      id: verification.id,
+      type: verification.type,
+      verificationProvider: verification.verificationProvider,
+      providerStatus: verification.providerStatus,
+      adminStatus: verification.adminStatus,
+      createdAt: verification.createdAt,
+    },
   });
 
-  return verification;
+  return { ...verification, verificationNumber: maskIdentityValue(verificationNumber) };
 }

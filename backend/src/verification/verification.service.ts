@@ -124,8 +124,15 @@ export async function startVerification(
       data: {
         verificationProvider: "YOUVERIFY",
         externalVerificationId,
-        providerResponse:
-          providerResponse as Prisma.InputJsonValue,
+        providerResponse: {
+          provider: "YOUVERIFY",
+          ...(typeof providerResponse.success === "boolean"
+            ? { success: providerResponse.success }
+            : {}),
+          ...(typeof providerResponse.data?.status === "string"
+            ? { status: providerResponse.data.status.slice(0, 40) }
+            : {}),
+        } as Prisma.InputJsonValue,
         status: "PENDING",
         verifiedAt: null,
       },
@@ -137,7 +144,16 @@ export async function startVerification(
     entityType: "DOCUMENT",
     entityId: document.id,
     actorId: userId,
-    data: document,
+    data: {
+      id: document.id,
+      type: document.type,
+      status: document.status,
+      verifiedAt: document.verifiedAt,
+      adminApproved: document.adminApproved,
+      adminApprovedAt: document.adminApprovedAt,
+      createdAt: document.createdAt,
+      updatedAt: document.updatedAt,
+    },
   });
 
   return document;

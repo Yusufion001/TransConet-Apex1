@@ -1,5 +1,48 @@
 import { prisma } from "../config/prisma.js";
 import { publishEvent } from "../realtime/event-bus.js";
+import { decryptIdentityValue, isEncryptedIdentityValue, maskIdentityValue } from "../security/identity-crypto.js";
+
+
+function maskStoredIdentity(value: unknown): string {
+  if (typeof value !== "string" || value.length === 0) return "";
+  const plain = isEncryptedIdentityValue(value)
+    ? decryptIdentityValue(value)
+    : value;
+  return maskIdentityValue(plain);
+}
+
+function sanitizeVerification<T extends {
+  verificationNumber: string;
+  providerResponse: unknown;
+}>(record: T): T {
+  const result: any = {
+    ...record,
+    verificationNumber: maskStoredIdentity(record.verificationNumber),
+    providerResponse: record.providerResponse == null
+      ? null
+      : { available: true },
+  };
+
+  const profile = (record as any).user?.transporterProfile;
+  if (profile && typeof profile.businessRegistrationNumber === "string") {
+    result.user = {
+      ...(record as any).user,
+      transporterProfile: {
+        ...profile,
+        businessRegistrationNumber:
+          maskStoredIdentity(profile.businessRegistrationNumber),
+      },
+    };
+  }
+
+  return result as T;
+}
+
+
+async function safeFindMany(args: any) {
+  const records = await prisma.verification.findMany(args);
+  return records.map((record) => sanitizeVerification(record));
+}
 
 const TRANSPORTER_VERIFICATION_TYPES = [
   "NIN",
@@ -32,7 +75,7 @@ function isCustomerVerificationType(
 }
 
 export async function getPendingCustomerVerifications() {
-  return prisma.verification.findMany({
+  return safeFindMany({
     where: {
       providerStatus: "PENDING",
       type: {
@@ -67,7 +110,7 @@ export async function getPendingCustomerVerifications() {
 }
 
 export async function getApprovedCustomerVerifications() {
-  return prisma.verification.findMany({
+  return safeFindMany({
     where: {
       providerStatus: "SUCCESS",
       type: {
@@ -102,7 +145,7 @@ export async function getApprovedCustomerVerifications() {
 }
 
 export async function getFailedCustomerVerifications() {
-  return prisma.verification.findMany({
+  return safeFindMany({
     where: {
       providerStatus: "FAILED",
       type: {
@@ -137,7 +180,7 @@ export async function getFailedCustomerVerifications() {
 }
 
 export async function getPendingTransporterVerifications() {
-  return prisma.verification.findMany({
+  return safeFindMany({
     where: {
       adminStatus: "PENDING",
       type: {
@@ -173,7 +216,7 @@ export async function getPendingTransporterVerifications() {
 }
 
 export async function getApprovedTransporterVerifications() {
-  return prisma.verification.findMany({
+  return safeFindMany({
     where: {
       adminStatus: "APPROVED",
       type: {
@@ -289,10 +332,10 @@ export async function approveTransporterVerification(
     entityType: "VERIFICATION",
     entityId: result.id,
     actorId: reviewedBy,
-    data: result,
+    data: sanitizeVerification(result),
   });
 
-  return result;
+  return sanitizeVerification(result);
 }
 
 export async function rejectTransporterVerification(
@@ -353,8 +396,8 @@ export async function rejectTransporterVerification(
     entityType: "VERIFICATION",
     entityId: result.id,
     actorId: reviewedBy,
-    data: result,
+    data: sanitizeVerification(result),
   });
 
-  return result;
+  return sanitizeVerification(result);
 }

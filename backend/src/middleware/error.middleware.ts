@@ -1,20 +1,9 @@
 import type { NextFunction, Request, Response } from "express";
 import { recordAdminError } from "../admin/error.service.js";
 
-function sanitizeErrorMessage(error: unknown): string {
-  if (!(error instanceof Error)) {
-    return "Unknown server error";
-  }
-
-  const message = error.message.trim();
-
-  if (!message) {
-    return "Internal server error";
-  }
-
-  return message.length > 1000
-    ? `${message.slice(0, 1000)}...`
-    : message;
+function sanitizeErrorMessage(_error: unknown): string {
+  // Exception messages can contain credentials, SQL, or identity data.
+  return "Unexpected server error";
 }
 
 function getRequestUser(req: Request): {
@@ -87,25 +76,21 @@ export async function applicationErrorMiddleware(
         data: {
           statusCode,
           method: req.method,
-          path: req.originalUrl,
+          path: req.path,
           requestId,
           userRole: user.role,
-          userAgent: req.get("user-agent"),
-          ipAddress: req.ip,
+
+
           errorName:
-            err instanceof Error
-              ? err.name
-              : "UnknownError",
+            "ApplicationError",
         },
       });
     } catch (loggingError) {
       /*
        * Error logging must never cause a second application failure.
        */
-      console.error(
-        "Failed to persist application error:",
-        loggingError,
-      );
+      // Do not print logging exceptions that may contain sensitive details.
+      console.error("Failed to persist application error");
     }
   }
 

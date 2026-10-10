@@ -17,7 +17,8 @@ const { applicationErrorMiddleware } = await import(
 function createRequest(): Request {
   return {
     method: "POST",
-    originalUrl: "/api/test",
+    originalUrl: "/api/test?token=SECRET_QUERY_TOKEN",
+    path: "/api/test",
     ip: "127.0.0.1",
     get(name: string) {
       return name === "user-agent" ? "security-test" : undefined;
@@ -166,6 +167,17 @@ test("hides internal server error details in production", async () => {
   const serialized = JSON.stringify(res.body);
   assert.equal(serialized.includes("SECRET_DATABASE_PASSWORD"), false);
   assert.equal(recordAdminErrorMock.mock.callCount(), 1);
+
+  const persistedError = JSON.stringify(
+    recordAdminErrorMock.mock.calls[0]?.arguments[0],
+  );
+  assert.equal(persistedError.includes("SECRET_DATABASE_PASSWORD"), false);
+  assert.equal(persistedError.includes("SECRET_QUERY_TOKEN"), false);
+  assert.equal(persistedError.includes("127.0.0.1"), false);
+  assert.equal(persistedError.includes("security-test"), false);
+  assert.equal(persistedError.includes("/api/test?"), false);
+  assert.equal(persistedError.includes("Unexpected server error"), true);
+  assert.equal(persistedError.includes("/api/test"), true);
 });
 
 test("returns generic 4xx errors in production", async () => {

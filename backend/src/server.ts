@@ -67,6 +67,7 @@ import contentRoutes from "./content/content.routes.js";
 import marketingRoutes from "./marketing/marketing.routes.js";
 import { initializeRealtime } from "./realtime/realtime.service.js";
 import { initializeSocketEvents } from "./realtime/socket-events.js";
+import { registerAdminSocketServer } from "./realtime/admin-socket-access.js";
 import { recordVehicleLocation } from "./realtime/tracking.service.js";
 import {
   canAccessBooking,
@@ -95,6 +96,8 @@ const io = new Server(httpServer, {
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   },
 });
+
+registerAdminSocketServer(io);
 
 io.use(async (socket, next) => {
   try {
