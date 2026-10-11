@@ -204,12 +204,13 @@ export default function Disputes() {
     };
   }, [selectedId]);
 
+  const selectedResolution =
+    (selectedDetail ?? selectedDispute)?.resolution ?? "";
+
   useEffect(() => {
-    setResolution(
-      (selectedDetail ?? selectedDispute)?.resolution ?? "",
-    );
+    setResolution(selectedResolution);
     setActionError("");
-  }, [selectedId, selectedDetail?.resolution, selectedDispute?.resolution]);
+  }, [selectedId, selectedResolution]);
 
   const metrics = useMemo(
     () => ({
