@@ -335,6 +335,17 @@ enum CargoCategory {
   REFRIGERATED
 }
 
+enum PackagingType {
+  BOXED
+  BAGGED
+  CRATED
+  PALLETIZED
+  DRUMMED
+  BALED
+  LOOSE
+  OTHER
+}
+
 enum VehicleClass {
   MINI_TRUCK
   LIGHT_TRUCK
@@ -659,6 +670,7 @@ model Booking {
   scheduledDate DateTime?
 
   cargoCategory CargoCategory?
+  packagingType PackagingType?
   cargoWeight   Decimal?       @db.Decimal(14, 2)
 
   status BookingStatus @default(REQUESTED)
@@ -801,6 +813,7 @@ model MarketplaceRequest {
   preferredVehicleYearMin Int?
   preferredVehicleYearMax Int?
   cargoCategory           CargoCategory?
+  packagingType            PackagingType?
   cargoWeight             Decimal?       @db.Decimal(14, 2)
 
   pickupLocation       String

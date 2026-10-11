@@ -229,6 +229,7 @@ export async function getVisibleMarketplaceLoads(
                                                   preferredVehicleYearMin: true,
                                                   preferredVehicleYearMax: true,
         cargoCategory: true,
+        packagingType: true,
         cargoWeight: true,
         pickupLocation: true,
         destination: true,

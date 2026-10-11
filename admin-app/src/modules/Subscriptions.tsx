@@ -1208,7 +1208,7 @@ export default function Subscriptions() {
                   Default radius (km)
                   <input
                     type="number"
-                    min="0.01"
+                    min="0"
                     step="0.01"
                     value={visibilityConfig.defaultRadiusKm}
                     onChange={(event) =>

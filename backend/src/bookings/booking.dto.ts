@@ -61,6 +61,7 @@ export function toBookingDto(booking: BookingModel) {
     scheduledDate: date(booking.scheduledDate),
 
     cargoCategory: booking.cargoCategory,
+    packagingType: booking.packagingType,
     cargoWeight: decimal(booking.cargoWeight),
 
     status: booking.status,

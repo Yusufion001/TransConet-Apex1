@@ -154,6 +154,9 @@ export async function createMarketplaceRequest(data: {
     | "CONSTRUCTION"
     | "HAZARDOUS"
     | "REFRIGERATED";
+  packagingType?:
+    | "BOXED" | "BAGGED" | "CRATED" | "PALLETIZED"
+    | "DRUMMED" | "BALED" | "LOOSE" | "OTHER";
   cargoWeight: number;
   preferredVehicleYearMin?: number;
   preferredVehicleYearMax?: number;
@@ -204,6 +207,7 @@ export async function createMarketplaceRequest(data: {
         preferredVehicleYearMin: data.preferredVehicleYearMin,
         preferredVehicleYearMax: data.preferredVehicleYearMax,
         cargoCategory: data.cargoCategory,
+        packagingType: data.packagingType,
         cargoWeight: data.cargoWeight,
         scheduledDate: data.scheduledDate,
         estimatedFare: pricing.estimatedFare,
@@ -250,6 +254,7 @@ export async function getMarketplaceRequest(
       cargoDescription: true,
       truckCategory: true,
       cargoCategory: true,
+      packagingType: true,
       cargoWeight: true,
       pickupLocation: true,
       destination: true,
@@ -334,6 +339,7 @@ export async function getCustomerMarketplaceRequests(customerId: string) {
       cargoDescription: true,
       truckCategory: true,
       cargoCategory: true,
+      packagingType: true,
       cargoWeight: true,
       pickupLocation: true,
       destination: true,
@@ -828,6 +834,7 @@ export async function selectMarketplaceBid(
         preferredVehicleYearMin: true,
         preferredVehicleYearMax: true,
         cargoCategory: true,
+        packagingType: true,
         cargoWeight: true,
         pickupLocation: true,
         destination: true,
@@ -1191,6 +1198,7 @@ export async function selectMarketplaceBid(
         scheduledDate: request.scheduledDate,
 
         cargoCategory: request.cargoCategory,
+        packagingType: request.packagingType,
         cargoWeight: request.cargoWeight,
 
         status: "ASSIGNED",

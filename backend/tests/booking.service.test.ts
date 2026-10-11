@@ -197,7 +197,7 @@ test.beforeEach(() => {
 });
 
 test("createBooking creates a booking and publishes shipment events", async () => {
-  const booking = makeBooking();
+  const booking = makeBooking({ packagingType: "BOXED" });
 
   prismaMock.$queryRaw.mock.mockImplementation(async () => [
     {
@@ -272,10 +272,16 @@ test("createBooking creates a booking and publishes shipment events", async () =
     truckCategory: "MEDIUM_TRUCK",
     transporterTier: "TIER_1",
     cargoCategory: "GENERAL",
+    packagingType: "BOXED",
     cargoWeight: 2000,
   });
 
   assert.equal(result.id, "booking-1");
+  assert.equal(result.packagingType, "BOXED");
+  assert.equal(
+    prismaMock.booking.create.mock.calls[0]?.arguments[0]?.data?.packagingType,
+    "BOXED",
+  );
 
   assert.equal(
     prismaMock.booking.create.mock.calls.length,

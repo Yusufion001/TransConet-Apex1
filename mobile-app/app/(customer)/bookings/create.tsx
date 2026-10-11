@@ -22,6 +22,8 @@ import {
   createBooking,
   estimateBookingFare,
   type TruckCategory,
+  type CargoCategory,
+  type PackagingType,
 } from "../../../src/api/bookings";
 
 const TRUCK_CATEGORIES: TruckCategory[] = [
@@ -34,6 +36,22 @@ const TRUCK_CATEGORIES: TruckCategory[] = [
   "TANKER",
   "SPECIALIZED",
 ];
+
+const CARGO_CATEGORIES: CargoCategory[] = [
+  "GENERAL", "FRAGILE", "ELECTRONICS", "FURNITURE",
+  "AGRICULTURAL", "INDUSTRIAL", "CONSTRUCTION",
+  "HAZARDOUS", "REFRIGERATED",
+];
+
+const PACKAGING_TYPES: PackagingType[] = [
+  "BOXED", "BAGGED", "CRATED", "PALLETIZED",
+  "DRUMMED", "BALED", "LOOSE", "OTHER",
+];
+
+function formatOptionLabel(value: string) {
+  return value.toLowerCase().replace(/_/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
 
 function formatTruckCategory(value: TruckCategory) {
   return value.replace(/_/g, " ");
@@ -98,7 +116,6 @@ type Coordinates = {
 
 export default function CreateBooking() {
   const [pickupLocation, setPickupLocation] = useState("");
-const [pickupLandmark, setPickupLandmark] = useState("");
 const [destinationLandmark, setDestinationLandmark] = useState("");
   const [destination, setDestination] = useState("");
   const [pickupSuggestions, setPickupSuggestions] = useState<PlaceSuggestion[]>([]);
@@ -111,6 +128,13 @@ const [destinationLandmark, setDestinationLandmark] = useState("");
   const [cargoWeight, setCargoWeight] = useState("");
   const [truckCategory, setTruckCategory] =
     useState<TruckCategory | null>(null);
+  const [cargoCategory, setCargoCategory] =
+    useState<CargoCategory | null>(null);
+  const [packagingType, setPackagingType] =
+    useState<PackagingType | null>(null);
+  const [showVehicleOptions, setShowVehicleOptions] = useState(false);
+  const [showCargoCategoryOptions, setShowCargoCategoryOptions] = useState(false);
+  const [showPackagingOptions, setShowPackagingOptions] = useState(false);
   const [pickupCoordinates, setPickupCoordinates] =
     useState<Coordinates | null>(null);
   const [destinationCoordinates, setDestinationCoordinates] =
@@ -172,48 +196,6 @@ const [destinationLandmark, setDestinationLandmark] = useState("");
     }
   }
 
-  async function openPickupLocationPicker() {
-    setLocationPickerType("pickup");
-
-    if (pickupCoordinates) {
-      setLocationPickerCoordinate(pickupCoordinates);
-      setLocationPickerVisible(true);
-      return;
-    }
-
-    if (!pickupLocation.trim()) {
-      Alert.alert(
-        "Pickup location required",
-        "Enter a pickup location or use your current location first.",
-      );
-      return;
-    }
-
-    setLocationLoading(true);
-
-    try {
-      const coordinates = await resolveAddress(pickupLocation.trim());
-
-      if (!coordinates) {
-        Alert.alert(
-          "Location not found",
-          "We could not identify that pickup location. Please check the address and try again.",
-        );
-        return;
-      }
-
-      setPickupCoordinates(coordinates);
-      setLocationPickerCoordinate(coordinates);
-      setLocationPickerVisible(true);
-    } catch {
-      Alert.alert(
-        "Location unavailable",
-        "We could not identify that pickup location right now. Please try again.",
-      );
-    } finally {
-      setLocationLoading(false);
-    }
-  }
 
   async function useCurrentLocation() {
     setLocationLoading(true);
@@ -377,11 +359,13 @@ const [destinationLandmark, setDestinationLandmark] = useState("");
       !pickupLocation.trim() ||
       !destination.trim() ||
       !cargoWeight.trim() ||
-      !truckCategory
+      !truckCategory ||
+      !cargoCategory ||
+      !packagingType
     ) {
       Alert.alert(
         "Missing information",
-        "Please enter pickup, destination, vehicle class, and cargo weight.",
+        "Please enter pickup, destination, vehicle class, goods category, packaging type, and cargo weight.",
       );
       return;
     }
@@ -436,6 +420,8 @@ const [destinationLandmark, setDestinationLandmark] = useState("");
           destinationLongitude: resolvedDestination.longitude,
           cargoDescription: cargoDescription.trim() || undefined,
           truckCategory,
+          cargoCategory,
+          packagingType,
           cargoWeight: numericWeight,
         });
 
@@ -454,7 +440,6 @@ const [destinationLandmark, setDestinationLandmark] = useState("");
 
       const booking = await createBooking({
         pickupLocation: pickupLocation.trim(),
-        pickupLandmark: pickupLandmark.trim() || undefined,
         destination: destination.trim(),
         destinationLandmark: destinationLandmark.trim() || undefined,
         pickupLatitude: resolvedPickup.latitude,
@@ -463,6 +448,8 @@ const [destinationLandmark, setDestinationLandmark] = useState("");
         destinationLongitude: resolvedDestination.longitude,
         cargoDescription: cargoDescription.trim() || undefined,
         truckCategory,
+        cargoCategory,
+        packagingType,
         cargoWeight: numericWeight,
         paymentMethod,
       });
@@ -552,27 +539,6 @@ void searchPlaceSuggestions(value, "pickup");
           Pickup location confirmed
         </Text>
       )}
-
-      <Pressable
-        disabled={loading || locationLoading}
-        onPress={openPickupLocationPicker}
-        style={[
-          styles.mapConfirmButton,
-          (loading || locationLoading) && styles.buttonDisabled,
-        ]}
-      >
-        <Text style={styles.mapConfirmButtonText}>
-          Confirm pickup on map
-        </Text>
-      </Pressable>
-              <Text style={styles.label}>Pickup landmark (optional)</Text>
-              <TextInput
-                value={pickupLandmark}
-                onChangeText={setPickupLandmark}
-                placeholder="e.g. Opposite Access Bank, near the filling station"
-                style={styles.input}
-              />
-
       <Text style={styles.label}>Destination</Text>
 
       <TextInput
@@ -706,49 +672,66 @@ void searchPlaceSuggestions(value, "destination");
         )}
 
         <Text style={styles.label}>Vehicle class required</Text>
-      <Text style={styles.fieldHint}>
-        Select the class of vehicle required for this shipment.
-      </Text>
+      <Pressable
+        disabled={loading}
+        onPress={() => setShowVehicleOptions((visible) => !visible)}
+        style={styles.vehicleSelector}
+      >
+        <View style={styles.vehicleSelectorCopy}>
+          <Text style={styles.vehicleSelectorTitle}>
+            {truckCategory ? formatTruckCategory(truckCategory) : "Choose vehicle class"}
+          </Text>
+          <Text style={styles.vehicleSelectorHint}>
+            {truckCategory
+              ? "Selected vehicle class · Tap to change"
+              : "View all 8 available vehicle classes"}
+          </Text>
+        </View>
+        <Text style={styles.vehicleSelectorChevron}>
+          {showVehicleOptions ? "−" : "+"}
+        </Text>
+      </Pressable>
 
-      <View style={styles.categoryList}>
-        {TRUCK_CATEGORIES.map((category) => (
-          <Pressable
-            key={category}
-            disabled={loading}
-            onPress={() => {
-              setTruckCategory(category);
-              setFareEstimate(null);
-              setDistanceKm(null);
-              setPaymentMethod(null);
-            }}
-            style={[
-              styles.categoryOption,
-              truckCategory === category && styles.categoryOptionSelected,
-            ]}
-          >
-            <Text
+      {showVehicleOptions && (
+        <View style={styles.categoryList}>
+          {TRUCK_CATEGORIES.map((category) => (
+            <Pressable
+              key={category}
+              disabled={loading}
+              onPress={() => {
+                setTruckCategory(category);
+                setShowVehicleOptions(false);
+                setFareEstimate(null);
+                setDistanceKm(null);
+                setPaymentMethod(null);
+              }}
               style={[
-                styles.categoryOptionText,
-                truckCategory === category &&
-                  styles.categoryOptionTextSelected,
+                styles.categoryOption,
+                truckCategory === category && styles.categoryOptionSelected,
               ]}
             >
-              {formatTruckCategory(category)}
-            </Text>
-
-            <View
-              style={[
-                styles.categoryRadio,
-                truckCategory === category && styles.categoryRadioSelected,
-              ]}
-            >
-              {truckCategory === category && (
-                <View style={styles.categoryRadioDot} />
-              )}
-            </View>
-          </Pressable>
-        ))}
-      </View>
+              <Text
+                style={[
+                  styles.categoryOptionText,
+                  truckCategory === category && styles.categoryOptionTextSelected,
+                ]}
+              >
+                {formatTruckCategory(category)}
+              </Text>
+              <View
+                style={[
+                  styles.categoryRadio,
+                  truckCategory === category && styles.categoryRadioSelected,
+                ]}
+              >
+                {truckCategory === category && (
+                  <View style={styles.categoryRadioDot} />
+                )}
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      )}
 
       {truckCategory ? (
         <View style={styles.classInfoBox}>
@@ -766,6 +749,130 @@ void searchPlaceSuggestions(value, "destination");
         </View>
       ) : null}
 
+      <Text style={styles.label}>Goods category</Text>
+      <Pressable
+        disabled={loading}
+        onPress={() => setShowCargoCategoryOptions((visible) => !visible)}
+        style={styles.vehicleSelector}
+      >
+        <View style={styles.vehicleSelectorCopy}>
+          <Text style={styles.vehicleSelectorTitle}>
+            {cargoCategory ? formatOptionLabel(cargoCategory) : "Choose goods category"}
+          </Text>
+          <Text style={styles.vehicleSelectorHint}>
+            {cargoCategory
+              ? "Selected goods category · Tap to change"
+              : "Tap to view available goods categories"}
+          </Text>
+        </View>
+        <Text style={styles.vehicleSelectorChevron}>
+          {showCargoCategoryOptions ? "−" : "+"}
+        </Text>
+      </Pressable>
+
+      {showCargoCategoryOptions && (
+        <View style={styles.categoryList}>
+          {CARGO_CATEGORIES.map((category) => (
+            <Pressable
+              key={category}
+              disabled={loading}
+              onPress={() => {
+                setCargoCategory(category);
+                setShowCargoCategoryOptions(false);
+                setFareEstimate(null);
+                setDistanceKm(null);
+                setPaymentMethod(null);
+              }}
+              style={[
+                styles.categoryOption,
+                cargoCategory === category && styles.categoryOptionSelected,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.categoryOptionText,
+                  cargoCategory === category && styles.categoryOptionTextSelected,
+                ]}
+              >
+                {formatOptionLabel(category)}
+              </Text>
+              <View
+                style={[
+                  styles.categoryRadio,
+                  cargoCategory === category && styles.categoryRadioSelected,
+                ]}
+              >
+                {cargoCategory === category && (
+                  <View style={styles.categoryRadioDot} />
+                )}
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      )}
+
+      <Text style={styles.label}>Packaging type</Text>
+      <Pressable
+        disabled={loading}
+        onPress={() => setShowPackagingOptions((visible) => !visible)}
+        style={styles.vehicleSelector}
+      >
+        <View style={styles.vehicleSelectorCopy}>
+          <Text style={styles.vehicleSelectorTitle}>
+            {packagingType ? formatOptionLabel(packagingType) : "Choose packaging type"}
+          </Text>
+          <Text style={styles.vehicleSelectorHint}>
+            {packagingType
+              ? "Selected packaging type · Tap to change"
+              : "Tap to view available packaging types"}
+          </Text>
+        </View>
+        <Text style={styles.vehicleSelectorChevron}>
+          {showPackagingOptions ? "−" : "+"}
+        </Text>
+      </Pressable>
+
+      {showPackagingOptions && (
+        <View style={styles.categoryList}>
+          {PACKAGING_TYPES.map((type) => (
+            <Pressable
+              key={type}
+              disabled={loading}
+              onPress={() => {
+                setPackagingType(type);
+                setShowPackagingOptions(false);
+                setFareEstimate(null);
+                setDistanceKm(null);
+                setPaymentMethod(null);
+              }}
+              style={[
+                styles.categoryOption,
+                packagingType === type && styles.categoryOptionSelected,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.categoryOptionText,
+                  packagingType === type && styles.categoryOptionTextSelected,
+                ]}
+              >
+                {formatOptionLabel(type)}
+              </Text>
+              <View
+                style={[
+                  styles.categoryRadio,
+                  packagingType === type && styles.categoryRadioSelected,
+                ]}
+              >
+                {packagingType === type && (
+                  <View style={styles.categoryRadioDot} />
+                )}
+              </View>
+            </Pressable>
+          ))}
+        </View>
+      )}
+
       <Text style={styles.label}>Cargo weight</Text>
 
       <TextInput
@@ -776,7 +883,7 @@ void searchPlaceSuggestions(value, "destination");
         style={styles.input}
       />
 
-      <Text style={styles.label}>Cargo description</Text>
+      <Text style={styles.label}>Cargo description (Optional)</Text>
 
       <TextInput
         value={cargoDescription}
@@ -1141,7 +1248,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700",
     color: "#344054",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   input: {
     backgroundColor: "#FFFFFF",
@@ -1149,10 +1256,10 @@ const styles = StyleSheet.create({
     borderColor: "#D9E1F0",
     borderRadius: 15,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 11,
     fontSize: 15,
     color: "#101B3A",
-    marginBottom: 17,
+    marginBottom: 12,
     shadowColor: "#101B3A",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.025,
@@ -1166,8 +1273,66 @@ const styles = StyleSheet.create({
     marginTop: -2,
     marginBottom: 12,
   },
+  vehicleSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D9E1F0",
+    borderRadius: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+    marginBottom: 10,
+  },
+  vehicleSelectorCopy: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  vehicleSelectorTitle: {
+    color: "#175CD3",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  vehicleSelectorHint: {
+    color: "#667085",
+    fontSize: 12,
+    marginTop: 3,
+  },
+  vehicleSelectorChevron: {
+    color: "#175CD3",
+    fontSize: 23,
+    fontWeight: "700",
+  },
+  optionChipList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 7,
+    marginBottom: 12,
+  },
+  optionChip: {
+    borderWidth: 1,
+    borderColor: "#D9E1F0",
+    borderRadius: 9,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  optionChipSelected: {
+    borderColor: "#175CD3",
+    backgroundColor: "#EFF6FF",
+  },
+  optionChipText: {
+    color: "#344054",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  optionChipTextSelected: {
+    color: "#175CD3",
+    fontWeight: "800",
+  },
   categoryList: {
-    marginBottom: 18,
+    marginBottom: 10,
   },
   classInfoBox: {
     marginTop: -4,

@@ -38,6 +38,9 @@ pickupLatitude: number;
     | "CONSTRUCTION"
     | "HAZARDOUS"
     | "REFRIGERATED";
+  packagingType?:
+    | "BOXED" | "BAGGED" | "CRATED" | "PALLETIZED"
+    | "DRUMMED" | "BALED" | "LOOSE" | "OTHER";
   cargoWeight: number;
   paymentMethod?: "FLUTTERWAVE" | "BANK_TRANSFER" | "NEGOTIATE";
 }) {
@@ -69,6 +72,7 @@ pickupLatitude: data.pickupLatitude,
         cargoDescription: data.cargoDescription,
         truckCategory: data.truckCategory,
         cargoCategory: data.cargoCategory,
+        packagingType: data.packagingType,
         cargoWeight: data.cargoWeight,
         estimatedFare: pricing.estimatedFare,
         fare: pricing.estimatedFare,
@@ -93,6 +97,7 @@ pickupLatitude: data.pickupLatitude,
           cargoDescription: data.cargoDescription,
           truckCategory: data.truckCategory,
           cargoCategory: data.cargoCategory,
+          packagingType: data.packagingType,
           cargoWeight: data.cargoWeight,
           pickupLocation: data.pickupLocation,
           destination: data.destination,

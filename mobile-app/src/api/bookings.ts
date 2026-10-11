@@ -23,6 +23,16 @@ export type CargoCategory =
   | "HAZARDOUS"
   | "REFRIGERATED";
 
+export type PackagingType =
+  | "BOXED"
+  | "BAGGED"
+  | "CRATED"
+  | "PALLETIZED"
+  | "DRUMMED"
+  | "BALED"
+  | "LOOSE"
+  | "OTHER";
+
 export type BookingStatus =
   | "REQUESTED"
   | "SEARCHING"
@@ -52,6 +62,7 @@ export type Booking = {
   destinationLongitude: string | null;
   scheduledDate: string | null;
   cargoCategory: CargoCategory | null;
+  packagingType: PackagingType | null;
   cargoWeight: string;
   status: BookingStatus;
   fare: string | null;
@@ -87,6 +98,7 @@ export type CreateBookingInput = {
   cargoDescription?: string;
   truckCategory: TruckCategory;
   cargoCategory?: CargoCategory;
+  packagingType?: PackagingType;
   cargoWeight: number;
   paymentMethod: "FLUTTERWAVE" | "BANK_TRANSFER" | "NEGOTIATE";
 };
