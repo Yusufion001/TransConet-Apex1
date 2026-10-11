@@ -79,9 +79,16 @@ export default function CustomerLiveTracking({
   const [followingVehicle, setFollowingVehicle] = useState(true);
   const [acceptedVehicleLocation, setAcceptedVehicleLocation] =
     useState<LiveLocation | null>(null);
+  const [freshnessNow, setFreshnessNow] = useState(() => Date.now());
   const lastRouteRequestAt = useRef(0);
   const lastRouteCoordinate = useRef<MapCoordinate | null>(null);
   const lastRecordedAtMs = useRef(0);
+
+  // Re-evaluate GPS freshness even when no new realtime event arrives.
+  useEffect(() => {
+    const timer = setInterval(() => setFreshnessNow(Date.now()), 5_000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!vehicleLocation) {
@@ -103,6 +110,7 @@ export default function CustomerLiveTracking({
     }
 
     const hasRecordedAt = Boolean(vehicleLocation.recordedAt);
+    if (!hasRecordedAt) return;
     const recordedAtMs = hasRecordedAt
       ? Date.parse(vehicleLocation.recordedAt as string)
       : 0;
@@ -135,7 +143,7 @@ export default function CustomerLiveTracking({
       ...vehicleLocation,
       latitude,
       longitude,
-      recordedAt: vehicleLocation.recordedAt ?? new Date().toISOString(),
+      recordedAt: vehicleLocation.recordedAt,
     });
   }, [vehicleLocation]);
 
@@ -157,7 +165,23 @@ export default function CustomerLiveTracking({
     };
   }, [acceptedVehicleLocation]);
 
-  const mapRegion = useMemo(
+const gpsFreshness = (() => {
+    if (
+      !acceptedVehicleLocation ||
+      typeof acceptedVehicleLocation.recordedAt !== "string" ||
+      !acceptedVehicleLocation.recordedAt.trim()
+    ) {
+      return "WAITING FOR GPS";
+    }
+    const recordedAtMs = Date.parse(acceptedVehicleLocation.recordedAt);
+    if (!Number.isFinite(recordedAtMs)) return "WAITING FOR GPS";
+    const ageMs = freshnessNow - recordedAtMs;
+    return ageMs >= -30_000 && ageMs <= 15_000
+      ? "LIVE"
+      : "LOCATION DELAYED";
+  })();
+
+    const mapRegion = useMemo(
     () => ({
       latitude:
         followingVehicle && vehicleCoordinate
@@ -269,8 +293,8 @@ export default function CustomerLiveTracking({
       <View style={styles.header}>
         <View style={styles.headerText}>
           <View style={styles.liveRow}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveLabel}>LIVE</Text>
+            <View style={[styles.liveDot, gpsFreshness !== "LIVE" && { opacity: 0.35 }]} />
+            <Text style={styles.liveLabel}>{gpsFreshness}</Text>
           </View>
 
           <Text style={styles.title}>{title}</Text>
@@ -339,7 +363,7 @@ export default function CustomerLiveTracking({
         <View style={styles.metric}>
           <Text style={styles.metricLabel}>GPS</Text>
           <Text style={styles.metricValue}>
-            {acceptedVehicleLocation ? "CONNECTED" : "WAITING"}
+            {gpsFreshness === "LIVE" ? "CONNECTED" : gpsFreshness === "LOCATION DELAYED" ? "DELAYED" : "WAITING"}
           </Text>
         </View>
       </View>
