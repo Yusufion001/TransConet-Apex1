@@ -7,7 +7,7 @@ export const marketplaceVisibilityConfigSchema = z
   .object({
     geographicScope: z.enum(["RADIUS", "NATIONWIDE"]),
 
-    defaultRadiusKm: positiveNumber,
+    defaultRadiusKm: z.coerce.number().finite().nonnegative(),
 
     maxRadiusKm: positiveNumber,
 
@@ -85,6 +85,18 @@ export const marketplaceVisibilityConfigSchema = z
 export type MarketplaceVisibilityConfig = z.infer<
   typeof marketplaceVisibilityConfigSchema
 >;
+
+/**
+ * A configured default of zero means use the configured maximum radius.
+ * Explicit radius overrides are validated separately.
+ */
+export function resolveDefaultMarketplaceRadius(
+  config: MarketplaceVisibilityConfig,
+): number {
+  return config.defaultRadiusKm === 0
+    ? config.maxRadiusKm
+    : config.defaultRadiusKm;
+}
 
 type ConfigRow = {
   value: unknown;

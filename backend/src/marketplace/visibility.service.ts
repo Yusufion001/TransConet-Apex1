@@ -75,11 +75,14 @@ export async function getVisibleMarketplaceLoads(
     await getMarketplaceVisibilityConfig();
 
   const effectiveRadiusKm =
-    radiusKm ?? visibilityPolicy.defaultRadiusKm;
+    radiusKm ?? (visibilityPolicy.defaultRadiusKm === 0
+      ? visibilityPolicy.maxRadiusKm
+      : visibilityPolicy.defaultRadiusKm);
 
   if (
     !Number.isFinite(effectiveRadiusKm) ||
-    effectiveRadiusKm <= 0
+    effectiveRadiusKm < 0 ||
+    (effectiveRadiusKm === 0 && radiusKm != null)
   ) {
     throw new Error(
       "Invalid marketplace visibility radius",

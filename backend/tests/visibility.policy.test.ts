@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   marketplaceVisibilityConfigSchema,
+  resolveDefaultMarketplaceRadius,
 } from "../src/marketplace/visibility.policy.js";
 
 function createConfig(radiusRingsKm: number[]) {
@@ -37,6 +38,22 @@ test("accepts admin-configured radius stages within maximum radius", () => {
   assert.equal(result.success, true);
 });
 
+test("accepts a zero default radius", () => {
+  const result = marketplaceVisibilityConfigSchema.safeParse({
+    ...createConfig([1, 5, 10, 25, 50]),
+    defaultRadiusKm: 0,
+  });
+  assert.equal(result.success, true);
+});
+
+test("rejects a negative default radius", () => {
+  const result = marketplaceVisibilityConfigSchema.safeParse({
+    ...createConfig([1, 5, 10, 25, 50]),
+    defaultRadiusKm: -1,
+  });
+  assert.equal(result.success, false);
+});
+
 test("rejects admin-configured radius stages above maximum radius", () => {
   const result = marketplaceVisibilityConfigSchema.safeParse(
     createConfig([1, 5, 10, 25, 51]),
@@ -54,4 +71,26 @@ test("rejects admin-configured radius stages above maximum radius", () => {
       true,
     );
   }
+});
+
+
+test("resolves a zero default radius to the configured maximum", () => {
+  const config = marketplaceVisibilityConfigSchema.parse({
+    ...createConfig([10]),
+    defaultRadiusKm: 0,
+  });
+
+  assert.equal(
+    resolveDefaultMarketplaceRadius(config),
+    config.maxRadiusKm,
+  );
+});
+
+test("preserves a positive configured default radius", () => {
+  const config = marketplaceVisibilityConfigSchema.parse({
+    ...createConfig([10]),
+    defaultRadiusKm: 30,
+  });
+
+  assert.equal(resolveDefaultMarketplaceRadius(config), 30);
 });
