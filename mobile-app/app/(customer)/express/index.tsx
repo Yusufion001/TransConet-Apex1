@@ -32,6 +32,11 @@ type Coordinates = {
   longitude: number;
 };
 
+function formatPackagingType(value: string) {
+  return value.toLowerCase().replace(/_/g, " ")
+    .replace(/\b\w/g, character => character.toUpperCase());
+}
+
 export default function ExpressBookingScreen() {
   const user = useAuthStore((state) => state.user);
   const [pickupLocation, setPickupLocation] = useState("");
@@ -56,6 +61,7 @@ export default function ExpressBookingScreen() {
   const [packageCount, setPackageCount] = useState("");
   const [weightKg, setWeightKg] = useState("");
   const [packagingType, setPackagingType] = useState("");
+  const [packagingOptionsExpanded, setPackagingOptionsExpanded] = useState(false);
   const [cargoDescription, setCargoDescription] = useState("");
   const [scheduledDate, setScheduledDate] = useState("");
   const [additionalDetailsExpanded, setAdditionalDetailsExpanded] =
@@ -739,34 +745,67 @@ export default function ExpressBookingScreen() {
           </View>
         ) : expressConfig &&
           Object.keys(expressConfig.packageTypes).length > 0 ? (
-          <View style={styles.packageTypeGrid}>
-            {Object.keys(expressConfig.packageTypes).map((item) => {
-              const selected = packagingType === item;
+          <>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: packagingOptionsExpanded }}
+              onPress={() => setPackagingOptionsExpanded(v => !v)}
+              style={styles.packageTypeSelector}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={styles.packageTypeSelectorTitle}>
+                  {packagingType
+                    ? formatPackagingType(packagingType)
+                    : "Choose packaging type"}
+                </Text>
+                <Text style={styles.packageTypeSelectorHint}>
+                  {packagingType
+                    ? "Selected · Tap to change"
+                    : "Tap to view available options"}
+                </Text>
+              </View>
+              <Text style={styles.packageTypeSelectorChevron}>
+                {packagingOptionsExpanded ? "−" : "+"}
+              </Text>
+            </Pressable>
 
-              return (
-                <Pressable
-                  key={item}
-                  onPress={() => {
-                    setPackagingType(item);
-                    setQuote(null);
-                  }}
-                  style={[
-                    styles.packageTypeOption,
-                    selected && styles.packageTypeOptionSelected,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.packageTypeText,
-                      selected && styles.packageTypeTextSelected,
-                    ]}
-                  >
-                    {item}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+            {packagingOptionsExpanded ? (
+              <View style={styles.packageTypeGrid}>
+                {Object.keys(expressConfig.packageTypes).map(item => {
+                  const selected = packagingType === item;
+                  return (
+                    <Pressable
+                      key={item}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected }}
+                      onPress={() => {
+                        setPackagingType(item);
+                        setPackagingOptionsExpanded(false);
+                        setQuote(null);
+                      }}
+                      style={[
+                        styles.packageTypeOption,
+                        selected && styles.packageTypeOptionSelected,
+                      ]}
+                    >
+                      <Text style={[
+                        styles.packageTypeText,
+                        selected && styles.packageTypeTextSelected,
+                      ]}>
+                        {formatPackagingType(item)}
+                      </Text>
+                      <View style={[
+                        styles.packageTypeRadio,
+                        selected && styles.packageTypeRadioSelected,
+                      ]}>
+                        {selected ? <View style={styles.packageTypeRadioDot} /> : null}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
+          </>
         ) : (
           <View style={styles.configError}>
             <Text style={styles.configErrorText}>
@@ -1054,17 +1093,17 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 18,
+    marginTop: 16,
     marginBottom: 4,
   },
   sectionIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 10,
     backgroundColor: "#E8EEFF",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 10,
+    marginRight: 9,
   },
   sectionIconText: {
     color: "#4169E1",
@@ -1081,13 +1120,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "900",
+    fontSize: 17,
+    fontWeight: "800",
     color: "#101B3A",
   },
   label: {
-    marginTop: 14,
-    marginBottom: 7,
+    marginTop: 12,
+    marginBottom: 6,
     fontSize: 12,
     fontWeight: "800",
     color: "#344054",
@@ -1095,9 +1134,9 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: "#D9E1F0",
-    borderRadius: 14,
-    paddingHorizontal: 15,
-    paddingVertical: 13,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     backgroundColor: "#FFFFFF",
     color: "#101B3A",
     fontSize: 14,
@@ -1113,29 +1152,80 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: "#667085",
   },
+  packageTypeSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#D9E1F0",
+    borderRadius: 12,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+    marginBottom: 10,
+  },
+  packageTypeSelectorTitle: {
+    color: "#175CD3",
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  packageTypeSelectorHint: {
+    color: "#667085",
+    fontSize: 12,
+    marginTop: 3,
+  },
+  packageTypeSelectorChevron: {
+    color: "#175CD3",
+    fontSize: 23,
+    fontWeight: "700",
+    marginLeft: 12,
+  },
   packageTypeGrid: {
     gap: 8,
+    marginBottom: 10,
   },
   packageTypeOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#D0D5DD",
+    borderColor: "#D9E1F0",
     backgroundColor: "#FFFFFF",
   },
   packageTypeOptionSelected: {
     borderColor: "#175CD3",
-    backgroundColor: "#F5F9FF",
+    borderWidth: 2,
+    backgroundColor: "#EFF6FF",
   },
   packageTypeText: {
-    color: "#475467",
+    color: "#344054",
     fontSize: 14,
     fontWeight: "700",
   },
   packageTypeTextSelected: {
     color: "#175CD3",
     fontWeight: "800",
+  },
+  packageTypeRadio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: "#98A2B3",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  packageTypeRadioSelected: {
+    borderColor: "#175CD3",
+  },
+  packageTypeRadioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#175CD3",
   },
   configLoading: {
     minHeight: 48,
@@ -1167,7 +1257,7 @@ const styles = StyleSheet.create({
   },
   suggestionsCard: {
     marginTop: 6,
-    borderRadius: 14,
+    borderRadius: 12,
     backgroundColor: "#FFFFFF",
     borderWidth: 1,
     borderColor: "#D7E3EF",
@@ -1175,7 +1265,7 @@ const styles = StyleSheet.create({
   },
   suggestionItem: {
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 11,
     borderBottomWidth: 1,
     borderBottomColor: "#E6EEF5",
   },
@@ -1205,7 +1295,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     borderWidth: 1,
     borderColor: "#B8CCE0",
-    borderRadius: 12,
+    borderRadius: 10,
     paddingVertical: 12,
     alignItems: "center",
   },
@@ -1314,9 +1404,9 @@ const styles = StyleSheet.create({
   },
   detailsToggle: {
     marginTop: 18,
-    paddingHorizontal: 15,
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "#D9E1F0",
     backgroundColor: "#FFFFFF",
@@ -1345,8 +1435,8 @@ const styles = StyleSheet.create({
   },
   detailsPanel: {
     marginTop: 8,
-    padding: 14,
-    borderRadius: 14,
+    padding: 12,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: "#D9E1F0",
     backgroundColor: "#FFFFFF",

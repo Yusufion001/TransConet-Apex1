@@ -48,6 +48,11 @@ export const createBookingSchema = z.object({
     "REFRIGERATED",
   ]).optional(),
 
+  packagingType: z.enum([
+    "BOXED", "BAGGED", "CRATED", "PALLETIZED",
+    "DRUMMED", "BALED", "LOOSE", "OTHER",
+  ]).optional(),
+
   cargoWeight: z.coerce
     .number()
     .finite()

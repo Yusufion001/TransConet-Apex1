@@ -235,6 +235,7 @@ test("createMarketplaceRequest creates an OPEN marketplace load", async () => {
     cargoDescription: "General cargo",
     truckCategory: "MEDIUM_TRUCK",
     cargoCategory: "GENERAL",
+    packagingType: "BOXED",
     cargoWeight: 2000,
     scheduledDate: null,
     estimatedFare: 150000,
@@ -256,10 +257,16 @@ test("createMarketplaceRequest creates an OPEN marketplace load", async () => {
     cargoDescription: "General cargo",
     truckCategory: "MEDIUM_TRUCK",
     cargoCategory: "GENERAL",
+    packagingType: "BOXED",
     cargoWeight: 2000,
   });
 
   assert.equal(result.id, "request-1");
+  assert.equal(result.packagingType, "BOXED");
+  assert.equal(
+    prismaMock.marketplaceRequest.create.mock.calls[0]?.arguments[0]?.data?.packagingType,
+    "BOXED",
+  );
   assert.equal(result.customerId, "customer-1");
   assert.equal(result.status, "OPEN");
 
