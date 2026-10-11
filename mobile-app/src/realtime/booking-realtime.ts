@@ -49,14 +49,22 @@ export async function joinBookingRealtime(
     );
   };
 
-  socket.emit("join-booking", bookingId);
+  const joinBookingRoom = () => {
+    socket.emit("join-booking", bookingId);
+  };
+
+  socket.on("connect", joinBookingRoom);
+  if (socket.connected) joinBookingRoom();
 
   socket.on("booking:activity", bookingActivity);
   socket.on("vehicle-location", vehicleLocation);
   socket.on("booking:access-denied", accessDenied);
 
   return () => {
-    socket.emit("leave-booking", bookingId);
+    socket.off("connect", joinBookingRoom);
+    if (socket.connected) {
+      socket.emit("leave-booking", bookingId);
+    }
     socket.off("booking:activity", bookingActivity);
     socket.off("vehicle-location", vehicleLocation);
     socket.off("booking:access-denied", accessDenied);
