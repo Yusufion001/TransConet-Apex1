@@ -383,6 +383,21 @@ export async function changeAdministratorStatus(
         data: {
           status,
         },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+              role: true,
+              status: true,
+              createdAt: true,
+              lastLoginAt: true,
+            },
+          },
+        },
       });
 
     const userStatus =

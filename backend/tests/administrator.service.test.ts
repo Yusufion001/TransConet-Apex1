@@ -404,6 +404,17 @@ test("changeAdministratorStatus suspends a normal administrator and writes an au
     async (args: any) => ({
       userId: "admin-2",
       status: args.data.status,
+      user: {
+        id: "admin-2",
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "jane@example.com",
+        phone: "08012345678",
+        role: "ADMIN",
+        status: "SUSPENDED",
+        createdAt: new Date(),
+        lastLoginAt: null,
+      },
     }),
   );
 
@@ -414,6 +425,7 @@ test("changeAdministratorStatus suspends a normal administrator and writes an au
   );
 
   assert.equal(result.status, "SUSPENDED");
+  assert.equal(result.user.firstName, "Jane");
 
   assert.equal(
     prismaMock.adminProfile.update.mock.calls.length,
