@@ -517,8 +517,11 @@ function CommandCenter({
   const [healthLoading, setHealthLoading] = useState(true);
   const [activityLoading, setActivityLoading] = useState(false);
 
-  const canUse = (module: AdminModule) =>
-    isSuperAdministrator || assignedModules.includes(module);
+  const canUse = useCallback(
+    (module: AdminModule) =>
+      isSuperAdministrator || assignedModules.includes(module),
+    [assignedModules, isSuperAdministrator],
+  );
 
   const loadCommandData = useCallback(async () => {
     setHealthLoading(true);
@@ -569,7 +572,7 @@ function CommandCenter({
 
     await Promise.all(tasks);
     setHealthLoading(false);
-  }, [assignedModules, isSuperAdministrator]);
+  }, [canUse]);
 
   useEffect(() => {
     void loadCommandData();
@@ -614,7 +617,7 @@ function CommandCenter({
     return () => {
       cleanup?.();
     };
-  }, [loadCommandData, assignedModules, isSuperAdministrator]);
+  }, [loadCommandData, canUse]);
 
   const formatNumber = (value: number | undefined) =>
     typeof value === "number" ? value.toLocaleString() : "—";

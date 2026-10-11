@@ -434,7 +434,7 @@ export default function VerificationCenter() {
       if (documentWindow) {
         documentWindow.location.href = result.url;
       } else {
-        window.location.href = result.url;
+        window.location.assign(result.url);
       }
     } catch (requestError) {
       if (documentWindow) {
