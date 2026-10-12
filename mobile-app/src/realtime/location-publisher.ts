@@ -47,14 +47,43 @@ async function publishLocation(location: Location.LocationObject) {
       },
     );
 
-    socket.emit("vehicle-marketplace-location-update", {
-      vehicleId: marketplaceVehicleId,
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(
+          new Error(
+            "Marketplace GPS update was not acknowledged within 8 seconds.",
+          ),
+        );
+      }, 8000);
+
+      socket.emit(
+        "vehicle-marketplace-location-update",
+        {
+          vehicleId: marketplaceVehicleId,
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        },
+        (response: { ok?: boolean; error?: string } | undefined) => {
+          clearTimeout(timeout);
+
+          if (response?.ok === true) {
+            resolve();
+            return;
+          }
+
+          reject(
+            new Error(
+              response?.error ||
+                "The server did not confirm the marketplace GPS update.",
+            ),
+          );
+        },
+      );
     });
 
     console.log(
-      "[MARKETPLACE_LOCATION] Marketplace GPS event emitted.",
+      "[MARKETPLACE_LOCATION] Server acknowledged GPS update.",
+      { vehicleId: marketplaceVehicleId },
     );
   }
 }

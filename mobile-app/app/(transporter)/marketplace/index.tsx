@@ -49,7 +49,7 @@ export default function TransporterMarketplace() {
       selectedRadiusKm === undefined &&
       typeof defaultRadiusKm === "number" &&
       Number.isFinite(defaultRadiusKm) &&
-      defaultRadiusKm > 0
+      defaultRadiusKm >= 0
     ) {
       setSelectedRadiusKm(defaultRadiusKm);
     }
@@ -62,7 +62,9 @@ export default function TransporterMarketplace() {
       discoveryConfigQuery.isSuccess &&
       selectedRadiusKm !== undefined,
     refetchInterval:
-      discoveryConfigQuery.data?.marketplaceRefreshSeconds ?? false,
+      discoveryConfigQuery.data?.marketplaceRefreshSeconds
+        ? discoveryConfigQuery.data.marketplaceRefreshSeconds * 1000
+        : false,
   });
 
   useEffect(() => {
@@ -93,7 +95,9 @@ export default function TransporterMarketplace() {
   }, [queryClient]);
 
   const nextRadiusKm =
-    discoveryConfigQuery.data && selectedRadiusKm !== undefined
+    discoveryConfigQuery.data &&
+    selectedRadiusKm !== undefined &&
+    selectedRadiusKm > 0
       ? discoveryConfigQuery.data.radiusRingsKm
           .filter(
             (radiusKm) =>

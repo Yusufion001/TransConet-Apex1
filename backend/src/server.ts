@@ -421,16 +421,28 @@ io.on("connection", (socket) => {
   });
   socket.on(
     "vehicle-marketplace-location-update",
-    async (data: {
-      vehicleId: string;
-      latitude: number;
-      longitude: number;
-    }) => {
+    async (
+      data: {
+        vehicleId: string;
+        latitude: number;
+        longitude: number;
+      },
+      acknowledge?: (response: { ok: boolean; error?: string }) => void,
+    ) => {
       try {
+        const rejectUpdate = (error: string) => {
+          socket.emit("vehicle:update-rejected", { error });
+          acknowledge?.({ ok: false, error });
+        };
+
         const user = socket.data.user;
 
         if (!user) {
           socket.emit("vehicle:access-denied", {
+            error: "Authentication required",
+          });
+          acknowledge?.({
+            ok: false,
             error: "Authentication required",
           });
           return;
@@ -443,9 +455,7 @@ io.on("connection", (socket) => {
           data.vehicleId.length === 0 ||
           !isValidCoordinates(data.latitude, data.longitude)
         ) {
-          socket.emit("vehicle:update-rejected", {
-            error: "Invalid marketplace vehicle location",
-          });
+          rejectUpdate("Invalid marketplace vehicle location");
           return;
         }
 
@@ -458,9 +468,7 @@ io.on("connection", (socket) => {
             marketplaceRateKey,
           )
         ) {
-          socket.emit("vehicle:update-rejected", {
-            error: "Location update rate limit exceeded",
-          });
+          rejectUpdate("Location update rate limit exceeded");
           return;
         }
 
@@ -472,13 +480,15 @@ io.on("connection", (socket) => {
         });
 
         socket.emit("vehicle:marketplace-location-updated", location);
+        acknowledge?.({ ok: true });
       } catch (error) {
-        socket.emit("vehicle:update-rejected", {
-          error:
-            error instanceof Error
-              ? error.message
-              : "Failed to update marketplace vehicle location",
-        });
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to update marketplace vehicle location";
+
+        socket.emit("vehicle:update-rejected", { error: message });
+        acknowledge?.({ ok: false, error: message });
       }
     },
   );
