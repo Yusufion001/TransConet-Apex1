@@ -224,11 +224,14 @@ export default function CustomerMarketplaceRequest() {
         </View>
       ) : (
         pendingBids.map((bid) => {
-          const transporterName =
-            `${bid.transporter.firstName} ${bid.transporter.lastName}`.trim();
+          const transporter = bid.transporter;
+          const vehicle = bid.vehicle;
 
-          const rating = bid.transporter.profile?.rating;
-          const trips = bid.transporter.profile?.totalTrips;
+          const transporterName =
+            `${transporter?.firstName ?? ""} ${transporter?.lastName ?? ""}`.trim();
+
+          const rating = transporter?.rating;
+          const trips = transporter?.totalTrips;
 
           return (
             <View key={bid.id} style={styles.bidCard}>
@@ -238,7 +241,7 @@ export default function CustomerMarketplaceRequest() {
                     {transporterName || "Transporter"}
                   </Text>
                   <Text style={styles.bidTier}>
-                    {bid.transporter.transporterTier.replace(/_/g, " ")}
+                    {(transporter?.transporterTier ?? "STANDARD").replace(/_/g, " ")}
                   </Text>
                 </View>
 
@@ -265,13 +268,13 @@ export default function CustomerMarketplaceRequest() {
                 <View style={styles.stat}>
                   <Text style={styles.statLabel}>Vehicle</Text>
                   <Text style={styles.statValue}>
-                    {bid.vehicle.vehicleType.replace(/_/g, " ")}
+                    {(vehicle?.vehicleType ?? "Vehicle").replace(/_/g, " ")}
                   </Text>
                 </View>
               </View>
 
               <Text style={styles.vehicleClass}>
-                {bid.vehicle.vehicleClass.replace(/_/g, " ")}
+                {(vehicle?.vehicleClass ?? "Vehicle class").replace(/_/g, " ")}
               </Text>
 
               {bid.message && (
