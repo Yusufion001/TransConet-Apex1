@@ -191,9 +191,23 @@ export default function TransporterMarketplace() {
           <Text style={styles.emptyTitle}>No opportunities available</Text>
 
           <Text style={styles.emptyText}>
-            New transport requests will appear here when they become available
-            to your transporter account.
+            Opportunities appear when an open request matches your vehicle
+            category and your transporter account meets marketplace eligibility
+            requirements.
           </Text>
+
+          <View style={styles.emptyGuidance}>
+            <Text style={styles.emptyGuidanceTitle}>CHECK YOUR AVAILABILITY</Text>
+            <Text style={styles.emptyGuidanceText}>
+              Make sure your vehicle is approved and marked Available, your
+              transporter profile is approved, and location permission is
+              enabled so your current GPS position can be refreshed.
+            </Text>
+            <Text style={styles.emptyGuidanceText}>
+              If no matching requests exist yet, check again later or refresh
+              the marketplace.
+            </Text>
+          </View>
 
           <Pressable
             onPress={() => query.refetch()}
@@ -514,6 +528,28 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: "#101B3A",
     textAlign: "center",
+  },
+  emptyGuidance: {
+    width: "100%",
+    marginTop: 16,
+    padding: 15,
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E5EAF4",
+  },
+  emptyGuidanceTitle: {
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1.2,
+    color: "#4169E1",
+    marginBottom: 8,
+  },
+  emptyGuidanceText: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: "#667085",
+    marginBottom: 8,
   },
   emptyText: {
     marginTop: 9,
