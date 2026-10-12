@@ -22,6 +22,52 @@ const socketUrl = apiUrl.replace(/\/api\/?$/, "");
 
 let socket: Socket | null = null;
 
+function waitForSocketConnection(
+  target: Socket,
+  timeoutMs = 10000,
+): Promise<void> {
+  if (target.connected) return Promise.resolve();
+
+  return new Promise<void>((resolve, reject) => {
+    let settled = false;
+
+    const cleanup = () => {
+      clearTimeout(timer);
+      target.off("connect", onConnect);
+      target.off("connect_error", onConnectError);
+    };
+
+    const finish = (error?: Error) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+
+      if (error) {
+        reject(
+          new Error(
+            `Realtime connection failed: ${error.message}`,
+          ),
+        );
+      } else {
+        resolve();
+      }
+    };
+
+    const onConnect = () => finish();
+    const onConnectError = (error: Error) => finish(error);
+
+    const timer = setTimeout(
+      () => finish(new Error("Connection timed out after 10 seconds")),
+      timeoutMs,
+    );
+
+    target.once("connect", onConnect);
+    target.on("connect_error", onConnectError);
+
+    if (target.connected) finish();
+  });
+}
+
 export async function getRealtimeSocket(): Promise<Socket> {
   const token = await getAccessToken();
 
@@ -31,7 +77,10 @@ export async function getRealtimeSocket(): Promise<Socket> {
 
   if (socket) {
     socket.auth = { token };
+
     if (!socket.connected) socket.connect();
+
+    await waitForSocketConnection(socket);
     return socket;
   }
 
@@ -42,6 +91,7 @@ export async function getRealtimeSocket(): Promise<Socket> {
   });
 
   socket.connect();
+  await waitForSocketConnection(socket);
 
   return socket;
 }
