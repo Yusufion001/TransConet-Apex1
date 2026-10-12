@@ -33,6 +33,7 @@ import VerificationCenter from "./modules/VerificationCenter";
 import { useAuthStore } from "./auth/auth.store";
 import type { AdminModule } from "./api/administrators";
 import { getPlatformOverview, type PlatformOverview } from "./api/admin";
+import { getReportsOverview, type ReportsOverview } from "./api/reports";
 import { getAdminActivity, type AdminActivity } from "./api/activity";
 import { getDatabaseHealth } from "./api/database-health";
 import { getApiHealth } from "./api/api-management";
@@ -516,6 +517,9 @@ function CommandCenter({
   const [databaseStatus, setDatabaseStatus] = useState("Unavailable");
   const [healthLoading, setHealthLoading] = useState(true);
   const [activityLoading, setActivityLoading] = useState(false);
+  const [reportsOverview, setReportsOverview] = useState<ReportsOverview | null>(null);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportsError, setReportsError] = useState("");
 
   const canUse = useCallback(
     (module: AdminModule) =>
@@ -531,6 +535,28 @@ function CommandCenter({
         .then(setLiveSummary)
         .catch(() => setLiveSummary(null)),
     ];
+
+    if (canUse("REPORTS_CENTER")) {
+      setReportsLoading(true);
+      setReportsError("");
+      tasks.push(
+        getReportsOverview()
+          .then((report) => setReportsOverview(report))
+          .catch((error: unknown) => {
+            setReportsOverview(null);
+            setReportsError(
+              error instanceof Error
+                ? error.message
+                : "Reports data could not be loaded.",
+            );
+          })
+          .finally(() => setReportsLoading(false)),
+      );
+    } else {
+      setReportsOverview(null);
+      setReportsError("Access restricted");
+      setReportsLoading(false);
+    }
 
     if (canUse("API_MANAGEMENT")) {
       tasks.push(
@@ -803,6 +829,124 @@ function CommandCenter({
         </div>
       </section>
 
+
+      {canUse("REPORTS_CENTER") && (
+        <section className="dashboard-grid command-analytics-grid">
+          <div className="panel command-analytics-panel">
+            <div className="panel-header">
+              <div>
+                <h2>Booking Outcomes</h2>
+                <p>Aggregate results from the existing Reports API</p>
+              </div>
+              <span className="analytics-total">
+                {reportsLoading ? "Loading…" : `${reportsOverview?.operations.bookings ?? 0} total`}
+              </span>
+            </div>
+
+            {reportsLoading ? (
+              <p className="analytics-message">Loading booking outcomes…</p>
+            ) : reportsError ? (
+              <p className="analytics-message analytics-error">{reportsError}</p>
+            ) : reportsOverview ? (
+              <div className="analytics-content">
+                <div className="completion-summary">
+                  <div>
+                    <span>Completion rate</span>
+                    <strong>{Number.isFinite(reportsOverview.operations.completionRate)
+                      ? `${reportsOverview.operations.completionRate.toFixed(1)}%`
+                      : "—"}</strong>
+                  </div>
+                  <div className="completion-track" role="progressbar"
+                    aria-label="Booking completion rate"
+                    aria-valuemin={0} aria-valuemax={100}
+                    aria-valuenow={Math.min(100, Math.max(0, reportsOverview.operations.completionRate || 0))}>
+                    <span style={{ width: `${Math.min(100, Math.max(0, reportsOverview.operations.completionRate || 0))}%` }} />
+                  </div>
+                </div>
+                <AnalyticsBar
+                  label="Completed"
+                  value={reportsOverview.operations.completedBookings}
+                  total={reportsOverview.operations.bookings}
+                  tone="success"
+                />
+                <AnalyticsBar
+                  label="Cancelled"
+                  value={reportsOverview.operations.cancelledBookings}
+                  total={reportsOverview.operations.bookings}
+                  tone="danger"
+                />
+                <AnalyticsBar
+                  label="Other / remaining"
+                  value={Math.max(0, reportsOverview.operations.bookings
+                    - reportsOverview.operations.completedBookings
+                    - reportsOverview.operations.cancelledBookings)}
+                  total={reportsOverview.operations.bookings}
+                  tone="neutral"
+                />
+              </div>
+            ) : (
+              <p className="analytics-message">No report snapshot is available yet.</p>
+            )}
+            <div className="panel-footer-link">
+              <button type="button" className="text-button" onClick={() => onNavigate("Reports")}>
+                Open Reports →
+              </button>
+            </div>
+          </div>
+
+          <div className="panel command-analytics-panel">
+            <div className="panel-header">
+              <div>
+                <h2>Payment Outcomes</h2>
+                <p>Recorded payment results from the Reports API</p>
+              </div>
+              <span className="analytics-total">
+                {reportsLoading ? "Loading…" : `${reportsOverview?.financial.payments ?? 0} total`}
+              </span>
+            </div>
+
+            {reportsLoading ? (
+              <p className="analytics-message">Loading payment outcomes…</p>
+            ) : reportsError ? (
+              <p className="analytics-message analytics-error">{reportsError}</p>
+            ) : reportsOverview ? (
+              <div className="analytics-content">
+                <AnalyticsBar
+                  label="Successful"
+                  value={reportsOverview.financial.successfulPayments}
+                  total={reportsOverview.financial.payments}
+                  tone="success"
+                />
+                <AnalyticsBar
+                  label="Failed"
+                  value={reportsOverview.financial.failedPayments}
+                  total={reportsOverview.financial.payments}
+                  tone="danger"
+                />
+                <AnalyticsBar
+                  label="Other / unclassified"
+                  value={Math.max(0, reportsOverview.financial.payments
+                    - reportsOverview.financial.successfulPayments
+                    - reportsOverview.financial.failedPayments)}
+                  total={reportsOverview.financial.payments}
+                  tone="neutral"
+                />
+                <p className="analytics-footnote">
+                  “Other / unclassified” is calculated from the reported totals. It is not a verified pending-payment count.
+                </p>
+              </div>
+            ) : (
+              <p className="analytics-message">No report snapshot is available yet.</p>
+            )}
+            <div className="panel-footer-link">
+              <button type="button" className="text-button" onClick={() => onNavigate("Reports")}>
+                View payment reports →
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="dashboard-grid command-secondary-grid">
         <div className="panel">
           <div className="panel-header">
@@ -903,6 +1047,36 @@ function CommandCenter({
           )}
         </div>
       </section>
+    </div>
+  );
+}
+
+function AnalyticsBar({
+  label,
+  value,
+  total,
+  tone,
+}: {
+  label: string;
+  value: number;
+  total: number;
+  tone: "success" | "danger" | "neutral";
+}) {
+  const safeValue = Number.isFinite(value) ? Math.max(0, value) : 0;
+  const safeTotal = Number.isFinite(total) ? Math.max(0, total) : 0;
+  const percentage = safeTotal > 0
+    ? Math.min(100, Math.max(0, (safeValue / safeTotal) * 100))
+    : 0;
+
+  return (
+    <div className="analytics-bar-row">
+      <div className="analytics-bar-label">
+        <span>{label}</span>
+        <strong>{safeValue.toLocaleString()}</strong>
+      </div>
+      <div className="analytics-track" aria-hidden="true">
+        <span className={`analytics-fill analytics-fill-${tone}`} style={{ width: `${percentage}%` }} />
+      </div>
     </div>
   );
 }

@@ -15269,3 +15269,126 @@ button.verification-metric {
     grid-column: auto;
   }
 }
+
+
+/* Command Center booking and payment analytics */
+.command-analytics-grid {
+  margin-top: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.command-analytics-panel {
+  min-width: 0;
+}
+
+.analytics-total {
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 6px 10px;
+  color: #1d4ed8;
+  background: #eff6ff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.analytics-content {
+  display: grid;
+  gap: 18px;
+  padding: 4px 20px 20px;
+}
+
+.analytics-message {
+  margin: 0;
+  padding: 18px 20px;
+  color: #667085;
+  font-size: 13px;
+}
+
+.analytics-error {
+  color: #b42318;
+}
+
+.completion-summary {
+  display: grid;
+  gap: 9px;
+  padding: 14px;
+  border: 1px solid #e7edf7;
+  border-radius: 12px;
+  background: #f8faff;
+}
+
+.completion-summary > div:first-child,
+.analytics-bar-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.completion-summary span,
+.analytics-bar-label span {
+  color: #667085;
+  font-size: 12px;
+}
+
+.completion-summary strong {
+  color: #1d4ed8;
+  font-size: 23px;
+}
+
+.completion-track,
+.analytics-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf1f7;
+}
+
+.completion-track > span,
+.analytics-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transition: width 180ms ease;
+}
+
+.completion-track > span {
+  background: #2563eb;
+}
+
+.analytics-bar-row {
+  display: grid;
+  gap: 8px;
+}
+
+.analytics-bar-label strong {
+  color: #172033;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.analytics-fill-success {
+  background: #16a34a;
+}
+
+.analytics-fill-danger {
+  background: #dc2626;
+}
+
+.analytics-fill-neutral {
+  background: #64748b;
+}
+
+.analytics-footnote {
+  margin: -3px 0 0;
+  color: #7b8494;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .command-analytics-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
