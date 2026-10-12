@@ -70,6 +70,7 @@ export function initializeSocketEvents(io: Server) {
   eventBus.on("marketplace", (event) => {
     const discoveryEvents = new Set([
       "LOAD_POSTED",
+      "BID_SUBMITTED",
       "MARKETPLACE_REQUEST_CANCELLED",
       "BID_SELECTED",
       "MARKETPLACE_REQUEST_AGREED",

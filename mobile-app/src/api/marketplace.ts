@@ -11,21 +11,19 @@ export type MarketplaceBid = {
   expiresAt: string | null;
   selectedAt: string | null;
   createdAt: string;
-  vehicle: {
-    id: string;
-    vehicleType: string;
-    vehicleClass: string;
-  };
-  transporter: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    transporterTier: string;
-    profile: {
-      rating: string | number | null;
-      totalTrips: number | null;
-    } | null;
-  };
+  vehicle?: {
+    id?: string;
+    vehicleType?: string | null;
+    vehicleClass?: string | null;
+  } | null;
+  transporter?: {
+    id?: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    transporterTier?: string | null;
+    rating?: string | number | null;
+    totalTrips?: number | null;
+  } | null;
 };
 
 export type MarketplaceRequest = {
