@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import { authenticate } from "../middleware/auth.middleware.js";
 import { requireAdmin } from "../middleware/admin.middleware.js";
+import { requireAdminModule } from "../middleware/admin-module.middleware.js";
 
 import { getPlatformOverview } from "./admin.service.js";
 import administratorRoutes from "./administrator.routes.js";
@@ -22,6 +23,7 @@ router.use("/activity", activityRoutes);
 
 router.get(
   "/platform-overview",
+  requireAdminModule("PLATFORM_OVERVIEW"),
   async (_req, res) => {
     try {
       const overview =

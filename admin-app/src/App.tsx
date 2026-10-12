@@ -52,66 +52,79 @@ type NavItem = {
   label: string;
   section?: string;
   description: string;
-  requiredModule?: AdminModule;
+  requiredModule: AdminModule;
 };
 
 const primaryNav: NavItem[] = [
   {
     label: "Command Center",
     description: "Platform-wide operational overview",
+    requiredModule: "PLATFORM_OVERVIEW",
   },
   {
     label: "Live Operations",
     section: "OPERATIONS",
     description: "Monitor active transport operations",
+    requiredModule: "LIVE_TRIPS",
   },
   {
     label: "Bookings & Shipments",
     description: "Manage bookings and shipment lifecycles",
+    requiredModule: "LIVE_TRIPS",
   },
   {
     label: "Customers",
     description: "Customer accounts and activity",
+    requiredModule: "CUSTOMER_MANAGEMENT",
   },
   {
     label: "Transporters",
     description: "Transporter accounts and performance",
+    requiredModule: "TRANSPORTER_MANAGEMENT",
   },
   {
     label: "Fleet",
     description: "Vehicles and fleet operations",
+    requiredModule: "FLEET_MARKETPLACE",
   },
   {
     label: "Marketplace",
     section: "MARKETPLACE",
     description: "Transport requests and marketplace activity",
+    requiredModule: "FLEET_MARKETPLACE",
   },
   {
     label: "Marketing Center",
     section: "MARKETPLACE",
     description: "Create, schedule, publish, and manage customer and transporter advertisements",
+    requiredModule: "MARKETING_CENTER",
   },
   {
     label: "Bidding",
     description: "Monitor marketplace bidding",
+    requiredModule: "FLEET_MARKETPLACE",
   },
   {
     label: "Payments",
     section: "FINANCIAL",
     description: "Payment operations and transactions",
+    requiredModule: "FINANCIAL_OPERATIONS",
   },
   {
     label: "Wallets",
     description: "Wallet and withdrawal operations",
+    requiredModule: "FINANCIAL_OPERATIONS",
   },
   {
     label: "Subscriptions",
     description: "Subscription administration",
+    requiredModule: "SUBSCRIPTION_BILLING",
   },
   {
     label: "Verification",
     section: "GOVERNANCE",
     description: "Verification and compliance",
+    requiredModule: "VERIFICATION_CENTER",
   },
   {
     label: "Partner Management",
@@ -122,10 +135,12 @@ const primaryNav: NavItem[] = [
   {
     label: "Content Management",
     description: "Govern platform content and controlled publishing",
+    requiredModule: "CONTENT_MANAGEMENT",
   },
   {
     label: "Support",
     description: "Customer and transporter support",
+    requiredModule: "SUPPORT_CARE",
   },
   {
     label: "Disputes",
@@ -135,25 +150,30 @@ const primaryNav: NavItem[] = [
   {
     label: "Risk & Fraud",
     description: "Risk signals and suspicious activity",
+    requiredModule: "RISK_FRAUD",
   },
   {
     label: "AI Automation",
     section: "INTELLIGENCE",
     description: "Rule-based operational intelligence and automation",
+    requiredModule: "AI_AUTOMATION",
   },
   {
     label: "Error Center",
     section: "INTELLIGENCE",
     description: "Application errors, operational failures, and system events",
+    requiredModule: "ERROR_CENTER",
   },
   {
     label: "Reports",
     section: "INTELLIGENCE",
     description: "Operational and platform intelligence",
+    requiredModule: "REPORTS_CENTER",
   },
   {
     label: "Notifications",
     description: "Platform notification operations",
+    requiredModule: "NOTIFICATION_CENTER",
   },
   {
     label: "Messages",
@@ -164,44 +184,54 @@ const primaryNav: NavItem[] = [
     label: "Security",
     section: "SYSTEM",
     description: "Security events and controls",
+    requiredModule: "SECURITY_CENTER",
   },
   {
     label: "Feature Management",
     description: "Control controlled feature availability and rollout",
+    requiredModule: "FEATURE_MANAGEMENT",
   },
   {
     label: "Administrators",
     description: "Manage administration accounts and administrator access",
+    requiredModule: "ROLE_PERMISSION",
   },
   {
     label: "Roles & Permissions",
     description: "Govern administrator roles and module permissions",
+    requiredModule: "ROLE_PERMISSION",
   },
   {
     label: "Audit Logs",
     description: "Administrative activity history",
+    requiredModule: "ACTIVITY_TIMELINE",
   },
   {
     label: "Activity Timeline",
     section: "OPERATIONS",
     description: "Platform-wide operational and administrative event stream",
+    requiredModule: "ACTIVITY_TIMELINE",
   },
   {
     label: "API Management",
     section: "SYSTEM",
     description: "Monitor API health, performance, and backend resource activity",
+    requiredModule: "API_MANAGEMENT",
   },
   {
     label: "Backup & Recovery",
     description: "Monitor backup protection and recovery readiness",
+    requiredModule: "BACKUP_RECOVERY",
   },
   {
     label: "Database Health",
     description: "Monitor PostgreSQL connectivity, response performance, and platform records",
+    requiredModule: "DATABASE_HEALTH",
   },
   {
     label: "Settings",
     description: "Platform configuration",
+    requiredModule: "PLATFORM_CONFIG",
   },
 ];
 
@@ -224,13 +254,6 @@ function App() {
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [overviewError, setOverviewError] = useState("");
 
-  const activeItem = useMemo(
-    () =>
-      primaryNav.find((item) => item.label === active) ??
-      primaryNav[0],
-    [active],
-  );
-
   const administratorName =
     [user?.firstName, user?.lastName]
       .filter(Boolean)
@@ -241,20 +264,35 @@ function App() {
     "Administrator";
 
   const isSuperAdministrator =
-    Boolean(
-      user?.adminProfile?.isSuperAdministrator,
-    );
+    Boolean(user?.adminProfile?.isSuperAdministrator) ||
+    user?.adminProfile?.administratorType === "SUPER_ADMIN";
 
+  const assignedModules = user?.adminProfile?.assignedModules ?? [];
   const visibleNav = primaryNav.filter(
     (item) =>
-      !item.requiredModule ||
-      isSuperAdministrator ||
-      (user?.adminProfile?.assignedModules ?? []).includes(
-        item.requiredModule,
-      ),
+      isSuperAdministrator || assignedModules.includes(item.requiredModule),
   );
 
+  const currentActive = visibleNav.some((item) => item.label === active)
+    ? active
+    : visibleNav[0]?.label ?? "";
+
+  const activeItem = useMemo(
+    () => primaryNav.find((item) => item.label === currentActive) ?? primaryNav[0],
+    [currentActive],
+  );
+
+  const canViewOverview =
+    isSuperAdministrator || assignedModules.includes("PLATFORM_OVERVIEW");
+
   const loadOverview = useCallback(async () => {
+    if (!canViewOverview) {
+      setOverview(null);
+      setOverviewError("");
+      setOverviewLoading(false);
+      return;
+    }
+
     try {
       setOverviewLoading(true);
       setOverviewError("");
@@ -266,7 +304,7 @@ function App() {
     } finally {
       setOverviewLoading(false);
     }
-  }, []);
+  }, [canViewOverview]);
 
   useEffect(() => {
     void loadOverview();
@@ -291,6 +329,9 @@ function App() {
         </div>
 
         <nav className="navigation">
+          {visibleNav.length === 0 && (
+            <div className="nav-section">No administration modules assigned</div>
+          )}
           {visibleNav.map((item) => (
             <div key={item.label}>
               {item.section && sidebarOpen && (
@@ -302,7 +343,7 @@ function App() {
               <button
                 type="button"
                 className={`nav-item ${
-                  active === item.label ? "active" : ""
+                  currentActive === item.label ? "active" : ""
                 }`}
                 title={
                   sidebarOpen
@@ -351,10 +392,10 @@ function App() {
             <div>
               <div className="breadcrumb">
                 TransConet-Apex1 / Administration /{" "}
-                {active}
+                {currentActive}
               </div>
 
-              <h1>{active}</h1>
+              <h1>{currentActive}</h1>
 
               <p className="page-description">
                 {activeItem.description}
@@ -405,7 +446,7 @@ function App() {
           </div>
         </header>
 
-        {active === "Command Center" ? (
+        {currentActive === "Command Center" ? (
           <CommandCenter
             administratorName={administratorName}
             overview={overview}
@@ -416,73 +457,73 @@ function App() {
             onRefresh={() => void loadOverview()}
             onNavigate={setActive}
           />
-        ) : active === "Live Operations" ? (
+        ) : currentActive === "Live Operations" ? (
           <LiveOperations />
-        ) : active === "Bookings & Shipments" ? (
+        ) : currentActive === "Bookings & Shipments" ? (
           <BookingsShipments />
-        ) : active === "Marketing Center" || active === "Marketing" ? (
+        ) : currentActive === "Marketing Center" || currentActive === "Marketing" ? (
           <MarketingCenter />
-        ) : active === "Customers" ? (
+        ) : currentActive === "Customers" ? (
           <Customers />
-        ) : active === "Transporters" ? (
+        ) : currentActive === "Transporters" ? (
           <Transporters />
-        ) : active === "Fleet" ? (
+        ) : currentActive === "Fleet" ? (
           <Fleet />
-        ) : active === "Marketplace" ? (
+        ) : currentActive === "Marketplace" ? (
           <Marketplace />
-        ) : active === "Bidding" ? (
+        ) : currentActive === "Bidding" ? (
           <Marketplace />
-        ) : active === "Feature Management" ? (
+        ) : currentActive === "Feature Management" ? (
           <FeatureManagement />
-        ) : active === "Security" ? (
+        ) : currentActive === "Security" ? (
           <SecurityCenter />
-        ) : active === "Administrators" ? (
+        ) : currentActive === "Administrators" ? (
           <Administrators />
-        ) : active === "Roles & Permissions" ? (
+        ) : currentActive === "Roles & Permissions" ? (
           <RolePermissions />
-        ) : active === "Payments" ? (
+        ) : currentActive === "Payments" ? (
           <FinancialOperations />
-        ) : active === "Wallets" ? (
+        ) : currentActive === "Wallets" ? (
           <WalletManagement />
-        ) : active === "Subscriptions" ? (
+        ) : currentActive === "Subscriptions" ? (
           <Subscriptions />
-        ) : active === "Verification" ? (
+        ) : currentActive === "Verification" ? (
           <VerificationCenter />
-        ) : active === "Risk & Fraud" ? (
+        ) : currentActive === "Risk & Fraud" ? (
           <RiskFraud />
-        ) : active === "Error Center" ? (
+        ) : currentActive === "Error Center" ? (
           <ErrorCenter />
-        ) : active === "Reports" ? (
+        ) : currentActive === "Reports" ? (
           <ReportCenter />
-        ) : active === "Partner Management" ? (
+        ) : currentActive === "Partner Management" ? (
           <PartnerManagement />
-        ) : active === "Notifications" ? (
+        ) : currentActive === "Notifications" ? (
           <NotificationCenter />
-        ) : active === "Messages" ? (
+        ) : currentActive === "Messages" ? (
           <Messages />
-        ) : active === "Content Management" ? (
+        ) : currentActive === "Content Management" ? (
           <ContentManagement />
-        ) : active === "Audit Logs" ? (
+        ) : currentActive === "Audit Logs" ? (
           <AuditLogs />
-        ) : active === "Activity Timeline" ? (
+        ) : currentActive === "Activity Timeline" ? (
           <ActivityTimeline />
-        ) : active === "AI Automation" ? (
+        ) : currentActive === "AI Automation" ? (
           <AIAutomation />
-        ) : active === "API Management" ? (
+        ) : currentActive === "API Management" ? (
           <ApiManagement />
-        ) : active === "Backup & Recovery" ? (
+        ) : currentActive === "Backup & Recovery" ? (
           <BackupRecovery />
-        ) : active === "Database Health" ? (
+        ) : currentActive === "Database Health" ? (
           <DatabaseHealth />
-        ) : active === "Settings" ? (
+        ) : currentActive === "Settings" ? (
           <Settings />
-        ) : active === "Support" ? (
+        ) : currentActive === "Support" ? (
           <SupportCare />
-        ) : active === "Disputes" ? (
+        ) : currentActive === "Disputes" ? (
           <Disputes />
         ) : (
           <ModuleWorkspace
-            title={active}
+            title={currentActive}
             description={activeItem.description}
           />
         )}
