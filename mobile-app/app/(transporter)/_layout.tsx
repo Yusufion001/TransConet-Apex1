@@ -9,6 +9,7 @@ import { getTransporterWallet } from "../../src/api/wallet";
 import { getUserNotifications } from "../../src/api/notifications";
 import { getTransporterOnboardingStatus } from "../../src/api/transporter";
 import { listenForExpressOffers } from "../../src/realtime/express-realtime";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function money(value: string | number | undefined) {
   if (value === undefined || value === null || value === "") return "₦0";
@@ -75,6 +76,7 @@ function HeaderActions() {
 }
 
 function TransporterDrawerContent(props: any) {
+  const insets = useSafeAreaInsets();
   const signOut = useAuthStore((state) => state.signOut);
 
   const go = (path: string) => {
@@ -104,7 +106,7 @@ function TransporterDrawerContent(props: any) {
   );
 
   return (
-    <ScrollView contentContainerStyle={styles.drawer}>
+    <ScrollView contentContainerStyle={[styles.drawer, { paddingTop: insets.top + 8 }]}>
       <View style={styles.brand}>
         <Text style={styles.brandTitle}>TRANSCONET</Text>
         <Text style={styles.brandSubtitle}>Transporter</Text>

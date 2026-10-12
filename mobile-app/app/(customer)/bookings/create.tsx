@@ -746,6 +746,11 @@ void searchPlaceSuggestions(value, "destination");
               {VEHICLE_CLASS_SPEC[truckCategory].capacityNote}
             </Text>
           ) : null}
+          <Text style={styles.classInfoMatchNotice}>
+            Marketplace matching requires an approved, available vehicle in
+            this selected class and a fresh GPS location. Choose the class
+            that genuinely fits your cargo requirements.
+          </Text>
         </View>
       ) : null}
 
@@ -1360,6 +1365,16 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     fontStyle: "italic",
     color: "#667085",
+  },
+  classInfoMatchNotice: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#D9E1F0",
+    fontSize: 12,
+    lineHeight: 18,
+    color: "#4169E1",
+    fontWeight: "600",
   },
   categoryOption: {
     backgroundColor: "#FFFFFF",
