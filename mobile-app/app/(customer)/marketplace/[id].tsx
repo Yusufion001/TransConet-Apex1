@@ -7,7 +7,8 @@ import {
   Text,
   View,
 } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getMarketplaceRequest,
@@ -52,7 +53,21 @@ export default function CustomerMarketplaceRequest() {
     queryKey: ["marketplace-request", requestId],
     queryFn: () => getMarketplaceRequest(requestId!),
     enabled: Boolean(requestId),
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: false,
+    refetchOnMount: "always",
+    refetchOnReconnect: true,
   });
+
+  useFocusEffect(
+    useCallback(() => {
+      if (requestId) {
+        void queryClient.invalidateQueries({
+          queryKey: ["marketplace-request", requestId],
+        });
+      }
+    }, [queryClient, requestId]),
+  );
 
   const selectMutation = useMutation({
     mutationFn: ({
@@ -101,7 +116,7 @@ export default function CustomerMarketplaceRequest() {
     );
   }
 
-  if (query.isError || !query.data) {
+  if (!query.data) {
     return (
       <View style={styles.center}>
         <Text style={styles.errorTitle}>Bids unavailable</Text>
@@ -148,6 +163,25 @@ export default function CustomerMarketplaceRequest() {
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
     >
+      {query.isRefetchError && (
+        <View style={styles.notice}>
+          <Text style={styles.noticeTitle}>Refresh temporarily unavailable</Text>
+          <Text style={styles.noticeText}>
+            Showing the last loaded request and bids. Check your connection
+            and try refreshing again.
+          </Text>
+          <Pressable
+            onPress={() => query.refetch()}
+            style={styles.button}
+            disabled={query.isFetching}
+          >
+            <Text style={styles.buttonText}>
+              {query.isFetching ? "Refreshing..." : "Retry Refresh"}
+            </Text>
+          </Pressable>
+        </View>
+      )}
+
       <Pressable onPress={() => router.back()} style={styles.backButton}>
         <Text style={styles.backIcon}>‹</Text>
         <Text style={styles.back}>Back to Requests</Text>
@@ -212,7 +246,7 @@ export default function CustomerMarketplaceRequest() {
           </Text>
           <Text style={styles.emptyText}>
             There are currently no pending bids available for selection.
-            Pull to refresh later for new offers.
+            New offers are checked automatically while this screen is open. You can also refresh now.
           </Text>
 
           <Pressable
