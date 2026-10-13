@@ -4,6 +4,7 @@ import { prisma } from "../config/prisma.js";
 import { completePayment } from "./payment.service.js";
 import { markSubscriptionInvoicePaid } from "../subscriptions/subscription.service.js";
 import { verifyFlutterwaveTransaction } from "./flutterwave.service.js";
+import { completeWalletFunding } from "../wallet/wallet-funding.service.js";
 
 export type PaymentWebhookInput = {
   provider: string;
@@ -171,6 +172,119 @@ export async function processPaymentWebhook(
         "Flutterwave transaction currency does not match webhook",
       );
     }
+  }
+
+
+  // Wallet funding shares the Flutterwave payment webhook endpoint.
+  // Signature and provider transaction verification happen before this branch.
+  if (
+    provider.toUpperCase() === "FLUTTERWAVE" &&
+    transactionReference?.startsWith("WALLET-")
+  ) {
+    if (!verifiedTransaction) {
+      throw new Error("Verified Flutterwave transaction is required for wallet funding");
+    }
+
+    const funding = await prisma.walletFunding.findUnique({
+      where: { transactionReference },
+      select: {
+        id: true,
+        provider: true,
+        transactionReference: true,
+        amount: true,
+        currency: true,
+      },
+    });
+
+    if (!funding || funding.provider.toUpperCase() !== "FLUTTERWAVE") {
+      throw new Error("Wallet funding not found or provider mismatch");
+    }
+
+    if (verifiedTransaction.tx_ref !== funding.transactionReference) {
+      throw new Error("Flutterwave transaction reference mismatch for wallet funding");
+    }
+
+    if (!amountsMatch(verifiedTransaction.amount, funding.amount.toString())) {
+      throw new Error("Flutterwave verified amount does not match wallet funding");
+    }
+
+    if (verifiedTransaction.currency.toUpperCase() !== funding.currency.toUpperCase()) {
+      throw new Error("Flutterwave verified currency does not match wallet funding");
+    }
+
+    if (amount !== undefined && !amountsMatch(amount, funding.amount.toString())) {
+      throw new Error("Webhook amount does not match wallet funding");
+    }
+
+    if (currency !== undefined && currency.toUpperCase() !== funding.currency.toUpperCase()) {
+      throw new Error("Webhook currency does not match wallet funding");
+    }
+
+    const eventKey = {
+      provider_providerEventId: { provider, providerEventId },
+    };
+
+    const existing = await prisma.walletFundingWebhookEvent.findUnique({
+      where: eventKey,
+    });
+
+    if (existing && existing.walletFundingId !== funding.id) {
+      throw new Error(
+        "Wallet funding webhook event is associated with a different funding record",
+      );
+    }
+
+    if (existing?.processed) {
+      return { duplicate: true, processed: true, webhookEventId: existing.id };
+    }
+
+    let webhookEvent;
+
+    if (existing) {
+      webhookEvent = existing;
+    } else {
+      try {
+        webhookEvent = await prisma.walletFundingWebhookEvent.create({
+          data: {
+            provider,
+            providerEventId,
+            eventType,
+            walletFundingId: funding.id,
+            payload: payload as object,
+          },
+        });
+      } catch (error) {
+        // A concurrent delivery may have created the unique event first.
+        const concurrent = await prisma.walletFundingWebhookEvent.findUnique({
+          where: eventKey,
+        });
+        if (!concurrent) throw error;
+        if (concurrent.walletFundingId !== funding.id) {
+          throw new Error(
+            "Wallet funding webhook event is associated with a different funding record",
+          );
+        }
+
+        if (concurrent.processed) {
+          return { duplicate: true, processed: true, webhookEventId: concurrent.id };
+        }
+        webhookEvent = concurrent;
+      }
+    }
+
+    const result = await completeWalletFunding(funding.id, verifiedTransaction);
+
+    await prisma.walletFundingWebhookEvent.update({
+      where: { id: webhookEvent.id },
+      data: { processed: true, processedAt: new Date() },
+    });
+
+    return {
+      processed: true,
+      walletFundingId: funding.id,
+      webhookEventId: webhookEvent.id,
+      result,
+    };
   }
 
   let validatedPaymentId = paymentId;
