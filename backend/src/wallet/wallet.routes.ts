@@ -25,7 +25,10 @@ import {
   completeWalletFunding,
 } from "./wallet-funding.service.js";
 import { initializeWalletFundingSchema } from "./wallet-funding.validators.js";
-import { verifyFlutterwaveTransaction } from "../payments/flutterwave.service.js";
+import {
+  findFlutterwaveTransactionByReference,
+  verifyFlutterwaveTransaction,
+} from "../payments/flutterwave.service.js";
 import { env } from "../config/env.js";
 import { prisma } from "../config/prisma.js";
 import { Prisma } from "../../generated/prisma/client.js";
@@ -121,12 +124,7 @@ router.get(
         ? req.query.transaction_id.trim()
         : "";
 
-    const providerStatus =
-      typeof req.query.status === "string"
-        ? req.query.status.trim().toLowerCase()
-        : "";
-
-    if (!transactionReference || !transactionId) {
+    if (!transactionReference) {
       return walletFundingReturn(res, "failed", transactionReference);
     }
 
@@ -153,18 +151,21 @@ router.get(
         );
       }
 
-      if (providerStatus !== "successful") {
-        return walletFundingReturn(
-          res,
-          "failed",
-          transactionReference,
-        );
+      let verifiedTransactionId = transactionId;
+
+      if (!verifiedTransactionId) {
+        const transaction =
+          await findFlutterwaveTransactionByReference(
+            transactionReference,
+          );
+
+        verifiedTransactionId = String(transaction.id);
       }
 
       const result =
         await verifyAndCompleteWalletFunding(
           funding.id,
-          transactionId,
+          verifiedTransactionId,
         );
 
       return walletFundingReturn(

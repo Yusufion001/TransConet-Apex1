@@ -31,6 +31,7 @@ type TransConetMapProps = {
   animatedMarkerId?: string;
   animatedMarkerHeading?: number | null;
   onUserMapInteraction?: () => void;
+  onMapTap?: () => void;
   onMapGestureStart?: () => void;
   followCoordinate?: MapCoordinate | null;
   followEnabled?: boolean;
@@ -50,6 +51,7 @@ export default function TransConetMap({
   animatedMarkerId,
   animatedMarkerHeading,
   onUserMapInteraction,
+  onMapTap,
   onMapGestureStart,
   followCoordinate,
   followEnabled = false,
@@ -195,6 +197,9 @@ export default function TransConetMap({
   const handleMapPress = (event: MapPressEvent) => {
     if (interactive) {
       onUserMapInteraction?.();
+    }
+    if (interactive) {
+      onMapTap?.();
     }
 
     if (!interactive || !onPinChange) {
