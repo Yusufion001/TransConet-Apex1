@@ -603,9 +603,7 @@ export async function createMarketplaceBid(data: {
 
   const effectiveRadiusKm =
     visibilityPolicy.geographicScope === "RADIUS"
-      ? data.radiusKm ?? (visibilityPolicy.defaultRadiusKm === 0
-        ? visibilityPolicy.maxRadiusKm
-        : visibilityPolicy.defaultRadiusKm)
+      ? data.radiusKm ?? visibilityPolicy.defaultRadiusKm
       : null;
 
   if (
@@ -664,7 +662,7 @@ export async function createMarketplaceBid(data: {
     if (
       radiusKm === null ||
       !Number.isFinite(radiusKm) ||
-      radiusKm <= 0 ||
+      radiusKm < 0 ||
       radiusKm > visibilityPolicy.maxRadiusKm
     ) {
       throw new Error(
@@ -1056,15 +1054,11 @@ export async function selectMarketplaceBid(
       }
 
       const selectionRadiusKm =
-        bid.radiusKm ??
-        (selectionVisibilityPolicy.defaultRadiusKm === 0
-          ? selectionVisibilityPolicy.maxRadiusKm
-          : selectionVisibilityPolicy.defaultRadiusKm);
+        bid.radiusKm ?? selectionVisibilityPolicy.defaultRadiusKm;
 
       if (
         !Number.isFinite(selectionRadiusKm) ||
         selectionRadiusKm < 0 ||
-        (selectionRadiusKm === 0 && bid.radiusKm != null) ||
         selectionRadiusKm > selectionVisibilityPolicy.maxRadiusKm
       ) {
         throw new Error(

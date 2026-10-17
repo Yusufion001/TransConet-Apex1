@@ -74,16 +74,13 @@ test("rejects admin-configured radius stages above maximum radius", () => {
 });
 
 
-test("resolves a zero default radius to the configured maximum", () => {
+test("preserves a zero default radius as zero kilometres", () => {
   const config = marketplaceVisibilityConfigSchema.parse({
     ...createConfig([10]),
     defaultRadiusKm: 0,
   });
 
-  assert.equal(
-    resolveDefaultMarketplaceRadius(config),
-    config.maxRadiusKm,
-  );
+  assert.equal(resolveDefaultMarketplaceRadius(config), 0);
 });
 
 test("preserves a positive configured default radius", () => {

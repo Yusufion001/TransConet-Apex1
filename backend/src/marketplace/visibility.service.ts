@@ -5,6 +5,7 @@ import {
 } from "./marketplace.compatibility.js";
 import {
   getMarketplaceVisibilityConfig,
+  resolveDefaultMarketplaceRadius,
 } from "./visibility.policy.js";
 
 const EARTH_RADIUS_KM = 6371;
@@ -75,9 +76,7 @@ export async function getVisibleMarketplaceLoads(
     await getMarketplaceVisibilityConfig();
 
   const effectiveRadiusKm =
-    radiusKm ?? (visibilityPolicy.defaultRadiusKm === 0
-      ? visibilityPolicy.maxRadiusKm
-      : visibilityPolicy.defaultRadiusKm);
+    radiusKm ?? resolveDefaultMarketplaceRadius(visibilityPolicy);
 
   if (
     !Number.isFinite(effectiveRadiusKm) ||
