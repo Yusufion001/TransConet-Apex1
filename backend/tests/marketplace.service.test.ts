@@ -392,6 +392,30 @@ test("createMarketplaceBid creates a pending bid for an approved transporter veh
     async () => bid,
   );
 
+  getMarketplaceVisibilityConfigMock.mock.mockImplementation(
+    async () => ({
+      geographicScope: "RADIUS",
+      defaultRadiusKm: 0,
+      maxRadiusKm: 50,
+      subscriptionBoosts: {
+        FREE: 5,
+        SILVER: 4,
+        GOLD: 3,
+        PLATINUM: 2,
+        ENTERPRISE: 1,
+      },
+      tierScores: {
+        TIER_1: 1,
+        TIER_2: 2,
+      },
+      requireApprovedTransporter: true,
+      requireApprovedVehicle: true,
+      requireAvailableVehicle: true,
+      requireVehicleLocation: true,
+      locationFreshnessSeconds: 60,
+    }),
+  );
+
   const result = await createMarketplaceBid({
     requestId: "request-1",
     transporterId: "transporter-1",
@@ -417,6 +441,7 @@ test("createMarketplaceBid creates a pending bid for an approved transporter veh
   assert.equal(createCall.data.transporterId, "transporter-1");
   assert.equal(createCall.data.vehicleId, "vehicle-1");
   assert.equal(createCall.data.amount, 140000);
+  assert.equal(createCall.data.radiusKm, 0);
   assert.equal(createCall.data.status, "PENDING");
 
   assert.equal(
@@ -887,7 +912,7 @@ test("selectMarketplaceBid selects the bid, reserves the vehicle, rejects compet
     vehicleId: "vehicle-1",
     amount: 140000,
     message: "Ready for this shipment",
-    radiusKm: 30,
+    radiusKm: 0,
     status: "PENDING",
     expiresAt: null,
   };

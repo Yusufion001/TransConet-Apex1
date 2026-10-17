@@ -13,6 +13,10 @@ const prismaMock = {
 const getMarketplaceVisibilityConfigMock =
   mock.fn<(...args: any[]) => any>();
 
+const resolveDefaultMarketplaceRadiusMock = (config: {
+  defaultRadiusKm: number;
+}) => config.defaultRadiusKm;
+
 mock.module(new URL("../src/config/prisma.js", import.meta.url).href, {
   namedExports: {
     prisma: prismaMock,
@@ -25,6 +29,8 @@ mock.module(
     namedExports: {
       getMarketplaceVisibilityConfig:
         getMarketplaceVisibilityConfigMock,
+      resolveDefaultMarketplaceRadius:
+        resolveDefaultMarketplaceRadiusMock,
     },
   },
 );
