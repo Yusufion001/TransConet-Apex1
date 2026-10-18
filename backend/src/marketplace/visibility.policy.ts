@@ -87,15 +87,13 @@ export type MarketplaceVisibilityConfig = z.infer<
 >;
 
 /**
- * A configured default of zero means use the configured maximum radius.
+ * A configured default of zero means a zero-kilometre default radius.
  * Explicit radius overrides are validated separately.
  */
 export function resolveDefaultMarketplaceRadius(
   config: MarketplaceVisibilityConfig,
 ): number {
-  return config.defaultRadiusKm === 0
-    ? config.maxRadiusKm
-    : config.defaultRadiusKm;
+  return config.defaultRadiusKm;
 }
 
 type ConfigRow = {
